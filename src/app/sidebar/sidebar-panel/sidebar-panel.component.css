@@ -1,0 +1,88 @@
+.sidebar {
+    position: absolute;
+    top: 200px;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.9);
+    width: 172px;
+    height: 400px;
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+  }
+  
+  .menuButton {
+    position: relative;
+    left: 165px;
+    transform: translate(0%, -50%);
+    background-color: rgb(56, 117, 194);
+    color:white;
+    top: 50%;
+    width: 30px;
+    height: 100px;
+    border-radius: 3px 20px 20px 3px;
+    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+    text-align: center;
+    vertical-align: middle;
+  }
+  .menuButton-text
+  {
+    font-style: bold;
+    transform: translate(-2px, 45px) rotate(-90deg);
+  }
+  .menuButton:hover
+  {
+    cursor: pointer;
+  }
+  
+  .row {
+    margin: 0px !important;
+    position: relative;
+    top: -100px;
+  }
+  
+  .col-sm {
+    margin-bottom: 5px;
+  }
+  
+  .input-field {
+    width: 100%;
+  }
+  
+  .add-button {
+    width: 100%;
+    background-color: rgb(89, 158, 92);
+    color: white;
+    font-size: 16px;
+  }
+  .capcity-button {
+    width: 100%;
+    background-color: rgb(175, 75, 75);
+    color: white;
+    font-size: 16px;
+  }
+  
+  .scrollable-menu {
+    height: auto;
+    max-height: 300px;
+    overflow-x: hidden;
+    width: 150px;
+}
+
+
+.btn-green{
+    background-color: #009933
+}
+
+.btn-blue{
+    background-color: #0099cc
+}
+
+.btn-orange{
+    background-color: #ff9900
+}
+
+.btn-label{
+    pointer-events: none;   
+    text-decoration: underline;
+    font-weight: bold
+}

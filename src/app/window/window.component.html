@@ -1,0 +1,31 @@
+<!-- <div #panelExtendDiv class="panel-extend"> -->
+
+  <div #panelDiv class="panel panel-default resizable">
+    <div #dragBar class="panel-heading panel-heading-custom">
+      {{ windowPanel.title }} - {{ windowPanel.id }}
+      <button class="navbarButton" (click)="removeWindow()">
+        <span class="glyphicon glyphicon-remove"></span>
+      </button>
+      <button class="navbarButton" (click)="incAlpha()">
+        <span class="glyphicon glyphicon-plus"></span>
+      </button>
+      <button class="navbarButton" (click)="decAlpha()">
+        <span class="glyphicon glyphicon-minus"></span>
+      </button>
+      <button class="navbarButton" (click)="maximize()">
+        <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
+      </button>
+    </div>
+    <div class="panel-body">
+      <!-- FIX AND UNCOMMENT HERE -->
+      <!-- <app-ngxgraph #child *ngIf="windowPanel.bodyType.split('-')[0] == 'ngxgraph'" [view]="getView" [type]="windowPanel.bodyType.split('-')[1]" [dbQuery]="windowPanel.dbQuery"></app-ngxgraph> -->
+
+
+      <app-map #child *ngIf="windowPanel.bodyType.split('-')[0] == 'map'"></app-map>
+
+    </div>
+
+  </div>
+  <app-sidebar-panel></app-sidebar-panel>
+  
+<!-- </div> -->
