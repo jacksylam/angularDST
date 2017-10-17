@@ -43,6 +43,7 @@ export class MapComponent implements OnInit {
     this.mymap.on('click', this.onMapClick);
 
     console.log(this.mapid.nativeElement.style.width);
+
   }
 
   onMapClick(e) {

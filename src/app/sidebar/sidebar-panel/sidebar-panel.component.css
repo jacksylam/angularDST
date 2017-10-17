@@ -12,8 +12,9 @@
   
   .menuButton {
     position: relative;
-    left: 165px;
-    transform: translate(0%, -50%);
+    left: -40px;
+    /* transform: translate(0%, 50%); */
+    transform: rotate(180deg);
     background-color: rgb(56, 117, 194);
     color:white;
     top: 50%;
@@ -27,7 +28,7 @@
   .menuButton-text
   {
     font-style: bold;
-    transform: translate(-2px, 45px) rotate(-90deg);
+    transform: translate(-2px, 45px) rotate(90deg);
   }
   .menuButton:hover
   {

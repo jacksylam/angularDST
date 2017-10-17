@@ -17,6 +17,7 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('panelDiv') panelDiv;
   @ViewChild('child') childComponent;
   @ViewChild('glyphSize') glyphSize;
+  @ViewChild('panelExtendDiv') panelExtendDiv;
 
   @Input() public title: string;
   @Input() public type: string;
@@ -39,7 +40,7 @@ export class WindowComponent implements AfterViewInit {
 
     this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
     this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
+    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 50 + 'px';
     this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     this.childComponent.resize(this.windowPanel.width, this.windowPanel.height);
@@ -67,6 +68,11 @@ export class WindowComponent implements AfterViewInit {
     window.addEventListener('resize', () => { this.windowResize() });
     this.panelDiv.nativeElement.addEventListener('mousedown', () => { this.bringWindowForward(); });
 
+    //PanelExtend
+    this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 300 + 'px';
+    this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height + 'px';
+    this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
+    this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
   }
 
   startDragging(e) {
@@ -74,17 +80,22 @@ export class WindowComponent implements AfterViewInit {
     let left = e.clientX - container.mouseWindowLeft;
     let top = e.clientY - container.mouseWindowTop;
 
-    if (top < 30) { top = 30; }
-    if (top > (window.innerHeight - 70)) { top = window.innerHeight - 70; }
-    if (left < 0) { left = 0; }
-    if (left > (window.innerWidth - 70)) { left = window.innerWidth - 70; }
+    // if (top < 30) { top = 30; }
+    // if (top > (window.innerHeight - 70)) { top = window.innerHeight - 70; }
+    // if (left < 0) { left = 0; }
+    // if (left > (window.innerWidth - 70)) { left = window.innerWidth - 70; }
 
     container.windowPanel.left = left
     container.windowPanel.top = top;
-    container.panelDiv.nativeElement.style.left = left + 'px';
-    container.panelDiv.nativeElement.style.top = top + 'px';
+    // container.panelDiv.nativeElement.style.left = left + 'px';
+    // container.panelDiv.nativeElement.style.top = top + 'px';
+
+      //PanelExtend
+      container.panelExtendDiv.nativeElement.style.left = left + 200 + 'px';
+      container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
     window.getSelection().removeAllRanges();
-  }
+
+   }
 
   stopDragging() {
     document.removeEventListener('mousemove', this.startDragging);
@@ -144,6 +155,11 @@ export class WindowComponent implements AfterViewInit {
 
       this.windowPanel.width = this.panelDiv.nativeElement.getBoundingClientRect().width;
       this.windowPanel.height = this.panelDiv.nativeElement.getBoundingClientRect().height;
+
+      //PanelExtend
+      this.windowPanel.width = this.panelExtendDiv.nativeElement.getBoundingClientRect().width;
+      this.windowPanel.height = this.panelExtendDiv.nativeElement.getBoundingClientRect().height;
+
       this.childComponent.resize(this.windowPanel.width, this.windowPanel.height);
     }
   }
@@ -159,6 +175,11 @@ export class WindowComponent implements AfterViewInit {
     this.windowPanel.top = winY;
     this.panelDiv.nativeElement.style.left = winX + 'px';
     this.panelDiv.nativeElement.style.top = winY + 'px';
+
+
+    //PanelExtend
+    this.panelExtendDiv.nativeElement.style.left = winX + 'px';
+    this.panelExtendDiv.nativeElement.style.top = winY + 'px';
 
     window.getSelection().removeAllRanges();
   }

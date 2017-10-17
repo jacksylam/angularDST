@@ -14,7 +14,7 @@ export class WindowPanel {
   constructor(title: string, bodyType: string, dbquery: string) {
     this.title = title;
     this.left = 200;
-    this.top = 200;
+    // this.top = 200;
     this.width = 1100;
     this.height = 700;
     this.backgroundAlpha = 1.0;
