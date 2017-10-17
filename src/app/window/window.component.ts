@@ -37,6 +37,7 @@ export class WindowComponent implements AfterViewInit {
   ngAfterViewInit() {
 
     WindowComponent.windowDivs.push(this.panelDiv.nativeElement);
+    WindowComponent.windowDivs.push(this.panelExtendDiv.nativeElement);
 
     this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
     this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
@@ -55,7 +56,7 @@ export class WindowComponent implements AfterViewInit {
       const mouseY = e.clientY;
       this.windowPanel.left = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().left, 10);
       this.windowPanel.top = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().top, 10);
-      this.mouseWindowLeft = mouseX - this.windowPanel.left;
+      this.mouseWindowLeft = mouseX - this.windowPanel.left + 300;
       this.mouseWindowTop = mouseY - this.windowPanel.top;
       WindowComponent.lastClickDiv = this;
       document.addEventListener('mousemove', this.startDragging);
@@ -71,8 +72,8 @@ export class WindowComponent implements AfterViewInit {
     //PanelExtend
     this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 300 + 'px';
     this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
-    this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
+    // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
+    // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
   }
 
   startDragging(e) {
@@ -91,7 +92,7 @@ export class WindowComponent implements AfterViewInit {
     // container.panelDiv.nativeElement.style.top = top + 'px';
 
       //PanelExtend
-      container.panelExtendDiv.nativeElement.style.left = left + 200 + 'px';
+      container.panelExtendDiv.nativeElement.style.left = left  + 'px';
       container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
     window.getSelection().removeAllRanges();
 

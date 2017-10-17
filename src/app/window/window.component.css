@@ -1,9 +1,10 @@
 .panel-extend{
   width:400px;
   height:200px;
-  /* top: 150px;
-  left: 100px; */
+  top: 150px;
+  left: 100px;
   position: absolute;
+  overflow:
 }
 
 .panel {

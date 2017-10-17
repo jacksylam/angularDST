@@ -8,10 +8,10 @@ import {animate, transition, state, trigger, style} from '@angular/core';
   animations: [
     trigger('movePanel', [
          state('active', style({
-        transform: 'translate(80px, 0px)',
+        transform: 'translate(75px, 0px)',
       })),
       state('inactive', style({
-        transform: 'translate(240px, 0px)',
+        transform: 'translate(250px, 0px)',
       })),
       transition('active => inactive', animate('500ms ease-in-out')),
       transition('inactive => active', animate('500ms ease-in-out'))
