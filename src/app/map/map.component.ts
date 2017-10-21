@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import {MapService} from '../map/shared/map.service';
 
 declare var L: any;
 
@@ -19,11 +20,12 @@ export class MapComponent implements OnInit {
   shpfileString: string;
   toggleShapeFile: boolean;
 
-  constructor() { }
+  constructor( private mapService: MapService) { }
 
   ngOnInit() {
     this.shpfileString = './assets/shpfile/dlnr_aquifers_poly';
     this.toggleShapeFile = true;
+
 
   }
 
@@ -43,7 +45,8 @@ export class MapComponent implements OnInit {
     this.mymap.on('click', this.onMapClick);
 
     console.log(this.mapid.nativeElement.style.width);
-
+    this.mapService.setMap(this);
+    
   }
 
   onMapClick(e) {
@@ -83,7 +86,7 @@ export class MapComponent implements OnInit {
       this.shpfileString = './assets/shpfile/dlnr_aquifers_poly';
     }
     if (!this.toggleShapeFile) {
-      this.shpfileString = './assets/shpfile/testGrid3';
+      this.shpfileString = './assets/shpfile/doh_aquifers';
 
     }
 

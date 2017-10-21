@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/core';
+import {MapService} from '../../map/shared/map.service';
 
 @Component({
   selector: 'app-sidebar-panel',
@@ -21,7 +22,7 @@ import {animate, transition, state, trigger, style} from '@angular/core';
 export class SidebarPanelComponent implements OnInit {
   state = 'inactive';
   
-  constructor() { }
+  constructor(private mapService: MapService) { }
 
   ngOnInit() {
   }
@@ -30,6 +31,10 @@ export class SidebarPanelComponent implements OnInit {
     this.state = (this.state == 'inactive' ? 'active' : 'inactive');
   }
 
-  
+  changeShapeFile(){
+    console.log(this.mapService);
+    this.mapService.toggleShape();
+    
+  }
 
 }

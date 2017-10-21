@@ -21,8 +21,8 @@ export class GraphsComponent implements OnInit {
   basicChart() {
   
     var values = [];
-    for(let i = 0; i < 20; i++){
-      values.push(10000 * Math.cos(Math.random()));
+    for(let i = 0; i < 21; i++){
+      values.push(100000000 * Math.cos(Math.random()));
     }
 
     const element = this.el.nativeElement
@@ -31,9 +31,20 @@ export class GraphsComponent implements OnInit {
       y: values
     }]
     const style = {
-      margin: { t: 0 },
+      margin: {  l: 65,
+        r: 50,
+        b: 65,
+        t: 90, },
       height: 300,
       width: 1000,
+      title: "Potential Rechage",
+      yaxis: {
+        title: 'Gallons',
+      },
+      xaxis:{
+        title: "Year",
+        autotick: false
+      }
     }
     Plotly.plot( element, data, style )
   }

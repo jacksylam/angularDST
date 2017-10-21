@@ -13,10 +13,11 @@ import 'hammerjs';
 import { MapComponent } from './map/map.component';
 import { WindowComponent } from './window/window.component';
 import { HomeComponent } from './home/home.component';
+import { GraphsComponent } from './graphs/graphs.component';
 
 //Service
 import { WindowService } from './window/shared/window.service';
-import { GraphsComponent } from './graphs/graphs.component';
+import {MapService} from './map/shared/map.service'
 
 //Agave imports
 // import { HttpModule } from '@angular/http'; // <-- import Angular HTTP module
@@ -41,7 +42,7 @@ import { GraphsComponent } from './graphs/graphs.component';
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
-  providers: [WindowService],
+  providers: [WindowService, MapService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
