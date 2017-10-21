@@ -30,7 +30,7 @@ import { GraphsComponent } from './graphs/graphs.component';
     MapComponent,
     HomeComponent,
     WindowComponent,
-    GraphsComponent,
+    
   ],
   imports: [
     // HttpModule,    

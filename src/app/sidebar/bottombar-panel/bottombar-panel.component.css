@@ -1,0 +1,67 @@
+.sidebar {
+    position: absolute;
+    top: 550px;
+    left: 300px;
+    z-index: -1000;
+    background-color: rgba(255, 255, 255, 0.9);
+    width: 1100px;
+    height: 300px;
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+  }
+  
+  .menuButton {
+    position: relative;
+    left: 500px;
+    /* transform: translate(0%, 50%); */
+    transform: rotate(90deg);
+    background-color: rgb(56, 117, 194);
+    color:white;
+    top: 59%;
+    width: 30px;
+    height: 100%;
+    border-radius: 3px 20px 20px 3px;
+    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+    text-align: center;
+    vertical-align: middle;
+    z-index: 2000;
+  }
+  .menuButton-text
+  {
+    font-style: bold;
+    transform: translate(-2px, 45px) rotate(270deg);
+  }
+  .menuButton:hover
+  {
+    cursor: pointer;
+  }
+  
+  .row {
+    margin: 0px !important;
+    position: relative;
+    top: -300px;
+  }
+  
+  .col-sm {
+    margin-bottom: 5px;
+  }
+  
+  .input-field {
+    width: 100%;
+  }
+  
+  .add-button {
+    width: 100%;
+    background-color: rgb(89, 158, 92);
+    color: white;
+    font-size: 16px;
+  }
+  .capcity-button {
+    width: 100%;
+    background-color: rgb(175, 75, 75);
+    color: white;
+    font-size: 16px;
+  }
+  
+

@@ -19,15 +19,21 @@ export class GraphsComponent implements OnInit {
   }
 
   basicChart() {
+  
+    var values = [];
+    for(let i = 0; i < 20; i++){
+      values.push(10000 * Math.cos(Math.random()));
+    }
+
     const element = this.el.nativeElement
     const data = [{
-      x: [1, 2, 3, 4, 5],
-      y: [1, 2, 4, 8, 16]
+      x: [2020,2021,2022,2023,2024,2025,2026,2027,2028,2029,2030,2031,2032,2033,2034,2035,2036,2037,2038,2039,2040],
+      y: values
     }]
     const style = {
       margin: { t: 0 },
-      height: 500,
-      width: 500
+      height: 300,
+      width: 1000,
     }
     Plotly.plot( element, data, style )
   }

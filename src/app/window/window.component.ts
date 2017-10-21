@@ -18,6 +18,7 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('child') childComponent;
   @ViewChild('glyphSize') glyphSize;
   @ViewChild('panelExtendDiv') panelExtendDiv;
+  @ViewChild('resizeButton') resizeButton;
 
   @Input() public title: string;
   @Input() public type: string;
@@ -41,7 +42,7 @@ export class WindowComponent implements AfterViewInit {
 
     this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
     this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 50 + 'px';
+    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 100 + 'px';
     this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     this.childComponent.resize(this.windowPanel.width, this.windowPanel.height);
@@ -62,7 +63,6 @@ export class WindowComponent implements AfterViewInit {
       document.addEventListener('mousemove', this.startDragging);
 
       this.bringWindowForward();
-
     })
 
     document.addEventListener('mouseup', () => { this.stopDragging(); });
@@ -71,9 +71,40 @@ export class WindowComponent implements AfterViewInit {
 
     //PanelExtend
     this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 300 + 'px';
-    this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height + 'px';
+    this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height  + 'px';
     // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
+
+    //ResizeButon
+    this.resizeButton.nativeElement.addEventListener('mousedown', (e) => {
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      WindowComponent.lastClickDiv = this;
+      
+      document.addEventListener('mousemove', this.startResizing);
+    }) 
+
+    document.addEventListener('mouseup', () => {this.stopResizing();});
+    
+  }
+
+  startResizing(e){
+    const container = WindowComponent.lastClickDiv;
+    let left = e.clientX;
+    let top = e.clientY;
+
+    console.log("Left: " + left + "top " + top);
+    console.log("Before " + container.panelExtendDiv.nativeElement.style.width );
+    container.panelExtendDiv.nativeElement.style.width = left + 'px';
+    console.log("After " + container.panelExtendDiv.nativeElement.style.width );
+
+    container.panelExtendDiv.nativeElement.style.height =  top + 'px';
+    
+
+  }
+
+  stopResizing(){
+    document.removeEventListener('mousemove', this.startResizing);
   }
 
   startDragging(e) {

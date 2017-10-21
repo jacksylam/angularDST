@@ -4,6 +4,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SidebarMenuComponent } from './sidebar-menu/sidebar-menu.component';
 import { MatSidenavModule } from '@angular/material';
 import { SidebarPanelComponent } from './sidebar-panel/sidebar-panel.component';
+import { BottombarPanelComponent } from './bottombar-panel/bottombar-panel.component';
+import {GraphsComponent} from '../graphs/graphs.component';
 
 @NgModule({
   imports: [
@@ -11,10 +13,14 @@ import { SidebarPanelComponent } from './sidebar-panel/sidebar-panel.component';
     MatSidenavModule,
     BrowserAnimationsModule
   ],
-  declarations: [SidebarMenuComponent, SidebarPanelComponent],
+  declarations: [SidebarMenuComponent, 
+    SidebarPanelComponent, 
+    BottombarPanelComponent,
+    GraphsComponent],
   exports: [
     SidebarMenuComponent,
-    SidebarPanelComponent
+    SidebarPanelComponent,
+    BottombarPanelComponent
   ]
 })
 export class SidebarModule { }

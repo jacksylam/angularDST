@@ -22,7 +22,7 @@ export class MapComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
-    this.shpfileString = './assets/shpfile/testGrid2';
+    this.shpfileString = './assets/shpfile/dlnr_aquifers_poly';
     this.toggleShapeFile = true;
 
   }
@@ -80,7 +80,7 @@ export class MapComponent implements OnInit {
     this.shpfile.remove();
     this.toggleShapeFile = !this.toggleShapeFile;
     if (this.toggleShapeFile) {
-      this.shpfileString = './assets/shpfile/testGrid2';
+      this.shpfileString = './assets/shpfile/dlnr_aquifers_poly';
     }
     if (!this.toggleShapeFile) {
       this.shpfileString = './assets/shpfile/testGrid3';
