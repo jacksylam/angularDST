@@ -3,11 +3,15 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+// import {HttpClientModule} from '@angular/common/http';
+
 
 //Modules
 import { NgxGraphsModule } from './ngx-graphs/ngx-graphs.module';
 import { SidebarModule } from './sidebar/sidebar.module';
 import 'hammerjs';
+import { PapaParseModule } from 'ngx-papaparse';
+
 
 //Components
 import { MapComponent } from './map/map.component';
@@ -20,7 +24,7 @@ import { WindowService } from './window/shared/window.service';
 import {MapService} from './map/shared/map.service'
 
 //Agave imports
-// import { HttpModule } from '@angular/http'; // <-- import Angular HTTP module
+import { HttpModule } from '@angular/http'; // <-- import Angular HTTP module
 // import { HttpClient } from 'ng-agave/ng-agave'; // <-- import API Client
 // import { Configuration } from 'ng-agave/ng-agave'; // <-- import API Config
 // import { APIHelper } from 'ng-agave/ng-agave'; // <-- import API Helper
@@ -34,11 +38,13 @@ import {MapService} from './map/shared/map.service'
     
   ],
   imports: [
-    // HttpModule,    
+    HttpModule,    
     BrowserModule,
     AppRoutingModule,
     NgxGraphsModule,
-    SidebarModule  
+    SidebarModule,
+    PapaParseModule,
+    // HttpClientModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],

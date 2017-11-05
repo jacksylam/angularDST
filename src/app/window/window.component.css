@@ -1,11 +1,12 @@
 .panel-extend{
   width:400px;
-  height:200px;
+  height:400px;
   top: 150px;
   left: 100px;
   position: absolute;
   overflow: hidden;
   pointer-events: none;
+  z-index: -1;
 }
 
 .panel {
@@ -66,9 +67,9 @@
 
 .btn-resize{
   position: absolute;
-  top: 97%;
+  top: 65%;
   left:98%;
-  z-index: 100;
+  z-index: 99999;
 }
 
 .graphs {

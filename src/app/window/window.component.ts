@@ -33,7 +33,13 @@ export class WindowComponent implements AfterViewInit {
   saveTop: number;
   saveLeft: number;
 
-  constructor(private windowService: WindowService, private _renderer: Renderer) { }
+  static lastMouseXPosition: number;
+  static lastMouseYPosition:number;
+
+  constructor(private windowService: WindowService, private _renderer: Renderer) {
+
+    
+   }
 
   ngAfterViewInit() {
 
@@ -71,7 +77,7 @@ export class WindowComponent implements AfterViewInit {
 
     //PanelExtend
     this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 300 + 'px';
-    this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height  + 'px';
+    this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height+ 350  + 'px';
     // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
@@ -80,6 +86,10 @@ export class WindowComponent implements AfterViewInit {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
       WindowComponent.lastClickDiv = this;
+
+      WindowComponent.lastMouseXPosition = e.clientX;
+      WindowComponent.lastMouseYPosition = e.clientY;
+      
       
       document.addEventListener('mousemove', this.startResizing);
     }) 
@@ -90,15 +100,25 @@ export class WindowComponent implements AfterViewInit {
 
   startResizing(e){
     const container = WindowComponent.lastClickDiv;
-    let left = e.clientX;
-    let top = e.clientY;
+    let mouseX = e.clientX;
+    let mouseY = e.clientY;
 
-    console.log("Left: " + left + "top " + top);
-    console.log("Before " + container.panelExtendDiv.nativeElement.style.width );
-    container.panelExtendDiv.nativeElement.style.width = left + 'px';
-    console.log("After " + container.panelExtendDiv.nativeElement.style.width );
+        // console.log(parseInt(container.panelExtendDiv.nativeElement.style.width));
+    
+    let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(container.panelExtendDiv.nativeElement.style.width);
+    let newHeight = (mouseY - WindowComponent.lastMouseYPosition ) + parseInt(container.panelExtendDiv.nativeElement.style.height);
+    
+    console.log(container.mouseWindowLeft);
 
-    container.panelExtendDiv.nativeElement.style.height =  top + 'px';
+    console.log("mousex = " + mouseX + " windowcomponent " + WindowComponent.lastMouseXPosition + " newwidth " + newWidth);
+
+    // container.panelExtendDiv.nativeElement.style.width = left + 'px';
+    // container.panelExtendDiv.nativeElement.style.height =  top + 'px';
+
+
+    
+    container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
+    container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
     
 
   }
@@ -188,11 +208,13 @@ export class WindowComponent implements AfterViewInit {
       this.windowPanel.width = this.panelDiv.nativeElement.getBoundingClientRect().width;
       this.windowPanel.height = this.panelDiv.nativeElement.getBoundingClientRect().height;
 
-      //PanelExtend
-      this.windowPanel.width = this.panelExtendDiv.nativeElement.getBoundingClientRect().width;
-      this.windowPanel.height = this.panelExtendDiv.nativeElement.getBoundingClientRect().height;
+
 
       this.childComponent.resize(this.windowPanel.width, this.windowPanel.height);
+
+            //PanelExtend
+            this.windowPanel.width = this.panelExtendDiv.nativeElement.getBoundingClientRect().width;
+            this.windowPanel.height = this.panelExtendDiv.nativeElement.getBoundingClientRect().height;
     }
   }
 

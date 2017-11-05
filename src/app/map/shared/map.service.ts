@@ -5,6 +5,10 @@ import {MapComponent} from '../map.component'
 
 @Injectable()
 export class MapService {
+  
+  mapHash = [];
+  panelButtonHash = [];
+
 
   mapEnabled: boolean;
   mapEnabledObs = new Subject<boolean>();
@@ -13,13 +17,17 @@ export class MapService {
 
   constructor() { }
 
-  setMap(newmap: any){
-    this.map = newmap;
-    console.log(this.map);
+  setMap(newMap: any){
+    this.mapHash.push(newMap);
   }
 
-  toggleShape(){
-    this.map.changeShapeFile();
+  setButtonPanel(buttonPanel: any){
+    this.panelButtonHash.push(buttonPanel);
+  }
+
+  toggleShape(buttonPanel: any){
+    let index = this.panelButtonHash.indexOf(buttonPanel);
+    this.mapHash[index].changeShapeFile();
   }
 
 

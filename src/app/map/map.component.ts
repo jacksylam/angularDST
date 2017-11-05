@@ -1,7 +1,11 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {MapService} from '../map/shared/map.service';
+import { PapaParseService } from 'ngx-papaparse';
+import {Http} from '@angular/http';
+import 'rxjs/add/operator/map'
 
 declare var L: any;
+
 
 @Component({
   selector: 'app-map',
@@ -20,10 +24,13 @@ export class MapComponent implements OnInit {
   shpfileString: string;
   toggleShapeFile: boolean;
 
-  constructor( private mapService: MapService) { }
+  csvLayer: any;
+  csvData: any;
+
+  constructor( private mapService: MapService, private papa: PapaParseService, private http: Http) { }
 
   ngOnInit() {
-    this.shpfileString = './assets/shpfile/dlnr_aquifers_poly';
+    this.shpfileString = './assets/shpfile/doh_aquifers';
     this.toggleShapeFile = true;
 
 
@@ -38,8 +45,9 @@ export class MapComponent implements OnInit {
     this.mymap.setZoom(10);
 
 
-    this.loadShapeFile();
+    // this.loadShapeFile();
 
+    this.loadCSVFile();
 
     this.popup = L.popup();
     this.mymap.on('click', this.onMapClick);
@@ -47,14 +55,13 @@ export class MapComponent implements OnInit {
     console.log(this.mapid.nativeElement.style.width);
     this.mapService.setMap(this);
     
+
+
   }
 
   onMapClick(e) {
 
     var popup = L.popup();
-
-    console.log(popup);
-    console.log(this);
 
     popup
       .setLatLng(e.latlng)
@@ -65,14 +72,11 @@ export class MapComponent implements OnInit {
 
   public resize(width: number, height: number) {
 
-    // this.scrollableMenu.nativeElement.style.maxHeight = height - 60 + 'px';
     
 
     this.mapid.nativeElement.style.height = height-60 + 'px';
-    // this.mapid.nativeElement.style.width = width - this.scrollableMenu.nativeElement.width + 'px';
     this.mapid.nativeElement.style.width = width;
 
-    // this.scrollableMenu.nativeElement.style.maxHeight = height - 60 + 'px';
 
 
     this.mymap.invalidateSize();
@@ -83,7 +87,7 @@ export class MapComponent implements OnInit {
     this.shpfile.remove();
     this.toggleShapeFile = !this.toggleShapeFile;
     if (this.toggleShapeFile) {
-      this.shpfileString = './assets/shpfile/dlnr_aquifers_poly';
+      this.shpfileString = './assets/shpfile/doh_aquifers';
     }
     if (!this.toggleShapeFile) {
       this.shpfileString = './assets/shpfile/doh_aquifers';
@@ -110,5 +114,29 @@ export class MapComponent implements OnInit {
     });
     this.shpfile.addTo(this.mymap);
 
+  }
+
+  private loadCSVFile(){
+
+    this.http.get('./assets/latlng1.csv' ).subscribe(data => {this.csvData = data;this.loadCsvToLayer()});
+    
+    // this.papa.parse(csvData,{
+    //     complete: (results, file) => {
+    //         console.log('Parsed: ', results, file);
+    //     }
+    // });
+  }
+
+  private loadCsvToLayer(){
+
+    this.papa.parse(this.csvData._body, {
+      complete: (results, file) => {
+       
+
+                for(let i = 1; i < results.data.length-1; i++){
+                  L.marker([results.data[i][0], results.data[i][1]]).bindPopup(results.data[i][2]).openPopup().addTo(this.mymap);
+                }
+            }
+    })
   }
 }

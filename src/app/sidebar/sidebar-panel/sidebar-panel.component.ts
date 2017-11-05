@@ -21,10 +21,12 @@ import {MapService} from '../../map/shared/map.service';
 })
 export class SidebarPanelComponent implements OnInit {
   state = 'inactive';
-  
+
+
   constructor(private mapService: MapService) { }
 
   ngOnInit() {
+
   }
 
   toggleMenu() {
@@ -32,9 +34,14 @@ export class SidebarPanelComponent implements OnInit {
   }
 
   changeShapeFile(){
-    console.log(this.mapService);
-    this.mapService.toggleShape();
+    this.mapService.toggleShape(this);
     
+  }
+
+
+
+  ngAfterViewInit(){
+    this.mapService.setButtonPanel(this);;
   }
 
 }
