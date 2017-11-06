@@ -2,7 +2,8 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {MapService} from '../map/shared/map.service';
 import { PapaParseService } from 'ngx-papaparse';
 import {Http} from '@angular/http';
-import 'rxjs/add/operator/map'
+import 'rxjs/add/operator/map';
+import {Grid} from './shared/grid';
 
 declare var L: any;
 
@@ -42,21 +43,22 @@ export class MapComponent implements OnInit {
     this.mymap = L.map(this.mapid.nativeElement).setView([21.50414, -157.96664], 103);
 
     var layer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
-    this.mymap.setZoom(10);
+    this.mymap.setZoom(16);
+
+    this.mymap.invalidateSize();
 
 
-    // this.loadShapeFile();
+    this.loadShapeFile();
 
-    this.loadCSVFile();
 
     this.popup = L.popup();
     this.mymap.on('click', this.onMapClick);
 
-    console.log(this.mapid.nativeElement.style.width);
+
     this.mapService.setMap(this);
     
 
-
+    this.loadMarkers();
   }
 
   onMapClick(e) {
@@ -116,27 +118,19 @@ export class MapComponent implements OnInit {
 
   }
 
-  private loadCSVFile(){
-
-    this.http.get('./assets/latlng1.csv' ).subscribe(data => {this.csvData = data;this.loadCsvToLayer()});
+  private loadMarkers(){
+    let temp = this.mymap.getBounds();
+    console.log(temp);
+    console.log(this.mymap.getZoom());
+    let markers: Grid[];
     
-    // this.papa.parse(csvData,{
-    //     complete: (results, file) => {
-    //         console.log('Parsed: ', results, file);
-    //     }
-    // });
-  }
-
-  private loadCsvToLayer(){
-
-    this.papa.parse(this.csvData._body, {
-      complete: (results, file) => {
-       
-
-                for(let i = 1; i < results.data.length-1; i++){
-                  L.marker([results.data[i][0], results.data[i][1]]).bindPopup(results.data[i][2]).openPopup().addTo(this.mymap);
-                }
-            }
-    })
+    // if(this.mymap.getZoom() >15){
+      //load the markers
+      // L.marker([results.data[i][0], results.data[i][1]]).bindPopup(results.data[i][2]).openPopup().addTo(this.mymap);
+       markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
+     
+      for(let i = 0; i < markers.length; i++){
+        L.marker([markers[i].lat, markers[i].lng]).addTo(this.mymap);
+      }
   }
 }

@@ -39,7 +39,6 @@ export class SidebarPanelComponent implements OnInit {
   }
 
 
-
   ngAfterViewInit(){
     this.mapService.setButtonPanel(this);;
   }
