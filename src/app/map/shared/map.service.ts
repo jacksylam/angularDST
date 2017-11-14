@@ -63,6 +63,10 @@ export class MapService {
     });
   }
 
+  //lat1 - lower latitude
+  //lng2 - upper latitude
+  //lng1 - right longitude
+  //lng2 - left longitude
   getMarkers(lat1: number, lng1: number, lat2: number, lng2: number){
     let markers = new Array();
     console.log("Map lat " + this.csvData[0].lat);
@@ -74,8 +78,8 @@ export class MapService {
     console.log("lng2 " + lng2);
 
     for(let i = 0; i < this.csvData.length; i++){
-      // if((this.csvData[i].lat > lat1) && (this.csvData[i].lat < lat2) && (this.csvData[i].lng > lng1) && (this.csvData[i].lng < lng2)){
-      if((this.csvData[i].lng > lng1) && (this.csvData[i].lng < lng2)){
+      if((this.csvData[i].lat > lat1) && (this.csvData[i].lat < lat2) && (this.csvData[i].lng > lng1) && (this.csvData[i].lng < lng2)){
+      // if((this.csvData[i].lng > lng1) && (this.csvData[i].lng < lng2)){
         markers.push(this.csvData[i]);
       }
     }

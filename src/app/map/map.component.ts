@@ -27,6 +27,8 @@ export class MapComponent implements OnInit {
 
   csvLayer: any;
   csvData: any;
+  markerLayer = new L.LayerGroup;
+  
 
   constructor( private mapService: MapService, private papa: PapaParseService, private http: Http) { }
 
@@ -40,28 +42,28 @@ export class MapComponent implements OnInit {
 
   ngAfterViewInit() {
 
-    this.mymap = L.map(this.mapid.nativeElement).setView([21.50414, -157.96664], 103);
+    this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664],20);
 
     var layer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
-    this.mymap.setZoom(16);
+    this.mymap.setZoom(20);
 
     this.mymap.invalidateSize();
 
 
-    this.loadShapeFile();
+    // this.loadShapeFile();
 
 
     this.popup = L.popup();
     this.mymap.on('click', this.onMapClick);
 
+    this.mymap.on('zoomend', this.loadMarkers.bind(this));
+    this.mymap.on('moveend', this.loadMarkers.bind(this));
 
     this.mapService.setMap(this);
-    
 
-    this.loadMarkers();
   }
 
-  onMapClick(e) {
+  private onMapClick(e) {
 
     var popup = L.popup();
 
@@ -75,10 +77,8 @@ export class MapComponent implements OnInit {
   public resize(width: number, height: number) {
 
     
-
     this.mapid.nativeElement.style.height = height-60 + 'px';
     this.mapid.nativeElement.style.width = width;
-
 
 
     this.mymap.invalidateSize();
@@ -118,19 +118,42 @@ export class MapComponent implements OnInit {
 
   }
 
+
+  //Loads the different grid points for land coverage onto leaflet map
   private loadMarkers(){
     let temp = this.mymap.getBounds();
     console.log(temp);
-    console.log(this.mymap.getZoom());
     let markers: Grid[];
+
+    this.markerLayer.clearLayers();
+
+    if(this.mymap.getZoom() > 15){
+      //load the markers from service
+      markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
+
+      for(let i = 0; i < markers.length ; i++){
+        //  L.marker([markers[i].lat, markers[i].lng]).addTo(this.mymap);
+        // L.marker([markers[i].lat, markers[i].lng]).addLayer(markerLayer);
+        this.markerLayer.addLayer(L.marker([markers[i].lat, markers[i].lng]));
+      }
+
+      this.markerLayer.addTo(this.mymap);
+    }
+
+    console.log(markers);
     
     // if(this.mymap.getZoom() >15){
       //load the markers
       // L.marker([results.data[i][0], results.data[i][1]]).bindPopup(results.data[i][2]).openPopup().addTo(this.mymap);
-       markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
+      //  markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
      
-      for(let i = 0; i < markers.length; i++){
-        L.marker([markers[i].lat, markers[i].lng]).addTo(this.mymap);
-      }
+      // for(let i = 0; i < markers.length; i++){
+      //   L.marker([markers[i].lat, markers[i].lng]).addTo(this.mymap);
+      //   // console.log("Marker array: " + markers[i].lat + " " + markers[i].lng);
+      // }
+
+
+      // console.log(temp);
+      // console.log(this.mymap.getZoom());
   }
 }
