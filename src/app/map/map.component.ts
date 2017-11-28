@@ -127,13 +127,11 @@ export class MapComponent implements OnInit {
 
     this.markerLayer.clearLayers();
 
-    if(this.mymap.getZoom() > 15){
+    if(this.mymap.getZoom() > 16){
       //load the markers from service
       markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
 
       for(let i = 0; i < markers.length ; i++){
-        //  L.marker([markers[i].lat, markers[i].lng]).addTo(this.mymap);
-        // L.marker([markers[i].lat, markers[i].lng]).addLayer(markerLayer);
         this.markerLayer.addLayer(L.marker([markers[i].lat, markers[i].lng]));
       }
 
@@ -142,18 +140,6 @@ export class MapComponent implements OnInit {
 
     console.log(markers);
     
-    // if(this.mymap.getZoom() >15){
-      //load the markers
-      // L.marker([results.data[i][0], results.data[i][1]]).bindPopup(results.data[i][2]).openPopup().addTo(this.mymap);
-      //  markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
-     
-      // for(let i = 0; i < markers.length; i++){
-      //   L.marker([markers[i].lat, markers[i].lng]).addTo(this.mymap);
-      //   // console.log("Marker array: " + markers[i].lat + " " + markers[i].lng);
-      // }
-
-
-      // console.log(temp);
-      // console.log(this.mymap.getZoom());
+  
   }
 }

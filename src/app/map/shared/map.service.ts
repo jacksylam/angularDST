@@ -3,6 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Http } from '@angular/http';
 import { PapaParseService } from 'ngx-papaparse';
+import {MapFirestoreService} from './map-firestore.service'
 
 
 import { MapComponent } from '../map.component'
@@ -23,13 +24,13 @@ export class MapService {
   tempData: any;
   csvData: Grid[];
 
-  constructor(private http: Http, private papa: PapaParseService) {
+  constructor(private http: Http, private firestore: MapFirestoreService, private papa: PapaParseService) {
 
    }
 
   init(){
     this.loadCSVFile();
-    
+   this.firestore.getList().subscribe(val => console.log(val));
   }
 
   setMap(newMap: any) {
