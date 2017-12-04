@@ -8,10 +8,9 @@ export class MapFirestoreService {
   items: Observable<any[]>;
 
   constructor(private db: AngularFirestore) {
-    this.items = db.collection('grid').doc('normal').collection('id').valueChanges();
-    
-    console.log(this.items);
-      }
+    // this.items = db.collection('grid').doc('normal').collection('id').valueChanges();
+   
+  }
 
 
       getList(){

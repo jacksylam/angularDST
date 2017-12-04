@@ -30,7 +30,7 @@ export class MapService {
 
   init(){
     this.loadCSVFile();
-   this.firestore.getList().subscribe(val => console.log(val));
+  //  this.firestore.getList().subscribe(val => console.log(val));
   }
 
   setMap(newMap: any) {

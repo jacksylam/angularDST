@@ -5,7 +5,11 @@ import {Http} from '@angular/http';
 import 'rxjs/add/operator/map';
 import {Grid} from './shared/grid';
 
+
+
 declare var L: any;
+declare var CovJSON: any;
+declare var C: any;
 
 
 @Component({
@@ -29,6 +33,8 @@ export class MapComponent implements OnInit {
   csvData: any;
   markerLayer = new L.LayerGroup;
   
+  layer: any;
+  layers: any;
 
   constructor( private mapService: MapService, private papa: PapaParseService, private http: Http) { }
 
@@ -44,7 +50,7 @@ export class MapComponent implements OnInit {
 
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664],20);
 
-    var layer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
+    var mapLayer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
     this.mymap.setZoom(20);
 
     this.mymap.invalidateSize();
@@ -56,21 +62,43 @@ export class MapComponent implements OnInit {
     this.popup = L.popup();
     this.mymap.on('click', this.onMapClick);
 
-    this.mymap.on('zoomend', this.loadMarkers.bind(this));
-    this.mymap.on('moveend', this.loadMarkers.bind(this));
+    // this.mymap.on('zoomend', this.loadMarkers.bind(this));
+    // this.mymap.on('moveend', this.loadMarkers.bind(this));
 
     this.mapService.setMap(this);
 
+    this.layers = L.control.layers(null, null, {collapsed: false}).addTo(this.mymap)
+    
+    this.loadcovJSON(this.mymap, this.layer, this.layers);
+    
+  }
+
+  private loadcovJSON(mymap, layer, layers){
+    
+    CovJSON.read('./assets/covjson/testfiles_sc0_1-fin.covjson').then(function(coverage) {
+      // work with Coverage object
+      layer = C.dataLayer(coverage, {parameter: 'recharge'})
+      .on('afterAdd', function () {
+        C.legend(layer).addTo(mymap)
+      })
+      .addTo(mymap)
+      layers.addOverlay(layer, 'Recharge');
+    })
   }
 
   private onMapClick(e) {
 
-    var popup = L.popup();
+    // var popup = L.popup();
 
-    popup
-      .setLatLng(e.latlng)
-      .setContent("You clicked the map at " + e.latlng.toString())
-      .openOn(this);
+    // popup
+    //   .setLatLng(e.latlng)
+    //   .setContent("You clicked the map at " + e.latlng.toString())
+    //   .openOn(this);
+
+      
+      new C.DraggableValuePopup({
+        layers: [this.layer]
+      }).setLatLng(e.latlng).openOn(this)
   }
 
 
