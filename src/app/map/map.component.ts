@@ -48,10 +48,11 @@ export class MapComponent implements OnInit {
 
   ngAfterViewInit() {
 
-    this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664],20);
+    this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664],15);
 
     var mapLayer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
-    this.mymap.setZoom(20);
+    // this.mymap.setZoom(20);
+    this.mymap.setZoom(15);
 
     this.mymap.invalidateSize();
 
@@ -69,22 +70,11 @@ export class MapComponent implements OnInit {
 
     this.layers = L.control.layers(null, null, {collapsed: false}).addTo(this.mymap)
     
-    this.loadcovJSON(this.mymap, this.layer, this.layers);
+    this.loadcovJSON("AlienForest", this.mymap, this.layer, this.layers);
     
   }
 
-  private loadcovJSON(mymap, layer, layers){
-    
-    CovJSON.read('./assets/covjson/testfiles_sc0_1-fin.covjson').then(function(coverage) {
-      // work with Coverage object
-      layer = C.dataLayer(coverage, {parameter: 'recharge'})
-      .on('afterAdd', function () {
-        C.legend(layer).addTo(mymap)
-      })
-      .addTo(mymap)
-      layers.addOverlay(layer, 'Recharge');
-    })
-  }
+
 
   private onMapClick(e) {
 
@@ -96,6 +86,7 @@ export class MapComponent implements OnInit {
     //   .openOn(this);
 
       
+    //for coverjson
       new C.DraggableValuePopup({
         layers: [this.layer]
       }).setLatLng(e.latlng).openOn(this)
@@ -169,5 +160,42 @@ export class MapComponent implements OnInit {
     console.log(markers);
     
   
+  }
+
+  private loadcovJSON(cover: string, mymap, layer, layers){
+
+    let coverFile = this.getCoverFile(cover);
+    
+    CovJSON.read('./assets/covjson/'+coverFile).then(function(coverage) {
+      // work with Coverage object
+      layer = C.dataLayer(coverage, {parameter: 'recharge'})
+      .on('afterAdd', function () {
+        C.legend(layer).addTo(mymap)
+      })
+      .addTo(mymap)
+      layers.addOverlay(layer, 'Recharge');
+    })
+  }
+
+  public changeCover(cover: string){
+ 
+    //how to remove cover layer?
+
+    this.loadcovJSON(cover, this.mymap, this.layer, this.layers);
+  }
+
+  private getCoverFile(cover: string){
+    if(cover === "AlienForest"){
+      return "testfiles_sc0_0-fin.covjson";
+    }
+    else if(cover === "AlienForestFog"){
+      return "testfiles_sc0_1-fin.covjson";
+    }
+    else if(cover === "Fallow"){
+      return "testfiles_sc0_2-fin.covjson";
+    }
+    else if (cover === "Grassland"){
+      return "testfiles_sc0_3-fin.covjson";
+    }
   }
 }

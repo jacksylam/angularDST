@@ -43,4 +43,19 @@ export class SidebarPanelComponent implements OnInit {
     this.mapService.setButtonPanel(this);;
   }
 
+  changeAlienForest(){
+    this.mapService.changeCover(this, "AlienForest");
+  }
+
+  changeAlienForestFog(){
+    this.mapService.changeCover(this, "AlienForestFog");
+  }
+
+  changeFallow(){
+    this.mapService.changeCover(this, "Fallow");
+  }
+
+  changeGrassland(){
+    this.mapService.changeCover(this, "Grassland");
+  }
 }

@@ -87,4 +87,11 @@ export class MapService {
     return markers;
   }
 
+
+  changeCover(buttonPanel: any, cover: string) {
+    let index = this.panelButtonHash.indexOf(buttonPanel);
+    this.mapHash[index].changeCover(cover);
+  }
+
+  
 }
