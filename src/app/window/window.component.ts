@@ -133,29 +133,7 @@ export class WindowComponent implements AfterViewInit {
     document.removeEventListener('mousemove', this.startResizing);
   }
 
-  resizeClick(event) {
-    this.resizeSelected = true;
-    this.resizeStartWidth = WindowComponent.lastClickDiv.panelExtendDiv.nativeElement.size.width;
-    this.resizeStartHeight = WindowComponent.lastClickDiv.panelExtendDiv.nativeElement.size.height;
-    this.resizeStartLeft = event.clientX;
-    this.resizeStartTop = event.clientY;
-    // this.bringForward();
-  }
 
-  resizeRelease(event) {
-    this.resizeSelected = false;
-  }
-
-  resizeMove(event) {
-    if (this.resizeSelected === true) {
-      this.havenWindow.size.width = this.resizeStartWidth + (event.clientX - this.resizeStartLeft);
-      this.havenWindow.size.height = this.resizeStartHeight + (event.clientY - this.resizeStartTop);
-      this.windowDiv.nativeElement.style.width = this.havenWindow.size.width + 'px';
-      this.windowDiv.nativeElement.style.height = this.havenWindow.size.height + 'px';
-      window.getSelection().removeAllRanges();
-      this.appRef.resize();
-    }
-  }
 
   startDragging(e) {
     const container = WindowComponent.lastClickDiv;

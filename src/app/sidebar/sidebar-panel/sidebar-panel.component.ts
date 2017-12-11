@@ -58,4 +58,16 @@ export class SidebarPanelComponent implements OnInit {
   changeGrassland(){
     this.mapService.changeCover(this, "Grassland");
   }
+
+  changeKiawae(){
+    this.mapService.changeCover(this, "Kiawae");
+  }
+
+  changeLowIntensity(){
+    this.mapService.changeCover(this, "LowIntensity");
+  }
+
+  changeNative(){
+    this.mapService.changeCover(this, "Native");
+  }
 }

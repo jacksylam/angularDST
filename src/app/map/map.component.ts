@@ -172,6 +172,7 @@ export class MapComponent implements OnInit {
       .on('afterAdd', function () {
         C.legend(layer).addTo(mymap)
       })
+      .setOpacity(0.8)
       .addTo(mymap)
       layers.addOverlay(layer, 'Recharge');
     })
@@ -197,5 +198,15 @@ export class MapComponent implements OnInit {
     else if (cover === "Grassland"){
       return "testfiles_sc0_3-fin.covjson";
     }
+    else if (cover === "Kiawae"){
+      return "testfiles_sc0_4-fin.covjson";
+    }
+    else if(cover === "LowIntensity"){
+      return "testfiles_sc0_5-fin.covjson";
+    }
+    else if(cover === "Native"){
+      return "testfiles_sc0_6fin.covjson"
+    }
+  
   }
 }
