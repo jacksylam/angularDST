@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Http } from '@angular/http';
-import { PapaParseService } from 'ngx-papaparse';
 import {MapFirestoreService} from './map-firestore.service'
 
 
@@ -24,12 +23,11 @@ export class MapService {
   tempData: any;
   csvData: Grid[];
 
-  constructor(private http: Http, private firestore: MapFirestoreService, private papa: PapaParseService) {
+  constructor(private http: Http, private firestore: MapFirestoreService) {
 
    }
 
   init(){
-    this.loadCSVFile();
   //  this.firestore.getList().subscribe(val => console.log(val));
   }
 
@@ -47,22 +45,6 @@ export class MapService {
   }
 
 
-  loadCSVFile() {
-    this.http.get('./assets/latlng.csv').subscribe(data =>  {
-      this.tempData = data;
-      this.csvData = new Array();
-
-      this.papa.parse(this.tempData._body, {
-        complete: (results, file) => {
-          for (let i = 1; i < results.data.length - 1; i++) {
-            var temp = new Grid(results.data[i][0], results.data[i][1], results.data[i][2]);
-            this.csvData.push(temp);
-          }
-        console.log("finish loading csv data");
-        }
-      });
-    });
-  }
 
   //lat1 - lower latitude
   //lng2 - upper latitude

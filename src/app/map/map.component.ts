@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {MapService} from '../map/shared/map.service';
-import { PapaParseService } from 'ngx-papaparse';
 import {Http} from '@angular/http';
 import 'rxjs/add/operator/map';
 import {Grid} from './shared/grid';
@@ -36,13 +35,13 @@ export class MapComponent implements OnInit {
   layer: any;
   layers: any;
 
-  constructor( private mapService: MapService, private papa: PapaParseService, private http: Http) { }
+  drawnItems: any;
+  drawControl: any;
+
+  constructor( private mapService: MapService, private http: Http) { }
 
   ngOnInit() {
-    this.shpfileString = './assets/shpfile/doh_aquifers';
-    this.toggleShapeFile = true;
-
-
+    
   }
 
 
@@ -57,12 +56,11 @@ export class MapComponent implements OnInit {
     this.mymap.invalidateSize();
 
 
-    // this.loadShapeFile();
 
+    this.loadDrawControls();
 
     this.popup = L.popup();
-    this.mymap.on('click', this.onMapClick);
-
+    // this.mymap.on('click', this.onMapClick);
     // this.mymap.on('zoomend', this.loadMarkers.bind(this));
     // this.mymap.on('moveend', this.loadMarkers.bind(this));
 
@@ -72,8 +70,25 @@ export class MapComponent implements OnInit {
     
     this.loadcovJSON("AlienForest", this.mymap, this.layer, this.layers);
     
+   
   }
 
+  private loadDrawControls(){
+    this.drawnItems = new L.FeatureGroup();
+    this.mymap.addLayer(this.drawnItems);
+    this.drawControl = new L.Control.Draw({
+        edit: {
+            featureGroup: this.drawnItems
+        }
+    });
+    this.mymap.addControl(this.drawControl);
+
+    this.mymap.on(L.Draw.Event.CREATED,  (event) => {
+      var layer = event.layer;
+
+      this.drawnItems.addLayer(layer);
+  });
+  }
 
 
   private onMapClick(e) {
@@ -101,40 +116,6 @@ export class MapComponent implements OnInit {
 
 
     this.mymap.invalidateSize();
-  }
-
-
-  public changeShapeFile() {
-    this.shpfile.remove();
-    this.toggleShapeFile = !this.toggleShapeFile;
-    if (this.toggleShapeFile) {
-      this.shpfileString = './assets/shpfile/doh_aquifers';
-    }
-    if (!this.toggleShapeFile) {
-      this.shpfileString = './assets/shpfile/doh_aquifers';
-
-    }
-
-    this.loadShapeFile();
-  }
-
-
-
-
-  private loadShapeFile() {
-    this.shpfile = new L.Shapefile(this.shpfileString, {
-      onEachFeature: function (feature, layer) {
-        if (feature.properties) {
-          layer.bindPopup(Object.keys(feature.properties).map(function (k) {
-            return k + ": " + feature.properties[k];
-          }).join("<br />"), {
-              maxHeight: 200
-            });
-        }
-      }
-    });
-    this.shpfile.addTo(this.mymap);
-
   }
 
 
@@ -181,7 +162,6 @@ export class MapComponent implements OnInit {
   public changeCover(cover: string){
  
     //how to remove cover layer?
-
     this.loadcovJSON(cover, this.mymap, this.layer, this.layers);
   }
 

@@ -7,10 +7,8 @@ import { AppComponent } from './app.component';
 
 
 //Modules
-import { NgxGraphsModule } from './ngx-graphs/ngx-graphs.module';
 import { SidebarModule } from './sidebar/sidebar.module';
 import 'hammerjs';
-import { PapaParseModule } from 'ngx-papaparse';
 
 
 //Components
@@ -48,9 +46,7 @@ import { HttpModule } from '@angular/http'; // <-- import Angular HTTP module
     HttpModule,    
     BrowserModule,
     AppRoutingModule,
-    NgxGraphsModule,
     SidebarModule,
-    PapaParseModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFirestoreModule, // imports firebase/firestore, only needed for database features
     AngularFireAuthModule, // imports firebase/auth, only needed for auth features   
