@@ -1,0 +1,40 @@
+#mapid {
+     height: 300px;
+}
+
+.topcorner{
+    position:absolute;
+    top:40px;
+    left: 10px;
+ }
+
+
+ .btn-responsive {
+    white-space: normal !important;
+    word-wrap: break-word;
+}
+
+.scrollable-menu {
+    height: auto;
+    /* max-height: 1000px; */
+    overflow-x: hidden;
+}
+
+
+.btn-green{
+    background-color: #009933
+}
+
+.btn-blue{
+    background-color: #0099cc
+}
+
+.btn-orange{
+    background-color: #ff9900
+}
+
+.btn-label{
+    pointer-events: none;   
+    text-decoration: underline;
+    font-weight: bold
+}

@@ -1,0 +1,78 @@
+.panel-extend{
+  width:400px;
+  height:400px;
+  top: 150px;
+  left: 100px;
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.panel {
+  width: 100%;
+  height: 100%;
+  /* top: 150px; */
+  /* left: 100px;  */
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.resizable {
+  overflow: hidden;
+  resize: both
+}
+
+.panel-default>.panel-heading-custom {
+  background-color: rgba(108, 138, 164, 0.88);
+  color: #fff;
+  height: 30px;
+  padding: 5px;
+}
+
+.panel-default>.panel-heading-custom:hover {
+  cursor: pointer;
+}
+
+
+.navbarButton {
+  height: 20px; 
+  width: 20px;
+  float: right;
+  margin-left: 3px;
+  border-radius: 10%;
+  border-color: transparent;
+}
+
+.glyphicon {
+  font-size: 12px;
+  transform: translate(-30%, -25%);
+}
+
+.glyphicon-remove {
+  color: #F37E7E;
+}
+
+.glyphicon-plus {
+  color: rgba(97, 97, 97, 0.85);
+}
+
+.glyphicon-minus {
+  color: rgba(97, 97, 97, 0.35);
+}
+
+.allowPointerEvents{
+  pointer-events: all;
+}
+
+.btn-resize{
+  position: absolute;
+  top: 65%;
+  left:98%;
+  z-index: 99999;
+}
+
+.graphs {
+  top: 2000px;
+  width: 400px;
+}
