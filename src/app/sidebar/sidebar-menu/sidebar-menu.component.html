@@ -1,0 +1,20 @@
+<div id="content" [@movePanel]='state' class="container sidebar">
+
+  <div (click)="toggleMenu()" class="menuButton">
+    <div class="menuButton-text">Menu</div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm">
+      <div class="btn-group-vertical" role="group">
+        <button type="button" class="btn btn-default" (click)="createNewMap()">New Map</button>
+        <button type="button" class="btn btn-default"> Upload ShapeFile</button>
+        <button type="button" class="btn btn-default"> Download ShapeFile</button>
+        <button type="button" class="btn btn-default"> Save </button>
+
+      </div>
+    </div>
+  </div>
+
+
+</div>
