@@ -118,9 +118,6 @@ export class MapComponent implements OnInit {
           this.setStyle(highlight);
           this.highlighted = true;
           __this.highlightedItems.addLayer(this);
-          //test dbconnect
-          //console.log(this.drawnItems.toGeoJSON());
-          __this.DBService.spatialSearch(__this.highlightedItems);
         }
         else {
           this.setStyle(MapComponent.baseStyle);
@@ -191,6 +188,18 @@ export class MapComponent implements OnInit {
 
   private loadcovJSON(cover: string, mymap, layers){
     var __this = this;
+
+    var numItems = this.highlightedItems.getLayers().length;
+
+    if(numItems != 0) {
+      //deal with errors too
+      var data = this.DBService.spatialSearch(this.highlightedItems, numItems);
+      //use file(s) generated as cover
+      this.DBService.generateCover(cover, data);
+    }
+
+    //figure out what base cover is going to be, coming from db?
+
     let coverFile = this.getCoverFile(cover);
     CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
       //remove old layer from map and control
@@ -204,7 +213,7 @@ export class MapComponent implements OnInit {
       .on('afterAdd', function () {
         C.legend(layer).addTo(mymap);
       })
-      .setOpacity(0.8)
+      .setOpacity(0.6)
       .addTo(mymap);
       layers.addOverlay(layer, 'Recharge');
       __this.currentCover = layer;
@@ -215,10 +224,9 @@ export class MapComponent implements OnInit {
 
 
   public changeCover(cover: string){
- 
-    //how to remove cover layer?
     this.loadcovJSON(cover, this.mymap, this.layers);
   }
+
 
   private getCoverFile(cover: string){
     if(cover === "AlienForest"){
