@@ -22,6 +22,7 @@ import { WindowService } from './window/shared/window.service';
 import {MapService} from './map/shared/map.service'
 import {MapFirestoreService} from './map/shared/map-firestore.service'
 import { DBConnectService } from './map/shared/dbconnect.service';
+import { CovDetailsService } from './map/shared/cov-details.service';
 
 //firebase
 import { AngularFireModule } from 'angularfire2';
@@ -58,7 +59,7 @@ import { HttpClientModule } from '@angular/common/http';
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
-  providers: [WindowService, MapService, MapFirestoreService, DBConnectService],
+  providers: [WindowService, MapService, MapFirestoreService, DBConnectService, CovDetailsService],
   bootstrap: [AppComponent]
 })
 

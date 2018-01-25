@@ -26,7 +26,7 @@ export class SidebarPanelComponent implements OnInit {
   constructor(private mapService: MapService) { }
 
   ngOnInit() {
-
+    this.mapService.setButtonPanel(this);
   }
 
   toggleMenu() {
@@ -40,7 +40,15 @@ export class SidebarPanelComponent implements OnInit {
 
 
   ngAfterViewInit(){
-    this.mapService.setButtonPanel(this);;
+    
+  }
+
+  changeScenario0() {
+    this.mapService.changeScenario(this, "recharge_scenario0");
+  }
+
+  changeScenario1() {
+    this.mapService.changeScenario(this, "recharge_scenario1");
   }
 
   changeAlienForest(){

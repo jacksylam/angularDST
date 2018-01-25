@@ -37,7 +37,7 @@ export class GraphsComponent implements OnInit {
         t: 90, },
       height: 300,
       width: 1000,
-      title: "Potential Rechage",
+      title: "Potential Recharge",
       yaxis: {
         title: 'Gallons',
       },
