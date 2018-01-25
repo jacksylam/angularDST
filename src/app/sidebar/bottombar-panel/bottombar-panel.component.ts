@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/core';
+import { CovDetailsService } from 'app/map/shared/cov-details.service';
+import {MapService} from '../../map/shared/map.service';
 
 @Component({
   selector: 'app-bottombar-panel',
@@ -20,10 +22,38 @@ import {animate, transition, state, trigger, style} from '@angular/core';
 })
 export class BottombarPanelComponent implements OnInit {
   state = 'inactive';
-  
-  constructor() { }
+  covDetails;
+  totalRecharge = "";
+  baseLandcover = "";
+  scenario = "";
+
+  constructor(private mapService: MapService,) { }
 
   ngOnInit() {
+    this.mapService.setDetailsPanel(this);
+    // this.covDetails.rechargeUpdate.subscribe(() => {
+    //   this.totalRecharge = this.covDetails.totalRecharge;
+    // })
+    // this.covDetails.baseLandcoverUpdate.subscribe(() => {
+    //   this.baseLandcover = this.covDetails.baseLandcover;
+    // })
+    // this.covDetails.scenarioUpdate.subscribe(() => {
+    //   this.scenario = scenarios[this.covDetails.scenario];
+    // })
+  }
+
+  ngAfterViewInit() {
+    
+  }
+
+  updateDetails(totalRecharge, scenario, baseLandcover) {
+    var scenarios = {
+      "recharge_scenario0" : "Average",
+      "recharge_scenario1" : "Drought"
+    }
+    if(totalRecharge != null) this.totalRecharge = totalRecharge;
+    if(baseLandcover != null) this.baseLandcover = baseLandcover;
+    if(scenario != null) this.scenario = scenarios[scenario];
   }
 
   toggleMenu() {

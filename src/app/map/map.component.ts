@@ -3,8 +3,12 @@ import {MapService} from '../map/shared/map.service';
 import {Http} from '@angular/http';
 import 'rxjs/add/operator/map';
 import {Grid} from './shared/grid';
+import {Cover} from './shared/cover';
 import {DBConnectService} from './shared/dbconnect.service';
 import { isNullOrUndefined } from 'util';
+import 'rxjs/add/observable/forkJoin';
+import { Observable } from 'rxjs';
+import { CovDetailsService } from 'app/map/shared/cov-details.service';
 
 
 
@@ -16,7 +20,7 @@ declare var C: any;
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
-  styleUrls: ['./map.component.css']
+  styleUrls: ['./map.component.css'],
 })
 export class MapComponent implements OnInit {
 
@@ -42,10 +46,14 @@ export class MapComponent implements OnInit {
   drawControl: any;
 
   currentCover: any;
+  currentCovLayer: any;
+  currentScenario: string;
 
   static baseStyle: any;
 
-  constructor( private DBService: DBConnectService, private mapService: MapService, private http: Http) { }
+  constructor( private DBService: DBConnectService, private mapService: MapService, private http: Http) {
+
+   }
 
   ngOnInit() {
     
@@ -76,13 +84,14 @@ export class MapComponent implements OnInit {
     this.layers = L.control.layers(null, null, {collapsed: false}).addTo(this.mymap)
     
     this.loadcovJSON("AlienForest", this.mymap, this.layers);
+    this.changeScenario("recharge_scenario0");
     
    
   }
 
   private loadDrawControls(){
     this.drawnItems = new L.featureGroup();
-    this.highlightedItems = new L.geoJSON();
+    this.highlightedItems = new L.featureGroup();
     this.mymap.addLayer(this.drawnItems);
     this.drawControl = new L.Control.Draw({
         edit: {
@@ -126,7 +135,6 @@ export class MapComponent implements OnInit {
         }
       })
 
-      
     });
   }
 
@@ -193,38 +201,73 @@ export class MapComponent implements OnInit {
 
     if(numItems != 0) {
       //deal with errors too
-      var data = this.DBService.spatialSearch(this.highlightedItems, numItems);
-      //use file(s) generated as cover
-      this.DBService.generateCover(cover, data);
+
+      Observable.forkJoin(this.highlightedItems.toGeoJSON().features.map(element => {
+        return this.DBService.spatialSearch(element.geometry)
+      }))
+      .subscribe((data) => {
+        //console.log(typeof data);
+        //use file(s) generated as cover
+        this.updateCover(cover, data, mymap, layers);
+      });
+      
+    }
+    else {
+      this.mapService.updateDetails(this, null, null, cover);
+      let coverFile = this.getCoverFile(cover);
+      CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
+        __this.updateRecharge(coverage, mymap, layers, __this)
+      });
     }
 
     //figure out what base cover is going to be, coming from db?
-
-    let coverFile = this.getCoverFile(cover);
-    CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
-      //remove old layer from map and control
-      if(__this.currentCover != undefined) {
-        mymap.removeControl(__this.currentCover);
-        layers.removeLayer(__this.currentCover);
-      }
-
-      // work with Coverage object
-      var layer = C.dataLayer(coverage, {parameter: 'recharge'})
-      .on('afterAdd', function () {
-        C.legend(layer).addTo(mymap);
-      })
-      .setOpacity(0.6)
-      .addTo(mymap);
-      layers.addOverlay(layer, 'Recharge');
-      __this.currentCover = layer;
-    })
-    
   }
 
+
+  private updateCover(type: string, update, mymap, layers) {
+    var coverBase = this.currentCover._covjson.ranges.recharge.values
+    update.forEach(area => {
+      area.forEach(record => {
+        var recordBase = record.value;
+        var x = recordBase.x;
+        var y = recordBase.y;
+        var index = y*732 + x;
+        //change to reflect selected scenario and enumerate types if not already implemented
+        coverBase[index] = recordBase[this.currentScenario][0];
+      });
+    });
+    this.updateRecharge(this.currentCover, mymap, layers)
+  }
+
+  private updateRecharge(coverage, mymap, layers, __this = this) {
+    //remove old layer from map and control
+    __this.currentCover = coverage;
+    var rechargeVals = coverage._covjson.ranges.recharge.values
+    if(__this.currentCovLayer != undefined) {
+      mymap.removeControl(__this.currentCovLayer);
+      layers.removeLayer(__this.currentCovLayer);
+    }
+
+    // work with Coverage object
+    var layer = C.dataLayer(coverage, {parameter: 'recharge'})
+    .on('afterAdd', function () {
+      C.legend(layer).addTo(mymap);
+    })
+    .setOpacity(0.6)
+    .addTo(mymap);
+    layers.addOverlay(layer, 'Recharge');
+    __this.currentCovLayer = layer;
+    __this.mapService.updateRechargeSum(__this, rechargeVals);
+  }
 
 
   public changeCover(cover: string){
     this.loadcovJSON(cover, this.mymap, this.layers);
+  }
+
+  public changeScenario(type: string) {
+    this.currentScenario = type;
+    this.mapService.updateDetails(this, null, type, null);
   }
 
 

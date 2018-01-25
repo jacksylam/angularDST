@@ -13,6 +13,7 @@ export class MapService {
 
   mapHash = [];
   panelButtonHash = [];
+  detailPanelHash = [];
 
 
   mapEnabled: boolean;
@@ -37,6 +38,10 @@ export class MapService {
 
   setButtonPanel(buttonPanel: any) {
     this.panelButtonHash.push(buttonPanel);
+  }
+
+  setDetailsPanel(detailPanel: any) {
+    this.detailPanelHash.push(detailPanel);
   }
 
   toggleShape(buttonPanel: any) {
@@ -75,5 +80,22 @@ export class MapService {
     this.mapHash[index].changeCover(cover);
   }
 
+  changeScenario(buttonPanel: any, scenario: string) {
+    let index = this.panelButtonHash.indexOf(buttonPanel);
+    this.mapHash[index].changeScenario(scenario);
+  }
+
+  updateDetails(map: any, totalRecharge: number, scenario: string, baseLandcover: string) {
+    let index = this.mapHash.indexOf(map);
+    this.detailPanelHash[index].updateDetails(totalRecharge, scenario, baseLandcover);
+  }
+
+  updateRechargeSum(map: any, rechargeArr) {
+    var totalRecharge = 0;
+    rechargeArr.forEach(element => {
+      totalRecharge += element;
+    });
+    this.updateDetails(map, totalRecharge, null, null);
+  }
   
 }
