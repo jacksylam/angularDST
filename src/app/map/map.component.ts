@@ -9,6 +9,7 @@ import { isNullOrUndefined } from 'util';
 import 'rxjs/add/observable/forkJoin';
 import { Observable } from 'rxjs';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
+import { COVER_ENUM } from './shared/cover_enum';
 
 
 
@@ -45,7 +46,10 @@ export class MapComponent implements OnInit {
   highlightedItems: any;
   drawControl: any;
 
-  currentCover: any;
+  coverBase: any
+  //currentCover[0] stores coverBase with holes, additional items store hole data
+  currentCover: any[];
+  coverColors: string[];
   currentCovLayer: any;
   currentScenario: string;
 
@@ -212,52 +216,89 @@ export class MapComponent implements OnInit {
       });
       
     }
-    else {
+    //do nothing if nothing selected (base landcover wont change)
+    else if(this.coverBase == undefined) {
       this.mapService.updateDetails(this, null, null, cover);
       let coverFile = this.getCoverFile(cover);
       CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
-        __this.updateRecharge(coverage, mymap, layers, __this)
+        __this.coverBase = coverage;
+        __this.currentCover = [coverage];
+        __this.coverColors = [COVER_ENUM[cover]];
+        __this.updateRecharge(mymap, layers, __this)
       });
     }
 
     //figure out what base cover is going to be, coming from db?
   }
 
-
+  //horrendously innefficient, will be fixed when actual cover methods put in place
   private updateCover(type: string, update, mymap, layers) {
-    var coverBase = this.currentCover._covjson.ranges.recharge.values
-    update.forEach(area => {
-      area.forEach(record => {
-        var recordBase = record.value;
-        var x = recordBase.x;
-        var y = recordBase.y;
-        var index = y*732 + x;
-        //change to reflect selected scenario and enumerate types if not already implemented
-        coverBase[index] = recordBase[this.currentScenario][0];
+    var coverBase = this.currentCover[0]._covjson.ranges.recharge.values
+    var __this = this;
+    CovJSON.read('./assets/covjson/' + "testfiles_sc0_0-fin.covjson").then(function(newCov) {
+      update.forEach(area => {
+      
+        // var newCov = JSON.parse(JSON.stringify(this.currentCover[0]));
+        var newCovBase = newCov._covjson.ranges.recharge.values;
+        // //stringify/parse does not copy over these values, since theyre functions
+        // console.log(this.currentCover[0]);
+        // newCov._covjson.domain.axes = new Map(this.currentCover[0]._covjson.domain.axes);
+        // newCov.parameters = new Map(this.currentCover[0].parameters);
+        // newCov._domainPromise.__zone_symbol__value.axes = new Map(this.currentCover[0]._domainPromise.__zone_symbol__value.axes);
+        // console.log(newCov);
+        //just the holes for shape, so rest null
+        for(var i = 0; i < newCovBase.length; i++) {
+          newCovBase[i] = null;
+        }
+        area.forEach(record => {
+          var recordBase = record.value;
+          var x = recordBase.x;
+          var y = recordBase.y;
+          var index = y*920 + x;
+          //cut hole in base cover and fill hole in new cover
+          coverBase[index] = null;
+          //change to reflect enumerated type
+          newCovBase[index] = recordBase[__this.currentScenario][0];
+        });
+        __this.coverColors.push(COVER_ENUM[type]);
+        __this.currentCover.push(newCov);
       });
+      __this.updateRecharge(mymap, layers)
     });
-    this.updateRecharge(this.currentCover, mymap, layers)
   }
 
-  private updateRecharge(coverage, mymap, layers, __this = this) {
-    //remove old layer from map and control
-    __this.currentCover = coverage;
-    var rechargeVals = coverage._covjson.ranges.recharge.values
+  private updateRecharge(mymap, layers, __this = this) {
     if(__this.currentCovLayer != undefined) {
       mymap.removeControl(__this.currentCovLayer);
-      layers.removeLayer(__this.currentCovLayer);
+      //layers.removeLayer(__this.currentCovLayer);
     }
+    for(var i = 0; i < __this.currentCover.length; i++) {
+      var coverage = __this.currentCover[i];
+      var color = __this.coverColors[i];
+      //remove old layer from map and control
+      //__this.currentCover = coverages;
+      var rechargeVals = coverage._covjson.ranges.recharge.values;
+      //var xaxis = coverage._covjson.domain.axes.x.values;
+      //var yaxis = coverage._covjson.domain.axes.y.values;
 
-    // work with Coverage object
-    var layer = C.dataLayer(coverage, {parameter: 'recharge'})
-    .on('afterAdd', function () {
-      C.legend(layer).addTo(mymap);
-    })
-    .setOpacity(0.6)
-    .addTo(mymap);
-    layers.addOverlay(layer, 'Recharge');
-    __this.currentCovLayer = layer;
-    __this.mapService.updateRechargeSum(__this, rechargeVals);
+      // var test = [];
+      // for(var i = 0; i < 100000; i++) {
+      //   test.push(null);
+      // }
+
+      // rechargeVals.splice(100000, 100000, ...test);
+      //console.log(coverage);
+      // work with Coverage object
+      var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.linearPalette(["#FFFFFF", color])})
+      .on('afterAdd', function () {
+        C.legend(layer).addTo(mymap);
+      })
+      .setOpacity(0.8)
+      .addTo(mymap);
+      layers.addOverlay(layer, 'Recharge');
+      __this.currentCovLayer = layer;
+      __this.mapService.updateRechargeSum(__this, rechargeVals);
+    }
   }
 
 
