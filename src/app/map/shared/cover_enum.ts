@@ -33,13 +33,13 @@ Object.freeze({
     // "Sugarcane - Drop Irrigation": 29,
     // "Sugarcane - Furrow Irrigation": 30
 
-    "AlienForest": "#000000",
-    "AlienForestFog": "#FF1111",
-    "Fallow": "#22FF22",
-    "Grassland": "#3333FF",
-    "Kiawe": "#4FF444",
-    "LowIntensity": "#555FF5",
-    "Native": "#66AA66"
+    "AlienForest": ["#ffffff", "#000000", "#000000"],
+    "AlienForestFog": ["#ff0000", "#5b0101", "#5b0101"],
+    "Fallow": ["#0000ff", "#000660", "#000660"],
+    "Grassland": ["#00ff00", "#075e00", "#075e00"],
+    "Kiawe": ["#ff00e9", "#600058", "#600058"],
+    "LowIntensity": ["#ffe500", "#00466d", "#00466d"],
+    "Native": ["#5b0101", "#595000", "#595000"]
 });
 
 

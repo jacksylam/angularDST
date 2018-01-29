@@ -50,8 +50,9 @@ export class MapComponent implements OnInit {
   //currentCover[0] stores coverBase with holes, additional items store hole data
   currentCover: any[];
   coverColors: string[];
-  currentCovLayer: any;
+  currentCovLayer: any[];
   currentScenario: string;
+  legend: any;
 
   static baseStyle: any;
 
@@ -269,8 +270,13 @@ export class MapComponent implements OnInit {
 
   private updateRecharge(mymap, layers, __this = this) {
     if(__this.currentCovLayer != undefined) {
-      mymap.removeControl(__this.currentCovLayer);
-      //layers.removeLayer(__this.currentCovLayer);
+      __this.currentCovLayer.forEach(layer => {
+        mymap.removeControl(layer);
+        layers.removeLayer(layer);
+      })
+    }
+    else {
+      __this.currentCovLayer = [];
     }
     for(var i = 0; i < __this.currentCover.length; i++) {
       var coverage = __this.currentCover[i];
@@ -289,14 +295,17 @@ export class MapComponent implements OnInit {
       // rechargeVals.splice(100000, 100000, ...test);
       //console.log(coverage);
       // work with Coverage object
-      var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.linearPalette(["#FFFFFF", color])})
+      var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.linearPalette(color), paletteExtent: [0, 600]})
       .on('afterAdd', function () {
-        C.legend(layer).addTo(mymap);
+        if(__this.legend == undefined) {
+          __this.legend = C.legend(layer);
+        }
+        __this.legend.addTo(mymap);
       })
-      .setOpacity(0.8)
+      .setOpacity(0.75)
       .addTo(mymap);
       layers.addOverlay(layer, 'Recharge');
-      __this.currentCovLayer = layer;
+      __this.currentCovLayer.push(layer);
       __this.mapService.updateRechargeSum(__this, rechargeVals);
     }
   }
