@@ -64,4 +64,38 @@
     font-size: 16px;
   }
   
+  .text {
+    margin-left: 50px;
+    color: dodgerblue;
+  }
 
+  .colorDisplay {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+    margin-right: 10px;
+    border: 1px solid #000000;
+  }
+
+  .alienForest {
+    background: #000000;
+  }
+  .alienForestFog {
+    background: #ff0000;
+  }
+  .fallow {
+    background: #0000ff;
+  }
+  .grassland {
+    background: #00ff00;
+  }
+  .kiawe {
+    background: #ff00e9;
+  }
+  .lowIntensity {
+    background: #ffe500;
+  }
+  .native {
+    background: #5b0101;
+  }

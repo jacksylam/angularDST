@@ -8,9 +8,21 @@
 
     <div class="row">
             <!-- <app-graphs> </app-graphs> -->
-            <h1>Base Landcover: {{baseLandcover}}</h1>
-            <h1>Scenario: {{scenario}}</h1>
-            <h1>Total Recharge: {{totalRecharge}}</h1>
+            <div>
+                <h3 class="text">Legend:</h3><br>
+                <div style="margin-left: 50px">
+                Alien Forest: <div class="colorDisplay alienForest"></div>
+                Alien Forest in Fog Zone: <div class="colorDisplay alienForestFog"></div>
+                Fallow/Grassland: <div class="colorDisplay fallow"></div>
+                Grassland: <div class="colorDisplay grassland"></div>
+                <br>
+                Kiawe/Phreatophytes: <div class="colorDisplay kiawe"></div>
+                Low-Intensity Developed: <div class="colorDisplay lowIntensity"></div>
+                Native Forest: <div class="colorDisplay native"></div>
+                </div>
+            </div>
+            <h3 class="text">Scenario: {{scenario}}</h3>
+            <h3 class="text">Total Recharge: {{totalRecharge}} Mgal/day</h3>
     </div>
 
 </div>

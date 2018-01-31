@@ -49,6 +49,7 @@ export class MapComponent implements OnInit {
   coverBase: any
   //currentCover[0] stores coverBase with holes, additional items store hole data
   currentCover: any[];
+  coverItems: any[];
   coverColors: string[];
   currentCovLayer: any[];
   currentScenario: string;
@@ -104,6 +105,11 @@ export class MapComponent implements OnInit {
         }
     });
     this.mymap.addControl(this.drawControl);
+
+    this.mymap.on(L.Draw.Event.DELETED,  (event) => {
+      //reset when drawn items removed
+      this.highlightedItems = new L.featureGroup();
+    });
 
     this.mymap.on(L.Draw.Event.CREATED,  (event) => {
       var layer = event.layer;
@@ -207,6 +213,29 @@ export class MapComponent implements OnInit {
     if(numItems != 0) {
       //deal with errors too
 
+      //remove from 3 mapped arrays, will then be readded to end
+      //set drawn items that correspond to area to avoid covering over if reused
+      if(this.coverItems == undefined) {
+        this.coverItems = [null]
+        //duplicate items
+        this.highlightedItems.eachLayer(item => {
+          this.coverItems.push(item._leaflet_id);
+        });
+      }
+      else {
+        this.highlightedItems.eachLayer(item => {
+          var curIndex = this.coverItems.indexOf(item._leaflet_id);
+          //remove items to be appended at end if exist
+          if(curIndex != -1) {
+            this.coverItems.splice(curIndex, 1)
+            this.coverColors.splice(curIndex, 1)
+            this.currentCover.splice(curIndex, 1)
+          }
+          this.coverItems.push(item._leaflet_id);
+        });
+      }
+      
+
       Observable.forkJoin(this.highlightedItems.toGeoJSON().features.map(element => {
         return this.DBService.spatialSearch(element.geometry)
       }))
@@ -224,8 +253,11 @@ export class MapComponent implements OnInit {
       CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
         __this.coverBase = coverage;
         __this.currentCover = [coverage];
-        __this.coverColors = [COVER_ENUM[cover]];
-        __this.updateRecharge(mymap, layers, __this)
+        __this.coverColors = [COVER_ENUM[cover].palette];
+        var rechargeVals = coverage._covjson.ranges.recharge.values;
+        var rechargeSum = __this.mapService.getRechargeSum(rechargeVals);
+        __this.mapService.updateDetails(__this, rechargeSum, null, null);
+        __this.updateRecharge(mymap, layers, __this);
       });
     }
 
@@ -236,9 +268,9 @@ export class MapComponent implements OnInit {
   private updateCover(type: string, update, mymap, layers) {
     var coverBase = this.currentCover[0]._covjson.ranges.recharge.values
     var __this = this;
-    CovJSON.read('./assets/covjson/' + "testfiles_sc0_0-fin.covjson").then(function(newCov) {
-      update.forEach(area => {
-      
+    var last = 0;
+    update.forEach(area => {
+      CovJSON.read('./assets/covjson/' + "testfiles_sc0_0-fin.covjson").then(function(newCov) {
         // var newCov = JSON.parse(JSON.stringify(this.currentCover[0]));
         var newCovBase = newCov._covjson.ranges.recharge.values;
         // //stringify/parse does not copy over these values, since theyre functions
@@ -259,14 +291,17 @@ export class MapComponent implements OnInit {
           //cut hole in base cover and fill hole in new cover
           coverBase[index] = null;
           //change to reflect enumerated type
-          newCovBase[index] = recordBase[__this.currentScenario][0];
+          newCovBase[index] = recordBase[__this.currentScenario][COVER_ENUM[type].number];
         });
-        __this.coverColors.push(COVER_ENUM[type]);
+        __this.coverColors.push(COVER_ENUM[type].palette);
         __this.currentCover.push(newCov);
+        if(++last == update.length) {
+          __this.updateRecharge(mymap, layers);
+        }
       });
-      __this.updateRecharge(mymap, layers)
     });
   }
+
 
   private updateRecharge(mymap, layers, __this = this) {
     if(__this.currentCovLayer != undefined) {
@@ -275,9 +310,8 @@ export class MapComponent implements OnInit {
         layers.removeLayer(layer);
       })
     }
-    else {
-      __this.currentCovLayer = [];
-    }
+    __this.currentCovLayer = [];
+    var rechargeSum = 0;
     for(var i = 0; i < __this.currentCover.length; i++) {
       var coverage = __this.currentCover[i];
       var color = __this.coverColors[i];
@@ -304,10 +338,18 @@ export class MapComponent implements OnInit {
       })
       .setOpacity(0.75)
       .addTo(mymap);
-      layers.addOverlay(layer, 'Recharge');
+      var layerControlName;
+      if(i == 0) {
+        layerControlName = "Base";
+      }
+      else {
+        layerControlName = "User Defined " + i.toString();
+      }
+      layers.addOverlay(layer, "Recharge: " + layerControlName);
       __this.currentCovLayer.push(layer);
-      __this.mapService.updateRechargeSum(__this, rechargeVals);
+      rechargeSum += __this.mapService.getRechargeSum(rechargeVals);
     }
+    __this.mapService.updateDetails(__this, rechargeSum, null, null);
   }
 
 
