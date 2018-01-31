@@ -39,28 +39,28 @@ Object.freeze({
     },
     "AlienForestFog": {
         number: 4,
-        palette: ["#ff0000", "#5b0101", "#5b0101"]
+        palette: ["#fb6a4a", "#67000d", "#67000d"]
     },
     //? what does this correspond to ? might be one of the removed ones ?
     "Fallow": {
         number: 11,
-        palette: ["#0000ff", "#000660", "#000660"]
+        palette: ["#6baed6", "#08306b", "#08306b"]
     },
     "Grassland": {
         number: 7,
-        palette: ["#00ff00", "#075e00", "#075e00"]
+        palette: ["#66c2a4", "#00441b", "#00441b"]
     },
     "Kiawe": {
         number: 5,
-        palette: ["#ff00e9", "#600058", "#600058"]
+        palette: ["#fd8d3c", "#7f2704", "#7f2704"]
     },
     "LowIntensity": {
         number: 8,
-        palette: ["#ffe500", "#00466d", "#00466d"]
+        palette: ["#9e9ac8", "#3f007d", "#3f007d"]
     },
     "Native": {
         number: 1,
-        palette: ["#5b0101", "#595000", "#595000"]
+        palette: ["#faff7c", "#aeb500", "#aeb500"]
     }
 });
 
