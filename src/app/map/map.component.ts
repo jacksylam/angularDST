@@ -88,7 +88,7 @@ export class MapComponent implements OnInit {
 
     this.layers = L.control.layers(null, null, {collapsed: false}).addTo(this.mymap)
     
-    this.loadcovJSON("AlienForest", this.mymap, this.layers);
+    this.loadcovJSON("covers", this.mymap, this.layers);
     this.changeScenario("recharge_scenario0");
     
    
@@ -295,7 +295,7 @@ export class MapComponent implements OnInit {
       // rechargeVals.splice(100000, 100000, ...test);
       //console.log(coverage);
       // work with Coverage object
-      var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.linearPalette(color), paletteExtent: [0, 600]})
+      var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.directPalette(this.colorPalette())})
       .on('afterAdd', function () {
         if(__this.legend == undefined) {
           __this.legend = C.legend(layer);
@@ -304,6 +304,11 @@ export class MapComponent implements OnInit {
       })
       .setOpacity(0.75)
       .addTo(mymap);
+      console.log(coverage);
+      layer.on('mouseover', () => {
+        console.log("test");
+        layer.openPopup();
+      });
       layers.addOverlay(layer, 'Recharge');
       __this.currentCovLayer.push(layer);
       __this.mapService.updateRechargeSum(__this, rechargeVals);
@@ -341,8 +346,50 @@ export class MapComponent implements OnInit {
       return "testfiles_sc0_5-fin.covjson";
     }
     else if(cover === "Native"){
-      return "testfiles_sc0_6fin.covjson"
+      return "testfiles_sc0_6fin.covjson";
     }
-  
+    else if(cover === "covers") {
+      return "landcover.covjson";
+    }
+  }
+
+
+  private colorPalette(): string[] {
+    var palette = []
+    var range = 255;
+    var color;
+    var r;
+    var g;
+    var b;
+    for(var i = 0; i < 3; i++) {
+      for(var j = 0; j < 3; j++) {
+        for(var k = 0; k < 3; k++) {
+          r = (Math.round(range / 2 * i)).toString(16);
+          g = (Math.round(range / 2 * j)).toString(16);
+          b = (Math.round(range / 2 * k)).toString(16);
+          if(r.length < 2) r = "0" + r;
+          if(g.length < 2) g = "0" + g;
+          if(b.length < 2) b = "0" + b;
+          color = "#" + r + g + b;
+          palette.push(color);
+          console.log(color);
+        }
+      }
+    }
+    // var range = 16777215;
+    
+    // for(var i = 0; i < 30; i++) {
+    //   color = Math.round((range / 29) * i);
+    //   var hex = color.toString(16)
+    //   while(hex.length < 6) {
+    //     hex = "0" + hex;
+    //   }
+    //   hex = "#" + hex;
+    //   //console.log(hex);
+    //   palette.push(hex);
+      
+    // }
+    console.log(palette.length)
+    return palette;
   }
 }
