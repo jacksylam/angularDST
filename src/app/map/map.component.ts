@@ -10,7 +10,7 @@ import 'rxjs/add/observable/forkJoin';
 import { Observable } from 'rxjs';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
 import { COVER_ENUM } from './shared/cover_enum';
-
+import * as proj4x from 'proj4';
 
 
 declare var L: any;
@@ -54,7 +54,20 @@ export class MapComponent implements OnInit {
   currentScenario: string;
   legend: any;
 
+  upperLeftLatLng: any;
+  lowerRightLatLng: any;
+  gridWidthCells: number;
+  gridHeightCells: number;
+  gridWidthLong: number;
+  gridHeightLat: number;
+
+  popupTimer: any;
+
   static baseStyle: any;
+
+  static readonly utm = "+proj=utm +zone=4 +datum=NAD83 +units=m";
+  static readonly longlat = "+proj=longlat";
+  static readonly proj4 = (proj4x as any).default;
 
   constructor( private DBService: DBConnectService, private mapService: MapService, private http: Http) {
 
@@ -67,14 +80,19 @@ export class MapComponent implements OnInit {
 
   ngAfterViewInit() {
 
-    this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664],15);
+
+    // var test = MapComponent.proj4(MapComponent.utm, MapComponent.latlng, [573037.5 - 37.5, 2404862.5 + 37.5]);
+    // this.gridWidth = 920;
+    // this.gridHeight = 732;
+    
+
+    this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
 
     var mapLayer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
     // this.mymap.setZoom(20);
     this.mymap.setZoom(15);
 
     this.mymap.invalidateSize();
-
 
 
     this.loadDrawControls();
@@ -90,6 +108,79 @@ export class MapComponent implements OnInit {
     
     this.loadcovJSON("covers", this.mymap, this.layers);
     this.changeScenario("recharge_scenario0");
+    
+    this.mymap.on('mouseover', () => {
+      this.mymap.on('mousemove', (e) => {
+        clearTimeout(this.popupTimer);
+        this.popupTimer = setTimeout(() => {
+          //quadrants differ in directional change, should be upper left, but generalize by finding minimum of each
+          //x grid corresponds to long
+          //console.log(this.gridWidthCells);
+          //this is off because grid cells offish because earth is round
+          //instead need to convert coordinates to utm then find corresponding grid cell
+          // var cellx = Math.floor((e.latlng.lng - Math.min(this.upperLeftLatLng[1], this.lowerRightLatLng[1])) / this.gridWidthLong * this.gridWidthCells);
+          // // y lat
+          // var celly = Math.floor(this.gridHeightLat / this.gridHeightCells * (e.latlng.lat - Math.min(this.upperLeftLatLng[0], this.lowerRightLatLng[0])));
+          // //test cell calc
+          // console.log("(" + cellx + "," + celly + ")")
+
+          //coords for conversion in long lat format
+          var convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
+          //console.log(convertedMousePoint);
+          //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
+          //coord arrays converted to maps when layer generated
+          var xs = this.currentCover[0]._covjson.domain.axes.get("x").values;
+          var ys = this.currentCover[0]._covjson.domain.axes.get("y").values;
+          
+          //remember to change data name for this part (not recharge)
+          //also need to remove all array stuff, since can be handled in single layer now
+          var data = this.currentCover[0]._covjson.ranges.recharge.values;
+          //console.log(data);
+          //find which value's the minimum, assumes oredered values
+          //subtract 37.5 since centroid of 75m cell
+          var xmin = Math.min(xs[0], xs[xs.length - 1]) - 37.5;
+          var ymin = Math.min(ys[0], ys[ys.length - 1]) - 37.5;
+          //get range + 75 to account for cell width
+          var xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
+          var yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75
+          //get difference from min to mouse position
+          var diffx = convertedMousePoint[0] - xmin;
+          var diffy = convertedMousePoint[1] - ymin;
+          //do nothing if out of range of grid
+          if(diffx >= 0 && diffy >= 0 && diffx <= xrange && diffy <= yrange) {
+
+            //round down to nearest 75
+            diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
+            diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
+
+            //add back 37.5 and rounded difference value to get cell coordinate
+            var xCellVal = xmin + 37.5 + diffx;
+            var yCellVal = ymin + 37.5 + diffy;
+
+            //find index of cell with coordinates
+            var xIndex = xs.indexOf(xCellVal);
+            var yIndex = ys.indexOf(yCellVal);
+
+            //convert to data cell index
+            var index = this.getIndex(xIndex, yIndex);
+
+            //popup cell value
+            L.popup()
+            .setLatLng(e.latlng)
+            .setContent(data[index].toString())
+            .openOn(this.mymap);
+          }
+
+        }, 1000);
+      });
+      
+    });
+
+    this.mymap.on('mouseout', () => {
+      this.mymap.off('mousemove');
+      clearTimeout(this.popupTimer);
+      this.mymap.closePopup();
+    });
     
    
   }
@@ -118,6 +209,7 @@ export class MapComponent implements OnInit {
         //clone base options
         MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
       }
+
       layer.on('click', function() {
         //alert(this._leaflet_id);
         var highlight = {
@@ -222,17 +314,33 @@ export class MapComponent implements OnInit {
       this.mapService.updateDetails(this, null, null, cover);
       let coverFile = this.getCoverFile(cover);
       CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
+        console.log(coverage._covjson.domain.axes);
+        var xutm = coverage._covjson.domain.axes.x.values;
+        var yutm = coverage._covjson.domain.axes.y.values;
+        var convertUpperLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[0] - 37.5, yutm[0] + 37.5]);
+        var convertLowerRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[xutm.length - 1] + 37.5, yutm[yutm.length - 1] - 37.5]);
+        //coordinate standards are dumb and inconsistent, need to swap
+        __this.upperLeftLatLng = [convertUpperLeft[1], convertUpperLeft[0]];
+        __this.lowerRightLatLng = [convertLowerRight[1], convertLowerRight[0]];
+        //test conversion
+        //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
+        __this.gridWidthCells = xutm.length;
+        __this.gridHeightCells = yutm.length;
+        //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
+        __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
+        __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
         __this.coverBase = coverage;
         __this.currentCover = [coverage];
+        console.log(__this.currentCover[0]._covjson.domain.axes);
         __this.coverColors = [COVER_ENUM[cover]];
         __this.updateRecharge(mymap, layers, __this)
       });
     }
-
-    //figure out what base cover is going to be, coming from db?
   }
 
   //horrendously innefficient, will be fixed when actual cover methods put in place
+
+  //no longer need all the hole cutting stuff remove and clean up
   private updateCover(type: string, update, mymap, layers) {
     var coverBase = this.currentCover[0]._covjson.ranges.recharge.values
     var __this = this;
@@ -255,7 +363,7 @@ export class MapComponent implements OnInit {
           var recordBase = record.value;
           var x = recordBase.x;
           var y = recordBase.y;
-          var index = y*920 + x;
+          var index = __this.getIndex(x, y);
           //cut hole in base cover and fill hole in new cover
           coverBase[index] = null;
           //change to reflect enumerated type
@@ -302,13 +410,8 @@ export class MapComponent implements OnInit {
         }
         __this.legend.addTo(mymap);
       })
-      .setOpacity(0.75)
+      .setOpacity(1)
       .addTo(mymap);
-      console.log(coverage);
-      layer.on('mouseover', () => {
-        console.log("test");
-        layer.openPopup();
-      });
       layers.addOverlay(layer, 'Recharge');
       __this.currentCovLayer.push(layer);
       __this.mapService.updateRechargeSum(__this, rechargeVals);
@@ -354,6 +457,17 @@ export class MapComponent implements OnInit {
   }
 
 
+  private agitate(vals: number[]) {
+    for(var i = 0; i <30; i++) {
+      var s1 = Math.round(Math.random() * 30);
+      var s2 = Math.round(Math.random() * 30);
+      var temp = vals[s1];
+      vals[s1] = vals[s2];
+      vals[s2] = temp;
+    }
+    return vals;
+  }
+
   private colorPalette(): string[] {
     var palette = []
     var range = 255;
@@ -363,7 +477,10 @@ export class MapComponent implements OnInit {
     var b;
     for(var i = 0; i < 3; i++) {
       for(var j = 0; j < 3; j++) {
-        for(var k = 0; k < 3; k++) {
+        for(var k = 0; k < 4; k++) {
+          if(palette.length >= 30) {
+            break;
+          }
           r = (Math.round(range / 2 * i)).toString(16);
           g = (Math.round(range / 2 * j)).toString(16);
           b = (Math.round(range / 2 * k)).toString(16);
@@ -372,7 +489,6 @@ export class MapComponent implements OnInit {
           if(b.length < 2) b = "0" + b;
           color = "#" + r + g + b;
           palette.push(color);
-          console.log(color);
         }
       }
     }
@@ -390,6 +506,13 @@ export class MapComponent implements OnInit {
       
     // }
     console.log(palette.length)
+    palette = this.agitate(palette);
     return palette;
   }
+
+  private getIndex(x: number, y: number, __this = this): number {
+    return y * __this.gridWidthCells + x;
+  }
 }
+
+
