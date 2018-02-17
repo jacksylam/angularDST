@@ -9,13 +9,19 @@ import { isNullOrUndefined } from 'util';
 import 'rxjs/add/observable/forkJoin';
 import { Observable } from 'rxjs';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
-import { COVER_ENUM } from './shared/cover_enum';
+import { COVER_ENUM, COVER_INDEX_DETAILS } from './shared/cover_enum';
 import * as proj4x from 'proj4';
+import * as shp from 'shpjs';
+import * as shpwrite from 'shp-write';
+import { FileUploader } from 'ng2-file-upload';
+import { FeatureGroup } from 'leaflet';
+
 
 
 declare var L: any;
 declare var CovJSON: any;
 declare var C: any;
+declare var require: any;
 
 
 @Component({
@@ -69,6 +75,27 @@ export class MapComponent implements OnInit {
   static readonly longlat = "+proj=longlat";
   static readonly proj4 = (proj4x as any).default;
 
+
+  //readonly URL = 'https://evening-anchorage-3159.herokuapp.com/api/';
+  //upload things
+  uploader:FileUploader = new FileUploader({url:''});
+  hasBaseDropZoneOver:boolean = false;
+  hasAnotherDropZoneOver:boolean = false;
+
+
+  //upload drag events
+  public fileOverBase(e:any):void {
+    this.hasBaseDropZoneOver = e;
+    this.uploader.queue.forEach(item => {
+      item.upload();
+    });
+  }
+ 
+  public fileOverAnother(e:any):void {
+    this.hasAnotherDropZoneOver = e;
+  }
+
+
   constructor( private DBService: DBConnectService, private mapService: MapService, private http: Http) {
 
    }
@@ -79,18 +106,13 @@ export class MapComponent implements OnInit {
 
 
   ngAfterViewInit() {
-
-
-    // var test = MapComponent.proj4(MapComponent.utm, MapComponent.latlng, [573037.5 - 37.5, 2404862.5 + 37.5]);
-    // this.gridWidth = 920;
-    // this.gridHeight = 732;
     
 
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
 
     var mapLayer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
     // this.mymap.setZoom(20);
-    this.mymap.setZoom(15);
+    this.mymap.setZoom(14);
 
     this.mymap.invalidateSize();
 
@@ -167,7 +189,7 @@ export class MapComponent implements OnInit {
             //popup cell value
             L.popup()
             .setLatLng(e.latlng)
-            .setContent(data[index].toString())
+            .setContent(COVER_INDEX_DETAILS[data[index]].type)
             .openOn(this.mymap);
           }
 
@@ -182,8 +204,68 @@ export class MapComponent implements OnInit {
       this.mymap.closePopup();
     });
     
+
+    shp('../assets/dlnr_aquifers.zip').then((geojson) => {
+      var aquifers = L.geoJSON();
+      geojson[1].features.forEach(aquifer => {
+        aquifers.addData(aquifer);
+        //console.log(aquifer);
+      })
+      aquifers.setStyle({
+        weight: 5,
+        opacity: 1,
+        color: 'black',
+        fillOpacity: 0
+      });
+      aquifers.addTo(this.mymap);
+    });
    
+    //this.downloadShapefile();
   }
+
+  downloadShapefile(shapes: any) {
+
+    //testing
+    //success :)
+    var options = {
+      folder: 'myshapes',
+      types: {
+          point: 'mypoints',
+          polygon: 'mypolygons',
+          line: 'mylines'
+      }
+    }
+    // a GeoJSON bridge for features
+    shpwrite.download({
+        type: 'FeatureCollection',
+        features: shapes.toGeoJSON().features
+    }, options);
+  }
+
+
+  //swap to be added to drawn items list (and add in any other controls that might be necessary)
+  //wait until file loading added so can test
+  loadShapefile(fname: string, __this = this) {
+    var shapes = L.geoJSON();
+    shp(fname).then((geojson) => {
+      //formatted as array if multiple shapefiles in zip
+      if(Array.isArray(geojson)) {
+        geojson.forEach(shpfile => {
+          shpfile.forEach(shape => {
+            shapes.addData(shape);
+          });
+        });
+      }
+      else {
+        geojson.forEach(shape => {
+          shapes.addData(shape);
+        });
+      }
+      shapes.addTo(__this.mymap);
+    });
+  }
+  
+
 
   private loadDrawControls(){
     this.drawnItems = new L.featureGroup();
@@ -199,7 +281,27 @@ export class MapComponent implements OnInit {
     this.mymap.on(L.Draw.Event.CREATED,  (event) => {
       var layer = event.layer;
 
+      var highlight = {
+        fillColor: 'black',
+        weight: 5,
+        opacity: 1,
+        color: 'black',  //Outline color
+        fillOpacity: 0.2
+      };
+      var unhighlight = {
+        weight: 5,
+        opacity: 0.5,
+        color: 'black',  //Outline color
+        fillOpacity: 0
+      }
+      //this.downloadShapefile(this.drawnItems)
+
       var __this = this;
+
+      layer.setStyle(highlight);
+      layer.highlighted = true;
+      this.highlightedItems.addLayer(layer);
+
       this.drawnItems.addLayer(layer);
       //this.loadcovJSON("Kiawe", this.mymap, this.layers);
       //alert(layer.getLatLngs());
@@ -212,23 +314,17 @@ export class MapComponent implements OnInit {
 
       layer.on('click', function() {
         //alert(this._leaflet_id);
-        var highlight = {
-          fillColor: 'blue',
-          weight: 5,
-          opacity: 1,
-          color: 'blue',  //Outline color
-          fillOpacity: 0.2
-        };
         
-        if(this.highlighted == undefined || !this.highlighted) {
+        
+        if(this.highlighted) {
+          this.setStyle(unhighlight);
+          this.highlighted = false;
+          __this.highlightedItems.removeLayer(this);
+        }
+        else {
           this.setStyle(highlight);
           this.highlighted = true;
           __this.highlightedItems.addLayer(this);
-        }
-        else {
-          this.setStyle(MapComponent.baseStyle);
-          this.highlighted = false;
-          __this.highlightedItems.removeLayer(this);
         }
       })
 
@@ -404,12 +500,12 @@ export class MapComponent implements OnInit {
       //console.log(coverage);
       // work with Coverage object
       var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.directPalette(this.colorPalette())})
-      .on('afterAdd', function () {
-        if(__this.legend == undefined) {
-          __this.legend = C.legend(layer);
-        }
-        __this.legend.addTo(mymap);
-      })
+      // .on('afterAdd', function () {
+      //   if(__this.legend == undefined) {
+      //     __this.legend = C.legend(layer);
+      //   }
+      //   __this.legend.addTo(mymap);
+      // })
       .setOpacity(1)
       .addTo(mymap);
       layers.addOverlay(layer, 'Recharge');
@@ -468,6 +564,7 @@ export class MapComponent implements OnInit {
     return vals;
   }
 
+  //generate 31 colors
   private colorPalette(): string[] {
     var palette = []
     var range = 255;
@@ -475,20 +572,27 @@ export class MapComponent implements OnInit {
     var r;
     var g;
     var b;
-    for(var i = 0; i < 3; i++) {
+    var first = true;
+    for(var i = 0; i < 4; i++) {
       for(var j = 0; j < 3; j++) {
-        for(var k = 0; k < 4; k++) {
-          if(palette.length >= 30) {
+        for(var k = 0; k < 3; k++) {
+          if(palette.length >= 31) {
             break;
           }
-          r = (Math.round(range / 2 * i)).toString(16);
-          g = (Math.round(range / 2 * j)).toString(16);
-          b = (Math.round(range / 2 * k)).toString(16);
-          if(r.length < 2) r = "0" + r;
-          if(g.length < 2) g = "0" + g;
-          if(b.length < 2) b = "0" + b;
-          color = "#" + r + g + b;
-          palette.push(color);
+          //avoid black so lines stand out more (have 5 extra colors)
+          if(!first) {
+            r = (Math.round(range / 2 * i)).toString(16);
+            g = (Math.round(range / 2 * j)).toString(16);
+            b = (Math.round(range / 2 * k)).toString(16);
+            if(r.length < 2) r = "0" + r;
+            if(g.length < 2) g = "0" + g;
+            if(b.length < 2) b = "0" + b;
+            color = "#" + r + g + b;
+            palette.push(color);
+          }
+          else {
+            first = false;
+          }
         }
       }
     }
@@ -505,8 +609,12 @@ export class MapComponent implements OnInit {
     //   palette.push(hex);
       
     // }
-    console.log(palette.length)
-    palette = this.agitate(palette);
+    for(i = 0; i < 31; i++) {
+      COVER_INDEX_DETAILS[i].color = palette[i];
+      document.documentElement.style.setProperty("--color" + i.toString(), palette[i]);
+    }
+    
+    //palette = this.agitate(palette);
     return palette;
   }
 

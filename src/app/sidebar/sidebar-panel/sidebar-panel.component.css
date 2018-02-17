@@ -1,3 +1,10 @@
+.colorDisplay {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #000000;
+}
+
 .sidebar {
     position: absolute;
     top: 200px;
@@ -36,6 +43,11 @@
     cursor: pointer;
   }
   
+  .buttonWColor {
+    width: 181px;
+    display: inline-block;
+  }
+
   .row {
     margin: 0px !important;
     position: relative;
@@ -90,4 +102,98 @@
     pointer-events: none;   
     text-decoration: underline;
     font-weight: bold
+}
+
+.c0{
+  background: var(--color0);
+}
+.c1{
+  background: var(--color1);
+}
+.c2{
+  background: var(--color2);
+}
+.c3{
+  background: var(--color3);
+}
+.c4{
+  background: var(--color4);
+}
+.c5{
+  background: var(--color5);
+}
+.c6{
+  background: var(--color6);
+}
+.c7{
+  background: var(--color7);
+}
+.c8{
+  background: var(--color8);
+}
+.c9{
+  background: var(--color9);
+}
+.c10{
+  background: var(--color10);
+}
+.c11{
+  background: var(--color11);
+}
+.c12{
+  background: var(--color12);
+}
+.c13{
+  background: var(--color13);
+}
+.c14{
+  background: var(--color14);
+}
+.c15{
+  background: var(--color15);
+}
+.c16{
+  background: var(--color16);
+}
+.c17{
+  background: var(--color17);
+}
+.c18{
+  background: var(--color18);
+}
+.c19{
+  background: var(--color19);
+}
+.c20{
+  background: var(--color20);
+}
+.c21{
+  background: var(--color21);
+}
+.c22{
+  background: var(--color22);
+}
+.c23{
+  background: var(--color23);
+}
+.c24{
+  background: var(--color24);
+}
+.c25{
+  background: var(--color25);
+}
+.c26{
+  background: var(--color26);
+}
+.c27{
+  background: var(--color27);
+}
+.c28{
+  background: var(--color28);
+}
+.c29{
+  background: var(--color29);
+}
+.c30{
+  background: var(--color30);
 }

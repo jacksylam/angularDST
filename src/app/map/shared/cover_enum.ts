@@ -30,7 +30,7 @@ Object.freeze({
     // "Golf Course": 26,
     // "Macadamia": 27,
     // "Pineapple": 28,
-    // "Sugarcane - Drop Irrigation": 29,
+    // "Sugarcane - Drip Irrigation": 29,
     // "Sugarcane - Furrow Irrigation": 30
 
     "AlienForest": ["#ffffff", "#000000", "#000000"],
@@ -44,8 +44,7 @@ Object.freeze({
 
 
 //Need irrigated/non-irrigated separation?
-export const COVER_INDEX_DETAILS = 
-Object.freeze({
+export var COVER_INDEX_DETAILS = {
     0: {
         "type": "Background",
         "color": "red"
@@ -115,11 +114,11 @@ Object.freeze({
         "color": "red"
     },
     17: {
-        "type": "NA",
+        "type": "Sugarcane (furrow)",
         "color": "red"
     },
     18: {
-        "type": "NA",
+        "type": "Sugarcane (drip)",
         "color": "red"
     },
     19: {
@@ -170,4 +169,4 @@ Object.freeze({
         "type": "Near-Coastal or Estuarine Water Body",
         "color": "red"
     }
-})
+}
