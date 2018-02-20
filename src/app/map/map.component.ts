@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, EventEmitter } from '@angular/core';
 import {MapService} from '../map/shared/map.service';
 import {Http} from '@angular/http';
 import 'rxjs/add/operator/map';
@@ -13,8 +13,7 @@ import { COVER_ENUM, COVER_INDEX_DETAILS } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
 import * as shpwrite from 'shp-write';
-import { FileUploader } from 'ng2-file-upload';
-import { FeatureGroup } from 'leaflet';
+import { UploadOutput, UploadInput, UploadFile, humanizeBytes, UploaderOptions } from 'ngx-uploader';
 
 
 
@@ -52,52 +51,154 @@ export class MapComponent implements OnInit {
   highlightedItems: any;
   drawControl: any;
 
-  coverBase: any
-  //currentCover[0] stores coverBase with holes, additional items store hole data
-  currentCover: any[];
-  coverColors: string[];
-  currentCovLayer: any[];
+  // landCover: any;
+  // landCoverLayer: any;
+  // recharge: any;
+  // rechargeLayer: any;
+  // aquiferLayer: any;
+
   currentScenario: string;
   legend: any;
 
-  upperLeftLatLng: any;
-  lowerRightLatLng: any;
+  // upperLeftLatLng: any;
+  // lowerRightLatLng: any;
+  
+  // gridHeightCells: number;
+  // gridWidthLong: number;
+  // gridHeightLat: number;
   gridWidthCells: number;
-  gridHeightCells: number;
-  gridWidthLong: number;
-  gridHeightLat: number;
+  xmin: number;
+  ymin: number;
+  xrange: number;
+  yrange: number;
 
   popupTimer: any;
 
   static baseStyle: any;
+
+  //remember to reformat file so parameter isnt "recharge", etc
+  static readonly landCoverFile = "../assets/covjson/landcover.covjson";
+  //change once get actual data, just use first test file for now
+  static readonly rechargeFile = "../assets/covjson/testfiles_sc0_0-fin.covjson"
+  static readonly aquifersFile = "../assets/dlnr_aquifers.zip";
+
+  types = {
+    landCover: {
+      parameter: 'cover',
+      label: 'Land Cover',
+      palette: C.directPalette(this.colorPalette()),
+      data: null,
+      layer: null
+    },
+    recharge: {
+      parameter: 'recharge',
+      label: 'Recharge Rate',
+      data: null,
+      layer: null
+    },
+    aquifers: {
+      label: 'Aquifers',
+      layer: null
+    }
+  };
+
+  //???
+  readonly layerOrdering = [this.types.landCover, this.types.recharge, this.types.aquifers];
 
   static readonly utm = "+proj=utm +zone=4 +datum=NAD83 +units=m";
   static readonly longlat = "+proj=longlat";
   static readonly proj4 = (proj4x as any).default;
 
 
-  //readonly URL = 'https://evening-anchorage-3159.herokuapp.com/api/';
-  //upload things
-  uploader:FileUploader = new FileUploader({url:''});
-  hasBaseDropZoneOver:boolean = false;
-  hasAnotherDropZoneOver:boolean = false;
+  options: UploaderOptions;
+  formData: FormData;
+  files: UploadFile[];
+  uploadInput: EventEmitter<UploadInput>;
+  humanizeBytes: Function;
+  dragOver: boolean;
 
-
-  //upload drag events
-  public fileOverBase(e:any):void {
-    this.hasBaseDropZoneOver = e;
-    this.uploader.queue.forEach(item => {
-      item.upload();
-    });
+  onUploadOutput(output: UploadOutput): void {
+    console.log(this.files);
+    if (output.type === 'allAddedToQueue') { // when all files added in queue
+      // uncomment this if you want to auto upload files when added
+      const event: UploadInput = {
+        type: 'uploadAll',
+        url: 'http://ngx-uploader.com/upload',
+        method: 'POST',
+        data: { foo: 'bar' }
+      };
+      console.log(event);
+      this.uploadInput.emit(event);
+    } else if (output.type === 'addedToQueue'  && typeof output.file !== 'undefined') { // add file to array when added
+      this.files.push(output.file);
+    } else if (output.type === 'uploading' && typeof output.file !== 'undefined') {
+      // update current data in files array for uploading file
+      const index = this.files.findIndex(file => typeof output.file !== 'undefined' && file.id === output.file.id);
+      this.files[index] = output.file;
+    } else if (output.type === 'removed') {
+      // remove file from array when removed
+      this.files = this.files.filter((file: UploadFile) => file !== output.file);
+    } else if (output.type === 'dragOver') {
+      this.dragOver = true;
+    } else if (output.type === 'dragOut') {
+      this.dragOver = false;
+    } else if (output.type === 'drop') {
+      this.dragOver = false;
+    }
   }
+
+  startUpload(): void {
+    const event: UploadInput = {
+      type: 'uploadAll',
+      url: 'http://localhost:4200',
+      method: 'POST',
+      data: { foo: 'bar' }
+    };
+
+    this.uploadInput.emit(event);
+  }
+
+  cancelUpload(id: string): void {
+    this.uploadInput.emit({ type: 'cancel', id: id });
+  }
+
+  removeFile(id: string): void {
+    this.uploadInput.emit({ type: 'remove', id: id });
+  }
+
+  removeAllFiles(): void {
+    this.uploadInput.emit({ type: 'removeAll' });
+  }
+
+
+  // //readonly URL = 'https://evening-anchorage-3159.herokuapp.com/api/';
+  // //upload things
+  // uploader:FileUploader = new FileUploader({url:''});
+  // hasBaseDropZoneOver:boolean = false;
+  // hasAnotherDropZoneOver:boolean = false;
+
+
+  // //upload drag events
+  // public fileOverBase(e:any):void {
+  //   this.hasBaseDropZoneOver = e;
+  //   this.uploader.queue.forEach(item => {
+  //     console.log(item);
+  //   });
+  // }
  
-  public fileOverAnother(e:any):void {
-    this.hasAnotherDropZoneOver = e;
-  }
+  // public fileOverAnother(e:any):void {
+  //   this.hasAnotherDropZoneOver = e;
+  // }
 
 
   constructor( private DBService: DBConnectService, private mapService: MapService, private http: Http) {
+    //should put all these in constructors to ensure initialized before use
+    this.mapService.setMap(this);
 
+    //probably swap out all this for file api stuff
+    this.files = []; // local uploading files array
+    this.uploadInput = new EventEmitter<UploadInput>(); // input events, we use this to emit data to ngx-uploader
+    this.humanizeBytes = humanizeBytes;
    }
 
   ngOnInit() {
@@ -106,7 +207,6 @@ export class MapComponent implements OnInit {
 
 
   ngAfterViewInit() {
-    
 
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
 
@@ -124,15 +224,18 @@ export class MapComponent implements OnInit {
     //this.mymap.on('zoomend', this.loadMarkers.bind(this));
     //this.mymap.on('moveend', this.loadMarkers.bind(this));
 
-    this.mapService.setMap(this);
+    //thinking I like the collapsed version with this stuff
+    this.layers = L.control.layers(null, null/*, {collapsed: false}*/).addTo(this.mymap)
 
-    this.layers = L.control.layers(null, null, {collapsed: false}).addTo(this.mymap)
+    this.initializeLayers();
+    console.log("2");
     
-    this.loadcovJSON("covers", this.mymap, this.layers);
+    //this.loadcovJSON("covers", this.mymap, this.layers);
     this.changeScenario("recharge_scenario0");
-    
+
     this.mymap.on('mouseover', () => {
       this.mymap.on('mousemove', (e) => {
+        this.mymap.closePopup();
         clearTimeout(this.popupTimer);
         this.popupTimer = setTimeout(() => {
           //quadrants differ in directional change, should be upper left, but generalize by finding minimum of each
@@ -151,33 +254,27 @@ export class MapComponent implements OnInit {
           //console.log(convertedMousePoint);
           //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
           //coord arrays converted to maps when layer generated
-          var xs = this.currentCover[0]._covjson.domain.axes.get("x").values;
-          var ys = this.currentCover[0]._covjson.domain.axes.get("y").values;
+          
           
           //remember to change data name for this part (not recharge)
           //also need to remove all array stuff, since can be handled in single layer now
-          var data = this.currentCover[0]._covjson.ranges.recharge.values;
-          //console.log(data);
-          //find which value's the minimum, assumes oredered values
-          //subtract 37.5 since centroid of 75m cell
-          var xmin = Math.min(xs[0], xs[xs.length - 1]) - 37.5;
-          var ymin = Math.min(ys[0], ys[ys.length - 1]) - 37.5;
-          //get range + 75 to account for cell width
-          var xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
-          var yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75
+          var data = this.types.landCover.data._covjson.ranges.cover.values;
+          var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+          var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+          
           //get difference from min to mouse position
-          var diffx = convertedMousePoint[0] - xmin;
-          var diffy = convertedMousePoint[1] - ymin;
+          var diffx = convertedMousePoint[0] - this.xmin;
+          var diffy = convertedMousePoint[1] - this.ymin;
           //do nothing if out of range of grid
-          if(diffx >= 0 && diffy >= 0 && diffx <= xrange && diffy <= yrange) {
+          if(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
             //round down to nearest 75
             diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
             diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
 
             //add back 37.5 and rounded difference value to get cell coordinate
-            var xCellVal = xmin + 37.5 + diffx;
-            var yCellVal = ymin + 37.5 + diffy;
+            var xCellVal = this.xmin + 37.5 + diffx;
+            var yCellVal = this.ymin + 37.5 + diffy;
 
             //find index of cell with coordinates
             var xIndex = xs.indexOf(xCellVal);
@@ -187,7 +284,7 @@ export class MapComponent implements OnInit {
             var index = this.getIndex(xIndex, yIndex);
 
             //popup cell value
-            L.popup()
+            L.popup({autoPan: false})
             .setLatLng(e.latlng)
             .setContent(COVER_INDEX_DETAILS[data[index]].type)
             .openOn(this.mymap);
@@ -203,10 +300,61 @@ export class MapComponent implements OnInit {
       clearTimeout(this.popupTimer);
       this.mymap.closePopup();
     });
-    
+  }
 
-    shp('../assets/dlnr_aquifers.zip').then((geojson) => {
+
+  initializeLayers() {
+    var __this = this;
+
+    var init1 = CovJSON.read(MapComponent.landCoverFile).then(function(coverage) {
+      var xs = coverage._covjson.domain.axes.x.values;
+      var ys = coverage._covjson.domain.axes.y.values;
+
+      //find which value's the minimum, assumes oredered values
+      //subtract 37.5 since centroid of 75m cell
+      __this.xmin = Math.min(xs[0], xs[xs.length - 1]) - 37.5;
+      __this.ymin = Math.min(ys[0], ys[ys.length - 1]) - 37.5;
+      //get range + 75 to account for cell width
+      __this.xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
+      __this.yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75;
+
+      // var xutm = coverage._covjson.domain.axes.x.values;
+      // var yutm = coverage._covjson.domain.axes.y.values;
+      // var convertUpperLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[0] - 37.5, yutm[0] + 37.5]);
+      // var convertLowerRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[xutm.length - 1] + 37.5, yutm[yutm.length - 1] - 37.5]);
+      // //coordinate standards are dumb and inconsistent, need to swap
+      // __this.upperLeftLatLng = [convertUpperLeft[1], convertUpperLeft[0]];
+      // __this.lowerRightLatLng = [convertLowerRight[1], convertLowerRight[0]];
+      // //test conversion
+      // //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
+      __this.gridWidthCells = xs.length;
+      // __this.gridHeightCells = yutm.length;
+      // //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
+      // __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
+      // __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
+      // __this.coverBase = coverage;
+
+      __this.types.landCover.data = coverage;
+      //console.log(__this.currentCover._covjson.domain.axes);
+
+      __this.loadCover(__this.types.landCover, false);
+    });
+
+    
+    var init2 = CovJSON.read(MapComponent.rechargeFile).then(function(coverage) {
+      __this.types.recharge.data = coverage;
+      //console.log(__this.currentCover._covjson.domain.axes);
+      //change this
+
+      __this.loadCover(__this.types.recharge, true);
+      var rechargeVals = __this.types.recharge.data._covjson.ranges.recharge.values;
+      //__this.mapService.updateRechargeSum(this, rechargeVals);
+    });
+
+    var init3 = shp(MapComponent.aquifersFile).then((geojson) => {
       var aquifers = L.geoJSON();
+      //two shape files, so array
+      //might want to just remove "lines" shapefile
       geojson[1].features.forEach(aquifer => {
         aquifers.addData(aquifer);
         //console.log(aquifer);
@@ -217,11 +365,26 @@ export class MapComponent implements OnInit {
         color: 'black',
         fillOpacity: 0
       });
+      this.types.aquifers.layer = aquifers;
       aquifers.addTo(this.mymap);
+      //this.downloadShapefile(aquifers);
+      this.layers.addOverlay(aquifers, this.types.aquifers.label);
     });
-   
-    //this.downloadShapefile();
+
+    Promise.all([init1, init2, init3]).then(() => {
+      this.orderLayers();
+    })
   }
+
+
+  //ensure layers are ordered as wanted
+  //DOESNT WORK??????
+  orderLayers() {
+    this.layerOrdering.forEach((type) => {
+      type.layer.bringToFront()
+    })
+  }
+
 
   downloadShapefile(shapes: any) {
 
@@ -236,10 +399,11 @@ export class MapComponent implements OnInit {
       }
     }
     // a GeoJSON bridge for features
-    shpwrite.download({
+    var test = shpwrite.zip({
         type: 'FeatureCollection',
         features: shapes.toGeoJSON().features
-    }, options);
+    });
+    //console.log(test);
   }
 
 
@@ -364,31 +528,32 @@ export class MapComponent implements OnInit {
 
 
   //Loads the different grid points for land coverage onto leaflet map
-  private loadMarkers(){
-    let temp = this.mymap.getBounds();
-    console.log(temp);
-    let markers: Grid[];
+  // private loadMarkers(){
+  //   let temp = this.mymap.getBounds();
+  //   console.log(temp);
+  //   let markers: Grid[];
 
-    this.markerLayer.clearLayers();
+  //   this.markerLayer.clearLayers();
 
-    if(this.mymap.getZoom() > 16){
-      //load the markers from service
-      markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
+  //   if(this.mymap.getZoom() > 16){
+  //     //load the markers from service
+  //     markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
 
-      for(let i = 0; i < markers.length ; i++){
-        this.markerLayer.addLayer(L.marker([markers[i].lat, markers[i].lng]));
-      }
+  //     for(let i = 0; i < markers.length ; i++){
+  //       this.markerLayer.addLayer(L.marker([markers[i].lat, markers[i].lng]));
+  //     }
 
-      this.markerLayer.addTo(this.mymap);
-    }
+  //     this.markerLayer.addTo(this.mymap);
+  //   }
 
-    console.log(markers);
+  //   console.log(markers);
     
   
-  }
+  // }
 
-  private loadcovJSON(cover: string, mymap, layers){
-    var __this = this;
+  //can update recharge on select, all handled async, so shouldn't be an issue as long as landcover update handled in app
+  //speaking of which, need to know how indexing works and write in-app computation of grid cells to change from that
+  private updateRecharge(cover: string, handler) {
 
     var numItems = this.highlightedItems.getLayers().length;
 
@@ -401,50 +566,52 @@ export class MapComponent implements OnInit {
       .subscribe((data) => {
         //console.log(typeof data);
         //use file(s) generated as cover
-        this.updateCover(cover, data, mymap, layers);
+        handler(data);
       });
       
     }
     //do nothing if nothing selected (base landcover wont change)
-    else if(this.coverBase == undefined) {
-      this.mapService.updateDetails(this, null, null, cover);
-      let coverFile = this.getCoverFile(cover);
-      CovJSON.read('./assets/covjson/' + coverFile).then(function(coverage) {
-        console.log(coverage._covjson.domain.axes);
-        var xutm = coverage._covjson.domain.axes.x.values;
-        var yutm = coverage._covjson.domain.axes.y.values;
-        var convertUpperLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[0] - 37.5, yutm[0] + 37.5]);
-        var convertLowerRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[xutm.length - 1] + 37.5, yutm[yutm.length - 1] - 37.5]);
-        //coordinate standards are dumb and inconsistent, need to swap
-        __this.upperLeftLatLng = [convertUpperLeft[1], convertUpperLeft[0]];
-        __this.lowerRightLatLng = [convertLowerRight[1], convertLowerRight[0]];
-        //test conversion
-        //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
-        __this.gridWidthCells = xutm.length;
-        __this.gridHeightCells = yutm.length;
-        //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
-        __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
-        __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
-        __this.coverBase = coverage;
-        __this.currentCover = [coverage];
-        console.log(__this.currentCover[0]._covjson.domain.axes);
-        __this.coverColors = [COVER_ENUM[cover]];
-        __this.updateRecharge(mymap, layers, __this)
-      });
-    }
+    //moved
+    // else if(this.coverBase == undefined) {
+    //   this.mapService.updateDetails(this, null, null, cover);
+    //   let coverFile = this.getCoverFile(cover);
+    //   CovJSON.read('../assets/covjson/' + coverFile).then(function(coverage) {
+    //     console.log(coverage._covjson.domain.axes);
+    //     var xutm = coverage._covjson.domain.axes.x.values;
+    //     var yutm = coverage._covjson.domain.axes.y.values;
+    //     var convertUpperLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[0] - 37.5, yutm[0] + 37.5]);
+    //     var convertLowerRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[xutm.length - 1] + 37.5, yutm[yutm.length - 1] - 37.5]);
+    //     //coordinate standards are dumb and inconsistent, need to swap
+    //     __this.upperLeftLatLng = [convertUpperLeft[1], convertUpperLeft[0]];
+    //     __this.lowerRightLatLng = [convertLowerRight[1], convertLowerRight[0]];
+    //     //test conversion
+    //     //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
+    //     __this.gridWidthCells = xutm.length;
+    //     __this.gridHeightCells = yutm.length;
+    //     //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
+    //     __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
+    //     __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
+    //     __this.coverBase = coverage;
+    //     __this.currentCover = [coverage];
+    //     console.log(__this.currentCover[0]._covjson.domain.axes);
+    //     __this.coverColors = [COVER_ENUM[cover]];
+    //     __this.updateRecharge(mymap, layers, __this)
+    //   });
+    // }
   }
 
   //horrendously innefficient, will be fixed when actual cover methods put in place
 
   //no longer need all the hole cutting stuff remove and clean up
-  private updateCover(type: string, update, mymap, layers) {
-    var coverBase = this.currentCover[0]._covjson.ranges.recharge.values
+  private updateCover(type: string) {
     var __this = this;
-    CovJSON.read('./assets/covjson/' + "testfiles_sc0_0-fin.covjson").then(function(newCov) {
+    //might as well update recharge as well, async so shouldnt affect performance of core app
+    //also handle recharge sums (aquifers and total) here
+    //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
+    this.updateRecharge(type, (update) => {
       update.forEach(area => {
-      
         // var newCov = JSON.parse(JSON.stringify(this.currentCover[0]));
-        var newCovBase = newCov._covjson.ranges.recharge.values;
+        //var newCovBase = newCov._covjson.ranges.recharge.values;
         // //stringify/parse does not copy over these values, since theyre functions
         // console.log(this.currentCover[0]);
         // newCov._covjson.domain.axes = new Map(this.currentCover[0]._covjson.domain.axes);
@@ -452,72 +619,80 @@ export class MapComponent implements OnInit {
         // newCov._domainPromise.__zone_symbol__value.axes = new Map(this.currentCover[0]._domainPromise.__zone_symbol__value.axes);
         // console.log(newCov);
         //just the holes for shape, so rest null
-        for(var i = 0; i < newCovBase.length; i++) {
-          newCovBase[i] = null;
-        }
+        // for(var i = 0; i < newCovBase.length; i++) {
+        //   newCovBase[i] = null;
+        // }
         area.forEach(record => {
           var recordBase = record.value;
           var x = recordBase.x;
           var y = recordBase.y;
-          var index = __this.getIndex(x, y);
-          //cut hole in base cover and fill hole in new cover
-          coverBase[index] = null;
+          var index = this.getIndex(x, y);
           //change to reflect enumerated type
-          newCovBase[index] = recordBase[__this.currentScenario][0];
+          this.types.recharge.data[index] = recordBase[this.currentScenario][0];
         });
-        __this.coverColors.push(COVER_ENUM[type]);
-        __this.currentCover.push(newCov);
       });
-      __this.updateRecharge(mymap, layers)
+      //reload recharge cover
+      __this.loadCover(__this.types.recharge, true)
+      var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+      this.mapService.updateRechargeSum(this, rechargeVals);
     });
-  }
 
-  private updateRecharge(mymap, layers, __this = this) {
-    if(__this.currentCovLayer != undefined) {
-      __this.currentCovLayer.forEach(layer => {
-        mymap.removeControl(layer);
-        layers.removeLayer(layer);
-      })
-    }
-    else {
-      __this.currentCovLayer = [];
-    }
-    for(var i = 0; i < __this.currentCover.length; i++) {
-      var coverage = __this.currentCover[i];
-      var color = __this.coverColors[i];
-      //remove old layer from map and control
-      //__this.currentCover = coverages;
-      var rechargeVals = coverage._covjson.ranges.recharge.values;
-      //var xaxis = coverage._covjson.domain.axes.x.values;
-      //var yaxis = coverage._covjson.domain.axes.y.values;
+    //ADD LOGIC FOR FINDING AND REPLACING CELLS IN LANDCOVER HERE
 
-      // var test = [];
-      // for(var i = 0; i < 100000; i++) {
-      //   test.push(null);
-      // }
-
-      // rechargeVals.splice(100000, 100000, ...test);
-      //console.log(coverage);
-      // work with Coverage object
-      var layer = C.dataLayer(coverage, {parameter: 'recharge', palette: C.directPalette(this.colorPalette())})
-      // .on('afterAdd', function () {
-      //   if(__this.legend == undefined) {
-      //     __this.legend = C.legend(layer);
-      //   }
-      //   __this.legend.addTo(mymap);
-      // })
-      .setOpacity(1)
-      .addTo(mymap);
-      layers.addOverlay(layer, 'Recharge');
-      __this.currentCovLayer.push(layer);
-      __this.mapService.updateRechargeSum(__this, rechargeVals);
-    }
+    //reload layer from changes
+    this.loadCover(this.types.landCover, false)
   }
 
 
-  public changeCover(cover: string){
-    this.loadcovJSON(cover, this.mymap, this.layers);
+  //prolly need parameter to say whether to start layer toggled on or off, might want to add this to types def
+  //update names and make sure works
+  private loadCover(coverage, legend: boolean) {
+    if(coverage.layer != undefined) {
+      this.mymap.removeControl(coverage.layer);
+      this.layers.removeLayer(coverage.layer);
+    }
+    //remove old layer from map and control
+    //__this.currentCover = coverages;
+    
+    //var xaxis = coverage._covjson.domain.axes.x.values;
+    //var yaxis = coverage._covjson.domain.axes.y.values;
+
+    // var test = [];
+    // for(var i = 0; i < 100000; i++) {
+    //   test.push(null);
+    // }
+
+    // rechargeVals.splice(100000, 100000, ...test);
+    //console.log(coverage);
+    // work with Coverage object
+    var layer = C.dataLayer(coverage.data, {parameter: coverage.parameter, palette: coverage.palette})
+    .on('afterAdd', () => {
+      if(legend) {
+        //see how behaves, probably need this back
+        // this.legend = C.legend(layer);
+        // this.legend.addTo(this.mymap);
+        C.legend(layer)
+        .addTo(this.mymap);
+      }
+    })
+    .setOpacity(1)
+    //ensure recharge layer on top (don't want to have to remove covers to view it)
+    if(this.types.recharge.layer != undefined) {
+      this.types.recharge.layer.bringToFront();
+    }
+    //recharge disabled by default
+    if(coverage != this.types.recharge) {
+      layer.addTo(this.mymap);
+    }
+    this.layers.addOverlay(layer, coverage.label);
+    coverage.layer = layer;
+    
   }
+
+
+  // public changeCover(cover: string){
+  //   this.loadcovJSON(cover, this.mymap, this.layers);
+  // }
 
   public changeScenario(type: string) {
     this.currentScenario = type;
@@ -525,32 +700,32 @@ export class MapComponent implements OnInit {
   }
 
 
-  private getCoverFile(cover: string){
-    if(cover === "AlienForest"){
-      return "testfiles_sc0_0-fin.covjson";
-    }
-    else if(cover === "AlienForestFog"){
-      return "testfiles_sc0_1-fin.covjson";
-    }
-    else if(cover === "Fallow"){
-      return "testfiles_sc0_2-fin.covjson";
-    }
-    else if (cover === "Grassland"){
-      return "testfiles_sc0_3-fin.covjson";
-    }
-    else if (cover === "Kiawe"){
-      return "testfiles_sc0_4-fin.covjson";
-    }
-    else if(cover === "LowIntensity"){
-      return "testfiles_sc0_5-fin.covjson";
-    }
-    else if(cover === "Native"){
-      return "testfiles_sc0_6fin.covjson";
-    }
-    else if(cover === "covers") {
-      return "landcover.covjson";
-    }
-  }
+  // private getCoverFile(cover: string){
+  //   if(cover === "AlienForest"){
+  //     return "testfiles_sc0_0-fin.covjson";
+  //   }
+  //   else if(cover === "AlienForestFog"){
+  //     return "testfiles_sc0_1-fin.covjson";
+  //   }
+  //   else if(cover === "Fallow"){
+  //     return "testfiles_sc0_2-fin.covjson";
+  //   }
+  //   else if (cover === "Grassland"){
+  //     return "testfiles_sc0_3-fin.covjson";
+  //   }
+  //   else if (cover === "Kiawe"){
+  //     return "testfiles_sc0_4-fin.covjson";
+  //   }
+  //   else if(cover === "LowIntensity"){
+  //     return "testfiles_sc0_5-fin.covjson";
+  //   }
+  //   else if(cover === "Native"){
+  //     return "testfiles_sc0_6fin.covjson";
+  //   }
+  //   else if(cover === "covers") {
+  //     return "landcover.covjson";
+  //   }
+  // }
 
 
   private agitate(vals: number[]) {

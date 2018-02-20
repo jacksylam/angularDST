@@ -21,28 +21,28 @@
     ]
   },
   "parameters": {
-    "recharge": {
+    "cover": {
       "type": "Parameter",
-      "description": "recharge",
+      "description": "land covers",
       "unit": {
         "label": {
-          "en": "inches per year"
+          "en": "cover_type"
         }
       },
       "symbol": {
-        "value": "inches per year",
+        "value": "cover_type",
         "type": ""
       },
       "observedProperty": {
         "id": null,
         "label": {
-          "en": "recharge"
+          "en": "cover_type"
         }
       }
     }
   },
   "ranges": {
-    "recharge": {
+    "cover": {
       "type": "NdArray",
       "dataType": "float",
       "axisNames": ["y","x"],

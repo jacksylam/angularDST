@@ -39,6 +39,7 @@ import { HttpClientModule } from '@angular/common/http';
 // import { APIHelper } from 'ng-agave/ng-agave'; // <-- import API Helper
 
 import { FileUploadModule } from 'ng2-file-upload';
+import { NgUploaderModule } from 'ngx-uploader';
 
 @NgModule({
   declarations: [
@@ -58,7 +59,8 @@ import { FileUploadModule } from 'ng2-file-upload';
     AngularFirestoreModule, // imports firebase/firestore, only needed for database features
     AngularFireAuthModule, // imports firebase/auth, only needed for auth features   
     // HttpClientModule
-    FileUploadModule 
+    FileUploadModule,
+    NgUploaderModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
