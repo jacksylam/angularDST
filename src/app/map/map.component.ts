@@ -379,6 +379,9 @@ export class MapComponent implements OnInit {
 
   //ensure layers are ordered as wanted
   //DOESNT WORK??????
+  //maybe needs to be added to map to work, maybe just add onadd event to recharge layer to bring to front
+  //geojson layer might just be different, check up on this
+  //pretty low priority
   orderLayers() {
     this.layerOrdering.forEach((type) => {
       type.layer.bringToFront()
