@@ -371,6 +371,7 @@ export class MapComponent implements OnInit {
       this.layers.addOverlay(aquifers, this.types.aquifers.label);
     });
 
+    //shouldn't need this with base layers
     Promise.all([init1, init2, init3]).then(() => {
       this.orderLayers();
     })
@@ -611,6 +612,9 @@ export class MapComponent implements OnInit {
     //might as well update recharge as well, async so shouldnt affect performance of core app
     //also handle recharge sums (aquifers and total) here
     //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
+    
+    //should grey out report generation button while this is going
+    //might also want to add some sort of loading indicator
     this.updateRecharge(type, (update) => {
       update.forEach(area => {
         // var newCov = JSON.parse(JSON.stringify(this.currentCover[0]));
@@ -638,6 +642,7 @@ export class MapComponent implements OnInit {
       __this.loadCover(__this.types.recharge, true)
       var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
       this.mapService.updateRechargeSum(this, rechargeVals);
+      //reenable report generation
     });
 
     //ADD LOGIC FOR FINDING AND REPLACING CELLS IN LANDCOVER HERE
@@ -687,7 +692,7 @@ export class MapComponent implements OnInit {
     if(coverage != this.types.recharge) {
       layer.addTo(this.mymap);
     }
-    this.layers.addOverlay(layer, coverage.label);
+    this.layers.addBaseLayer(layer, coverage.label);
     coverage.layer = layer;
     
   }
