@@ -51,6 +51,8 @@ export class MapComponent implements OnInit {
   highlightedItems: any;
   drawControl: any;
 
+  highlightedCell: any;
+
   // landCover: any;
   // landCoverLayer: any;
   // recharge: any;
@@ -74,7 +76,7 @@ export class MapComponent implements OnInit {
 
   popupTimer: any;
 
-  static baseStyle: any;
+  //static baseStyle: any;
 
   //remember to reformat file so parameter isnt "recharge", etc
   static readonly landCoverFile = "../assets/covjson/landcover.covjson";
@@ -88,12 +90,14 @@ export class MapComponent implements OnInit {
       label: 'Land Cover',
       palette: C.directPalette(this.colorPalette()),
       data: null,
+      baseData: null,
       layer: null
     },
     recharge: {
       parameter: 'recharge',
       label: 'Recharge Rate',
       data: null,
+      baseData: null,
       layer: null
     },
     aquifers: {
@@ -191,7 +195,7 @@ export class MapComponent implements OnInit {
   // }
 
 
-  constructor( private DBService: DBConnectService, private mapService: MapService, private http: Http) {
+  constructor(private DBService: DBConnectService, private mapService: MapService, private http: Http) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
 
@@ -216,7 +220,7 @@ export class MapComponent implements OnInit {
 
     this.mymap.invalidateSize();
 
-
+    //might want to remove or modify draw controls in recharge context
     this.loadDrawControls();
 
     this.popup = L.popup();
@@ -228,16 +232,21 @@ export class MapComponent implements OnInit {
     this.layers = L.control.layers(null, null/*, {collapsed: false}*/).addTo(this.mymap)
 
     this.initializeLayers();
-    console.log("2");
     
     //this.loadcovJSON("covers", this.mymap, this.layers);
     this.changeScenario("recharge_scenario0");
 
+    //possibly change if on recharge
     this.mymap.on('mouseover', () => {
       this.mymap.on('mousemove', (e) => {
+        if(this.highlightedCell) {
+          this.mymap.removeLayer(this.highlightedCell);
+          this.highlightedCell = null;
+        }
         this.mymap.closePopup();
         clearTimeout(this.popupTimer);
         this.popupTimer = setTimeout(() => {
+
           //quadrants differ in directional change, should be upper left, but generalize by finding minimum of each
           //x grid corresponds to long
           //console.log(this.gridWidthCells);
@@ -272,6 +281,31 @@ export class MapComponent implements OnInit {
             diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
             diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
 
+            //get cell boundaries as geojson object to draw on map
+            //cell corners
+            var c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
+            var c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
+            var c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
+            var c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
+            console.log(c1);
+            var cellBounds = {
+              "type": "Feature",
+              "properties": {},
+              "geometry": {
+                  "type": "Polygon",
+                  "coordinates": [[c1, c2, c3, c4, c1]]
+              }
+            };
+            this.highlightedCell = L.geoJSON(cellBounds)
+            .setStyle({
+              fillColor: 'orange',
+              weight: 3,
+              opacity: 1,
+              color: 'orange',
+              fillOpacity: 0.2
+            })
+            .addTo(this.mymap)
+
             //add back 37.5 and rounded difference value to get cell coordinate
             var xCellVal = this.xmin + 37.5 + diffx;
             var yCellVal = this.ymin + 37.5 + diffy;
@@ -284,10 +318,15 @@ export class MapComponent implements OnInit {
             var index = this.getIndex(xIndex, yIndex);
 
             //popup cell value
-            L.popup({autoPan: false})
-            .setLatLng(e.latlng)
-            .setContent(COVER_INDEX_DETAILS[data[index]].type)
-            .openOn(this.mymap);
+            var popup = L.popup({autoPan: false})
+            .setLatLng(e.latlng);
+            if(data[index] == this.types.landCover.baseData[index]) {
+              popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type)
+            }
+            else {
+              popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type + "<br> Original: " + COVER_INDEX_DETAILS[this.types.landCover.baseData[index]].type)
+            }
+            popup.openOn(this.mymap);
           }
 
         }, 1000);
@@ -335,6 +374,8 @@ export class MapComponent implements OnInit {
       // __this.coverBase = coverage;
 
       __this.types.landCover.data = coverage;
+      //deepcopy values for comparisons with modified types
+      __this.types.landCover.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.cover.values));
       //console.log(__this.currentCover._covjson.domain.axes);
 
       __this.loadCover(__this.types.landCover, false);
@@ -343,6 +384,8 @@ export class MapComponent implements OnInit {
     
     var init2 = CovJSON.read(MapComponent.rechargeFile).then(function(coverage) {
       __this.types.recharge.data = coverage;
+      //deepcopy values for comparisons with modified types
+      __this.types.recharge.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.recharge.values));
       //console.log(__this.currentCover._covjson.domain.axes);
       //change this
 
@@ -474,16 +517,13 @@ export class MapComponent implements OnInit {
       //this.loadcovJSON("Kiawe", this.mymap, this.layers);
       //alert(layer.getLatLngs());
 
-      //set base drawing style for highlight reset
-      if(MapComponent.baseStyle == undefined) {
-        //clone base options
-        MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
-      }
+      // //set base drawing style for highlight reset
+      // if(MapComponent.baseStyle == undefined) {
+      //   //clone base options
+      //   MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
+      // }
 
       layer.on('click', function() {
-        //alert(this._leaflet_id);
-        
-        
         if(this.highlighted) {
           this.setStyle(unhighlight);
           this.highlighted = false;
@@ -608,47 +648,159 @@ export class MapComponent implements OnInit {
 
   //no longer need all the hole cutting stuff remove and clean up
   private updateCover(type: string) {
-    var __this = this;
+    //var __this = this;
     //might as well update recharge as well, async so shouldnt affect performance of core app
     //also handle recharge sums (aquifers and total) here
     //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
     
     //should grey out report generation button while this is going
     //might also want to add some sort of loading indicator
+    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+
     this.updateRecharge(type, (update) => {
       update.forEach(area => {
-        // var newCov = JSON.parse(JSON.stringify(this.currentCover[0]));
-        //var newCovBase = newCov._covjson.ranges.recharge.values;
-        // //stringify/parse does not copy over these values, since theyre functions
-        // console.log(this.currentCover[0]);
-        // newCov._covjson.domain.axes = new Map(this.currentCover[0]._covjson.domain.axes);
-        // newCov.parameters = new Map(this.currentCover[0].parameters);
-        // newCov._domainPromise.__zone_symbol__value.axes = new Map(this.currentCover[0]._domainPromise.__zone_symbol__value.axes);
-        // console.log(newCov);
-        //just the holes for shape, so rest null
-        // for(var i = 0; i < newCovBase.length; i++) {
-        //   newCovBase[i] = null;
-        // }
+        //how does it behave if out of coverage range? chack db response and modify so doesn't throw an error
         area.forEach(record => {
           var recordBase = record.value;
           var x = recordBase.x;
           var y = recordBase.y;
           var index = this.getIndex(x, y);
-          //change to reflect enumerated type
-          this.types.recharge.data[index] = recordBase[this.currentScenario][0];
+          //does the array include base? if not have to shift
+          rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
         });
       });
       //reload recharge cover
-      __this.loadCover(__this.types.recharge, true)
-      var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+      this.loadCover(this.types.recharge, true)
+      
       this.mapService.updateRechargeSum(this, rechargeVals);
       //reenable report generation
     });
 
     //ADD LOGIC FOR FINDING AND REPLACING CELLS IN LANDCOVER HERE
+    this.highlightedItems.toGeoJSON().features.forEach(shape => {
+      //array due to potential cutouts, shouldn't have any cutouts
+      var pointsBase = shape.geometry.coordinates[0];
+      var convertedPoints = [];
+      var a = [];
+      var b = [];
+      //need to store both point coordinates for proper UTM conversion
+      var xmax = Number.NEGATIVE_INFINITY;
+      //var xmax_y;
+      var xmin = Number.POSITIVE_INFINITY;
+      //var xmin_y;
+      var ymax = Number.NEGATIVE_INFINITY;
+      //var ymax_x;
+      var ymin = Number.POSITIVE_INFINITY;
+      //var ymin_x;
+
+      for(var i = 0; i < pointsBase.length; i++) {
+        convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
+      }
+
+      for(var i = 0; i < convertedPoints.length - 1; i++) {
+        //coordinates are in long lat order (I think)
+
+        //get max and min vals to limit coordinates need to compare
+        if(convertedPoints[i][0] > xmax) {
+          xmax = convertedPoints[i][0];
+        }
+        if(convertedPoints[i][0] < xmin) {
+          xmin = convertedPoints[i][0];
+        }
+        if(convertedPoints[i][1] > ymax) {
+          ymax = convertedPoints[i][1];
+        }
+        if(convertedPoints[i][1] < ymin) {
+          ymin = convertedPoints[i][1];
+        }
+        //convert these points, less conversions than trying to convert grid points
+        a.push({
+          x: convertedPoints[i][0],
+          y: convertedPoints[i][1]
+        });
+        b.push( {
+          x: convertedPoints[i + 1][0],
+          y: convertedPoints[i + 1][1]
+        });
+      }
+
+      //convert max min values and find range of cells
+      //no need to check every single one
+      //convert coordinate and get x value
+      // var xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
+      // var xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
+      // var ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
+      // var yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
+
+      var data = this.types.landCover.data._covjson.ranges.cover.values;
+      var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+      var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+      var minxIndex;
+      var maxxIndex;
+      var minyIndex;
+      var maxyIndex;
+
+      //again, assume values are in order
+      //find min and max indexes
+      //check if ascending or descending order, findIndex returns first occurance
+      if(xs[0] < xs[1]) {
+        minxIndex = xs.findIndex(function(val) {return val >= xmin});
+        //> not >= so returns index after last even if on edge 
+        maxxIndex = xs.findIndex(function(val) {return val > xmax});
+      }
+      else {
+        maxxIndex = xs.findIndex(function(val) {return val < xmin});
+        minxIndex = xs.findIndex(function(val) {return val <= xmax});
+      }
+      if(ys[0] < ys[1]) {
+        minyIndex = ys.findIndex(function(val) {return val >= ymin});
+        maxyIndex = ys.findIndex(function(val) {return val > ymax});
+      }
+      else {
+        maxyIndex = ys.findIndex(function(val) {return val < ymin});
+        minyIndex = ys.findIndex(function(val) {return val <= ymax});
+      }
+
+      //check if shape boundaries out of coverage range
+      if(minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
+        //convert cell coords to long lat and raycast
+        //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
+        for(var xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+          for(var yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+            if(this.isInternal(a, b, {x: xs[xIndex], y: ys[yIndex]})) {
+              data[this.getIndex(xIndex, yIndex)] = COVER_ENUM[type];
+            }
+          }
+        }
+      }
+    });
+
 
     //reload layer from changes
     this.loadCover(this.types.landCover, false)
+  }
+
+  //can specify origin if 0, 0 is in range, not necessary for cover being used (0,0 not in range)
+  private isInternal(a: any[], b: any[], point: any, origin: any = {x: 0, y: 0}): boolean {
+    //raycasting algorithm, point is internal if intersects an odd number of edges
+    var internal = false;
+    for(var i = 0; i < a.length; i++) {
+      //segments intersect iff endpoints of each segment are on opposite sides of the other segment
+      //check if angle formed is counterclockwise to determine which side endpoints fall on
+      if(this.ccw(a[i], origin, point) != this.ccw(b[i], origin, point) && this.ccw(a[i], b[i], origin) != this.ccw(a[i], b[i], point)) {
+        internal = !internal
+      }
+      
+    }
+    return internal;
+  }
+
+  //determinant formula yields twice the signed area of triangle formed by 3 points
+  //counterclockwise if negative, clockwise if positive, collinear if 0
+  private ccw(p1, p2, p3): boolean {
+    //if on line counts, both will be 0, probably need to add special value (maybe return -1, 0, or 1)
+    return ((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) > 0;
   }
 
 

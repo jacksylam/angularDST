@@ -51,31 +51,7 @@ export class SidebarPanelComponent implements OnInit {
     this.mapService.changeScenario(this, "recharge_scenario1");
   }
 
-  changeAlienForest(){
-    this.mapService.changeCover(this, "AlienForest");
-  }
-
-  changeAlienForestFog(){
-    this.mapService.changeCover(this, "AlienForestFog");
-  }
-
-  changeFallow(){
-    this.mapService.changeCover(this, "Fallow");
-  }
-
-  changeGrassland(){
-    this.mapService.changeCover(this, "Grassland");
-  }
-
-  changeKiawe(){
-    this.mapService.changeCover(this, "Kiawe");
-  }
-
-  changeLowIntensity(){
-    this.mapService.changeCover(this, "LowIntensity");
-  }
-
-  changeNative(){
-    this.mapService.changeCover(this, "Native");
+  changeCover(type: string) {
+    this.mapService.changeCover(this, type);
   }
 }

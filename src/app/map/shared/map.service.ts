@@ -77,7 +77,7 @@ export class MapService {
 
   changeCover(buttonPanel: any, cover: string) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
-    this.mapHash[index].changeCover(cover);
+    this.mapHash[index].updateCover(cover);
   }
 
   changeScenario(buttonPanel: any, scenario: string) {
