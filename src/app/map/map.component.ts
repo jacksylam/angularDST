@@ -96,6 +96,7 @@ export class MapComponent implements OnInit {
     recharge: {
       parameter: 'recharge',
       label: 'Recharge Rate',
+      palette: C.linearPalette(["#ffffbf", "#a6d96a", "#92c5de", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#2166ac", "#2166ac", "#2166ac", "#2166ac", "#2166ac"]),
       data: null,
       baseData: null,
       layer: null
@@ -342,6 +343,7 @@ export class MapComponent implements OnInit {
   }
 
 
+  //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
   initializeLayers() {
     var __this = this;
 
