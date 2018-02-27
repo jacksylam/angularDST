@@ -650,50 +650,74 @@ export class MapComponent implements OnInit {
 
   //no longer need all the hole cutting stuff remove and clean up
   private updateCover(type: string) {
-    //var __this = this;
-    //might as well update recharge as well, async so shouldnt affect performance of core app
-    //also handle recharge sums (aquifers and total) here
-    //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
-    
-    //should grey out report generation button while this is going
-    //might also want to add some sort of loading indicator
-    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
 
-    this.updateRecharge(type, (update) => {
-      update.forEach(area => {
-        //how does it behave if out of coverage range? chack db response and modify so doesn't throw an error
-        area.forEach(record => {
-          var recordBase = record.value;
-          var x = recordBase.x;
-          var y = recordBase.y;
-          var index = this.getIndex(x, y);
-          //does the array include base? if not have to shift
-          rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
-        });
+    //type base indicates should be changed back to base values
+    if(type == "base") {
+      var covData = this.types.landCover.data._covjson.ranges.cover.values;
+      var rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+      var indexes = this.getInternalIndexes();
+      indexes.forEach(index => {
+        covData[index] = this.types.landCover.baseData[index];
+        rechargeData[index] = this.types.recharge.baseData[index];
       });
-      //reload recharge cover
-      this.loadCover(this.types.recharge, true)
+      this.loadCover(this.types.landCover, false);
+      this.loadCover(this.types.recharge, false);
+    }
+    else {
+      //var __this = this;
+      //might as well update recharge as well, async so shouldnt affect performance of core app
+      //also handle recharge sums (aquifers and total) here
+      //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
       
-      this.mapService.updateRechargeSum(this, rechargeVals);
-      //reenable report generation
-    });
+      //should grey out report generation button while this is going
+      //might also want to add some sort of loading indicator
+      var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
 
-    //ADD LOGIC FOR FINDING AND REPLACING CELLS IN LANDCOVER HERE
+      this.updateRecharge(type, (update) => {
+        update.forEach(area => {
+          //how does it behave if out of coverage range? chack db response and modify so doesn't throw an error
+          area.forEach(record => {
+            var recordBase = record.value;
+            var x = recordBase.x;
+            var y = recordBase.y;
+            var index = this.getIndex(x, y);
+            //does the array include base? if not have to shift
+            rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
+          });
+        });
+        //reload recharge cover
+        this.loadCover(this.types.recharge, true)
+        
+        this.mapService.updateRechargeSum(this, rechargeVals);
+        //reenable report generation
+      });
+
+      //ADD LOGIC FOR FINDING AND REPLACING CELLS IN LANDCOVER HERE
+      var data = this.types.landCover.data._covjson.ranges.cover.values;
+      var indexes = this.getInternalIndexes();
+      indexes.forEach(index => {
+        data[index] = COVER_ENUM[type];
+      });
+
+      //reload layer from changes
+      this.loadCover(this.types.landCover, false);
+    }
+
+    
+  }
+
+  private getInternalIndexes(): number[] {
+    var indexes = [];
     this.highlightedItems.toGeoJSON().features.forEach(shape => {
       //array due to potential cutouts, shouldn't have any cutouts
       var pointsBase = shape.geometry.coordinates[0];
       var convertedPoints = [];
       var a = [];
       var b = [];
-      //need to store both point coordinates for proper UTM conversion
       var xmax = Number.NEGATIVE_INFINITY;
-      //var xmax_y;
       var xmin = Number.POSITIVE_INFINITY;
-      //var xmin_y;
       var ymax = Number.NEGATIVE_INFINITY;
-      //var ymax_x;
       var ymin = Number.POSITIVE_INFINITY;
-      //var ymin_x;
 
       for(var i = 0; i < pointsBase.length; i++) {
         convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
@@ -734,7 +758,6 @@ export class MapComponent implements OnInit {
       // var ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
       // var yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
 
-      var data = this.types.landCover.data._covjson.ranges.cover.values;
       var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
       var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
 
@@ -771,16 +794,14 @@ export class MapComponent implements OnInit {
         for(var xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
           for(var yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
             if(this.isInternal(a, b, {x: xs[xIndex], y: ys[yIndex]})) {
-              data[this.getIndex(xIndex, yIndex)] = COVER_ENUM[type];
+              indexes.push(this.getIndex(xIndex, yIndex))
             }
           }
         }
       }
     });
 
-
-    //reload layer from changes
-    this.loadCover(this.types.landCover, false)
+    return indexes;
   }
 
   //can specify origin if 0, 0 is in range, not necessary for cover being used (0,0 not in range)
