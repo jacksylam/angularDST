@@ -114,6 +114,8 @@ export class MapComponent implements OnInit {
   static readonly longlat = "+proj=longlat";
   static readonly proj4 = (proj4x as any).default;
 
+  r: FileReader;
+
 
   options: UploaderOptions;
   formData: FormData;
@@ -123,15 +125,25 @@ export class MapComponent implements OnInit {
   dragOver: boolean;
 
   dropHandler(e) {
-    console.log("drop");
+    e.preventDefault();
+    //ensure reader initialized
+    if(this.r) {
+      console.log(e.dataTransfer.files);
+      for(var i = 0; i < e.dataTransfer.files.length; i++) {
+        //this.loadShapefile()
+        
+        this.r.readAsArrayBuffer(e.dataTransfer.files[i]);
+      };
+    }
   }
 
   dragOverHandler(e) {
     e.preventDefault();
-    console.log("drop");
+    console.log("drag");
   }
 
   dragEndHandler(e) {
+    e.preventDefault();
     console.log("drop");
   }
 
@@ -250,6 +262,26 @@ export class MapComponent implements OnInit {
     //this.loadcovJSON("covers", this.mymap, this.layers);
     this.changeScenario("recharge_scenario0");
 
+    this.r = new FileReader();
+    this.r.onload = (e) => {
+      //console.log(this.r.result);
+      shp(this.r.result).then((geojson) => {
+        //array if multiple shapefiles, else single object
+        if(Array.isArray(geojson)) {
+          geojson.forEach(shpset => {
+            shpset.features.forEach(shape => {
+              this.addDrawnItem(L.geoJSON().addData(shape));
+            });
+          });
+        }
+        else {
+          geojson.features.forEach(shape => {
+            this.addDrawnItem(L.geoJSON().addData(shape));
+          });
+        }
+      });
+    }
+
     //possibly change if on recharge
     this.mymap.on('mouseover', () => {
       this.mymap.on('mousemove', (e) => {
@@ -309,7 +341,7 @@ export class MapComponent implements OnInit {
                   "coordinates": [[c1, c2, c3, c4, c1]]
               }
             };
-            this.highlightedCell = L.geoJSON(cellBounds)
+            this.highlightedCell = L.geoJSON(cellBounds, {interactive: false})
             .setStyle({
               fillColor: 'orange',
               weight: 3,
@@ -429,9 +461,9 @@ export class MapComponent implements OnInit {
     });
 
     //shouldn't need this with base layers
-    Promise.all([init1, init2, init3]).then(() => {
-      this.orderLayers();
-    })
+    // Promise.all([init1, init2/*, init3*/]).then(() => {
+    //   //this.orderLayers();
+    // })
   }
 
 
@@ -505,52 +537,58 @@ export class MapComponent implements OnInit {
 
     this.mymap.on(L.Draw.Event.CREATED,  (event) => {
       var layer = event.layer;
-
-      var highlight = {
-        fillColor: 'black',
-        weight: 5,
-        opacity: 1,
-        color: 'black',  //Outline color
-        fillOpacity: 0.2
-      };
-      var unhighlight = {
-        weight: 5,
-        opacity: 0.5,
-        color: 'black',  //Outline color
-        fillOpacity: 0
-      }
-      //this.downloadShapefile(this.drawnItems)
-
-      var __this = this;
-
-      layer.setStyle(highlight);
-      layer.highlighted = true;
-      this.highlightedItems.addLayer(layer);
-
-      this.drawnItems.addLayer(layer);
-      //this.loadcovJSON("Kiawe", this.mymap, this.layers);
-      //alert(layer.getLatLngs());
-
-      // //set base drawing style for highlight reset
-      // if(MapComponent.baseStyle == undefined) {
-      //   //clone base options
-      //   MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
-      // }
-
-      layer.on('click', function() {
-        if(this.highlighted) {
-          this.setStyle(unhighlight);
-          this.highlighted = false;
-          __this.highlightedItems.removeLayer(this);
-        }
-        else {
-          this.setStyle(highlight);
-          this.highlighted = true;
-          __this.highlightedItems.addLayer(this);
-        }
-      })
-
+      //pull into separate method so can be used with file loading
+      this.addDrawnItem(layer)
     });
+  }
+
+  //might want to do something about overlapping layers
+  //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
+  //maybe check if one is contained in another
+  private addDrawnItem(layer) {
+    var highlight = {
+      fillColor: 'black',
+      weight: 5,
+      opacity: 1,
+      color: 'black',  //Outline color
+      fillOpacity: 0.2
+    };
+    var unhighlight = {
+      weight: 5,
+      opacity: 0.5,
+      color: 'black',  //Outline color
+      fillOpacity: 0
+    }
+    //this.downloadShapefile(this.drawnItems)
+
+    var __this = this;
+
+    layer.setStyle(highlight);
+    layer.highlighted = true;
+    this.highlightedItems.addLayer(layer);
+
+    this.drawnItems.addLayer(layer);
+    //this.loadcovJSON("Kiawe", this.mymap, this.layers);
+    //alert(layer.getLatLngs());
+
+    // //set base drawing style for highlight reset
+    // if(MapComponent.baseStyle == undefined) {
+    //   //clone base options
+    //   MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
+    // }
+
+    layer.on('click', function() {
+      if(this.highlighted) {
+        this.setStyle(unhighlight);
+        this.highlighted = false;
+        __this.highlightedItems.removeLayer(this);
+      }
+      else {
+        this.setStyle(highlight);
+        this.highlighted = true;
+        __this.highlightedItems.addLayer(this);
+      }
+    })
   }
 
 

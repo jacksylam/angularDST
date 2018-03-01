@@ -48,7 +48,7 @@
 
     </div> -->
 
-    <div ondrop="dropHandler(event)" (dragover)="dragOverHandler($event)" ondragend="dragEndHandler(event)"
+    <div (drop)="dropHandler($event)" (dragover)="dragOverHandler($event)" (ondragend)="dragEndHandler($event)"
     class="col-xs-12">
 
         <div #mapid></div>
