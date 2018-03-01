@@ -48,7 +48,7 @@
 
     </div> -->
 
-    <div ngFileDrop [options]="options" (uploadOutput)="onUploadOutput($event)" [uploadInput]="uploadInput" [ngClass]="{ 'is-drop-over': dragOver }"
+    <div ondrop="dropHandler(event)" (dragover)="dragOverHandler($event)" ondragend="dragEndHandler(event)"
     class="col-xs-12">
 
         <div #mapid></div>

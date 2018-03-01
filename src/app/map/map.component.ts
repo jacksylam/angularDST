@@ -122,6 +122,19 @@ export class MapComponent implements OnInit {
   humanizeBytes: Function;
   dragOver: boolean;
 
+  dropHandler(e) {
+    console.log("drop");
+  }
+
+  dragOverHandler(e) {
+    e.preventDefault();
+    console.log("drop");
+  }
+
+  dragEndHandler(e) {
+    console.log("drop");
+  }
+
   onUploadOutput(output: UploadOutput): void {
     console.log(this.files);
     if (output.type === 'allAddedToQueue') { // when all files added in queue
@@ -288,7 +301,6 @@ export class MapComponent implements OnInit {
             var c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
             var c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
             var c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
-            console.log(c1);
             var cellBounds = {
               "type": "Feature",
               "properties": {},
