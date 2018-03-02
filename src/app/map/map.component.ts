@@ -13,7 +13,7 @@ import { COVER_ENUM, COVER_INDEX_DETAILS } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
 import * as shpwrite from 'shp-write';
-import { UploadOutput, UploadInput, UploadFile, humanizeBytes, UploaderOptions } from 'ngx-uploader';
+import { saveAs } from 'file-saver';
 
 
 
@@ -117,118 +117,9 @@ export class MapComponent implements OnInit {
   r: FileReader;
 
 
-  options: UploaderOptions;
-  formData: FormData;
-  files: UploadFile[];
-  uploadInput: EventEmitter<UploadInput>;
-  humanizeBytes: Function;
-  dragOver: boolean;
-
-  dropHandler(e) {
-    e.preventDefault();
-    //ensure reader initialized
-    if(this.r) {
-      console.log(e.dataTransfer.files);
-      for(var i = 0; i < e.dataTransfer.files.length; i++) {
-        //this.loadShapefile()
-        
-        this.r.readAsArrayBuffer(e.dataTransfer.files[i]);
-      };
-    }
-  }
-
-  dragOverHandler(e) {
-    e.preventDefault();
-    console.log("drag");
-  }
-
-  dragEndHandler(e) {
-    e.preventDefault();
-    console.log("drop");
-  }
-
-  onUploadOutput(output: UploadOutput): void {
-    console.log(this.files);
-    if (output.type === 'allAddedToQueue') { // when all files added in queue
-      // uncomment this if you want to auto upload files when added
-      const event: UploadInput = {
-        type: 'uploadAll',
-        url: 'http://ngx-uploader.com/upload',
-        method: 'POST',
-        data: { foo: 'bar' }
-      };
-      console.log(event);
-      this.uploadInput.emit(event);
-    } else if (output.type === 'addedToQueue'  && typeof output.file !== 'undefined') { // add file to array when added
-      this.files.push(output.file);
-    } else if (output.type === 'uploading' && typeof output.file !== 'undefined') {
-      // update current data in files array for uploading file
-      const index = this.files.findIndex(file => typeof output.file !== 'undefined' && file.id === output.file.id);
-      this.files[index] = output.file;
-    } else if (output.type === 'removed') {
-      // remove file from array when removed
-      this.files = this.files.filter((file: UploadFile) => file !== output.file);
-    } else if (output.type === 'dragOver') {
-      this.dragOver = true;
-    } else if (output.type === 'dragOut') {
-      this.dragOver = false;
-    } else if (output.type === 'drop') {
-      this.dragOver = false;
-    }
-  }
-
-  startUpload(): void {
-    const event: UploadInput = {
-      type: 'uploadAll',
-      url: 'http://localhost:4200',
-      method: 'POST',
-      data: { foo: 'bar' }
-    };
-
-    this.uploadInput.emit(event);
-  }
-
-  cancelUpload(id: string): void {
-    this.uploadInput.emit({ type: 'cancel', id: id });
-  }
-
-  removeFile(id: string): void {
-    this.uploadInput.emit({ type: 'remove', id: id });
-  }
-
-  removeAllFiles(): void {
-    this.uploadInput.emit({ type: 'removeAll' });
-  }
-
-
-  // //readonly URL = 'https://evening-anchorage-3159.herokuapp.com/api/';
-  // //upload things
-  // uploader:FileUploader = new FileUploader({url:''});
-  // hasBaseDropZoneOver:boolean = false;
-  // hasAnotherDropZoneOver:boolean = false;
-
-
-  // //upload drag events
-  // public fileOverBase(e:any):void {
-  //   this.hasBaseDropZoneOver = e;
-  //   this.uploader.queue.forEach(item => {
-  //     console.log(item);
-  //   });
-  // }
- 
-  // public fileOverAnother(e:any):void {
-  //   this.hasAnotherDropZoneOver = e;
-  // }
-
-
   constructor(private DBService: DBConnectService, private mapService: MapService, private http: Http) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
-
-    //probably swap out all this for file api stuff
-    this.files = []; // local uploading files array
-    this.uploadInput = new EventEmitter<UploadInput>(); // input events, we use this to emit data to ngx-uploader
-    this.humanizeBytes = humanizeBytes;
    }
 
   ngOnInit() {
@@ -237,6 +128,7 @@ export class MapComponent implements OnInit {
 
 
   ngAfterViewInit() {
+    this.downloadShapefile(null);
 
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
 
@@ -386,6 +278,29 @@ export class MapComponent implements OnInit {
     });
   }
 
+  dropHandler(e) {
+    e.preventDefault();
+    //ensure reader initialized
+    if(this.r) {
+      console.log(e.dataTransfer.files);
+      for(var i = 0; i < e.dataTransfer.files.length; i++) {
+        //this.loadShapefile()
+        
+        this.r.readAsArrayBuffer(e.dataTransfer.files[i]);
+      };
+    }
+  }
+
+  dragOverHandler(e) {
+    e.preventDefault();
+    console.log("drag");
+  }
+
+  dragEndHandler(e) {
+    e.preventDefault();
+    console.log("drop");
+  }
+
 
   //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
   initializeLayers() {
@@ -483,21 +398,59 @@ export class MapComponent implements OnInit {
 
     //testing
     //success :)
-    var options = {
-      folder: 'myshapes',
-      types: {
-          point: 'mypoints',
-          polygon: 'mypolygons',
-          line: 'mylines'
-      }
-    }
+    // var options = {
+    //   folder: 'myshapes',
+    //   types: {
+    //       point: 'mypoints',
+    //       polygon: 'mypolygons',
+    //       line: 'mylines'
+    //   }
+    // }
     // a GeoJSON bridge for features
+    // var test = shpwrite.zip({
+    //     type: 'FeatureCollection',
+    //     features: shapes.toGeoJSON().features
+    // });
+
     var test = shpwrite.zip({
-        type: 'FeatureCollection',
-        features: shapes.toGeoJSON().features
+      type: 'FeatureCollection',
+      features: [
+          {
+              type: 'Feature',
+              geometry: {
+                  type: 'Point',
+                  coordinates: [0, 0]
+              },
+              properties: {
+                  name: 'Foo'
+              }
+          },
+          {
+              type: 'Feature',
+              geometry: {
+                  type: 'Point',
+                  coordinates: [0, 10]
+              },
+              properties: {
+                  name: 'Bar'
+              }
+          }
+      ]
     });
-    //console.log(test);
+    location.href = 'data:application/zip;base64,' + test;
+    // var blob = new Blob([this._base64ToArrayBuffer(test)], {type: "application/zip"});
+    // console.log(blob);
+    // saveAs(blob, "test.zip");
   }
+  private _base64ToArrayBuffer(base64) {
+    var binary_string =  window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array( len );
+    for (var i = 0; i < len; i++)        {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
 
 
   //swap to be added to drawn items list (and add in any other controls that might be necessary)
