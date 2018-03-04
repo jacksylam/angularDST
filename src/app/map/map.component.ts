@@ -13,6 +13,9 @@ import { COVER_ENUM, COVER_INDEX_DETAILS } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
 import * as shpwrite from 'shp-write';
+import * as JSZip from 'jszip'
+import * as shpWriteGeojson from '../../../node_modules/shp-write/src/geojson'
+import * as shpWritePrj from '../../../node_modules/shp-write/src/prj';
 import { saveAs } from 'file-saver';
 
 
@@ -33,6 +36,7 @@ export class MapComponent implements OnInit {
   @ViewChild('mapid') mapid;
   @ViewChild('scrollableMenu') scrollableMenu;
   @ViewChild('menuCol') menuCol;
+  
 
   mymap: any;
   popup: any;
@@ -48,6 +52,7 @@ export class MapComponent implements OnInit {
   layers: any;
 
   drawnItems: any;
+  editableItems: any;
   highlightedItems: any;
   drawControl: any;
 
@@ -96,6 +101,7 @@ export class MapComponent implements OnInit {
     recharge: {
       parameter: 'recharge',
       label: 'Recharge Rate',
+      //update with scheme sent by Kolja
       palette: C.linearPalette(["#ffffbf", "#a6d96a", "#92c5de", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#2166ac", "#2166ac", "#2166ac", "#2166ac", "#2166ac"]),
       data: null,
       baseData: null,
@@ -128,15 +134,10 @@ export class MapComponent implements OnInit {
 
 
   ngAfterViewInit() {
-    this.downloadShapefile(null);
 
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
 
     var mapLayer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
-    // this.mymap.setZoom(20);
-    this.mymap.setZoom(14);
-
-    this.mymap.invalidateSize();
 
     //might want to remove or modify draw controls in recharge context
     this.loadDrawControls();
@@ -174,8 +175,18 @@ export class MapComponent implements OnInit {
       });
     }
 
+    this.mymap.on('movestart', () => {
+      L.DomUtil.removeClass(this.mymap._container,'crosshair-cursor-enabled');
+      L.DomUtil.addClass(this.mymap._container,'leaflet-grab');
+    });
+    this.mymap.on('moveend', () => {
+      L.DomUtil.removeClass(this.mymap._container,'leaflet-grab');
+      L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
+    });
+
     //possibly change if on recharge
     this.mymap.on('mouseover', () => {
+      L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
       this.mymap.on('mousemove', (e) => {
         if(this.highlightedCell) {
           this.mymap.removeLayer(this.highlightedCell);
@@ -266,12 +277,13 @@ export class MapComponent implements OnInit {
             popup.openOn(this.mymap);
           }
 
-        }, 1000);
+        }, 1000)
       });
       
     });
 
     this.mymap.on('mouseout', () => {
+      L.DomUtil.removeClass(this.mymap._container,'crosshair-cursor-enabled');
       this.mymap.off('mousemove');
       clearTimeout(this.popupTimer);
       this.mymap.closePopup();
@@ -291,14 +303,14 @@ export class MapComponent implements OnInit {
     }
   }
 
+  //should anything be here?
   dragOverHandler(e) {
     e.preventDefault();
-    console.log("drag");
   }
 
+  //add file end handling. think have to remove it, etc
   dragEndHandler(e) {
     e.preventDefault();
-    console.log("drop");
   }
 
 
@@ -395,54 +407,38 @@ export class MapComponent implements OnInit {
 
 
   downloadShapefile(shapes: any) {
-
-    //testing
-    //success :)
-    // var options = {
-    //   folder: 'myshapes',
-    //   types: {
-    //       point: 'mypoints',
-    //       polygon: 'mypolygons',
-    //       line: 'mylines'
-    //   }
-    // }
-    // a GeoJSON bridge for features
-    // var test = shpwrite.zip({
-    //     type: 'FeatureCollection',
-    //     features: shapes.toGeoJSON().features
-    // });
-
-    var test = shpwrite.zip({
-      type: 'FeatureCollection',
-      features: [
-          {
-              type: 'Feature',
-              geometry: {
-                  type: 'Point',
-                  coordinates: [0, 0]
-              },
-              properties: {
-                  name: 'Foo'
-              }
-          },
-          {
-              type: 'Feature',
-              geometry: {
-                  type: 'Point',
-                  coordinates: [0, 10]
-              },
-              properties: {
-                  name: 'Bar'
-              }
-          }
-      ]
+    var __this = this;
+    var zip = new JSZip();
+    //redefine shp-write zip feature with desired file hierarchy
+    [shpWriteGeojson.point(shapes), shpWriteGeojson.line(shapes), shpWriteGeojson.polygon(shapes)].forEach(function(l) {
+        if (l.geometries.length && l.geometries[0].length) {
+          shpwrite.write(
+            // field definitions
+            l.properties,
+            // geometry type
+            l.type,
+            // geometries
+            l.geometries,
+            function(err, files) {
+              var fileName = "DefinedAreas";
+              zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+              zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+              zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+              zip.file(fileName + '.prj', shpWritePrj);
+            }
+          );
+        }
     });
-    location.href = 'data:application/zip;base64,' + test;
-    // var blob = new Blob([this._base64ToArrayBuffer(test)], {type: "application/zip"});
-    // console.log(blob);
-    // saveAs(blob, "test.zip");
+
+    zip.generateAsync({ type: "base64" }).then((file) => {
+      saveAs(new Blob([this.base64ToArrayBuffer(file)], {type: "data:application/zip"}), "DefinedAreas.zip")
+    })
+    
+
   }
-  private _base64ToArrayBuffer(base64) {
+
+  //convert base64 string produced by shp-write to array buffer for conversion to blob
+  private base64ToArrayBuffer(base64) {
     var binary_string =  window.atob(base64);
     var len = binary_string.length;
     var bytes = new Uint8Array( len );
@@ -475,30 +471,117 @@ export class MapComponent implements OnInit {
     });
   }
   
+  private test(map: any) {
 
+  }
 
   private loadDrawControls(){
     this.drawnItems = new L.featureGroup();
+    this.editableItems = new L.featureGroup();
     this.highlightedItems = new L.featureGroup();
+
+    //CANT DELETE LAYERS RIGHT NOW, TRACKED BY DRAWN ITEMS
+    //NEED TO REVAMP DELETE CONTROLS  
+
     this.mymap.addLayer(this.drawnItems);
+
+    L.drawLocal.draw.handlers.marker.tooltip.start = "Click map to select cell"
+
+    
+
+    L.DrawToolbar.include({
+      getModeHandlers: function(map) {
+        return [
+          {
+            enabled: true,
+            handler: new L.Draw.Polygon(map, {}),
+            title: L.drawLocal.draw.toolbar.buttons.polygon,
+          },
+          
+          {
+            enabled: true,
+            handler: new L.Draw.Rectangle(map, {}),
+            title: L.drawLocal.draw.toolbar.buttons.rectangle
+          },
+          {
+            enabled: true,
+            handler: new L.Draw.Marker(map, {icon: new L.divIcon({
+              className: 'leaflet-mouse-marker',
+              iconAnchor: [0, 0],
+              iconSize: [0, 0]}
+            )}),
+            title: 'Select map cell'
+          }
+        ]
+      }
+    });
+
     this.drawControl = new L.Control.Draw({
         edit: {
-          featureGroup: this.drawnItems
+          featureGroup: this.editableItems
         }
     });
     this.mymap.addControl(this.drawControl);
 
     this.mymap.on(L.Draw.Event.CREATED,  (event) => {
-      var layer = event.layer;
-      //pull into separate method so can be used with file loading
-      this.addDrawnItem(layer)
+      console.log(event);
+      if(event.layerType == "marker") {
+        var bounds = this.getCell(event.layer._latlng);
+        //check if was out of map boundaries, do nothing if it was
+        if(bounds) {
+          this.addDrawnItem(L.geoJSON(bounds), false);
+        }
+      }
+      else {
+        this.addDrawnItem(event.layer)
+      }
+     
     });
+  }
+
+  //might want to refactor so hover uses this function too
+  //though a bit weird since hover function needs more info from computed values
+  private getCell(clickLocation: {lat: number, lng: number}): any {
+    var convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [clickLocation.lng, clickLocation.lat]);
+
+    var cellBounds = null;
+
+    var data = this.types.landCover.data._covjson.ranges.cover.values;
+    var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+    var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+    
+    //get difference from min to mouse position
+    var diffx = convertedMousePoint[0] - this.xmin;
+    var diffy = convertedMousePoint[1] - this.ymin;
+    //do nothing if out of range of grid
+    if(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+
+      //round down to nearest 75
+      diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
+      diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
+
+      //get cell boundaries as geojson object to draw on map
+      //cell corners
+      var c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
+      var c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
+      var c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
+      var c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
+      cellBounds = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[c1, c2, c3, c4, c1]]
+        }
+      };
+    }
+    return cellBounds;
   }
 
   //might want to do something about overlapping layers
   //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
   //maybe check if one is contained in another
-  private addDrawnItem(layer) {
+  private addDrawnItem(layer, editable: boolean = true) {
     var highlight = {
       fillColor: 'black',
       weight: 5,
@@ -521,6 +604,9 @@ export class MapComponent implements OnInit {
     this.highlightedItems.addLayer(layer);
 
     this.drawnItems.addLayer(layer);
+    if(editable) {
+      this.editableItems.addLayer(layer);
+    }
     //this.loadcovJSON("Kiawe", this.mymap, this.layers);
     //alert(layer.getLatLngs());
 
@@ -545,26 +631,6 @@ export class MapComponent implements OnInit {
   }
 
 
-  private onMapClick(e) {
-
-    // var popup = L.popup();
-
-    // popup
-    //   .setLatLng(e.latlng)
-    //   .setContent("You clicked the map at " + e.latlng.toString())
-    //   .openOn(this);
-
-    //does this do something (other than throw an error)?
-    //for coverjson
-    // new C.DraggableValuePopup({
-    //   layers: [this.layer]
-    // }).setLatLng(e.latlng).openOn(this)
-
-    //alert(this._leaflet_id);
-    //this.mymap._layers['name'+LayerID].setStyle(highlight);
-  }
-
-
   public resize(width: number, height: number) {
 
     
@@ -574,31 +640,6 @@ export class MapComponent implements OnInit {
 
     this.mymap.invalidateSize();
   }
-
-
-  //Loads the different grid points for land coverage onto leaflet map
-  // private loadMarkers(){
-  //   let temp = this.mymap.getBounds();
-  //   console.log(temp);
-  //   let markers: Grid[];
-
-  //   this.markerLayer.clearLayers();
-
-  //   if(this.mymap.getZoom() > 16){
-  //     //load the markers from service
-  //     markers = this.mapService.getMarkers(temp._southWest.lat, temp._southWest.lng, temp._northEast.lat, temp._northEast.lng);
-
-  //     for(let i = 0; i < markers.length ; i++){
-  //       this.markerLayer.addLayer(L.marker([markers[i].lat, markers[i].lng]));
-  //     }
-
-  //     this.markerLayer.addTo(this.mymap);
-  //   }
-
-  //   console.log(markers);
-    
-  
-  // }
 
   //can update recharge on select, all handled async, so shouldn't be an issue as long as landcover update handled in app
   //speaking of which, need to know how indexing works and write in-app computation of grid cells to change from that
@@ -619,40 +660,16 @@ export class MapComponent implements OnInit {
       });
       
     }
-    //do nothing if nothing selected (base landcover wont change)
-    //moved
-    // else if(this.coverBase == undefined) {
-    //   this.mapService.updateDetails(this, null, null, cover);
-    //   let coverFile = this.getCoverFile(cover);
-    //   CovJSON.read('../assets/covjson/' + coverFile).then(function(coverage) {
-    //     console.log(coverage._covjson.domain.axes);
-    //     var xutm = coverage._covjson.domain.axes.x.values;
-    //     var yutm = coverage._covjson.domain.axes.y.values;
-    //     var convertUpperLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[0] - 37.5, yutm[0] + 37.5]);
-    //     var convertLowerRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[xutm.length - 1] + 37.5, yutm[yutm.length - 1] - 37.5]);
-    //     //coordinate standards are dumb and inconsistent, need to swap
-    //     __this.upperLeftLatLng = [convertUpperLeft[1], convertUpperLeft[0]];
-    //     __this.lowerRightLatLng = [convertLowerRight[1], convertLowerRight[0]];
-    //     //test conversion
-    //     //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
-    //     __this.gridWidthCells = xutm.length;
-    //     __this.gridHeightCells = yutm.length;
-    //     //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
-    //     __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
-    //     __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
-    //     __this.coverBase = coverage;
-    //     __this.currentCover = [coverage];
-    //     console.log(__this.currentCover[0]._covjson.domain.axes);
-    //     __this.coverColors = [COVER_ENUM[cover]];
-    //     __this.updateRecharge(mymap, layers, __this)
-    //   });
-    // }
   }
 
   //horrendously innefficient, will be fixed when actual cover methods put in place
 
   //no longer need all the hole cutting stuff remove and clean up
   private updateCover(type: string) {
+
+    //test download
+    this.downloadShapefile(this.highlightedItems.toGeoJSON());
+
 
     //type base indicates should be changed back to base values
     if(type == "base") {
@@ -695,7 +712,6 @@ export class MapComponent implements OnInit {
         //reenable report generation
       });
 
-      //ADD LOGIC FOR FINDING AND REPLACING CELLS IN LANDCOVER HERE
       var data = this.types.landCover.data._covjson.ranges.cover.values;
       var indexes = this.getInternalIndexes();
       indexes.forEach(index => {
@@ -883,46 +899,6 @@ export class MapComponent implements OnInit {
   public changeScenario(type: string) {
     this.currentScenario = type;
     this.mapService.updateDetails(this, null, type, null);
-  }
-
-
-  // private getCoverFile(cover: string){
-  //   if(cover === "AlienForest"){
-  //     return "testfiles_sc0_0-fin.covjson";
-  //   }
-  //   else if(cover === "AlienForestFog"){
-  //     return "testfiles_sc0_1-fin.covjson";
-  //   }
-  //   else if(cover === "Fallow"){
-  //     return "testfiles_sc0_2-fin.covjson";
-  //   }
-  //   else if (cover === "Grassland"){
-  //     return "testfiles_sc0_3-fin.covjson";
-  //   }
-  //   else if (cover === "Kiawe"){
-  //     return "testfiles_sc0_4-fin.covjson";
-  //   }
-  //   else if(cover === "LowIntensity"){
-  //     return "testfiles_sc0_5-fin.covjson";
-  //   }
-  //   else if(cover === "Native"){
-  //     return "testfiles_sc0_6fin.covjson";
-  //   }
-  //   else if(cover === "covers") {
-  //     return "landcover.covjson";
-  //   }
-  // }
-
-
-  private agitate(vals: number[]) {
-    for(var i = 0; i <30; i++) {
-      var s1 = Math.round(Math.random() * 30);
-      var s2 = Math.round(Math.random() * 30);
-      var temp = vals[s1];
-      vals[s1] = vals[s2];
-      vals[s2] = temp;
-    }
-    return vals;
   }
 
   //generate 31 colors
