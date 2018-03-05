@@ -52,7 +52,7 @@ export class MapComponent implements OnInit {
   layers: any;
 
   drawnItems: any;
-  editableItems: any;
+  uneditableItems: any;
   highlightedItems: any;
   drawControl: any;
 
@@ -138,6 +138,8 @@ export class MapComponent implements OnInit {
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
 
     var mapLayer = L.esri.basemapLayer('Imagery').addTo(this.mymap);
+    //create empty layer for displaying base map
+    var empty = L.featureGroup();
 
     //might want to remove or modify draw controls in recharge context
     this.loadDrawControls();
@@ -148,7 +150,7 @@ export class MapComponent implements OnInit {
     //this.mymap.on('moveend', this.loadMarkers.bind(this));
 
     //thinking I like the collapsed version with this stuff
-    this.layers = L.control.layers(null, null/*, {collapsed: false}*/).addTo(this.mymap)
+    this.layers = L.control.layers({"Base Map": empty}, null/*, {collapsed: false}*/).addTo(this.mymap)
 
     this.initializeLayers();
     
@@ -169,6 +171,8 @@ export class MapComponent implements OnInit {
         }
         else {
           geojson.features.forEach(shape => {
+            //need to sparate shapes
+            console.log(shape);
             this.addDrawnItem(L.geoJSON().addData(shape));
           });
         }
@@ -183,6 +187,16 @@ export class MapComponent implements OnInit {
       L.DomUtil.removeClass(this.mymap._container,'leaflet-grab');
       L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
     });
+
+    this.mymap.on('baselayerchange', (e) => {
+      if(e.name == "Land Cover") {
+        this.drawControl.addTo(this.mymap);
+      }
+      else {
+        this.drawControl.remove();
+      }
+    });
+
 
     //possibly change if on recharge
     this.mymap.on('mouseover', () => {
@@ -294,7 +308,7 @@ export class MapComponent implements OnInit {
     e.preventDefault();
     //ensure reader initialized
     if(this.r) {
-      console.log(e.dataTransfer.files);
+      //console.log(e.dataTransfer.files);
       for(var i = 0; i < e.dataTransfer.files.length; i++) {
         //this.loadShapefile()
         
@@ -449,27 +463,29 @@ export class MapComponent implements OnInit {
 }
 
 
-  //swap to be added to drawn items list (and add in any other controls that might be necessary)
-  //wait until file loading added so can test
-  loadShapefile(fname: string, __this = this) {
-    var shapes = L.geoJSON();
-    shp(fname).then((geojson) => {
-      //formatted as array if multiple shapefiles in zip
-      if(Array.isArray(geojson)) {
-        geojson.forEach(shpfile => {
-          shpfile.forEach(shape => {
-            shapes.addData(shape);
-          });
-        });
-      }
-      else {
-        geojson.forEach(shape => {
-          shapes.addData(shape);
-        });
-      }
-      shapes.addTo(__this.mymap);
-    });
-  }
+  // //swap to be added to drawn items list (and add in any other controls that might be necessary)
+  // //wait until file loading added so can test
+  // loadShapefile(fname: string, __this = this) {
+  //   console.log("?");
+  //   var shapes = L.geoJSON();
+  //   shp(fname).then((geojson) => {
+  //     //formatted as array if multiple shapefiles in zip
+  //     if(Array.isArray(geojson)) {
+  //       geojson.forEach(shpfile => {
+  //         shpfile.forEach(shape => {
+  //           __this.addDrawnItem(L.polygon(shape));
+  //         });
+  //       });
+  //     }
+  //     else {
+  //       geojson.forEach(shape => {
+  //         console.log(shape);
+  //         __this.addDrawnItem(L.polygon(shape));
+  //       });
+  //     }
+  //     //shapes.addTo(__this.mymap);
+  //   });
+  // }
   
   private test(map: any) {
 
@@ -477,18 +493,25 @@ export class MapComponent implements OnInit {
 
   private loadDrawControls(){
     this.drawnItems = new L.featureGroup();
-    this.editableItems = new L.featureGroup();
+    this.uneditableItems = new L.featureGroup();
     this.highlightedItems = new L.featureGroup();
 
     //CANT DELETE LAYERS RIGHT NOW, TRACKED BY DRAWN ITEMS
-    //NEED TO REVAMP DELETE CONTROLS  
+    //it already works like an eraser tool dummy
 
     this.mymap.addLayer(this.drawnItems);
+    //this.mymap.addLayer(this.editableItems);
 
     L.drawLocal.draw.handlers.marker.tooltip.start = "Click map to select cell"
 
-    
+    // L.EditToolbar.CustomDelete = L.EditToolbar.Delete.extend({
+    //   initialize: function (map, options) {
+    //     L.EditToolbar.Delete.prototype.initialize.call(this, map, options);
+    //   }
+    // })
 
+
+    //might want to add some kind of undo button
     L.DrawToolbar.include({
       getModeHandlers: function(map) {
         return [
@@ -518,18 +541,45 @@ export class MapComponent implements OnInit {
 
     this.drawControl = new L.Control.Draw({
         edit: {
-          featureGroup: this.editableItems
+          featureGroup: this.drawnItems
         }
     });
     this.mymap.addControl(this.drawControl);
 
+    this.mymap.on(L.Draw.Event.DELETED, (event) => {
+      event.layers.eachLayer((layer) => {
+        //remove layers from layers not controled by the draw edit controls
+        this.drawnItems.removeLayer(layer)
+        this.highlightedItems.removeLayer(layer)
+        this.uneditableItems.removeLayer(layer)
+      })
+    });
+
+    //remove individual cells from edit control (can be deleted but not edited)
+    this.mymap.on(L.Draw.Event.EDITSTART, (event) => {
+      this.uneditableItems.eachLayer((layer) => {
+        this.drawnItems.removeLayer(layer);
+      })
+      //removed from visible layer so add to map temporarily
+      this.uneditableItems.addTo(this.mymap);
+    });
+    //add back when editing complete
+    this.mymap.on(L.Draw.Event.EDITSTOP, (event) => {
+      //remove added shapes from map so not included twice
+      this.mymap.removeLayer(this.uneditableItems);
+      //add back shapes to edit control
+      this.uneditableItems.eachLayer((layer) => {
+        this.drawnItems.addLayer(layer);
+      })
+    });
+
     this.mymap.on(L.Draw.Event.CREATED,  (event) => {
-      console.log(event);
+      //console.log(event.layer);
       if(event.layerType == "marker") {
         var bounds = this.getCell(event.layer._latlng);
         //check if was out of map boundaries, do nothing if it was
         if(bounds) {
-          this.addDrawnItem(L.geoJSON(bounds), false);
+          this.addDrawnItem(new L.Rectangle(bounds), false);
         }
       }
       else {
@@ -562,18 +612,23 @@ export class MapComponent implements OnInit {
 
       //get cell boundaries as geojson object to draw on map
       //cell corners
+      //only need first and third corners for rectangle object
       var c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
-      var c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
+      // var c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
       var c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
-      var c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
-      cellBounds = {
-        "type": "Feature",
-        "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [[c1, c2, c3, c4, c1]]
-        }
-      };
+      // var c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
+      // cellBounds = {
+      //   "type": "Feature",
+      //   "properties": {},
+      //   "geometry": {
+      //       "type": "Polygon",
+      //       "coordinates": [[c1, c2, c3, c4, c1]]
+      //   }
+      // };
+
+      //rectangle bounds in lat long order, so swap values
+      //returning rectangle bounds since can't easily use geojson layers with edit controls
+      cellBounds = [[c1[1], c1[0]], [c3[1], c3[0]]];
     }
     return cellBounds;
   }
@@ -604,8 +659,8 @@ export class MapComponent implements OnInit {
     this.highlightedItems.addLayer(layer);
 
     this.drawnItems.addLayer(layer);
-    if(editable) {
-      this.editableItems.addLayer(layer);
+    if(!editable) {
+      this.uneditableItems.addLayer(layer);
     }
     //this.loadcovJSON("Kiawe", this.mymap, this.layers);
     //alert(layer.getLatLngs());
@@ -668,7 +723,7 @@ export class MapComponent implements OnInit {
   private updateCover(type: string) {
 
     //test download
-    this.downloadShapefile(this.highlightedItems.toGeoJSON());
+    //this.downloadShapefile(this.highlightedItems.toGeoJSON());
 
 
     //type base indicates should be changed back to base values
