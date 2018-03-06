@@ -161,19 +161,54 @@ export class MapComponent implements OnInit {
     this.r.onload = (e) => {
       //console.log(this.r.result);
       shp(this.r.result).then((geojson) => {
+        console.log(geojson);
         //array if multiple shapefiles, else single object
         if(Array.isArray(geojson)) {
           geojson.forEach(shpset => {
             shpset.features.forEach(shape => {
-              this.addDrawnItem(L.geoJSON().addData(shape));
+              console.log(shape);
+              //might need to check if multipolygon or normal polygon in case stored differently, might have dfferent format
+              var coordsBase = shape.geometry.coordinates;
+              //swap coordinates, who wants consistent standards anyway?
+              for(var i = 0; i < coordsBase.length; i++) {
+                for(var j = 0; j < coordsBase[i].length; j++) {
+                  if(Array.isArray(coordsBase[i][j][0])) {
+                    for(var k = 0; k < coordsBase[i][j].length; k++) {
+                      var temp = coordsBase[i][j][k][0];
+                      coordsBase[i][j][k][0] = coordsBase[i][j][k][1];
+                      coordsBase[i][j][k][1] = temp;
+                    }
+                  }
+                  //should check if multipolygon instead, if not multipolygon add coordsBase, not coordsBase[i]
+                  else {
+                    console.log("test");
+                    var temp = coordsBase[i][j][k][0];
+                      coordsBase[i][j][0] = coordsBase[i][j][1];
+                      coordsBase[i][j][1] = temp;
+                  }
+                }
+                this.addDrawnItem(L.polygon(coordsBase[i], {}));
+              }
             });
           });
         }
         else {
           geojson.features.forEach(shape => {
-            //need to sparate shapes
-            console.log(shape);
-            this.addDrawnItem(L.geoJSON().addData(shape));
+            //console.log(shape);
+            //need to sparate shapes, saved as one multipolygon
+            //might need to check if multipolygon or normal polygon in case stored differently, might have dfferent format
+            var coordsBase = shape.geometry.coordinates;
+            //swap coordinates, who wants consistent standards anyway?
+            for(var i = 0; i < coordsBase.length; i++) {
+              for(var j = 0; j < coordsBase[i].length; j++) {
+                for(var k = 0; k < coordsBase[i][j].length; k++) {
+                  var temp = coordsBase[i][j][k][0];
+                  coordsBase[i][j][k][0] = coordsBase[i][j][k][1];
+                  coordsBase[i][j][k][1] = temp;
+                }
+              }
+              this.addDrawnItem(L.polygon(coordsBase[i], {}));
+            }
           });
         }
       });
@@ -717,7 +752,6 @@ export class MapComponent implements OnInit {
     }
   }
 
-  //horrendously innefficient, will be fixed when actual cover methods put in place
 
   //no longer need all the hole cutting stuff remove and clean up
   private updateCover(type: string) {
