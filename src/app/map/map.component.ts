@@ -132,7 +132,6 @@ export class MapComponent implements OnInit {
     
   }
 
-
   ngAfterViewInit() {
 
     this.mymap = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
@@ -165,54 +164,16 @@ export class MapComponent implements OnInit {
         //array if multiple shapefiles, else single object
         if(Array.isArray(geojson)) {
           geojson.forEach(shpset => {
-            shpset.features.forEach(shape => {
-              console.log(shape);
-              //might need to check if multipolygon or normal polygon in case stored differently, might have dfferent format
-              var coordsBase = shape.geometry.coordinates;
-              //swap coordinates, who wants consistent standards anyway?
-              for(var i = 0; i < coordsBase.length; i++) {
-                for(var j = 0; j < coordsBase[i].length; j++) {
-                  if(Array.isArray(coordsBase[i][j][0])) {
-                    for(var k = 0; k < coordsBase[i][j].length; k++) {
-                      var temp = coordsBase[i][j][k][0];
-                      coordsBase[i][j][k][0] = coordsBase[i][j][k][1];
-                      coordsBase[i][j][k][1] = temp;
-                    }
-                  }
-                  //should check if multipolygon instead, if not multipolygon add coordsBase, not coordsBase[i]
-                  else {
-                    console.log("test");
-                    var temp = coordsBase[i][j][k][0];
-                      coordsBase[i][j][0] = coordsBase[i][j][1];
-                      coordsBase[i][j][1] = temp;
-                  }
-                }
-                this.addDrawnItem(L.polygon(coordsBase[i], {}));
-              }
-            });
+            this.parseAndAddShapes(shpset);
           });
         }
         else {
-          geojson.features.forEach(shape => {
-            //console.log(shape);
-            //need to sparate shapes, saved as one multipolygon
-            //might need to check if multipolygon or normal polygon in case stored differently, might have dfferent format
-            var coordsBase = shape.geometry.coordinates;
-            //swap coordinates, who wants consistent standards anyway?
-            for(var i = 0; i < coordsBase.length; i++) {
-              for(var j = 0; j < coordsBase[i].length; j++) {
-                for(var k = 0; k < coordsBase[i][j].length; k++) {
-                  var temp = coordsBase[i][j][k][0];
-                  coordsBase[i][j][k][0] = coordsBase[i][j][k][1];
-                  coordsBase[i][j][k][1] = temp;
-                }
-              }
-              this.addDrawnItem(L.polygon(coordsBase[i], {}));
-            }
-          });
+          this.parseAndAddShapes(geojson);
         }
       });
     }
+
+    
 
     this.mymap.on('movestart', () => {
       L.DomUtil.removeClass(this.mymap._container,'crosshair-cursor-enabled');
@@ -363,6 +324,40 @@ export class MapComponent implements OnInit {
   }
 
 
+  //swap values in bottom level arrays
+  private swapCoordinates(arrLevel: any[]) {
+    //base case, values are not arrays
+    if(!Array.isArray(arrLevel[0])) {
+      var temp = arrLevel[0];
+      arrLevel[0] = arrLevel[1];
+      arrLevel[1] = temp;
+      return;
+    }
+    arrLevel.forEach(arr => {
+      this.swapCoordinates(arr);
+    });
+  }
+
+  private parseAndAddShapes(shapes: any) {
+    shapes.features.forEach(shape => {
+      var coordsBase = shape.geometry.coordinates;
+    
+      //swap coordinates, who wants consistent standards anyway?
+      //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
+      this.swapCoordinates(coordsBase);
+
+       //multipolygons separated due to how shp-write package creates shapefiles, if problematic might have to heavily modify shp-write
+      if(shape.geometry.type == "MultiPolygon") {
+        for(var i = 0; i < coordsBase.length; i++) {
+          this.addDrawnItem(L.polygon(coordsBase[i], {}));
+        }
+      }
+      else {
+        this.addDrawnItem(L.polygon(coordsBase, {}));
+      }
+    });
+  }
+
   //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
   initializeLayers() {
     var __this = this;
@@ -455,6 +450,7 @@ export class MapComponent implements OnInit {
   }
 
 
+  //do you want to include lines or points? Don't actually do anything, maybe just remove these
   downloadShapefile(shapes: any) {
     var __this = this;
     var zip = new JSZip();
@@ -488,11 +484,11 @@ export class MapComponent implements OnInit {
 
   //convert base64 string produced by shp-write to array buffer for conversion to blob
   private base64ToArrayBuffer(base64) {
-    var binary_string =  window.atob(base64);
-    var len = binary_string.length;
-    var bytes = new Uint8Array( len );
+    var bs = window.atob(base64);
+    var len = bs.length;
+    var bytes = new Uint8Array(len);
     for (var i = 0; i < len; i++)        {
-        bytes[i] = binary_string.charCodeAt(i);
+        bytes[i] = bs.charCodeAt(i);
     }
     return bytes.buffer;
 }
