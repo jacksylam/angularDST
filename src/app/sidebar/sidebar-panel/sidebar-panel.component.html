@@ -8,46 +8,44 @@
   
       <div class="btn-group-vertical scrollable-menu" #scrollableMenu role="group">
 
+        <button type="button" class="btn btn-primary btn-responsive btn-red" (click)="changeCover('base')">Revert to Base</button>
+        <p></p>
         <button type="button" class="btn btn-primary btn-responsive btn-label">Climate</button>
         <button type="button" class="btn btn-primary btn-responsive btn-climategreen" (click)="changeScenario0()">Average</button>
         <button type="button" class="btn btn-primary btn-responsive btn-orange" (click)="changeScenario1()">Drought</button>
         <p></p>
         <button type="button" class="btn btn-primary btn-responsive btn-label">Non-Irrigated</button>
-        <!-- a lot of these dont seem to match any of the covers as far as I can understand... ask for breakdown of irrigated and unirrigated covers based on landcovers you have and redo labels -->
-        <div class="colorDisplay c0 btn btn-primary btn-responsive"></div><button type="button" class="btn btn-primary btn-responsive btn-green buttonWColor" (click)="changeCover('Alien Forest')">Alien Forest</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('base')">Revert to Base</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Alien Forest Fog')">Alien Forest in Fog Zone</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Fallow/Grassland</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Grassland')">Grassland</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Kiawe/Phreatophytes')">Kiawe/Phreatophytes</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Developed Low-Intensity')">Low-Intensity Developed</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Native Forest')">Native Forest</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Native Forest Fog')">Native Forest in Fog Zone</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Near-Coastal or Estuarine Water Body')">Near-Coastal or Estuarine Water Body</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Open-Space Developed</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Predevelopment Grass/Shrub</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Predevelopment Open Native Forest</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Reservoirs</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Shrub Land</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Sparsely Vegetated, Barren</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Sugarcane - Unirrigated</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover('Taro')">Taro</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Tree Plantatation</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Tree Plantation in Fog Zone</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">Water Body</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-green" (click)="changeCover()">WetLand</button>
+        <button type="button" class="btn btn-primary btn-responsive c0" (click)="changeCover('Alien Forest')">Alien Forest</button>
+        <button type="button" class="btn btn-primary btn-responsive c1" (click)="changeCover('Alien Forest Fog')">Alien Forest in Fog Zone</button>
+        <button type="button" class="btn btn-primary btn-responsive c2" (click)="changeCover('Developed Low-Intensity')">Developed, Low-Intensity</button>
+        <button type="button" class="btn btn-primary btn-responsive c3" (click)="changeCover()">Grass/Shrub - Predevelopment</button>
+        <button type="button" class="btn btn-primary btn-responsive c4" (click)="changeCover('Grassland')">Grassland</button>
+        <button type="button" class="btn btn-primary btn-responsive c5" (click)="changeCover('Kiawe/Phreatophytes')">Kiawe/Phreatophytes</button>
+        <button type="button" class="btn btn-primary btn-responsive c6" (click)="changeCover()">Macadamia</button>
+        <button type="button" class="btn btn-primary btn-responsive c7" (click)="changeCover('Native Forest')">Native Forest</button>
+        <button type="button" class="btn btn-primary btn-responsive c8" (click)="changeCover('Native Forest Fog')">Native Forest in Fog Zone</button>
+        <button type="button" class="btn btn-primary btn-responsive c9" (click)="changeCover('Near-Coastal or Estuarine Water Body')">Near-Coastal or Estuarine Water Body</button>
+        <button type="button" class="btn btn-primary btn-responsive c10" (click)="changeCover()">Open Native Forest - Predevelopment</button>
+        <button type="button" class="btn btn-primary btn-responsive c11" (click)="changeCover()">Reservoirs</button>
+        <button type="button" class="btn btn-primary btn-responsive c12" (click)="changeCover()">Shrub Land</button>
+        <button type="button" class="btn btn-primary btn-responsive c13" (click)="changeCover()">Sparse Grassland - Predevelopment</button>
+        <button type="button" class="btn btn-primary btn-responsive c14" (click)="changeCover()">Sparsely Vegetated, Barren</button>
+        <button type="button" class="btn btn-primary btn-responsive c15" (click)="changeCover()">Sugarcane - Predevelopment</button>
+        <button type="button" class="btn btn-primary btn-responsive c16" (click)="changeCover()">Tree Plantatation</button>
+        <button type="button" class="btn btn-primary btn-responsive c17" (click)="changeCover()">Water Body</button>
+        <button type="button" class="btn btn-primary btn-responsive c18" (click)="changeCover()">WetLand</button>
         <p></p>
         <button type="button" class="btn btn-primary btn-responsive btn-label">Irrigated</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Coffee</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Corn</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Developed, Medium-Intensity</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Developed, High-Intensity</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Diversified Agriculture</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Golf Course</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Macadamia</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Pineapple</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Sugarcane - Drip Irrigation</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-blue" (click)="changeCover()">Sugarcane - Furrow Irrigation</button>
+        <button type="button" class="btn btn-primary btn-responsive c20" (click)="changeCover()">Coffee</button>
+        <button type="button" class="btn btn-primary btn-responsive c21" (click)="changeCover()">Corn</button>
+        <button type="button" class="btn btn-primary btn-responsive c22" (click)="changeCover()">Developed, High-Intensity</button>
+        <button type="button" class="btn btn-primary btn-responsive c23" (click)="changeCover()">Developed, Medium-Intensity</button>
+        <button type="button" class="btn btn-primary btn-responsive c24" (click)="changeCover()">Diversified Agriculture</button>
+        <button type="button" class="btn btn-primary btn-responsive c25" (click)="changeCover()">Golf Course</button>
+        <button type="button" class="btn btn-primary btn-responsive c26" (click)="changeCover()">Pineapple</button>
+        <button type="button" class="btn btn-primary btn-responsive c27" (click)="changeCover()">Sugarcane - Drip Irrigation</button>
+        <button type="button" class="btn btn-primary btn-responsive c28" (click)="changeCover()">Sugarcane - Furrow Irrigation</button>
+        <button type="button" class="btn btn-primary btn-responsive c29" (click)="changeCover('Taro')">Taro</button>
       </div>
 
     </div>

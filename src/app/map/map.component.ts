@@ -47,6 +47,7 @@ export class MapComponent implements OnInit {
   csvLayer: any;
   csvData: any;
   markerLayer = new L.LayerGroup;
+  baseLayer: any;
   
   layer: any;
   layers: any;
@@ -184,7 +185,10 @@ export class MapComponent implements OnInit {
       L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
     });
 
+    //need to add a way to store initial layer, just need layer and name probably, so manually add name at init
     this.mymap.on('baselayerchange', (e) => {
+      //store current layer details
+      this.baseLayer = e;
       if(e.name == "Land Cover") {
         this.drawControl.addTo(this.mymap);
       }
@@ -358,8 +362,43 @@ export class MapComponent implements OnInit {
     });
   }
 
+  private toggleShapesHidden() {
+    
+  }
+
+  private changeLayerOpacity(opacity: number) {
+    //shouldn't change base map opacity
+    if(this.baseLayer.name != "Base Map") {
+      this.baseLayer.layer.options.opacity = opacity;
+    }
+  }
+
+  private shapeSelectMode() {
+
+  }
+
+  private cellSelectMode() {
+    
+  }
+
+  private wholeMapMode() {
+
+  }
+
+  private getSelectedCellMetrics() {
+
+  }
+
+  private getSelectedShapeMetrics() {
+
+  }
+
+  private getWholeMapMetrics() {
+
+  }
+
   //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
-  initializeLayers() {
+  private initializeLayers() {
     var __this = this;
 
     var init1 = CovJSON.read(MapComponent.landCoverFile).then(function(coverage) {
@@ -396,6 +435,11 @@ export class MapComponent implements OnInit {
       //console.log(__this.currentCover._covjson.domain.axes);
 
       __this.loadCover(__this.types.landCover, false);
+
+      __this.baseLayer = {
+        name: "Land Cover",
+        layer: __this.types.landCover.layer
+      }
     });
 
     
@@ -701,7 +745,6 @@ export class MapComponent implements OnInit {
     //   //clone base options
     //   MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
     // }
-
     layer.on('click', function() {
       if(this.highlighted) {
         this.setStyle(unhighlight);
@@ -963,11 +1006,14 @@ export class MapComponent implements OnInit {
       }
     })
     .setOpacity(1)
-    //ensure recharge layer on top (don't want to have to remove covers to view it)
-    if(this.types.recharge.layer != undefined) {
-      this.types.recharge.layer.bringToFront();
-    }
+    //uses base layers now
+    // //ensure recharge layer on top (don't want to have to remove covers to view it)
+    // if(this.types.recharge.layer != undefined) {
+    //   this.types.recharge.layer.bringToFront();
+    // }
     //recharge disabled by default
+
+    //a bit sketchy, might want to change to keep current layer, though might not ever happen if can't update in recharge (should still change it)
     if(coverage != this.types.recharge) {
       layer.addTo(this.mymap);
     }
@@ -1031,9 +1077,9 @@ export class MapComponent implements OnInit {
     //   palette.push(hex);
       
     // }
-    for(i = 0; i < 31; i++) {
+    for(i = 0; i < 30; i++) {
       COVER_INDEX_DETAILS[i].color = palette[i];
-      document.documentElement.style.setProperty("--color" + i.toString(), palette[i]);
+      document.documentElement.style.setProperty("--color" + i.toString(), palette[i + 1]);
     }
     
     //palette = this.agitate(palette);

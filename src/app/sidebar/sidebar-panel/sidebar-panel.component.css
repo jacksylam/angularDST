@@ -98,6 +98,10 @@
   background-color: #c9a824
 }
 
+.btn-red{
+  background-color: red
+}
+
 .btn-label{
     pointer-events: none;   
     text-decoration: underline;
@@ -105,95 +109,94 @@
 }
 
 .c0{
-  background: var(--color0);
+  background: linear-gradient(90deg, var(--color0) 15%, #009933 15%, #009933 15%, #009933 15%, #009933 15%, #009933 15%);
+  font-size: fit-width;
 }
 .c1{
-  background: var(--color1);
+  background: linear-gradient(90deg, var(--color1) 50%, #009933 50%)
 }
 .c2{
-  background: var(--color2);
+  background: linear-gradient(90deg, var(--color2) 50%, #009933 50%)
 }
 .c3{
-  background: var(--color3);
+  background: linear-gradient(90deg, var(--color3) 50%, #009933 50%)
 }
 .c4{
-  background: var(--color4);
+  background: linear-gradient(90deg, var(--color4) 50%, #009933 50%)
 }
 .c5{
-  background: var(--color5);
+  background: linear-gradient(90deg, var(--color5) 50%, #009933 50%)
 }
 .c6{
-  background: var(--color6);
+  background: linear-gradient(90deg, var(--color6) 50%, #009933 50%)
 }
 .c7{
-  background: var(--color7);
+  background: linear-gradient(90deg, var(--color7) 50%, #009933 50%)
 }
 .c8{
-  background: var(--color8);
+  background: linear-gradient(90deg, var(--color8) 50%, #009933 50%)
 }
 .c9{
-  background: var(--color9);
+  font-size: 100px;
+  background: linear-gradient(90deg, var(--color9) 50%, #009933 50%)
 }
 .c10{
-  background: var(--color10);
+  background: linear-gradient(90deg, var(--color10) 50%, #009933 50%)
 }
 .c11{
-  background: var(--color11);
+  background: linear-gradient(90deg, var(--color11) 50%, #009933 50%)
 }
 .c12{
-  background: var(--color12);
+  background: linear-gradient(90deg, var(--color12) 50%, #009933 50%)
 }
 .c13{
-  background: var(--color13);
+  background: linear-gradient(90deg, var(--color13) 50%, #009933 50%)
 }
 .c14{
-  background: var(--color14);
+  background: linear-gradient(90deg, var(--color14) 50%, #009933 50%)
 }
 .c15{
-  background: var(--color15);
+  background: linear-gradient(90deg, var(--color15) 50%, #009933 50%)
 }
 .c16{
-  background: var(--color16);
+  background: linear-gradient(90deg, var(--color16) 50%, #009933 50%)
 }
 .c17{
-  background: var(--color17);
+  background: linear-gradient(90deg, var(--color17) 50%, #009933 50%)
 }
 .c18{
-  background: var(--color18);
+  background: linear-gradient(90deg, var(--color18) 50%, #009933 50%)
 }
 .c19{
-  background: var(--color19);
+  background: linear-gradient(90deg, var(--color19) 50%, #009933 50%)
 }
 .c20{
-  background: var(--color20);
+  background: linear-gradient(90deg, var(--color20) 50%, #0099cc 50%)
 }
 .c21{
-  background: var(--color21);
+  background: linear-gradient(90deg, var(--color21) 50%, #0099cc 50%)
 }
 .c22{
-  background: var(--color22);
+  background: linear-gradient(90deg, var(--color22) 50%, #0099cc 50%)
 }
 .c23{
-  background: var(--color23);
+  background: linear-gradient(90deg, var(--color23) 50%, #0099cc 50%)
 }
 .c24{
-  background: var(--color24);
+  background: linear-gradient(90deg, var(--color24) 50%, #0099cc 50%)
 }
 .c25{
-  background: var(--color25);
+  background: linear-gradient(90deg, var(--color25) 50%, #0099cc 50%)
 }
 .c26{
-  background: var(--color26);
+  background: linear-gradient(90deg, var(--color26) 50%, #0099cc 50%)
 }
 .c27{
-  background: var(--color27);
+  background: linear-gradient(90deg, var(--color27) 50%, #0099cc 50%)
 }
 .c28{
-  background: var(--color28);
+  background: linear-gradient(90deg, var(--color28) 50%, #0099cc 50%)
 }
 .c29{
-  background: var(--color29);
-}
-.c30{
-  background: var(--color30);
+  background: linear-gradient(90deg, var(--color29) 50%, #0099cc 50%)
 }
