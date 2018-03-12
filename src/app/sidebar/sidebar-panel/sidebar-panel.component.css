@@ -42,11 +42,6 @@
   {
     cursor: pointer;
   }
-  
-  .buttonWColor {
-    width: 181px;
-    display: inline-block;
-  }
 
   .row {
     margin: 0px !important;
@@ -108,95 +103,108 @@
     font-weight: bold
 }
 
+.medium {
+  transform: scale(.9, 1);
+}
+
+.long {
+  transform: scale(.75, 1);
+  margin-left: -5%
+}
+
+.shift {
+  margin-left: 5%
+}
+
+
+
 .c0{
-  background: linear-gradient(90deg, var(--color0) 15%, #009933 15%, #009933 15%, #009933 15%, #009933 15%, #009933 15%);
-  font-size: fit-width;
+  background: linear-gradient(90deg, var(--color0) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c1{
-  background: linear-gradient(90deg, var(--color1) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color1) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c2{
-  background: linear-gradient(90deg, var(--color2) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color2) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c3{
-  background: linear-gradient(90deg, var(--color3) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color3) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c4{
-  background: linear-gradient(90deg, var(--color4) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color4) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c5{
-  background: linear-gradient(90deg, var(--color5) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color5) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c6{
-  background: linear-gradient(90deg, var(--color6) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color6) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c7{
-  background: linear-gradient(90deg, var(--color7) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color7) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c8{
-  background: linear-gradient(90deg, var(--color8) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color8) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c9{
-  font-size: 100px;
-  background: linear-gradient(90deg, var(--color9) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color9) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c10{
-  background: linear-gradient(90deg, var(--color10) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color10) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c11{
-  background: linear-gradient(90deg, var(--color11) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color11) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c12{
-  background: linear-gradient(90deg, var(--color12) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color12) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c13{
-  background: linear-gradient(90deg, var(--color13) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color13) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c14{
-  background: linear-gradient(90deg, var(--color14) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color14) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c15{
-  background: linear-gradient(90deg, var(--color15) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color15) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c16{
-  background: linear-gradient(90deg, var(--color16) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color16) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c17{
-  background: linear-gradient(90deg, var(--color17) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color17) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c18{
-  background: linear-gradient(90deg, var(--color18) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color18) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c19{
-  background: linear-gradient(90deg, var(--color19) 50%, #009933 50%)
+  background: linear-gradient(90deg, var(--color19) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
 }
 .c20{
-  background: linear-gradient(90deg, var(--color20) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color20) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c21{
-  background: linear-gradient(90deg, var(--color21) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color21) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c22{
-  background: linear-gradient(90deg, var(--color22) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color22) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c23{
-  background: linear-gradient(90deg, var(--color23) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color23) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c24{
-  background: linear-gradient(90deg, var(--color24) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color24) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c25{
-  background: linear-gradient(90deg, var(--color25) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color25) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c26{
-  background: linear-gradient(90deg, var(--color26) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color26) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c27{
-  background: linear-gradient(90deg, var(--color27) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color27) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c28{
-  background: linear-gradient(90deg, var(--color28) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color28) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }
 .c29{
-  background: linear-gradient(90deg, var(--color29) 50%, #0099cc 50%)
+  background: linear-gradient(90deg, var(--color29) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
 }

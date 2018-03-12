@@ -9,7 +9,7 @@ import { isNullOrUndefined } from 'util';
 import 'rxjs/add/observable/forkJoin';
 import { Observable } from 'rxjs';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
-import { COVER_ENUM, COVER_INDEX_DETAILS } from './shared/cover_enum';
+import { COVER_ENUM, COVER_INDEX_DETAILS, LC_TO_BUTTON_INDEX } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
 import * as shpwrite from 'shp-write';
@@ -1049,12 +1049,13 @@ export class MapComponent implements OnInit {
           }
           //avoid black so lines stand out more (have 5 extra colors)
           if(!first) {
-            r = (Math.round(range / 2 * i)).toString(16);
+            r = (Math.round(range / 3 * i)).toString(16);
             g = (Math.round(range / 2 * j)).toString(16);
             b = (Math.round(range / 2 * k)).toString(16);
             if(r.length < 2) r = "0" + r;
             if(g.length < 2) g = "0" + g;
             if(b.length < 2) b = "0" + b;
+            console.log(r + " " + g + " " + b);
             color = "#" + r + g + b;
             palette.push(color);
           }
@@ -1077,9 +1078,10 @@ export class MapComponent implements OnInit {
     //   palette.push(hex);
       
     // }
+    console.log(palette[27])
     for(i = 0; i < 30; i++) {
       COVER_INDEX_DETAILS[i].color = palette[i];
-      document.documentElement.style.setProperty("--color" + i.toString(), palette[i + 1]);
+      document.documentElement.style.setProperty("--color" + (LC_TO_BUTTON_INDEX[i + 1]).toString(), palette[i + 1]);
     }
     
     //palette = this.agitate(palette);
