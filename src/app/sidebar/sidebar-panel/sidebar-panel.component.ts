@@ -19,9 +19,12 @@ import {MapService} from '../../map/shared/map.service';
     ]),
   ]
 })
+
+
 export class SidebarPanelComponent implements OnInit {
   state = 'inactive';
 
+  layer = "landcover";
 
   constructor(private mapService: MapService) { }
 
@@ -53,5 +56,14 @@ export class SidebarPanelComponent implements OnInit {
 
   changeCover(type: string) {
     this.mapService.changeCover(this, type);
+  }
+
+  //might want to disable custom shapes button for recharge if no drawn items
+  setMode(mode: string) {
+    this.mapService.setMode(this, mode);
+  }
+
+  changeLayer(type: string) {
+    this.layer = type;
   }
 }

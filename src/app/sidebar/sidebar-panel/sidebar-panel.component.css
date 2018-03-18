@@ -74,8 +74,12 @@
     height: auto;
     max-height: 450px;
     overflow-x: hidden;
+    width: 240px;
+  }
+
+  .internal-menu {
     width: 230px;
-}
+  }
 
 .btn-green{
     background-color: #009933
@@ -94,117 +98,210 @@
 }
 
 .btn-red{
-  background-color: red
+  background-color: rgb(125, 0, 0);
+}
+.btn-red:hover {
+  color: green;
 }
 
 .btn-label{
     pointer-events: none;   
-    text-decoration: underline;
+    font-size: 150%;
     font-weight: bold
 }
 
+.btn-sublabel1{
+  background-color: #016422;
+  pointer-events: none;   
+  font-size: 100%;
+  font-weight: bold
+}
+
+.btn-sublabel2{
+  background-color: rgb(0, 97, 110);
+  pointer-events: none;   
+  font-size: 100%;
+  font-weight: bold
+}
+
+.outline {
+  border-radius: 7px;
+  border: 3px solid blue;
+}
+
 .medium {
-  transform: scale(.9, 1);
+  transform: scale(.85, 1);
+  margin-left: -2%;
 }
 
 .long {
-  transform: scale(.75, 1);
-  margin-left: -5%
+  transform: scale(.8, 1);
+  margin-left: -4%;
 }
 
 .shift {
-  margin-left: 5%
+  margin-left: 5%;
 }
 
+.btn-red:hover {
+  color: greenyellow;
+}
 
+.btn-custom-t1 {
+  border: 1px solid rgb(95, 136, 0);
+}
+
+.btn-custom-t1:hover {
+  color: rgb(95, 136, 0);
+}
+
+.btn-custom-t2 {
+  border: 1px solid #016422;
+}
+
+.btn-custom-t2:hover {
+  color: #016422;
+}
+
+.btn-custom-t3 {
+  border: 1px solid rgb(0, 97, 110);;
+}
+
+.btn-custom-t3:hover {
+  color: rgb(0, 97, 110);
+}
+
+.btn-custom-t4 {
+  border: 1px solid rgb(125, 0, 0);
+}
+
+.btn-custom-t4:hover {
+  color: rgb(125, 0, 0);
+}
+
+.btn-ivory {
+  background: ivory;
+  color: black;
+  font-weight: bold;
+}
 
 .c0{
-  background: linear-gradient(90deg, var(--color0) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  background: linear-gradient(90deg, var(--color0) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
+  color: black;
 }
 .c1{
-  background: linear-gradient(90deg, var(--color1) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  background: linear-gradient(90deg, var(--color1) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
+  color: black;
 }
 .c2{
-  background: linear-gradient(90deg, var(--color2) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  background: linear-gradient(90deg, var(--color2) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
+  color: black;
 }
 .c3{
-  background: linear-gradient(90deg, var(--color3) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color3) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c4{
-  background: linear-gradient(90deg, var(--color4) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color4) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c5{
-  background: linear-gradient(90deg, var(--color5) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color5) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c6{
-  background: linear-gradient(90deg, var(--color6) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color6) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c7{
-  background: linear-gradient(90deg, var(--color7) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color7) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c8{
-  background: linear-gradient(90deg, var(--color8) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color8) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c9{
-  background: linear-gradient(90deg, var(--color9) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color9) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c10{
-  background: linear-gradient(90deg, var(--color10) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color10) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c11{
-  background: linear-gradient(90deg, var(--color11) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color11) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c12{
-  background: linear-gradient(90deg, var(--color12) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color12) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c13{
-  background: linear-gradient(90deg, var(--color13) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color13) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c14{
-  background: linear-gradient(90deg, var(--color14) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color14) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c15{
-  background: linear-gradient(90deg, var(--color15) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color15) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c16{
-  background: linear-gradient(90deg, var(--color16) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color16) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c17{
-  background: linear-gradient(90deg, var(--color17) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color17) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c18{
-  background: linear-gradient(90deg, var(--color18) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color18) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c19{
-  background: linear-gradient(90deg, var(--color19) 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%, #009933 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color19) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c20{
-  background: linear-gradient(90deg, var(--color20) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color20) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c21{
-  background: linear-gradient(90deg, var(--color21) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color21) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c22{
-  background: linear-gradient(90deg, var(--color22) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color22) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c23{
-  background: linear-gradient(90deg, var(--color23) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color23) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c24{
-  background: linear-gradient(90deg, var(--color24) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color24) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c25{
-  background: linear-gradient(90deg, var(--color25) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color25) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c26{
-  background: linear-gradient(90deg, var(--color26) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color26) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c27{
-  background: linear-gradient(90deg, var(--color27) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color27) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c28{
-  background: linear-gradient(90deg, var(--color28) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color28) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }
 .c29{
-  background: linear-gradient(90deg, var(--color29) 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%, #0099cc 10%);
+  color: black;
+  background: linear-gradient(90deg, var(--color29) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }

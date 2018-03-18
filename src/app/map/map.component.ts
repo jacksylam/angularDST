@@ -59,6 +59,10 @@ export class MapComponent implements OnInit {
 
   highlightedCell: any;
 
+  selectedCell: any;
+
+  interactionEnabled: boolean;
+
   // landCover: any;
   // landCoverLayer: any;
   // recharge: any;
@@ -189,11 +193,22 @@ export class MapComponent implements OnInit {
     this.mymap.on('baselayerchange', (e) => {
       //store current layer details
       this.baseLayer = e;
-      if(e.name == "Land Cover") {
-        this.drawControl.addTo(this.mymap);
-      }
-      else {
-        this.drawControl.remove();
+      switch(e.name) {
+        case "Land Cover":
+          this.mapService.changeLayer(this, "landcover");
+          this.enableShapeInteraction(false);
+          this.drawControl.addTo(this.mymap);
+          break;
+        //need to figure out how you want to handle this, should modifications be disabled?
+        case "Base Map":
+          this.mapService.changeLayer(this, "base");
+          this.enableShapeInteraction(false);
+          this.drawControl.remove();
+          break;
+        case "Recharge Rate":
+          this.mapService.changeLayer(this, "recharge");
+          this.drawControl.remove();
+          break;
       }
     });
 
@@ -210,26 +225,9 @@ export class MapComponent implements OnInit {
         clearTimeout(this.popupTimer);
         this.popupTimer = setTimeout(() => {
 
-          //quadrants differ in directional change, should be upper left, but generalize by finding minimum of each
-          //x grid corresponds to long
-          //console.log(this.gridWidthCells);
-          //this is off because grid cells offish because earth is round
-          //instead need to convert coordinates to utm then find corresponding grid cell
-          // var cellx = Math.floor((e.latlng.lng - Math.min(this.upperLeftLatLng[1], this.lowerRightLatLng[1])) / this.gridWidthLong * this.gridWidthCells);
-          // // y lat
-          // var celly = Math.floor(this.gridHeightLat / this.gridHeightCells * (e.latlng.lat - Math.min(this.upperLeftLatLng[0], this.lowerRightLatLng[0])));
-          // //test cell calc
-          // console.log("(" + cellx + "," + celly + ")")
-
           //coords for conversion in long lat format
           var convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
-          //console.log(convertedMousePoint);
           //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
-          //coord arrays converted to maps when layer generated
-          
-          
-          //remember to change data name for this part (not recharge)
-          //also need to remove all array stuff, since can be handled in single layer now
           var data = this.types.landCover.data._covjson.ranges.cover.values;
           var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
           var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
@@ -327,7 +325,6 @@ export class MapComponent implements OnInit {
     e.preventDefault();
   }
 
-
   //swap values in bottom level arrays
   private swapCoordinates(arrLevel: any[]) {
     //base case, values are not arrays
@@ -373,24 +370,114 @@ export class MapComponent implements OnInit {
     }
   }
 
-  private shapeSelectMode() {
-
+  public setMode(mode: string) {
+    switch(mode) {
+      case "cell":
+        this.disableShapeInteraction();
+        this.addCellInteraction();
+        break;
+      case "custom":
+        this.enableShapeInteraction(true);
+        this.getSelectedShapeMetrics();
+        break;
+      case "aquifer":
+        break;
+      case "full":
+        break;
+    }
   }
 
-  private cellSelectMode() {
+  private addCellInteraction() {
+    //really need to refoactor this to a generalized function since used 3 times
+    this.mymap.on('click', (e) => {
+      if(this.selectedCell) {
+        this.mymap.removeLayer(this.selectedCell);
+      }
+      var convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
+      //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
+      var data = this.types.landCover.data._covjson.ranges.cover.values;
+      var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+      var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+      
+      //get difference from min to mouse position
+      var diffx = convertedMousePoint[0] - this.xmin;
+      var diffy = convertedMousePoint[1] - this.ymin;
+      //do nothing if out of range of grid
+      if(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+
+        //round down to nearest 75
+        diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
+        diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
+
+        //get cell boundaries as geojson object to draw on map
+        //cell corners
+        var c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
+        var c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
+        var c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
+        var c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
+        var cellBounds = {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+              "type": "Polygon",
+              "coordinates": [[c1, c2, c3, c4, c1]]
+          }
+        };
+        //should also make highlight styles global variables since used a lot
+        this.selectedCell = L.geoJSON(cellBounds, {interactive: false})
+        .setStyle({
+            fillColor: 'black',
+            weight: 3,
+            opacity: 1,
+            color: 'black',  //Outline color
+            fillOpacity: 0.2
+        })
+        .addTo(this.mymap)
+
+        //add back 37.5 and rounded difference value to get cell coordinate
+        var xCellVal = this.xmin + 37.5 + diffx;
+        var yCellVal = this.ymin + 37.5 + diffy;
+
+        //find index of cell with coordinates
+        var xIndex = xs.indexOf(xCellVal);
+        var yIndex = ys.indexOf(yCellVal);
+
+        //convert to data cell index
+        var index = this.getIndex(xIndex, yIndex);
+        this.getSelectedCellMetrics(index);
+      }
+    });
+  }
+
+  private disableShapeInteraction() {
+    if(this.interactionEnabled) {
+      this.interactionEnabled = false;
+      this.drawnItems.eachLayer((layer) => {
+        layer.off('click');
+      });
+    }
+  }
+
+  private enableShapeInteraction(metrics: boolean) {
+    if(!this.interactionEnabled) {
+      this.interactionEnabled = true;
+      if(this.selectedCell) {
+        this.mymap.removeLayer(this.selectedCell);
+      }
+      this.drawnItems.eachLayer((layer) => {
+        this.addInteractionToLayer(layer, metrics, this);
+      });
+      this.mymap.off('click');
+    }
+  }
+
+  private getSelectedCellMetrics(index: number) {
     
   }
 
-  private wholeMapMode() {
-
-  }
-
-  private getSelectedCellMetrics() {
-
-  }
-
   private getSelectedShapeMetrics() {
-
+    //want internal cells of highlighted shapes, again, redundant code, refactor
+    //use highlighted items, if none selected indicate default message (no shape selected)
   }
 
   private getWholeMapMetrics() {
@@ -471,9 +558,10 @@ export class MapComponent implements OnInit {
       });
       this.types.aquifers.layer = aquifers;
       aquifers.addTo(this.mymap);
-      //this.downloadShapefile(aquifers);
       this.layers.addOverlay(aquifers, this.types.aquifers.label);
     });
+
+    this.interactionEnabled = true;
 
     //shouldn't need this with base layers
     // Promise.all([init1, init2/*, init3*/]).then(() => {
@@ -538,33 +626,8 @@ export class MapComponent implements OnInit {
 }
 
 
-  // //swap to be added to drawn items list (and add in any other controls that might be necessary)
-  // //wait until file loading added so can test
-  // loadShapefile(fname: string, __this = this) {
-  //   console.log("?");
-  //   var shapes = L.geoJSON();
-  //   shp(fname).then((geojson) => {
-  //     //formatted as array if multiple shapefiles in zip
-  //     if(Array.isArray(geojson)) {
-  //       geojson.forEach(shpfile => {
-  //         shpfile.forEach(shape => {
-  //           __this.addDrawnItem(L.polygon(shape));
-  //         });
-  //       });
-  //     }
-  //     else {
-  //       geojson.forEach(shape => {
-  //         console.log(shape);
-  //         __this.addDrawnItem(L.polygon(shape));
-  //       });
-  //     }
-  //     //shapes.addTo(__this.mymap);
-  //   });
-  // }
   
-  private test(map: any) {
 
-  }
 
   private loadDrawControls(){
     this.drawnItems = new L.featureGroup();
@@ -712,6 +775,11 @@ export class MapComponent implements OnInit {
   //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
   //maybe check if one is contained in another
   private addDrawnItem(layer, editable: boolean = true) {
+    
+    //this.downloadShapefile(this.drawnItems)
+
+    var __this = this;
+
     var highlight = {
       fillColor: 'black',
       weight: 5,
@@ -719,15 +787,6 @@ export class MapComponent implements OnInit {
       color: 'black',  //Outline color
       fillOpacity: 0.2
     };
-    var unhighlight = {
-      weight: 5,
-      opacity: 0.5,
-      color: 'black',  //Outline color
-      fillOpacity: 0
-    }
-    //this.downloadShapefile(this.drawnItems)
-
-    var __this = this;
 
     layer.setStyle(highlight);
     layer.highlighted = true;
@@ -745,6 +804,24 @@ export class MapComponent implements OnInit {
     //   //clone base options
     //   MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
     // }
+    this.addInteractionToLayer(layer, false, this);
+  }
+
+  private addInteractionToLayer(layer: any, emitMetrics: boolean, __this) {
+    var highlight = {
+      fillColor: 'black',
+      weight: 5,
+      opacity: 1,
+      color: 'black',  //Outline color
+      fillOpacity: 0.2
+    };
+    var unhighlight = {
+      weight: 5,
+      opacity: 0.5,
+      color: 'black',  //Outline color
+      fillOpacity: 0
+    }
+
     layer.on('click', function() {
       if(this.highlighted) {
         this.setStyle(unhighlight);
@@ -755,6 +832,10 @@ export class MapComponent implements OnInit {
         this.setStyle(highlight);
         this.highlighted = true;
         __this.highlightedItems.addLayer(this);
+      }
+      //if indicated that metrics are to be computed, recompute on change
+      if(emitMetrics) {
+        this.getSelectedShapeMetrics();
       }
     })
   }
@@ -1055,7 +1136,6 @@ export class MapComponent implements OnInit {
             if(r.length < 2) r = "0" + r;
             if(g.length < 2) g = "0" + g;
             if(b.length < 2) b = "0" + b;
-            console.log(r + " " + g + " " + b);
             color = "#" + r + g + b;
             palette.push(color);
           }

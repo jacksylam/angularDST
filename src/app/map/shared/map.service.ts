@@ -74,10 +74,19 @@ export class MapService {
     return markers;
   }
 
+  changeLayer(map: any, type: string) {
+    let index = this.mapHash.indexOf(map);
+    this.panelButtonHash[index].changeLayer(type);
+  }
 
   changeCover(buttonPanel: any, cover: string) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
     this.mapHash[index].updateCover(cover);
+  }
+
+  setMode(buttonPanel: any, mode: string) {
+    let index = this.panelButtonHash.indexOf(buttonPanel);
+    this.mapHash[index].setMode(mode);
   }
 
   changeScenario(buttonPanel: any, scenario: string) {
