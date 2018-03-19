@@ -5,6 +5,7 @@ import { SidebarMenuComponent } from './sidebar-menu/sidebar-menu.component';
 import { MatSidenavModule } from '@angular/material';
 import { SidebarPanelComponent } from './sidebar-panel/sidebar-panel.component';
 import { BottombarPanelComponent } from './bottombar-panel/bottombar-panel.component';
+import { SidebarControlsComponent } from './sidebar-controls/sidebar-controls.component';
 import {GraphsComponent} from '../graphs/graphs.component';
 
 @NgModule({
@@ -13,14 +14,18 @@ import {GraphsComponent} from '../graphs/graphs.component';
     MatSidenavModule,
     BrowserAnimationsModule
   ],
-  declarations: [SidebarMenuComponent, 
+  declarations: [
+    SidebarMenuComponent, 
     SidebarPanelComponent, 
     BottombarPanelComponent,
-    GraphsComponent],
+    SidebarControlsComponent,
+    GraphsComponent
+  ],
   exports: [
     SidebarMenuComponent,
     SidebarPanelComponent,
-    BottombarPanelComponent
+    BottombarPanelComponent,
+    SidebarControlsComponent
   ]
 })
 export class SidebarModule { }

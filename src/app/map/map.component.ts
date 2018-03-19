@@ -198,16 +198,19 @@ export class MapComponent implements OnInit {
           this.mapService.changeLayer(this, "landcover");
           this.enableShapeInteraction(false);
           this.drawControl.addTo(this.mymap);
+          this.mapService.baseDetails(this);
           break;
         //need to figure out how you want to handle this, should modifications be disabled?
         case "Base Map":
           this.mapService.changeLayer(this, "base");
           this.enableShapeInteraction(false);
           this.drawControl.remove();
+          this.mapService.baseDetails(this);
           break;
         case "Recharge Rate":
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
+          this.mapService.updateMetrics(this, null, null, "full");
           break;
       }
     });
@@ -359,8 +362,13 @@ export class MapComponent implements OnInit {
     });
   }
 
-  private toggleShapesHidden() {
-    
+  showHideObjects(showOrHide: string) {
+    if(showOrHide == "Show") {
+      this.drawnItems.addTo(this.mymap);
+    }
+    else {
+      this.mymap.removeLayer(this.drawnItems);
+    }
   }
 
   private changeLayerOpacity(opacity: number) {
@@ -383,6 +391,7 @@ export class MapComponent implements OnInit {
       case "aquifer":
         break;
       case "full":
+        this.getWholeMapMetrics();
         break;
     }
   }
@@ -472,16 +481,23 @@ export class MapComponent implements OnInit {
   }
 
   private getSelectedCellMetrics(index: number) {
-    
+    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    this.mapService.updateMetrics(this, this.types.recharge.baseData[index], rechargeVals[index], "cell");
   }
 
   private getSelectedShapeMetrics() {
-    //want internal cells of highlighted shapes, again, redundant code, refactor
-    //use highlighted items, if none selected indicate default message (no shape selected)
+    var originalRecharge = 0;
+    var currentRecharge = 0;
+    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    this.getInternalIndexes().forEach((index) => {
+      originalRecharge += this.types.recharge.baseData[index];
+      currentRecharge += rechargeVals[index];
+    })
+    this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "custom");
   }
 
   private getWholeMapMetrics() {
-
+    this.mapService.updateMetrics(this, null, null, "full");
   }
 
   //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
@@ -534,6 +550,7 @@ export class MapComponent implements OnInit {
       __this.types.recharge.data = coverage;
       //deepcopy values for comparisons with modified types
       __this.types.recharge.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.recharge.values));
+      __this.mapService.setTotalAndCurrentRecharge(__this, __this.types.recharge.baseData);
       //console.log(__this.currentCover._covjson.domain.axes);
       //change this
 
@@ -835,7 +852,7 @@ export class MapComponent implements OnInit {
       }
       //if indicated that metrics are to be computed, recompute on change
       if(emitMetrics) {
-        this.getSelectedShapeMetrics();
+        __this.getSelectedShapeMetrics();
       }
     })
   }
@@ -1110,7 +1127,7 @@ export class MapComponent implements OnInit {
 
   public changeScenario(type: string) {
     this.currentScenario = type;
-    this.mapService.updateDetails(this, null, type, null);
+    this.mapService.updateDetails(this, type);
   }
 
   //generate 31 colors

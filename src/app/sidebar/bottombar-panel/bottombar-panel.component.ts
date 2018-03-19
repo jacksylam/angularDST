@@ -23,9 +23,14 @@ import {MapService} from '../../map/shared/map.service';
 export class BottombarPanelComponent implements OnInit {
   state = 'inactive';
   covDetails;
-  totalRecharge = "";
-  baseLandcover = "";
-  scenario = "";
+  current = "";
+  original= "";
+  pchange= "";
+  diff= "";
+  mode="none";
+  scenario = "Average";
+  totalRecharge;
+  totalOriginalRecharge;
 
   constructor(private mapService: MapService,) { }
 
@@ -46,18 +51,54 @@ export class BottombarPanelComponent implements OnInit {
     
   }
 
-  updateDetails(totalRecharge, scenario, baseLandcover) {
+  updateTotalRecharge(totalRecharge: number) {
+    this.totalRecharge = totalRecharge;
+  }
+
+  setTotalRecharge(totalOriginalRecharge: number) {
+    this.totalOriginalRecharge = totalOriginalRecharge;
+  }
+
+  updateMetrics(original: number, current: number, mode: string) {
+    this.mode = mode;
+    //no reason to update repeatedly, store full map data ahead of time
+    //should do the same for aquifers since also static
+    if(mode == "full") {
+      this.original = this.totalOriginalRecharge.toString();
+      this.current = this.totalRecharge.toString();
+      var diff = this.totalOriginalRecharge - this.totalRecharge;
+      this.diff = diff.toString();
+      this.pchange = (diff / this.totalOriginalRecharge * 100).toString();
+    }
+    else {
+      this.original = original.toString();
+      this.current = current.toString();
+      var diff = original - current;
+      console.log(original);
+      this.diff = diff.toString();
+      this.pchange = (diff / original * 100).toString();
+    }
+    
+    
+  }
+
+  updateDetails(scenario: string) {
     var scenarios = {
       "recharge_scenario0" : "Average",
       "recharge_scenario1" : "Drought"
     }
-    if(totalRecharge != null) this.totalRecharge = totalRecharge;
-    if(baseLandcover != null) this.baseLandcover = baseLandcover;
     if(scenario != null) this.scenario = scenarios[scenario];
   }
+
+  backToBase() {
+    this.mode = "none";
+  }
+  
 
   toggleMenu() {
     this.state = (this.state == 'inactive' ? 'active' : 'inactive');
   }
+
+
 
 }

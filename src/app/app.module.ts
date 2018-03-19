@@ -46,8 +46,7 @@ import { NgUploaderModule } from 'ngx-uploader';
     AppComponent,
     MapComponent,
     HomeComponent,
-    WindowComponent,
-    
+    WindowComponent
   ],
   imports: [
     HttpModule,

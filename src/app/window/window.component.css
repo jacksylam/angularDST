@@ -1,5 +1,5 @@
 .panel-extend{
-  width:400px;
+  width:500px;
   height:400px;
   top: 150px;
   left: 100px;
@@ -19,7 +19,6 @@
 }
 
 .resizable {
-  overflow: hidden;
   resize: both
 }
 
@@ -68,7 +67,7 @@
 .btn-resize{
   position: absolute;
   top: 65%;
-  left:98%;
+  left:85%;
   z-index: 99999;
 }
 

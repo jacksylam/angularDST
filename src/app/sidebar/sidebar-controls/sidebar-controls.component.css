@@ -1,0 +1,66 @@
+.colorDisplay {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #000000;
+  }
+  
+.sidebar {
+    position: absolute;
+    right: 200px;
+    top: 100px;
+    z-index: -1000;
+    background-color: rgba(255, 255, 255, 0.9);
+    width: 160px;
+    height: 250px;
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+    }
+    
+.menuButton {
+    position: relative;
+    left: 153px;
+    /* transform: translate(0%, 50%); */
+    /* transform: rotate(180deg); */
+    background-color: rgb(56, 117, 194);
+    color:white;
+    top: 30%;
+    width: 30px;
+    height: 100px;
+    border-radius: 3px 20px 20px 3px;
+    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+    text-align: center;
+    vertical-align: middle;
+    z-index: 2000;
+}
+.menuButton-text
+{
+    font-style: bold;
+    transform: translate(-2px, 30px) rotate(90deg);
+}
+.menuButton:hover
+{
+    cursor: pointer;
+}
+
+.row {
+    margin: 0px !important;
+    position: relative;
+    top: -100px;
+}
+
+.btn-custom {
+    border: 1px solid rgb(125, 0, 0);
+  }
+  
+  .btn-custom:hover {
+    color: rgb(125, 0, 0);
+  }
+  
+  .btn-ivory {
+    background: ivory;
+    color: black;
+    font-weight: bold;
+    width: 150px;
+  }

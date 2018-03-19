@@ -1,0 +1,13 @@
+<div id="content" [@movePanel]='state' class="container sidebar">
+
+  <div (click)="toggleMenu()" class="menuButton">
+    <div class="menuButton-text">Controls</div>
+  </div>
+
+  <div class="row">
+    
+      <!-- <app-sidebar-controls ngD3Slider  id="s" [length]="200" ></app-sidebar-controls> -->
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
+
+  </div>
+</div>

@@ -88,7 +88,7 @@ export class WindowComponent implements AfterViewInit {
     this.panelDiv.nativeElement.addEventListener('mousedown', () => { this.bringWindowForward(); });
 
     //PanelExtend
-    this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 300 + 'px';
+    this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 500 + 'px';
     this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height+ 350  + 'px';
     // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
@@ -117,20 +117,21 @@ export class WindowComponent implements AfterViewInit {
 
         // console.log(parseInt(container.panelExtendDiv.nativeElement.style.width));
     
-    let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(container.panelExtendDiv.nativeElement.style.width);
-    let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(container.panelExtendDiv.nativeElement.style.height);
+    let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(container.panelDiv.nativeElement.style.width);
+    let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(container.panelDiv.nativeElement.style.height);
     
     console.log(container.mouseWindowLeft);
 
     console.log("mousex = " + mouseX + " windowcomponent " + WindowComponent.lastMouseXPosition + " newwidth " + newWidth);
 
+    
     // container.panelExtendDiv.nativeElement.style.width = left + 'px';
     // container.panelExtendDiv.nativeElement.style.height =  top + 'px';
 
 
     
-    container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
-    container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
+    // container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
+    // container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
     container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
     container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
 

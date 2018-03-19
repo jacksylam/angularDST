@@ -7,10 +7,15 @@
 
 
     <div class="row">
-            <!-- <app-graphs> </app-graphs> -->
-            <h1>Base Landcover: {{baseLandcover}}</h1>
-            <h1>Scenario: {{scenario}}</h1>
-            <h1>Total Recharge: {{totalRecharge}}</h1>
+        <div *ngIf="mode=='none'; else metrics">
+            <h1>Selected Scenario: {{scenario}}</h1>
+        </div>
+        <ng-template #metrics>
+            <h1>Metric Mode: {{mode}}</h1>
+            <h1>Original Recharge: {{original}}</h1>
+            <h1>Current Recharge: {{current}}</h1>
+            <h1>Difference: {{diff}}, Percent Change: {{pchange}}%</h1>
+        </ng-template>
     </div>
 
 </div>
