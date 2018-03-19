@@ -211,6 +211,7 @@ export class MapComponent implements OnInit {
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
           this.mapService.updateMetrics(this, null, null, "full");
+          this.disableShapeInteraction();
           break;
       }
     });
@@ -391,6 +392,7 @@ export class MapComponent implements OnInit {
       case "aquifer":
         break;
       case "full":
+        this.disableShapeInteraction();
         this.getWholeMapMetrics();
         break;
     }

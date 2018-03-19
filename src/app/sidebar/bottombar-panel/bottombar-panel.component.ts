@@ -29,6 +29,7 @@ export class BottombarPanelComponent implements OnInit {
   diff= "";
   mode="none";
   scenario = "Average";
+  units = "Mgal/d"
   totalRecharge;
   totalOriginalRecharge;
 
@@ -52,11 +53,11 @@ export class BottombarPanelComponent implements OnInit {
   }
 
   updateTotalRecharge(totalRecharge: number) {
-    this.totalRecharge = totalRecharge;
+    this.totalRecharge = this.convertValue(totalRecharge);
   }
 
   setTotalRecharge(totalOriginalRecharge: number) {
-    this.totalOriginalRecharge = totalOriginalRecharge;
+    this.totalOriginalRecharge = this.convertValue(totalOriginalRecharge);
   }
 
   updateMetrics(original: number, current: number, mode: string) {
@@ -64,22 +65,39 @@ export class BottombarPanelComponent implements OnInit {
     //no reason to update repeatedly, store full map data ahead of time
     //should do the same for aquifers since also static
     if(mode == "full") {
-      this.original = this.totalOriginalRecharge.toString();
-      this.current = this.totalRecharge.toString();
-      var diff = this.totalOriginalRecharge - this.totalRecharge;
-      this.diff = diff.toString();
-      this.pchange = (diff / this.totalOriginalRecharge * 100).toString();
+      this.original = this.roundToPrecision(this.totalOriginalRecharge, 4).toString();
+      this.current = this.roundToPrecision(this.totalRecharge, 4).toString();
+      var diff = this.totalRecharge - this.totalOriginalRecharge;
+      this.diff = this.roundToPrecision(diff, 4).toString();
+      this.pchange = this.roundToPrecision((diff / this.totalOriginalRecharge * 100), 4).toString();
     }
     else {
-      this.original = original.toString();
-      this.current = current.toString();
-      var diff = original - current;
-      console.log(original);
-      this.diff = diff.toString();
-      this.pchange = (diff / original * 100).toString();
+      var convertedOrigin = this.convertValue(original);
+      var convertedCurrent = this.convertValue(current)
+
+      this.original = this.roundToPrecision(convertedOrigin, 4).toString();
+      this.current = this.roundToPrecision(convertedCurrent, 4).toString();
+      var diff = convertedCurrent - convertedOrigin;
+      this.diff = this.roundToPrecision(diff, 4).toString();
+      this.pchange = this.roundToPrecision((diff / convertedOrigin * 100), 4).toString();
     }
     
     
+  }
+
+  convertValue(valueIPY: number) {
+    //use 4 decimal precision
+    switch(this.units) {
+      case "in/yr":
+        return valueIPY;
+      case "Mgal/d":
+        return (valueIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    }
+  }
+
+  roundToPrecision(value: number, precision: number) {
+    var roundMag = Math.pow(10, precision);
+    return Math.round(value * roundMag) / roundMag;
   }
 
   updateDetails(scenario: string) {
