@@ -12,7 +12,7 @@ import {MapService} from '../../map/shared/map.service';
         transform: 'translate(50px, 0px)',
       })),
       state('inactive', style({
-        transform: 'translate(300px, 0px)',
+        transform: 'translate(00px, 0px)',
       })),
       transition('active => inactive', animate('500ms ease-in-out')),
       transition('inactive => active', animate('500ms ease-in-out'))

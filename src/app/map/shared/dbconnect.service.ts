@@ -51,22 +51,5 @@ export class DBConnectService {
     interface ResponseResults {
       result: any
     }
-
-    // $.ajax({
-    //   type: "GET",
-    //   url: "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0",
-    //   dataType: 'json',
-    //   async: false,
-    //   headers: {
-    //     "Authorization": "Bearer " + oAuthAccessToken,
-    //     "Content-Type":"application/x-www-form-urlencoded"
-    //   },
-    //   data: {},
-    //   success: function (response){
-    //     $scope.landuse = response.result;
-    //     console.log("Count:" + $scope.landuse.length.toString())
-    //     $scope.calculate_new_recharge()
-    //   }
-    // });
   }
 }

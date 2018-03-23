@@ -18,7 +18,6 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('panelDiv') panelDiv;
   @ViewChild('child') childComponent;
   @ViewChild('glyphSize') glyphSize;
-  @ViewChild('panelExtendDiv') panelExtendDiv;
   @ViewChild('resizeButton') resizeButton;
 
   @Input() public title: string;
@@ -53,7 +52,6 @@ export class WindowComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.divsIndex = WindowComponent.windowDivs.length;
-    WindowComponent.windowDivs.push(this.panelExtendDiv.nativeElement);
     WindowComponent.windowDivs.push(this.panelDiv.nativeElement);
     WindowComponent.windowDivs[this.divsIndex].style.zIndex = WindowComponent.zIndex;
     WindowComponent.zIndex++;
@@ -88,8 +86,8 @@ export class WindowComponent implements AfterViewInit {
     this.panelDiv.nativeElement.addEventListener('mousedown', () => { this.bringWindowForward(); });
 
     //PanelExtend
-    this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 500 + 'px';
-    this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height+ 350  + 'px';
+    // this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 500 + 'px';
+    // this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height+ 350  + 'px';
     // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
@@ -130,8 +128,8 @@ export class WindowComponent implements AfterViewInit {
 
 
     
-    container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
-    container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
+   // container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
+    //container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
     container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
     container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
 
@@ -160,12 +158,12 @@ export class WindowComponent implements AfterViewInit {
 
     container.windowPanel.left = left
     container.windowPanel.top = top;
-    // container.panelDiv.nativeElement.style.left = left + 'px';
-    // container.panelDiv.nativeElement.style.top = top + 'px';
+    container.panelDiv.nativeElement.style.left = left + 'px';
+    container.panelDiv.nativeElement.style.top = top + 'px';
 
       //PanelExtend
-      container.panelExtendDiv.nativeElement.style.left = left  + 'px';
-      container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
+      // container.panelExtendDiv.nativeElement.style.left = left  + 'px';
+      // container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
     window.getSelection().removeAllRanges();
 
    }
@@ -261,15 +259,16 @@ export class WindowComponent implements AfterViewInit {
   incAlpha() {
     this.windowPanel.backgroundAlpha += 0.05;
     this.windowPanel.backgroundAlpha = Math.min(this.windowPanel.backgroundAlpha, 1.0);
-    this._renderer.setElementStyle(
-      this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
+    this._renderer.setElementStyle(this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
+    //this._renderer.setElementStyle(this.childComponent.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
+      
   }
 
   decAlpha() {
     this.windowPanel.backgroundAlpha -= 0.05;
     this.windowPanel.backgroundAlpha = Math.max(this.windowPanel.backgroundAlpha, 0.0);
-    this._renderer.setElementStyle(
-      this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
+    this._renderer.setElementStyle(this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
+    //this._renderer.setElementStyle(this.childComponent.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
   }
 
   getView() {
