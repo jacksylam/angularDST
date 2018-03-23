@@ -147,5 +147,10 @@ export class MapService {
     let index = this.mapHash.indexOf(map);
     this.detailPanelHash[index].backToBase();
   }
+
+  changeOpacity(controlPanel: any, opacity: number) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.mapHash[index].changeLayerOpacity(opacity);
+  }
   
 }

@@ -10,7 +10,7 @@ import {MapService} from '../../map/shared/map.service';
   animations: [
     trigger('movePanel', [
          state('active', style({
-        transform: 'translate(0px, 150px)',
+        transform: 'translate(0px, 40px)',
       })),
       state('inactive', style({
         transform: 'translate( 0px, -155px)',

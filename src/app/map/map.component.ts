@@ -375,7 +375,8 @@ export class MapComponent implements OnInit {
   private changeLayerOpacity(opacity: number) {
     //shouldn't change base map opacity
     if(this.baseLayer.name != "Base Map") {
-      this.baseLayer.layer.options.opacity = opacity;
+      this.baseLayer.layer.setOpacity(opacity);
+      this.mymap.invalidateSize();
     }
   }
 

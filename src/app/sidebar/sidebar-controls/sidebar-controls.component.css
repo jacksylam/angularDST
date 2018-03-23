@@ -64,3 +64,13 @@
     font-weight: bold;
     width: 150px;
   }
+
+  .slider-background {
+    background: black;
+    color: white;
+    font-weight: bold;
+  }
+
+  .shift {
+    margin-left: -3%;
+  }

@@ -8,6 +8,6 @@
     
       <!-- <app-sidebar-controls ngD3Slider  id="s" [length]="200" ></app-sidebar-controls> -->
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
-
+      <div class="slider-background">Layer Opacity<br><mat-slider [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider></div>
   </div>
 </div>

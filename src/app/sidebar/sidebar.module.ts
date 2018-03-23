@@ -7,12 +7,18 @@ import { SidebarPanelComponent } from './sidebar-panel/sidebar-panel.component';
 import { BottombarPanelComponent } from './bottombar-panel/bottombar-panel.component';
 import { SidebarControlsComponent } from './sidebar-controls/sidebar-controls.component';
 import {GraphsComponent} from '../graphs/graphs.component';
+import { NouisliderModule } from 'ng2-nouislider';
+import {MatSliderModule} from '@angular/material/slider';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   imports: [
     CommonModule,
     MatSidenavModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    NouisliderModule,
+    MatSliderModule,
+    FormsModule
   ],
   declarations: [
     SidebarMenuComponent, 

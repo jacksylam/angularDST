@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/core';
 import {MapService} from '../../map/shared/map.service';
-import {D3SliderDirective} from 'ng-d3-slider/d3-slider.directive'
+
 
 @Component({
   selector: 'app-sidebar-controls',
@@ -22,7 +22,9 @@ import {D3SliderDirective} from 'ng-d3-slider/d3-slider.directive'
 })
 export class SidebarControlsComponent implements OnInit {
 
-  @Input() length: string;
+  // max 
+  // min [step]=0.1
+  value = 1;
 
   state = 'inactive';
 
@@ -39,7 +41,7 @@ export class SidebarControlsComponent implements OnInit {
   }
 
   sliderChange(e) {
-
+    this.mapService.changeOpacity(this, e.value);
   }
 
   toggleAreas() {

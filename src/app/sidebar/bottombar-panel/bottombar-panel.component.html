@@ -1,21 +1,25 @@
-<div id="content" [@movePanel]='state' class="container sidebar">
+<div *ngIf="mode!='none'">
+    <div id="content" [@movePanel]='state' class="container sidebar">
 
-    <div (click)="toggleMenu()" class="menuButton">
-        <div class="menuButton-text">Details</div>
-    </div>
-
-
-
-    <div class="row">
-        <div *ngIf="mode=='none'; else metrics">
-            <h1>Selected Scenario: {{scenario}}</h1>
+        <div (click)="toggleMenu()" class="menuButton">
+            <div class="menuButton-text">Details</div>
         </div>
-        <ng-template #metrics>
-            <h2>Metric Mode: {{mode}}</h2>
-            <h2>Original Recharge: {{original}} {{units}}</h2>
-            <h2>Current Recharge: {{current}} {{units}}</h2>
-            <h2>Difference: {{diff}}, Percent Change: {{pchange}}%</h2>
-        </ng-template>
-    </div>
 
+
+
+        <div class="row">
+            
+
+                
+            <h3>Metric Mode: {{mode}}</h3>
+<!-- add something to check scenario for specific areas rather than currently selected one -->
+            <h3>Selected Scenario: {{scenario}}</h3>
+
+            <h3>Original Recharge: {{original}} {{units}}</h3>
+            <h3>Current Recharge: {{current}} {{units}}</h3>
+            <h3>Difference: {{diff}}, Percent Change: {{pchange}}%</h3>
+
+        </div>
+
+    </div>
 </div>

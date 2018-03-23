@@ -130,8 +130,8 @@ export class WindowComponent implements AfterViewInit {
 
 
     
-    // container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
-    // container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
+    container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
+    container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
     container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
     container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
 
