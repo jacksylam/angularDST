@@ -145,7 +145,6 @@ export class MapComponent implements OnInit {
     //create empty layer for displaying base map
     var empty = L.featureGroup();
 
-    //might want to remove or modify draw controls in recharge context
     this.loadDrawControls();
 
     this.popup = L.popup();
@@ -363,6 +362,10 @@ export class MapComponent implements OnInit {
     });
   }
 
+  resetMapSize() {
+    this.mymap.invalidateSize();
+  }
+
   showHideObjects(showOrHide: string) {
     if(showOrHide == "Show") {
       this.drawnItems.addTo(this.mymap);
@@ -376,7 +379,6 @@ export class MapComponent implements OnInit {
     //shouldn't change base map opacity
     if(this.baseLayer.name != "Base Map") {
       this.baseLayer.layer.setOpacity(opacity);
-      this.mymap.invalidateSize();
     }
   }
 

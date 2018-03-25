@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
+import {MapService} from '../map/shared/map.service';
 
 @Component({
   selector: 'app-window',
@@ -16,9 +17,11 @@ export class WindowComponent implements AfterViewInit {
 
   @ViewChild('dragBar') dragBar;
   @ViewChild('panelDiv') panelDiv;
-  @ViewChild('child') childComponent;
+  @ViewChild('map') mapComponent;
   @ViewChild('glyphSize') glyphSize;
-  @ViewChild('resizeButton') resizeButton;
+  @ViewChild('resizeCorner') resizeCorner;
+  @ViewChild('resizeBot') resizeBot;
+  @ViewChild('resizeRight') resizeRight;
 
   @Input() public title: string;
   @Input() public type: string;
@@ -45,35 +48,34 @@ export class WindowComponent implements AfterViewInit {
   //divs cover 2 indexes, panelExtendedDiv at divsIndex, panelDiv at divsIndex + 1
   divsIndex: number;
 
-  constructor(private windowService: WindowService, private _renderer: Renderer) {
-
-    
+  constructor(private mapService: MapService, private windowService: WindowService, private _renderer: Renderer) {
+    mapService.setWindow(this);
    }
 
   ngAfterViewInit() {
+    var __this = this;
+    var resizeFunct;
+
     this.divsIndex = WindowComponent.windowDivs.length;
     WindowComponent.windowDivs.push(this.panelDiv.nativeElement);
-    WindowComponent.windowDivs[this.divsIndex].style.zIndex = WindowComponent.zIndex;
+    this.panelDiv.nativeElement.style.zIndex = WindowComponent.zIndex;
     WindowComponent.zIndex++;
     //console.log(WindowComponent.windowDivs[this.divsIndex].style.zIndex);
     this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
     this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 100 + 'px';
+    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
-    this.childComponent.resize(this.windowPanel.width, this.windowPanel.height);
+    this.mapComponent.resize(this.windowPanel.width, this.windowPanel.height);
 
-    if (this.childComponent !== undefined) {
-      const mutObs = new MutationObserver(() => this.resize());
-      mutObs.observe(this.panelDiv.nativeElement, { attributes: true });
-    }
+
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
       this.windowPanel.left = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().left, 10);
       this.windowPanel.top = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().top, 10);
-      this.mouseWindowLeft = mouseX - this.windowPanel.left + 300;
+      this.mouseWindowLeft = mouseX - this.windowPanel.left;
       this.mouseWindowTop = mouseY - this.windowPanel.top;
       WindowComponent.lastClickDiv = this;
       document.addEventListener('mousemove', this.startDragging);
@@ -82,7 +84,6 @@ export class WindowComponent implements AfterViewInit {
     })
 
     document.addEventListener('mouseup', () => { this.stopDragging(); });
-    window.addEventListener('resize', () => { this.windowResize() });
     this.panelDiv.nativeElement.addEventListener('mousedown', () => { this.bringWindowForward(); });
 
     //PanelExtend
@@ -92,7 +93,7 @@ export class WindowComponent implements AfterViewInit {
     // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     //ResizeButon
-    this.resizeButton.nativeElement.addEventListener('mousedown', (e) => {
+    this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
       WindowComponent.lastClickDiv = this;
@@ -100,48 +101,77 @@ export class WindowComponent implements AfterViewInit {
       WindowComponent.lastMouseXPosition = e.clientX;
       WindowComponent.lastMouseYPosition = e.clientY;
       
+      //need to pass __this in to function, so save anonymous function call for removal
+      document.addEventListener('mousemove', resizeFunct = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.startResizing(e, "both", __this);
+      });
+    })
+
+    this.resizeRight.nativeElement.addEventListener('mousedown', (e) => {
+      const mouseX = e.clientX;
+      WindowComponent.lastClickDiv = this;
+      WindowComponent.lastMouseXPosition = e.clientX;
       
-      document.addEventListener('mousemove', this.startResizing);
-    }) 
+      
+      //need to pass __this in to function, so save anonymous function call for removal
+      document.addEventListener('mousemove', resizeFunct = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.startResizing(e, "right", __this);
+      });
+    })
 
-    document.addEventListener('mouseup', () => {this.stopResizing();});
+    this.resizeBot.nativeElement.addEventListener('mousedown', (e) => {
+      const mouseY = e.clientY;
+      WindowComponent.lastClickDiv = this;
+      WindowComponent.lastMouseYPosition = e.clientY;
+      
+      
+      //need to pass __this in to function, so save anonymous function call for removal
+      document.addEventListener('mousemove', resizeFunct = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.startResizing(e, "bot", __this);
+      });
+    })
+
+    document.addEventListener('mouseup', () => {document.removeEventListener('mousemove', resizeFunct)});
     
   }
 
-  startResizing(e){
+  startResizing(e, type, __this){
     const container = WindowComponent.lastClickDiv;
-    let mouseX = e.clientX;
-    let mouseY = e.clientY;
 
-        // console.log(parseInt(container.panelExtendDiv.nativeElement.style.width));
+    if(type == "bot" || type == "both") {
+      let mouseY = e.clientY;
+      let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(container.panelDiv.nativeElement.style.height);
+
+      //minimum size
+      if(newHeight >= 400) {
+        WindowComponent.lastMouseYPosition = mouseY;
+        container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
+        //for some reason percent size allows map to change width but not height, so change manually
+        __this.mapComponent.resize(__this.mapComponent.width, newHeight);
+      }
+      
+    }
+    if(type == "right" || type == "both") {
+      let mouseX = e.clientX;
+      let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(container.panelDiv.nativeElement.style.width);
+      //minimum size
+      if(newWidth >= 400) {
+        WindowComponent.lastMouseXPosition = mouseX;
+        container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
+        //for some reason percent size allows map to change width but not height, so change manually
+        __this.mapComponent.resize(newWidth, __this.mapComponent.height);
+      }
+    }
     
-    let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(container.panelDiv.nativeElement.style.width);
-    let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(container.panelDiv.nativeElement.style.height);
-    
-    console.log(container.mouseWindowLeft);
+    //invalidate map size
+    __this.mapService.changeMapSize(__this);
 
-    console.log("mousex = " + mouseX + " windowcomponent " + WindowComponent.lastMouseXPosition + " newwidth " + newWidth);
-
-    
-    // container.panelExtendDiv.nativeElement.style.width = left + 'px';
-    // container.panelExtendDiv.nativeElement.style.height =  top + 'px';
-
-
-    
-   // container.panelExtendDiv.nativeElement.style.width =  (newWidth) + 'px';
-    //container.panelExtendDiv.nativeElement.style.height =  (newHeight) + 'px';
-    container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
-    container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
-
-    WindowComponent.lastMouseXPosition = mouseX;
-    WindowComponent.lastMouseYPosition = mouseY;
-    
-    
-
-  }
-
-  stopResizing(){
-    document.removeEventListener('mousemove', this.startResizing);
   }
 
 
@@ -165,7 +195,6 @@ export class WindowComponent implements AfterViewInit {
       // container.panelExtendDiv.nativeElement.style.left = left  + 'px';
       // container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
     window.getSelection().removeAllRanges();
-
    }
 
   stopDragging() {
@@ -182,6 +211,7 @@ export class WindowComponent implements AfterViewInit {
     this.windowService.removeWindow(this.windowPanel.id);
   }
 
+  //still very broken, should remove event listeners for move and resize while active, lock in place
   maximize() {
     if (!this.maximized) {
       this.saveLeft = this.windowPanel.left;
@@ -190,10 +220,10 @@ export class WindowComponent implements AfterViewInit {
       this.saveWidth = this.windowPanel.width;
 
       this.windowPanel.left = 0;
-      this.windowPanel.top = 30;
+      this.windowPanel.top = 50;
 
-      this.panelDiv.nativeElement.style.left = 0 + 'px';
-      this.panelDiv.nativeElement.style.top = 30 + 'px';
+      this.panelDiv.nativeElement.style.left = 100 + '%';
+      this.panelDiv.nativeElement.style.top = 50 + 'px';
       this.panelDiv.nativeElement.style.width = window.innerWidth + 'px';
       this.panelDiv.nativeElement.style.height = window.innerHeight - 60 + 'px';
       this._renderer.setElementStyle(this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + 1.0 + ')');
@@ -216,45 +246,6 @@ export class WindowComponent implements AfterViewInit {
     }
   }
 
-
-  //not sure what these were supposed to do, they just break everything, seems to be ok without any adjustments
-  //maybe trying to adjust map size to take up a certain portion of the page? Come back to this later
-  resize() {
-    // if (this.windowPanel.width !== this.panelDiv.nativeElement.getBoundingClientRect().width ||
-    //   this.windowPanel.height !== this.panelDiv.nativeElement.getBoundingClientRect().height) {
-
-    //   this.windowPanel.width = this.panelDiv.nativeElement.getBoundingClientRect().width;
-    //   this.windowPanel.height = this.panelDiv.nativeElement.getBoundingClientRect().height;
-
-
-
-    //   this.childComponent.resize(this.windowPanel.width, this.windowPanel.height);
-
-    //         //PanelExtend
-    //         this.windowPanel.width = this.panelExtendDiv.nativeElement.getBoundingClientRect().width;
-    //         this.windowPanel.height = this.panelExtendDiv.nativeElement.getBoundingClientRect().height;
-    // }
-  }
-
-  windowResize() {
-    // let winX = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().left, 10);
-    // let winY = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().top, 10);
-
-    // if (winY > (window.innerHeight - 70)) { winY = window.innerHeight - 70; }
-    // if (winX > (window.innerWidth - 70)) { winX = window.innerWidth - 70; }
-
-    // this.windowPanel.left = winX;
-    // this.windowPanel.top = winY;
-    // this.panelDiv.nativeElement.style.left = winX + 'px';
-    // this.panelDiv.nativeElement.style.top = winY + 'px';
-
-
-    // //PanelExtend
-    // this.panelExtendDiv.nativeElement.style.left = winX + 'px';
-    // this.panelExtendDiv.nativeElement.style.top = winY + 'px';
-
-    // window.getSelection().removeAllRanges();
-  }
 
   incAlpha() {
     this.windowPanel.backgroundAlpha += 0.05;

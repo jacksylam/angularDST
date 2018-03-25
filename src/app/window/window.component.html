@@ -1,7 +1,7 @@
 
 
-  <div class="allowPointerEvents">
-    <div #panelDiv class="panel panel-default">
+
+    <div #panelDiv class="panel panel-default allowPointerEvents">
       <div #dragBar class="panel-heading panel-heading-custom">
         {{ windowPanel.title }} - {{ windowPanel.id }}
         <button class="navbarButton" (click)="removeWindow()">
@@ -17,21 +17,23 @@
           <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
         </button>
       </div>
-      <div class="panel-body">
+
+      <div class="map-container">
         <!-- FIX AND UNCOMMENT HERE -->
         <!-- <app-ngxgraph #child *ngIf="windowPanel.bodyType.split('-')[0] == 'ngxgraph'" [view]="getView" [type]="windowPanel.bodyType.split('-')[1]" [dbQuery]="windowPanel.dbQuery"></app-ngxgraph> -->
 
 
-        <app-map #child *ngIf="windowPanel.bodyType.split('-')[0] == 'map'"></app-map>
+        <app-map #map *ngIf="windowPanel.bodyType.split('-')[0] == 'map'"></app-map>
 
       </div>
+
       <app-sidebar-panel></app-sidebar-panel>
       <app-bottombar-panel></app-bottombar-panel>
       <app-sidebar-controls></app-sidebar-controls>
-      <button #resizeButton type="button" class="btn btn-primary btn-responsive btn-resize"></button>
+      <div class="drag-bottom" #resizeBot></div>
+      <div class="drag-right" #resizeRight></div>
+      <div class="drag-corner" #resizeCorner></div>
     </div>
-    
 
-  </div>
 
 

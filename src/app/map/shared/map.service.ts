@@ -15,6 +15,7 @@ export class MapService {
   panelButtonHash = [];
   detailPanelHash = [];
   controlPanelHash = [];
+  windowHash = [];
 
 
   mapEnabled: boolean;
@@ -47,6 +48,10 @@ export class MapService {
 
   setDetailsPanel(detailPanel: any) {
     this.detailPanelHash.push(detailPanel);
+  }
+
+  setWindow(window: any) {
+    this.windowHash.push(window);
   }
 
   toggleShape(buttonPanel: any) {
@@ -151,6 +156,11 @@ export class MapService {
   changeOpacity(controlPanel: any, opacity: number) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     this.mapHash[index].changeLayerOpacity(opacity);
+  }
+
+  changeMapSize(window: any) {
+    let index = this.windowHash.indexOf(window);
+    this.mapHash[index].resetMapSize();
   }
   
 }

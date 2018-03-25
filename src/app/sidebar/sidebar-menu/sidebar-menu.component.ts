@@ -9,7 +9,7 @@ import {WindowPanel} from '../../window/shared/windowPanel'
   animations: [
     trigger('movePanel', [
       state('active', style({
-        transform: 'translate(10px, 0px)',
+        transform: 'translate(0px, 0px)',
       })),
       state('inactive', style({
         transform: 'translate(-172px, 0px)',

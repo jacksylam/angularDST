@@ -1,28 +1,24 @@
-.panel-extend{
-  width:500px;
-  height:400px;
-  top: 150px;
-  left: 100px;
-  position: absolute;
-  pointer-events: none;
-  z-index: -1;
-}
 
 .panel {
-  width: 100%;
-  height: 100%;
-  /* top: 150px; */
-  /* left: 100px;  */
+  top: 150px;
+  left: 100px; 
   position: absolute;
-  background-color: rgba(255, 255, 255, 0.5);
+  z-index: 0;
+  border-radius: 1%;
 }
 
-.resizable {
-  resize: both
+.map-container {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 1);
+  width: 100%;
+  height: calc(100% - 30px);
+  padding: 10px;
+  border-radius: 1%;
 }
+
 
 .panel-default>.panel-heading-custom {
-  background-color: rgba(108, 138, 164, 0.88);
+  background-color: rgba(108, 138, 164, 1);
   color: #fff;
   height: 30px;
   padding: 5px;
@@ -73,4 +69,38 @@
 .graphs {
   top: 2000px;
   width: 400px;
+}
+
+.drag-bottom {
+  position: absolute;
+  width: calc(100% - 7px);
+  height: 15px;
+  top: calc(100% - 15px);
+}
+
+.drag-bottom:hover {
+  cursor: ns-resize;
+}
+
+.drag-right {
+  position: absolute;
+  width: 15px;
+  height: calc(100% - 45px);
+  left: calc(100% - 7px);
+}
+
+.drag-right:hover {
+  cursor: ew-resize;
+}
+
+.drag-corner {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  top: calc(100% - 15px);
+  left: calc(100% - 15px);
+}
+
+.drag-corner:hover {
+  cursor: nwse-resize;
 }
