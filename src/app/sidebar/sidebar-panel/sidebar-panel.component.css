@@ -1,3 +1,13 @@
+
+::ng-deep .mat-select{
+  height: 30px;
+  padding: 6px;
+  background: ivory;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 0px 0px 0px 5px;
+}
+
 .colorDisplay {
   display: inline-block;
   width: 30px;
@@ -38,7 +48,6 @@
     top: 50%;
     left: 50%;
     position: absolute;
-    font-style: bold;
     transform: translate(-50%, -50%) rotate(90deg);
   }
   .menuButton:hover

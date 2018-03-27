@@ -1,7 +1,6 @@
 import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
-import {MapService} from '../map/shared/map.service';
 
 @Component({
   selector: 'app-window',
@@ -48,9 +47,7 @@ export class WindowComponent implements AfterViewInit {
   //divs cover 2 indexes, panelExtendedDiv at divsIndex, panelDiv at divsIndex + 1
   divsIndex: number;
 
-  constructor(private mapService: MapService, private windowService: WindowService, private _renderer: Renderer) {
-    mapService.setWindow(this);
-   }
+  constructor(private windowService: WindowService, private _renderer: Renderer) { }
 
   ngAfterViewInit() {
     var __this = this;
@@ -67,7 +64,6 @@ export class WindowComponent implements AfterViewInit {
     this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     this.mapComponent.resize(this.windowPanel.width, this.windowPanel.height);
-
 
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
@@ -168,9 +164,6 @@ export class WindowComponent implements AfterViewInit {
         __this.mapComponent.resize(newWidth, __this.mapComponent.height);
       }
     }
-    
-    //invalidate map size
-    __this.mapService.changeMapSize(__this);
 
   }
 

@@ -15,7 +15,6 @@ export class MapService {
   panelButtonHash = [];
   detailPanelHash = [];
   controlPanelHash = [];
-  windowHash = [];
 
 
   mapEnabled: boolean;
@@ -50,10 +49,6 @@ export class MapService {
     this.detailPanelHash.push(detailPanel);
   }
 
-  setWindow(window: any) {
-    this.windowHash.push(window);
-  }
-
   toggleShape(buttonPanel: any) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
     this.mapHash[index].changeShapeFile();
@@ -62,31 +57,6 @@ export class MapService {
   showHideObjects(showOrHide: string, controlPanel: any) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     this.mapHash[index].showHideObjects(showOrHide);
-  }
-
-
-
-  //lat1 - lower latitude
-  //lng2 - upper latitude
-  //lng1 - right longitude
-  //lng2 - left longitude
-  getMarkers(lat1: number, lng1: number, lat2: number, lng2: number){
-    let markers = new Array();
-    console.log("Map lat " + this.csvData[0].lat);
-    console.log("Map lng " + this.csvData[0].lng);
-
-    console.log("lat1 " + lat1);
-    console.log("lng1 " + lng1);
-    console.log("lat2 " + lat2);
-    console.log("lng2 " + lng2);
-
-    for(let i = 0; i < this.csvData.length; i++){
-      if((this.csvData[i].lat > lat1) && (this.csvData[i].lat < lat2) && (this.csvData[i].lng > lng1) && (this.csvData[i].lng < lng2)){
-      // if((this.csvData[i].lng > lng1) && (this.csvData[i].lng < lng2)){
-        markers.push(this.csvData[i]);
-      }
-    }
-    return markers;
   }
 
   changeLayer(map: any, type: string) {
@@ -115,10 +85,10 @@ export class MapService {
     this.detailPanelHash[index].updateMetrics(originalRecharge, currentRecharge, mode);
   }
 
-  updateDetails(map: any, scenario: string) {
-    let index = this.mapHash.indexOf(map);
-    this.detailPanelHash[index].updateDetails(scenario);
-  }
+  // updateDetails(map: any, scenario: string) {
+  //   let index = this.mapHash.indexOf(map);
+  //   this.detailPanelHash[index].updateDetails(scenario);
+  // }
 
   updateRechargeSum(map: any, rechargeArr: number[]) {
     var totalRecharge = 0;
@@ -158,9 +128,5 @@ export class MapService {
     this.mapHash[index].changeLayerOpacity(opacity);
   }
 
-  changeMapSize(window: any) {
-    let index = this.windowHash.indexOf(window);
-    this.mapHash[index].resetMapSize();
-  }
   
 }

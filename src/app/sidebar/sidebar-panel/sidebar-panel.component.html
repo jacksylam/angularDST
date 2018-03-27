@@ -12,8 +12,12 @@
         <p></p>
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-primary btn-responsive btn-label">Climate</button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t1 btn-ivory" (click)="changeScenario0()">Average</button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t1 btn-ivory" (click)="changeScenario1()">Drought</button>
+
+          <mat-select [(value)]="selected" (change)="climateChange($event)">
+            <mat-option value="Baseline Rainfall 1978-2007">Baseline Rainfall 1978-2007</mat-option>
+            <mat-option value="Rainfall Projection 2041-2070 (RCP 8.5)">Rainfall Projection 2041-2070 (RCP 8.5)</mat-option>
+          </mat-select>
+
         </div>
         <p></p>
         <div class="outline btn-group-vertical internal-menu">

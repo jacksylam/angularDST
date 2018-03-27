@@ -100,13 +100,13 @@ export class BottombarPanelComponent implements OnInit {
     return Math.round(value * roundMag) / roundMag;
   }
 
-  updateDetails(scenario: string) {
-    var scenarios = {
-      "recharge_scenario0" : "Average",
-      "recharge_scenario1" : "Drought"
-    }
-    if(scenario != null) this.scenario = scenarios[scenario];
-  }
+  // updateDetails(scenario: string) {
+  //   var scenarios = {
+  //     "recharge_scenario0" : "Average",
+  //     "recharge_scenario1" : "Drought"
+  //   }
+  //   if(scenario != null) this.scenario = scenarios[scenario];
+  // }
 
   backToBase() {
     this.mode = "none";

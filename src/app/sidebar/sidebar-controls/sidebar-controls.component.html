@@ -4,10 +4,69 @@
     <div class="menuButton-text">Controls</div>
   </div>
 
-  <div class="row">
+  <div class="scrollbar-madness-parent">
     
-      <!-- <app-sidebar-controls ngD3Slider  id="s" [length]="200" ></app-sidebar-controls> -->
+    <div class="left-scrollbar" #leftScrollbar (scroll)="scrollbarScroll($event)">
+      <!-- fake buttons to size phony scrollbar div to same size as menu -->
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
+
+        <br><br>
+  
+        <div class="outline slider-background invisible">
+          <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">a</button>
+          <br><mat-slider [max]="1" [min]="0" [step]="0.01"></mat-slider>
+        </div>
+  
+        <br>
+  
+        <div class="outline btn-group-vertical internal-menu invisible">
+          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half"><div class="shift">a</div></button>
+        </div>
+  
+        <br><br>
+  
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift"> a <br> a </div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift"> a <br> a </div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift"> a <br> a </div></button>
+        
+        <br><br>
+        
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
+    </div>
+
+    <div class="menu" #menu  (scroll)="menuScroll($event)">
+      
+    
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
-      <div class="slider-background">Layer Opacity<br><mat-slider [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider></div>
+
+      <br><br>
+
+      <div class="outline slider-background">
+        <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">Layer Opacity</button>
+        <br><mat-slider class="slider-shift" [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
+      </div>
+
+      <br>
+
+      <div class="outline btn-group-vertical internal-menu">
+        <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">test</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="toggleAreas()"><div class="shift">test</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="toggleAreas()"><div class="shift">test</div></button>
+      </div>
+
+      <br><br>
+
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Upload Shapefile <br> as Custom Areas</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Upload Shapefile <br> as Reference Layer</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Download Custom <br> Areas as Shapefile</div></button>
+      
+      <br><br>
+      
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Generate Report</div></button>
+
+    </div>
+
   </div>
 </div>

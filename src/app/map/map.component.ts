@@ -34,8 +34,6 @@ declare var require: any;
 export class MapComponent implements OnInit {
 
   @ViewChild('mapid') mapid;
-  @ViewChild('scrollableMenu') scrollableMenu;
-  @ViewChild('menuCol') menuCol;
   
 
   mymap: any;
@@ -57,11 +55,16 @@ export class MapComponent implements OnInit {
   highlightedItems: any;
   drawControl: any;
 
+  aquifers: any;
+
   highlightedCell: any;
 
   selectedCell: any;
 
-  interactionEnabled: boolean;
+  opacity = 1;
+
+  interactionType: string;
+  shapeMetricsEnabled: boolean;
 
   // landCover: any;
   // landCoverLayer: any;
@@ -158,7 +161,7 @@ export class MapComponent implements OnInit {
     this.initializeLayers();
     
     //this.loadcovJSON("covers", this.mymap, this.layers);
-    this.changeScenario("recharge_scenario0");
+    // this.changeScenario("recharge_scenario0");
 
     this.r = new FileReader();
     this.r.onload = (e) => {
@@ -192,12 +195,20 @@ export class MapComponent implements OnInit {
     this.mymap.on('baselayerchange', (e) => {
       //store current layer details
       this.baseLayer = e;
+      
       switch(e.name) {
         case "Land Cover":
           this.mapService.changeLayer(this, "landcover");
           this.enableShapeInteraction(false);
           this.drawControl.addTo(this.mymap);
           this.mapService.baseDetails(this);
+
+          //throws an error for some reason if run immediately (though it still works...)
+          //possible that event goes through before layer fully swapped, so run on a delay
+          setTimeout(() => {
+            this.baseLayer.layer.setOpacity(this.opacity);
+          }, 400); 
+
           break;
         //need to figure out how you want to handle this, should modifications be disabled?
         case "Base Map":
@@ -211,6 +222,9 @@ export class MapComponent implements OnInit {
           this.drawControl.remove();
           this.mapService.updateMetrics(this, null, null, "full");
           this.disableShapeInteraction();
+          setTimeout(() => {
+            this.baseLayer.layer.setOpacity(this.opacity);
+          }, 400); 
           break;
       }
     });
@@ -362,10 +376,6 @@ export class MapComponent implements OnInit {
     });
   }
 
-  resetMapSize() {
-    this.mymap.invalidateSize();
-  }
-
   showHideObjects(showOrHide: string) {
     if(showOrHide == "Show") {
       this.drawnItems.addTo(this.mymap);
@@ -379,29 +389,152 @@ export class MapComponent implements OnInit {
     //shouldn't change base map opacity
     if(this.baseLayer.name != "Base Map") {
       this.baseLayer.layer.setOpacity(opacity);
+      this.opacity = opacity;
     }
   }
 
   public setMode(mode: string) {
     switch(mode) {
       case "cell":
-        this.disableShapeInteraction();
         this.addCellInteraction();
         break;
       case "custom":
         this.enableShapeInteraction(true);
+        //get initial metrics for already selected shapes
         this.getSelectedShapeMetrics();
         break;
       case "aquifer":
+        this.addAquiferInteractions();
         break;
       case "full":
-        this.disableShapeInteraction();
+        //just get metrics, not interactive
         this.getWholeMapMetrics();
         break;
     }
   }
 
+
+  private disableInteraction(interaction: string) {
+    switch(interaction) {
+      case "cell":
+        this.disableCellInteraction();
+        break;
+      case "custom":
+        this.disableShapeInteraction();
+        break;
+      case "aquifer":
+        this.disableAquiferInteraction();
+        break;
+      //no whole map interaction to disable
+    }
+  }
+
+
+
+  private addAquiferInteractions() {
+    if(this.interactionType == "aquifer") {
+      //already in aquifer mode
+      return;
+    }
+    else {
+      //disable previous interaction type
+      this.disableInteraction(this.interactionType)
+    }
+
+    this.interactionType = "aquifer";
+
+    var highlightedAquifers = L.featureGroup();
+
+    var highlight = {
+      fillColor: 'black',
+      weight: 5,
+      opacity: 1,
+      color: 'black',  //Outline color
+      fillOpacity: 0.2
+    };
+    var unhighlight = {
+      weight: 5,
+      opacity: 0.5,
+      color: 'black',  //Outline color
+      fillOpacity: 0
+    }
+
+    this.types.aquifers.layer.eachLayer((layer) => {
+      layer.higlighted = false;
+      //clicks intercepted by drawn shapes if behind
+      layer.bringToFront();
+      layer.on('click', (e) => {
+        if(layer.highlighted) {
+          layer.setStyle(unhighlight)
+          layer.highlighted = false;
+          highlightedAquifers.removeLayer(layer);
+        }
+        else {
+          layer.setStyle(highlight)
+          layer.highlighted = true;
+          highlightedAquifers.addLayer(layer);
+        }
+
+        var originalRecharge = 0;
+        var currentRecharge = 0;
+        var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+        this.getInternalIndexes(highlightedAquifers.toGeoJSON()).forEach((index) => {
+          originalRecharge += this.types.recharge.baseData[index];
+          currentRecharge += rechargeVals[index];
+        })
+        this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "aquifer");
+      });
+    })
+    
+    
+  }
+
+  private disableAquiferInteraction() {
+    L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
+    this.types.aquifers.layer.eachLayer((layer) => {
+      layer.off('click')
+      layer.bringToBack();
+      layer.setStyle({
+        weight: 5,
+        opacity: 1,
+        color: 'black',
+        fillOpacity: 0
+      });
+    })
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   private addCellInteraction() {
+
+    if(this.interactionType == "cell") {
+      //already in cell mode
+      return;
+    }
+    else {
+      //disable previous interaction type
+      this.disableInteraction(this.interactionType)
+    }
+
+    this.interactionType = "cell";
+
     //really need to refoactor this to a generalized function since used 3 times
     this.mymap.on('click', (e) => {
       if(this.selectedCell) {
@@ -464,25 +597,53 @@ export class MapComponent implements OnInit {
   }
 
   private disableShapeInteraction() {
-    if(this.interactionEnabled) {
-      this.interactionEnabled = false;
-      this.drawnItems.eachLayer((layer) => {
-        layer.off('click');
-      });
-    }
+    this.drawnItems.eachLayer((layer) => {
+      // layer.on('mouseover', () => {
+      //   L.DomUtil.addClass(layer._container,'crosshair-cursor-enabled');
+      // })
+      layer.off('click');
+    });
   }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   private enableShapeInteraction(metrics: boolean) {
-    if(!this.interactionEnabled) {
-      this.interactionEnabled = true;
-      if(this.selectedCell) {
-        this.mymap.removeLayer(this.selectedCell);
-      }
-      this.drawnItems.eachLayer((layer) => {
-        this.addInteractionToLayer(layer, metrics, this);
-      });
-      this.mymap.off('click');
+
+    if(this.interactionType == "custom" && metrics == this.shapeMetricsEnabled) {
+      //already in cell mode and same metric type
+      return;
     }
+    else {
+      //disable previous interaction type
+      this.disableInteraction(this.interactionType)
+    }
+
+    this.interactionType = "custom";
+    this.shapeMetricsEnabled = metrics;
+
+    this.drawnItems.eachLayer((layer) => {
+      layer.bringToFront();
+      this.addInteractionToLayer(layer, metrics, this);
+    });
+  }
+
+
+  private disableCellInteraction() {
+    if(this.selectedCell) {
+      this.mymap.removeLayer(this.selectedCell);
+    }
+    this.mymap.off('click');
   }
 
   private getSelectedCellMetrics(index: number) {
@@ -494,7 +655,7 @@ export class MapComponent implements OnInit {
     var originalRecharge = 0;
     var currentRecharge = 0;
     var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    this.getInternalIndexes().forEach((index) => {
+    this.getInternalIndexes(this.highlightedItems.toGeoJSON()).forEach((index) => {
       originalRecharge += this.types.recharge.baseData[index];
       currentRecharge += rechargeVals[index];
     })
@@ -502,6 +663,17 @@ export class MapComponent implements OnInit {
   }
 
   private getWholeMapMetrics() {
+    if(this.interactionType == "full") {
+      //already in full map mode
+      return;
+    }
+    else {
+      //disable previous interaction type
+      this.disableInteraction(this.interactionType)
+    }
+
+    this.interactionType = "full";
+
     this.mapService.updateMetrics(this, null, null, "full");
   }
 
@@ -544,10 +716,7 @@ export class MapComponent implements OnInit {
 
       __this.loadCover(__this.types.landCover, false);
 
-      __this.baseLayer = {
-        name: "Land Cover",
-        layer: __this.types.landCover.layer
-      }
+      
     });
 
     
@@ -564,11 +733,13 @@ export class MapComponent implements OnInit {
       //__this.mapService.updateRechargeSum(this, rechargeVals);
     });
 
-    var init3 = shp(MapComponent.aquifersFile).then((geojson) => {
+    shp(MapComponent.aquifersFile).then((geojson) => {
+      // this.aquifers = L.featureGroup
+
       var aquifers = L.geoJSON();
       //two shape files, so array
       //might want to just remove "lines" shapefile
-      geojson[1].features.forEach(aquifer => {
+      geojson[0].features.forEach(aquifer => {
         aquifers.addData(aquifer);
         //console.log(aquifer);
       })
@@ -578,16 +749,20 @@ export class MapComponent implements OnInit {
         color: 'black',
         fillOpacity: 0
       });
-      this.types.aquifers.layer = aquifers;
+      __this.types.aquifers.layer = aquifers;
       aquifers.addTo(this.mymap);
-      this.layers.addOverlay(aquifers, this.types.aquifers.label);
+      __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
     });
 
-    this.interactionEnabled = true;
+    this.shapeMetricsEnabled = false;
+    this.interactionType = "custom";
 
-    //shouldn't need this with base layers
-    // Promise.all([init1, init2/*, init3*/]).then(() => {
-    //   //this.orderLayers();
+    //changed to set when layer added, shouldnt need this
+    // Promise.all([init1, init2]).then(() => {
+    //   this.baseLayer = {
+    //     name: "Land Cover",
+    //     layer: this.types.landCover.layer
+    //   }
     // })
   }
 
@@ -866,8 +1041,8 @@ export class MapComponent implements OnInit {
   public resize(width: number, height: number) {
 
     
-    this.mapid.nativeElement.style.height = height-60 + 'px';
-    this.mapid.nativeElement.style.width = width;
+    this.mapid.nativeElement.style.height = height - 50 + 'px';
+    this.mapid.nativeElement.style.width = width - 20 + 'px';
 
 
     this.mymap.invalidateSize();
@@ -906,7 +1081,7 @@ export class MapComponent implements OnInit {
     if(type == "base") {
       var covData = this.types.landCover.data._covjson.ranges.cover.values;
       var rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
-      var indexes = this.getInternalIndexes();
+      var indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
       indexes.forEach(index => {
         covData[index] = this.types.landCover.baseData[index];
         rechargeData[index] = this.types.recharge.baseData[index];
@@ -944,7 +1119,7 @@ export class MapComponent implements OnInit {
       });
 
       var data = this.types.landCover.data._covjson.ranges.cover.values;
-      var indexes = this.getInternalIndexes();
+      var indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
       indexes.forEach(index => {
         data[index] = COVER_ENUM[type];
       });
@@ -956,9 +1131,9 @@ export class MapComponent implements OnInit {
     
   }
 
-  private getInternalIndexes(): number[] {
+  private getInternalIndexes(geojsonFeatures: any): number[] {
     var indexes = [];
-    this.highlightedItems.toGeoJSON().features.forEach(shape => {
+    geojsonFeatures.features.forEach(shape => {
       //array due to potential cutouts, shouldn't have any cutouts
       var pointsBase = shape.geometry.coordinates[0];
       var convertedPoints = [];
@@ -1108,7 +1283,7 @@ export class MapComponent implements OnInit {
         .addTo(this.mymap);
       }
     })
-    .setOpacity(1)
+    .setOpacity(this.opacity)
     //uses base layers now
     // //ensure recharge layer on top (don't want to have to remove covers to view it)
     // if(this.types.recharge.layer != undefined) {
@@ -1119,7 +1294,12 @@ export class MapComponent implements OnInit {
     //a bit sketchy, might want to change to keep current layer, though might not ever happen if can't update in recharge (should still change it)
     if(coverage != this.types.recharge) {
       layer.addTo(this.mymap);
+      this.baseLayer = {
+        name: "Land Cover",
+        layer: layer
+      }
     }
+    
     this.layers.addBaseLayer(layer, coverage.label);
     coverage.layer = layer;
     
@@ -1132,7 +1312,6 @@ export class MapComponent implements OnInit {
 
   public changeScenario(type: string) {
     this.currentScenario = type;
-    this.mapService.updateDetails(this, type);
   }
 
   //generate 31 colors

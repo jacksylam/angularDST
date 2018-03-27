@@ -26,6 +26,8 @@ export class SidebarPanelComponent implements OnInit {
 
   layer = "landcover";
 
+  selected="Baseline Rainfall 1978-2007";
+
   constructor(private mapService: MapService) { }
 
   ngOnInit() {
@@ -46,12 +48,17 @@ export class SidebarPanelComponent implements OnInit {
     
   }
 
-  changeScenario0() {
-    this.mapService.changeScenario(this, "recharge_scenario0");
-  }
 
-  changeScenario1() {
-    this.mapService.changeScenario(this, "recharge_scenario1");
+
+  climateChange(e) {
+    switch(e.value) {
+      case "Baseline Rainfall 1978-2007":
+        this.mapService.changeScenario(this, "recharge_scenario0");
+        break;
+      case "Rainfall Projection 2041-2070 (RCP 8.5)":
+        this.mapService.changeScenario(this, "recharge_scenario1");
+        break;
+    }
   }
 
   changeCover(type: string) {

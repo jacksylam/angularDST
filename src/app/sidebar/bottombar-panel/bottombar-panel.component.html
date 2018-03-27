@@ -1,4 +1,4 @@
-<!-- <div *ngIf="mode!='none'"> -->
+<div *ngIf="mode!='none'">
     <div id="content" [@movePanel]='state' class="container sidebar">
 
         <div (click)="toggleMenu()" class="menuButton">
@@ -13,7 +13,7 @@
                 
             <h3>Metric Mode: {{mode}}</h3>
 <!-- add something to check scenario for specific areas rather than currently selected one -->
-            <h3>Selected Scenario: {{scenario}}</h3>
+            <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 
             <h3>Original Recharge: {{original}} {{units}}</h3>
             <h3>Current Recharge: {{current}} {{units}}</h3>
@@ -22,4 +22,4 @@
         </div>
 
     </div>
-<!-- </div> -->
+</div>
