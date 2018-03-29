@@ -62,6 +62,7 @@ export class MapService {
   changeLayer(map: any, type: string) {
     let index = this.mapHash.indexOf(map);
     this.panelButtonHash[index].changeLayer(type);
+    this.controlPanelHash[index].changeLayer(type);
   }
 
   changeCover(buttonPanel: any, cover: string) {

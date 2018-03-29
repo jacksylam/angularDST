@@ -309,10 +309,6 @@ export class MapComponent implements OnInit {
       
   }
 
-  //BREAKS CONTINUITY IF UPLOADED NOT IN LANDCOVER MODE (CREATED LIKE NORMAL DRAWN OBJECT)
-  //should disable uploads as custom areas if not in landcover mode
-  //reference layers shouldn't affect anything
-
   uploadShapefileAsCustom(files: any[]) {
     //ensure reader initialized
     if(this.r) {
@@ -847,6 +843,10 @@ export class MapComponent implements OnInit {
   }
 
   
+  //NOTE: WHEN GETTING NEW NODE MODULES PROBABLY WILL NEED TO DOWNLOAD EARLIER VERSION, THEN REDOWNLOAD NEW ONE
+  //shpwrite module uses an old version, whereas this uses newer methods
+  //is there a workaround to make this work better?
+
   //default download drawn items
   downloadShapefile(shapes = this.drawnItems.toGeoJSON(), name = "DefinedAreas") {
     var __this = this;
@@ -873,7 +873,7 @@ export class MapComponent implements OnInit {
         }
     });
 
-//nothing works because versions are dumb
+
     zip.generateAsync({ type: "base64" }).then((file) => {
       saveAs(new Blob([this.base64ToArrayBuffer(file)], {type: "data:application/zip"}), name + ".zip")
     })

@@ -58,7 +58,7 @@
 
       <br><br>
       <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
+      <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
 
       <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'reference')" #fileSelectReference />
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectReference.click()"><div class="shift">Upload Shapefile<br>as Reference Layer</div></button>

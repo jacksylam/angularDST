@@ -27,6 +27,7 @@ export class SidebarControlsComponent implements OnInit {
   @ViewChild("leftScrollbar") leftScrollbarDiv;
   
 
+  baselayer = "landcover";
 
   value = 1;
 
@@ -98,6 +99,9 @@ export class SidebarControlsComponent implements OnInit {
     }
   }
 
+  changeLayer(type: string) {
+    this.baselayer = type;
+  }
 
 
 }

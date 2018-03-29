@@ -14,7 +14,7 @@ import { timeout } from 'q';
         transform: 'translate(0px, 0px)',
       })),
       state('inactive', style({
-        transform: 'translate( 0px, -310px)',
+        transform: 'translate( 0px, -275px)',
       })),
       transition('active => inactive', animate('500ms ease-in-out')),
       transition('inactive => active', animate('500ms ease-in-out'))
@@ -188,7 +188,7 @@ export class BottombarPanelComponent implements OnInit {
     
     var layout = {
       barmode: 'group',
-      height: 300,
+      height: 275,
       width: 350,
       plot_bgcolor: 'ivory',
       paper_bgcolor: 'ivory',
