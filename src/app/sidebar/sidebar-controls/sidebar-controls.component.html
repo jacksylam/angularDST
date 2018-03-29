@@ -51,20 +51,23 @@
       <br>
 
       <div class="outline btn-group-vertical internal-menu">
-        <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">test</div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="toggleAreas()"><div class="shift">test</div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="toggleAreas()"><div class="shift">test</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('Mgal/d')"><div class="shift">Mgal/d</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('in/yr')"><div class="shift">in/yr</div></button>
       </div>
 
       <br><br>
+      <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
 
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Upload Shapefile <br> as Custom Areas</div></button>
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Upload Shapefile <br> as Reference Layer</div></button>
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Download Custom <br> Areas as Shapefile</div></button>
+      <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'reference')" #fileSelectReference />
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectReference.click()"><div class="shift">Upload Shapefile<br>as Reference Layer</div></button>
+
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button>
       
       <br><br>
       
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">Generate Report</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()"><div class="shift">Generate Report</div></button>
 
     </div>
 

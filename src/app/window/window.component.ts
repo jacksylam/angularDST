@@ -169,15 +169,20 @@ export class WindowComponent implements AfterViewInit {
 
 
 
+  //acts weird if grab after scroll, think the coordinates get messed up somehow if off initial screen
   startDragging(e) {
     const container = WindowComponent.lastClickDiv;
+
     let left = e.clientX - container.mouseWindowLeft;
     let top = e.clientY - container.mouseWindowTop;
 
-    // if (top < 30) { top = 30; }
-    // if (top > (window.innerHeight - 70)) { top = window.innerHeight - 70; }
-    // if (left < 0) { left = 0; }
-    // if (left > (window.innerWidth - 70)) { left = window.innerWidth - 70; }
+
+    if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 10) {
+      left = -parseInt(container.panelDiv.nativeElement.style.width) + 10;
+    }
+    if(top < 50) {
+      top = 50;
+    }
 
     container.windowPanel.left = left
     container.windowPanel.top = top;

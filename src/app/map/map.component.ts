@@ -159,28 +159,8 @@ export class MapComponent implements OnInit {
     this.layers = L.control.layers({"Base Map": empty}, null/*, {collapsed: false}*/).addTo(this.mymap)
 
     this.initializeLayers();
-    
-    //this.loadcovJSON("covers", this.mymap, this.layers);
-    // this.changeScenario("recharge_scenario0");
 
     this.r = new FileReader();
-    this.r.onload = (e) => {
-      //console.log(this.r.result);
-      shp(this.r.result).then((geojson) => {
-        console.log(geojson);
-        //array if multiple shapefiles, else single object
-        if(Array.isArray(geojson)) {
-          geojson.forEach(shpset => {
-            this.parseAndAddShapes(shpset);
-          });
-        }
-        else {
-          this.parseAndAddShapes(geojson);
-        }
-      });
-    }
-
-    
 
     this.mymap.on('movestart', () => {
       L.DomUtil.removeClass(this.mymap._container,'crosshair-cursor-enabled');
@@ -319,18 +299,132 @@ export class MapComponent implements OnInit {
     });
   }
 
+
+
   dropHandler(e) {
     e.preventDefault();
+    //defualt to custom shapes for drag upload, maybe change later
+    this.uploadShapefileAsCustom(e.dataTransfer.files);
+    //console.log(e.dataTransfer.files);
+      
+  }
+
+  //BREAKS CONTINUITY IF UPLOADED NOT IN LANDCOVER MODE (CREATED LIKE NORMAL DRAWN OBJECT)
+  //should disable uploads as custom areas if not in landcover mode
+  //reference layers shouldn't affect anything
+
+  uploadShapefileAsCustom(files: any[]) {
     //ensure reader initialized
     if(this.r) {
-      //console.log(e.dataTransfer.files);
-      for(var i = 0; i < e.dataTransfer.files.length; i++) {
-        //this.loadShapefile()
-        
-        this.r.readAsArrayBuffer(e.dataTransfer.files[i]);
-      };
+      //think can redefine onload function, if not working might have to reinitialize file reader
+      this.r.onload = (e) => {
+        //console.log(this.r.result);
+        shp(this.r.result).then((geojson) => {
+          console.log(geojson);
+          //array if multiple shapefiles, else single object
+          if(Array.isArray(geojson)) {
+            geojson.forEach(shpset => {
+              this.parseAndAddShapes(shpset);
+            });
+          }
+          else {
+            this.parseAndAddShapes(geojson);
+          }
+        });
+      }
+
+      for(var i = 0; i < files.length; i++) {
+        this.r.readAsArrayBuffer(files[i]);
+      }
     }
   }
+
+  
+  uploadShapefileAsReference(files: any[]) {
+
+    //name layer name of first file
+    var fname = files[0].name;
+    //strip extension
+    fname = fname.substr(0, fname.lastIndexOf('.'));
+
+    //ensure reader initialized
+    if(this.r) {
+      //think can redefine onload function, if not working might have to reinitialize file reader
+      this.r.onload = (e) => {
+        //console.log(this.r.result);
+        shp(this.r.result).then((geojson) => {
+
+          var refLayer = L.geoJSON();
+
+          //array if multiple shpfiles
+          if(Array.isArray(geojson)) {
+            geojson.forEach((shpset) => {
+              shpset.features.forEach(object => {
+                refLayer.addData(object);
+              })
+            })
+            
+          }
+          //else single element
+          else {
+            geojson.features.forEach(object => {
+              refLayer.addData(object);
+            })
+          }
+          
+          refLayer.setStyle({
+            weight: 5,
+            opacity: 1,
+            color: 'black',
+            fillOpacity: 0
+          });
+          refLayer.addTo(this.mymap);
+          this.layers.addOverlay(refLayer, fname);
+
+        });
+      }
+
+      for(var i = 0; i < files.length; i++) {
+        this.r.readAsArrayBuffer(files[i]);
+      }
+    }
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   //should anything be here?
   dragOverHandler(e) {
@@ -389,8 +483,8 @@ export class MapComponent implements OnInit {
     //shouldn't change base map opacity
     if(this.baseLayer.name != "Base Map") {
       this.baseLayer.layer.setOpacity(opacity);
-      this.opacity = opacity;
     }
+    this.opacity = opacity;
   }
 
   public setMode(mode: string) {
@@ -504,24 +598,6 @@ export class MapComponent implements OnInit {
   }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   private addCellInteraction() {
 
     if(this.interactionType == "cell") {
@@ -604,18 +680,6 @@ export class MapComponent implements OnInit {
       layer.off('click');
     });
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   private enableShapeInteraction(metrics: boolean) {
@@ -730,7 +794,6 @@ export class MapComponent implements OnInit {
 
       __this.loadCover(__this.types.recharge, true);
       var rechargeVals = __this.types.recharge.data._covjson.ranges.recharge.values;
-      //__this.mapService.updateRechargeSum(this, rechargeVals);
     });
 
     shp(MapComponent.aquifersFile).then((geojson) => {
@@ -778,12 +841,18 @@ export class MapComponent implements OnInit {
     })
   }
 
+  generateReport() {
+    //placeholder
+    console.log("Report!");
+  }
 
-  //do you want to include lines or points? Don't actually do anything, maybe just remove these
-  downloadShapefile(shapes: any) {
+  
+  //default download drawn items
+  downloadShapefile(shapes = this.drawnItems.toGeoJSON(), name = "DefinedAreas") {
     var __this = this;
     var zip = new JSZip();
     //redefine shp-write zip feature with desired file hierarchy
+    //do you want to include lines or points? Don't actually do anything, maybe just remove these
     [shpWriteGeojson.point(shapes), shpWriteGeojson.line(shapes), shpWriteGeojson.polygon(shapes)].forEach(function(l) {
         if (l.geometries.length && l.geometries[0].length) {
           shpwrite.write(
@@ -804,8 +873,9 @@ export class MapComponent implements OnInit {
         }
     });
 
+//nothing works because versions are dumb
     zip.generateAsync({ type: "base64" }).then((file) => {
-      saveAs(new Blob([this.base64ToArrayBuffer(file)], {type: "data:application/zip"}), "DefinedAreas.zip")
+      saveAs(new Blob([this.base64ToArrayBuffer(file)], {type: "data:application/zip"}), name + ".zip")
     })
     
 
@@ -831,19 +901,10 @@ export class MapComponent implements OnInit {
     this.uneditableItems = new L.featureGroup();
     this.highlightedItems = new L.featureGroup();
 
-    //CANT DELETE LAYERS RIGHT NOW, TRACKED BY DRAWN ITEMS
-    //it already works like an eraser tool dummy
-
     this.mymap.addLayer(this.drawnItems);
     //this.mymap.addLayer(this.editableItems);
 
     L.drawLocal.draw.handlers.marker.tooltip.start = "Click map to select cell"
-
-    // L.EditToolbar.CustomDelete = L.EditToolbar.Delete.extend({
-    //   initialize: function (map, options) {
-    //     L.EditToolbar.Delete.prototype.initialize.call(this, map, options);
-    //   }
-    // })
 
 
     //might want to add some kind of undo button
@@ -1070,7 +1131,6 @@ export class MapComponent implements OnInit {
   }
 
 
-  //no longer need all the hole cutting stuff remove and clean up
   private updateCover(type: string) {
 
     //test download
@@ -1092,7 +1152,7 @@ export class MapComponent implements OnInit {
     else {
       //var __this = this;
       //might as well update recharge as well, async so shouldnt affect performance of core app
-      //also handle recharge sums (aquifers and total) here
+      
       //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
       
       //should grey out report generation button while this is going
@@ -1114,6 +1174,7 @@ export class MapComponent implements OnInit {
         //reload recharge cover
         this.loadCover(this.types.recharge, true)
         
+        //handle recharge sums (aquifers and total) here
         this.mapService.updateRechargeSum(this, rechargeVals);
         //reenable report generation
       });

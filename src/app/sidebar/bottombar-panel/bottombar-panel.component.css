@@ -25,8 +25,7 @@
     box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
     z-index: 2000;
   }
-  .menuButton-text
-  {
+  .menuButton-text {
     top: 50%;
     left: 50%;
     position: absolute;
@@ -34,35 +33,41 @@
     transform: translate(-50%, -50%) rotate(270deg);
   }
 
-  .menuButton:hover
-  {
+  .menuButton:hover {
     cursor: pointer;
-  }
-  
-  .row {
-    margin: 0px !important;
-    position: absolute;
   }
   
   .col-sm {
     margin-bottom: 5px;
   }
   
-  .input-field {
+  .contents {
+    position: absolute;
     width: 100%;
+    height: 100%;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    top: 0px;
+    left: 0px;
+    background-color: ivory;
   }
+
+  .metrics-container { 
+    position: absolute;
+    width: 100%;
+    display: inline-flex;
+    height: 100%;
+    padding: 20px;
+  }
+
+  .width-ctrl {
+    min-width: 400px;
+    width: 50%;
+    color: rgb(56, 117, 194);
+    font-weight: bold;
+    font-family: serif;
+  }
+
   
-  .add-button {
-    width: 100%;
-    background-color: rgb(89, 158, 92);
-    color: white;
-    font-size: 16px;
-  }
-  .capcity-button {
-    width: 100%;
-    background-color: rgb(175, 75, 75);
-    color: white;
-    font-size: 16px;
-  }
   
 

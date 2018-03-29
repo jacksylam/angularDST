@@ -25,6 +25,8 @@ export class SidebarControlsComponent implements OnInit {
   
   @ViewChild("menu") menuDiv;
   @ViewChild("leftScrollbar") leftScrollbarDiv;
+  
+
 
   value = 1;
 
@@ -53,6 +55,24 @@ export class SidebarControlsComponent implements OnInit {
     this.displayType = this.displayType == "Show" ? "Hide" : "Show";
   }
 
+  upload(e: any, type: string) {
+    console.log(e.target.files);
+    this.mapService.uploadShapefile(this, type, e.target.files);
+  }
+
+  download() {
+    this.mapService.downloadShapefile(this);
+  }
+
+  setUnits(unitType: string) {
+    //should switch mapService coordination to window service
+    this.mapService.setUnits(this, unitType);
+  }
+
+  generateReport() {
+    this.mapService.generateReport(this);
+  }
+
   menuScroll(e) {
     //stops events from bouncing back and forth since both scrolling
     if(!this.scrollLock) {
@@ -64,9 +84,6 @@ export class SidebarControlsComponent implements OnInit {
       //unlock after bounce
       this.scrollLock = false;
     }
-    
-
-    
   }
 
   scrollbarScroll(e) {

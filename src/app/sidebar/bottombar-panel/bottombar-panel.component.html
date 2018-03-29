@@ -6,20 +6,27 @@
         </div>
 
 
+        <div class="contents">
 
-        <div class="row">
+            <div class="metrics-container">
+                <div class="width-ctrl">
+                    <h3>Metric Mode: {{mode}}</h3>
+                    
+                    <!-- add something to check scenario for specific areas rather than currently selected one -->
+                    <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
+
+                    <h3>Original Recharge: {{original}} {{units}}</h3>
+                    <h3>Current Recharge: {{current}} {{units}}</h3>
+                    <h3>Difference: {{diff}}, Percent Change: {{pchange}}%</h3>
+                </div>
+                <div #chart> </div>
+            </div>
             
+            <!-- <div  class="chart-container">
+                    <div #chart> </div>
+            </div> -->
 
-                
-            <h3>Metric Mode: {{mode}}</h3>
-<!-- add something to check scenario for specific areas rather than currently selected one -->
-            <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
-
-            <h3>Original Recharge: {{original}} {{units}}</h3>
-            <h3>Current Recharge: {{current}} {{units}}</h3>
-            <h3>Difference: {{diff}}, Percent Change: {{pchange}}%</h3>
-
-        </div>
+            </div>
 
     </div>
 </div>

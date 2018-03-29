@@ -3,11 +3,11 @@
 
     <div #panelDiv class="panel panel-default allowPointerEvents">
       <div #dragBar class="panel-heading panel-heading-custom">
-        {{ windowPanel.title }} - {{ windowPanel.id }}
+        {{ windowPanel.title }} - {{ windowPanel.id + 1 }}
         <button class="navbarButton" (click)="removeWindow()">
           <span class="glyphicon glyphicon-remove"></span>
         </button>
-        <button class="navbarButton" (click)="incAlpha()">
+        <!-- <button class="navbarButton" (click)="incAlpha()">
           <span class="glyphicon glyphicon-plus"></span>
         </button>
         <button class="navbarButton" (click)="decAlpha()">
@@ -15,7 +15,7 @@
         </button>
         <button class="navbarButton" (click)="maximize()">
           <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
-        </button>
+        </button> -->
       </div>
 
       <div class="map-container">

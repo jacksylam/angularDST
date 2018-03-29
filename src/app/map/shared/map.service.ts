@@ -128,5 +128,38 @@ export class MapService {
     this.mapHash[index].changeLayerOpacity(opacity);
   }
 
-  
+
+  uploadShapefile(controlPanel: any, type: string, files: any[]) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    switch(type) {
+      case "reference":
+        this.mapHash[index].uploadShapefileAsReference(files);
+        break;
+      case "custom":
+        this.mapHash[index].uploadShapefileAsCustom(files);
+        break;
+    }
+    
+
+  }
+
+
+  downloadShapefile(controlPanel: any) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.mapHash[index].downloadShapefile();
+  }
+
+
+  setUnits(controlPanel: any, unitType: string) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.detailPanelHash[index].setUnits(unitType);
+  }
+
+
+  generateReport(controlPanel: any) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    //probably need to get details from this function, then generate new window with info, placeholder for now
+    this.mapHash[index].generateReport();
+  }
+
 }
