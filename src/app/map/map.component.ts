@@ -815,6 +815,7 @@ export class MapComponent implements OnInit {
 
     this.shapeMetricsEnabled = false;
     this.interactionType = "custom";
+    this.currentScenario = "recharge_scenario0"
 
     //changed to set when layer added, shouldnt need this
     // Promise.all([init1, init2]).then(() => {

@@ -168,20 +168,14 @@ export class BottombarPanelComponent implements OnInit {
       x: ['Recharge'],
       y: [originalRecharge],
       name: 'Original',
-      type: 'bar',
-      marker: {
-        color: 'rgb(56, 117, 194)'
-      },
+      type: 'bar'
     };
     
     var current = {
       x: ['Recharge'],
       y: [currentRecharge],
       name: 'Current',
-      type: 'bar',
-      marker: {
-        color: '#016422'
-      },
+      type: 'bar'
     };
     
     var data = [original, current];
@@ -198,6 +192,9 @@ export class BottombarPanelComponent implements OnInit {
         b: 50,
         t: 40,
         pad: 0
+      },
+      yaxis: {
+        range: [Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0), Math.max(originalRecharge, currentRecharge) + 2]  // to set the xaxis range to 0 to 1
       }
     };
     
