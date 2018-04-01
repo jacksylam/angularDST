@@ -7,11 +7,11 @@ export class WindowPanel {
   height: number;
   backgroundAlpha: number;
   zindex: number;
-
+  tag: number;
   bodyType: string;
-  dbQuery: string;
+  data: any;
 
-  constructor(title: string, bodyType: string, dbquery: string) {
+  constructor(title: string, bodyType: string, data: any) {
     this.title = title;
     this.left = 200;
     // this.top = 200;
@@ -21,6 +21,6 @@ export class WindowPanel {
     this.zindex = 0;
 
     this.bodyType = bodyType;
-    this.dbQuery = dbquery;
+    this.data = data;
   }
 }

@@ -17,6 +17,8 @@ import * as JSZip from 'jszip'
 import * as shpWriteGeojson from '../../../node_modules/shp-write/src/geojson'
 import * as shpWritePrj from '../../../node_modules/shp-write/src/prj';
 import { saveAs } from 'file-saver';
+import { WindowService } from '../window/shared/window.service';
+import {WindowPanel} from '../window/shared/windowPanel';
 
 
 
@@ -65,6 +67,8 @@ export class MapComponent implements OnInit {
 
   interactionType: string;
   shapeMetricsEnabled: boolean;
+
+  windowId: number;
 
   // landCover: any;
   // landCoverLayer: any;
@@ -131,7 +135,7 @@ export class MapComponent implements OnInit {
   r: FileReader;
 
 
-  constructor(private DBService: DBConnectService, private mapService: MapService, private http: Http) {
+  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
    }
@@ -200,7 +204,7 @@ export class MapComponent implements OnInit {
         case "Recharge Rate":
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
-          this.mapService.updateMetrics(this, null, null, "full");
+          this.mapService.updateMetrics(this, null, null, "full", this.types.recharge.baseData.length);
           this.disableShapeInteraction();
           setTimeout(() => {
             this.baseLayer.layer.setOpacity(this.opacity);
@@ -316,7 +320,7 @@ export class MapComponent implements OnInit {
       this.r.onload = (e) => {
         //console.log(this.r.result);
         shp(this.r.result).then((geojson) => {
-          console.log(geojson);
+          //console.log(geojson);
           //array if multiple shapefiles, else single object
           if(Array.isArray(geojson)) {
             geojson.forEach(shpset => {
@@ -387,39 +391,6 @@ export class MapComponent implements OnInit {
 
 
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   //should anything be here?
@@ -544,7 +515,7 @@ export class MapComponent implements OnInit {
     };
     var unhighlight = {
       weight: 5,
-      opacity: 0.5,
+      opacity: 1,
       color: 'black',  //Outline color
       fillOpacity: 0
     }
@@ -568,14 +539,17 @@ export class MapComponent implements OnInit {
         var originalRecharge = 0;
         var currentRecharge = 0;
         var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-        this.getInternalIndexes(highlightedAquifers.toGeoJSON()).forEach((index) => {
+        var indexes = this.getInternalIndexes(highlightedAquifers.toGeoJSON());
+        var cells = indexes.length;
+        indexes.forEach((index) => {
           originalRecharge += this.types.recharge.baseData[index];
           currentRecharge += rechargeVals[index];
         })
-        this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "aquifer");
+        this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "aquifer", cells);
       });
     })
     
+    this.mapService.updateMetrics(this, 0, 0, "aquifer", 0);
     
   }
 
@@ -666,6 +640,8 @@ export class MapComponent implements OnInit {
         this.getSelectedCellMetrics(index);
       }
     });
+
+    this.mapService.updateMetrics(this, 0, 0, "cell", 0);
   }
 
   private disableShapeInteraction() {
@@ -708,18 +684,20 @@ export class MapComponent implements OnInit {
 
   private getSelectedCellMetrics(index: number) {
     var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    this.mapService.updateMetrics(this, this.types.recharge.baseData[index], rechargeVals[index], "cell");
+    this.mapService.updateMetrics(this, this.types.recharge.baseData[index], rechargeVals[index], "cell", 1);
   }
 
   private getSelectedShapeMetrics() {
     var originalRecharge = 0;
     var currentRecharge = 0;
     var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    this.getInternalIndexes(this.highlightedItems.toGeoJSON()).forEach((index) => {
+    var indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
+    var cells = indexes.length;
+    indexes.forEach((index) => {
       originalRecharge += this.types.recharge.baseData[index];
       currentRecharge += rechargeVals[index];
     })
-    this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "custom");
+    this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "custom", cells);
   }
 
   private getWholeMapMetrics() {
@@ -734,14 +712,14 @@ export class MapComponent implements OnInit {
 
     this.interactionType = "full";
 
-    this.mapService.updateMetrics(this, null, null, "full");
+    this.mapService.updateMetrics(this, null, null, "full", this.types.recharge.baseData.length);
   }
 
   //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
   private initializeLayers() {
     var __this = this;
 
-    var init1 = CovJSON.read(MapComponent.landCoverFile).then(function(coverage) {
+    CovJSON.read(MapComponent.landCoverFile).then(function(coverage) {
       var xs = coverage._covjson.domain.axes.x.values;
       var ys = coverage._covjson.domain.axes.y.values;
 
@@ -752,6 +730,37 @@ export class MapComponent implements OnInit {
       //get range + 75 to account for cell width
       __this.xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
       __this.yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75;
+
+
+      //load aquifers after boundaries found so can filter out external aquifers
+      shp(MapComponent.aquifersFile).then((geojson) => {
+        // this.aquifers = L.featureGroup
+  
+        var aquifers = L.geoJSON();
+        //two shape files, so array
+        //might want to just remove "lines" shapefile
+        geojson[0].features.forEach(aquifer => {
+          
+          //convert one point to UTM and check if in bounds (if one point in bounds the aquifer should be internal)
+          var sampleCoord = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, aquifer.geometry.coordinates[0][0]);
+          
+          if(sampleCoord[0] >= __this.xmin && sampleCoord[0] <= __this.xmin + __this.xrange
+            && sampleCoord[1] >= __this.ymin && sampleCoord[1] <= __this.ymin + __this.yrange) {
+            aquifers.addData(aquifer);
+          }
+  
+         
+        })
+        aquifers.setStyle({
+          weight: 5,
+          opacity: 1,
+          color: 'black',
+          fillOpacity: 0
+        });
+        __this.types.aquifers.layer = aquifers;
+        aquifers.addTo(__this.mymap);
+        __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
+      });
 
       // var xutm = coverage._covjson.domain.axes.x.values;
       // var yutm = coverage._covjson.domain.axes.y.values;
@@ -777,10 +786,11 @@ export class MapComponent implements OnInit {
       __this.loadCover(__this.types.landCover, false);
 
       
-    });
+    })
+    
 
     
-    var init2 = CovJSON.read(MapComponent.rechargeFile).then(function(coverage) {
+    CovJSON.read(MapComponent.rechargeFile).then(function(coverage) {
       __this.types.recharge.data = coverage;
       //deepcopy values for comparisons with modified types
       __this.types.recharge.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.recharge.values));
@@ -792,26 +802,7 @@ export class MapComponent implements OnInit {
       var rechargeVals = __this.types.recharge.data._covjson.ranges.recharge.values;
     });
 
-    shp(MapComponent.aquifersFile).then((geojson) => {
-      // this.aquifers = L.featureGroup
-
-      var aquifers = L.geoJSON();
-      //two shape files, so array
-      //might want to just remove "lines" shapefile
-      geojson[0].features.forEach(aquifer => {
-        aquifers.addData(aquifer);
-        //console.log(aquifer);
-      })
-      aquifers.setStyle({
-        weight: 5,
-        opacity: 1,
-        color: 'black',
-        fillOpacity: 0
-      });
-      __this.types.aquifers.layer = aquifers;
-      aquifers.addTo(this.mymap);
-      __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
-    });
+    
 
     this.shapeMetricsEnabled = false;
     this.interactionType = "custom";
@@ -827,21 +818,176 @@ export class MapComponent implements OnInit {
   }
 
 
-  //ensure layers are ordered as wanted
-  //DOESNT WORK??????
-  //maybe needs to be added to map to work, maybe just add onadd event to recharge layer to bring to front
-  //geojson layer might just be different, check up on this
-  //pretty low priority
-  orderLayers() {
-    this.layerOrdering.forEach((type) => {
-      type.layer.bringToFront()
-    })
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   generateReport() {
-    //placeholder
-    console.log("Report!");
+    var data = {
+      customAreas: [],
+      aquifers: [],
+      customAreasTotal: {},
+      total: {}
+    };
+    
+
+    var items;
+
+    this.types.aquifers.layer.eachLayer((layer) => {
+      var info = {
+        name: "",
+        metrics: {}
+      };
+      items = new L.featureGroup();
+
+      info.name = layer.feature.properties.SYSTEM;
+      info.metrics = this.getMetricsSuite(items.addLayer(layer));
+
+      data.aquifers.push(info);
+    })
+
+    var count = 1;
+    this.drawnItems.eachLayer((layer) => {
+      var info = {
+        name: "",
+        metrics: {}
+      };
+      items = new L.featureGroup();
+      //add custom naming options later, for now just name by number
+      info.name = "Custom Area " + (count++).toString();
+      info.metrics = this.getMetricsSuite(items.addLayer(layer));
+
+      data.customAreas.push(info);
+    })
+
+    //can make more efficient by computing individual shape metrics and full metrics at the same time
+    //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
+    data.customAreasTotal = this.getMetricsSuite(this.drawnItems);
+
+    //again, make sure to go back and modify all full map metrics to disclude background cells
+    data.total = this.getMetricsSuite(null);
+
+    var reportWindow = new WindowPanel("Report", "report", data);
+    this.windowService.addWindow(reportWindow, this.windowId);
+
+    console.log(data);
   }
+
+  
+  //could probably refactor to use this for generating and passing metrics to bottombar
+  //also could use something similar to report generation for passing name and metric breakdown
+  //maybe have subfunctions in generate report for different parts
+
+  //also need to update all full map computations to disclude background cells
+  getMetricsSuite(items: any) {
+    var metrics = {
+      originalIPY: 0,
+      currentIPY: 0,
+      originalMGPY: 0,
+      currentMGPY: 0,
+      cells: 0,
+      difference: 0,
+      pchange: 0
+    }
+
+    var roundedMetrics = {
+      originalIPY: "",
+      currentIPY: "",
+      originalMGPY: "",
+      currentMGPY: "",
+      cells: "",
+      difference: "",
+      pchange: ""
+    }
+
+    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+
+    var precision = 3;
+
+    //pass in null if want whole map (just use arrays rather than shape)
+    if(items == null) {
+      for(var i = 0; i < rechargeVals.length; i++) {
+        metrics.currentIPY += rechargeVals[i];
+        metrics.originalIPY += this.types.recharge.baseData[i]
+      }
+
+      metrics.cells = rechargeVals.length;
+    }
+    else {
+      var indexes = this.getInternalIndexes(items.toGeoJSON());
+  
+      //number of cells enclosed
+      metrics.cells = indexes.length;
+  
+      //get total IPY over cells
+      indexes.forEach((index) => {
+        metrics.originalIPY += this.types.recharge.baseData[index];
+        metrics.currentIPY += rechargeVals[index];
+      });  
+    }
+    
+
+    //compute metrics in MGPY
+    metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+
+    //if no cells leave at default value of 0 to avoid dividing by 0
+    if(metrics.cells > 0) {
+      //average IPY summation over cells
+      metrics.originalIPY /= metrics.cells;
+      metrics.currentIPY /= metrics.cells;
+
+      //get difference and percent change
+      metrics.difference = metrics.currentMGPY - metrics.originalMGPY;
+      //make sure not dividing by 0 if no recharge in selected cells
+      metrics.pchange = metrics.originalMGPY == 0 ? 0 : metrics.difference / metrics.originalMGPY * 100;
+    }
+
+    roundedMetrics.originalIPY = metrics.originalIPY.toPrecision(precision);
+    roundedMetrics.currentIPY = metrics.currentIPY.toPrecision(precision);
+    roundedMetrics.originalMGPY = metrics.originalMGPY.toPrecision(precision);
+    roundedMetrics.currentMGPY = metrics.currentMGPY.toPrecision(precision);
+    roundedMetrics.cells = metrics.cells.toString();
+    roundedMetrics.difference = metrics.difference.toPrecision(precision);
+    roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
+    
+
+    return roundedMetrics;
+  }
+
+
+
+  setWindowId(id: number) {
+    this.windowId = id;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   
   //NOTE: WHEN GETTING NEW NODE MODULES PROBABLY WILL NEED TO DOWNLOAD EARLIER VERSION, THEN REDOWNLOAD NEW ONE
@@ -1408,20 +1554,7 @@ export class MapComponent implements OnInit {
         }
       }
     }
-    // var range = 16777215;
     
-    // for(var i = 0; i < 30; i++) {
-    //   color = Math.round((range / 29) * i);
-    //   var hex = color.toString(16)
-    //   while(hex.length < 6) {
-    //     hex = "0" + hex;
-    //   }
-    //   hex = "#" + hex;
-    //   //console.log(hex);
-    //   palette.push(hex);
-      
-    // }
-    console.log(palette[27])
     for(i = 0; i < 30; i++) {
       COVER_INDEX_DETAILS[i].color = palette[i];
       document.documentElement.style.setProperty("--color" + (LC_TO_BUTTON_INDEX[i + 1]).toString(), palette[i + 1]);

@@ -39,8 +39,6 @@ export class DBConnectService {
         headers: head
       };
 
-      //console.log(i);
-
       var response = this.http.get<ResponseResults>(url, options)
       .map((data) => {
         return data.result as Cover[]

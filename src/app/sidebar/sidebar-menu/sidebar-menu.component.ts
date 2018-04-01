@@ -32,7 +32,7 @@ export class SidebarMenuComponent implements OnInit {
   }
 
   createNewMap(){
-    var newWindow = new WindowPanel("Map", "map", "");
+    var newWindow = new WindowPanel("Map", "map", {});
     this.windowService.addWindow(newWindow);
   }
 }

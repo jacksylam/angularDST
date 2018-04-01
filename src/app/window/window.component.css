@@ -16,6 +16,16 @@
   border-radius: 1%;
 }
 
+.report-container {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 1);
+  width: 100%;
+  height: calc(100% - 30px);
+  padding: 10px;
+  border-radius: 1%;
+  overflow: scroll;
+}
+
 
 .panel-default>.panel-heading-custom {
   background-color: rgba(108, 138, 164, 1);
@@ -103,4 +113,12 @@
 
 .drag-corner:hover {
   cursor: nwse-resize;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+th, td {
+  padding: 15px;
 }

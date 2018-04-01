@@ -22,6 +22,11 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('resizeBot') resizeBot;
   @ViewChild('resizeRight') resizeRight;
 
+  @ViewChild('aquiferGraph') aquiferGraph;
+  @ViewChild('customGraph') customGraph;
+  @ViewChild('customTotalGraph') customTotalGraph;
+  @ViewChild('fullGraph') fullGraph;
+
   @Input() public title: string;
   @Input() public type: string;
   @Input() windowPanel: WindowPanel;
@@ -44,7 +49,6 @@ export class WindowComponent implements AfterViewInit {
   resizeStartWidth: number;
   resizeStartHeight: number;
 
-  //divs cover 2 indexes, panelExtendedDiv at divsIndex, panelDiv at divsIndex + 1
   divsIndex: number;
 
   constructor(private windowService: WindowService, private _renderer: Renderer) { }
@@ -63,8 +67,14 @@ export class WindowComponent implements AfterViewInit {
     this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
-    this.mapComponent.resize(this.windowPanel.width, this.windowPanel.height);
-
+    if(this.mapComponent) {
+      this.mapComponent.resize(this.windowPanel.width, this.windowPanel.height);
+      this.mapComponent.setWindowId(this.windowPanel.tag);
+    }
+    else {
+      this.generateReportGraphs();
+    }
+    
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
       const mouseX = e.clientX;
@@ -148,8 +158,10 @@ export class WindowComponent implements AfterViewInit {
       if(newHeight >= 400) {
         WindowComponent.lastMouseYPosition = mouseY;
         container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
-        //for some reason percent size allows map to change width but not height, so change manually
-        __this.mapComponent.resize(__this.mapComponent.width, newHeight);
+        if(this.mapComponent) {
+          //for some reason percent size allows map to change width but not height, so change manually
+          __this.mapComponent.resize(__this.mapComponent.width, newHeight);
+        }
       }
       
     }
@@ -160,8 +172,10 @@ export class WindowComponent implements AfterViewInit {
       if(newWidth >= 400) {
         WindowComponent.lastMouseXPosition = mouseX;
         container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
-        //for some reason percent size allows map to change width but not height, so change manually
-        __this.mapComponent.resize(newWidth, __this.mapComponent.height);
+        if(this.mapComponent) {
+          //for some reason percent size allows map to change width but not height, so change manually
+          __this.mapComponent.resize(newWidth, __this.mapComponent.height);
+        }
       }
     }
 
@@ -262,6 +276,150 @@ export class WindowComponent implements AfterViewInit {
 
   getView() {
     return [this.windowPanel.width, this.windowPanel.height];
+  }
+
+
+  //graphs in Mgal/year, might want to add methods to change
+  generateReportGraphs() {
+
+    var graphData = {
+      aquifers: {
+        data: [{
+          x: [],
+          y: [],
+          name: 'Original',
+          type: 'bar'
+        },
+        {
+          x: [],
+          y: [],
+          name: 'Current',
+          type: 'bar'
+        }],
+        layout: {}
+      },
+      custom: {
+        data: [{
+          x: [],
+          y: [],
+          name: 'Original',
+          type: 'bar'
+        },
+        {
+          x: [],
+          y: [],
+          name: 'Current',
+          type: 'bar'
+        }],
+        layout: {}
+      },
+      customTotal: {
+        data: [{
+          x: [],
+          y: [],
+          name: 'Original',
+          type: 'bar'
+        },
+        {
+          x: [],
+          y: [],
+          name: 'Current',
+          type: 'bar'
+        }],
+        layout: {}
+      },
+      full: {
+        data: [{
+          x: [],
+          y: [],
+          name: 'Original',
+          type: 'bar'
+        },
+        {
+          x: [],
+          y: [],
+          name: 'Current',
+          type: 'bar'
+        }],
+        layout: {}
+      }
+    }
+
+    
+    this.windowPanel.data.aquifers.forEach((aquifer) => {
+      graphData.aquifers.data[0].x.push(aquifer.name);
+      graphData.aquifers.data[1].x.push(aquifer.name);
+
+      graphData.aquifers.data[0].y.push(aquifer.metrics.originalMGPY);
+      graphData.aquifers.data[1].y.push(aquifer.metrics.currentMGPY);
+    })
+    graphData.aquifers.layout = {
+      barmode: 'group'
+    }
+
+    graphData.full.data[0].x.push("Map Total");
+    graphData.full.data[1].x.push("Map Total");
+
+    graphData.full.data[0].y.push(this.windowPanel.data.total.originalMGPY);
+    graphData.full.data[1].y.push(this.windowPanel.data.total.currentMGPY);
+
+    graphData.full.layout = {
+      barmode: 'group'
+    }
+
+    Plotly.newPlot(this.aquiferGraph.nativeElement, graphData.aquifers.data, graphData.aquifers.layout);
+    Plotly.newPlot(this.fullGraph.nativeElement, graphData.full.data, graphData.full.layout);
+
+
+    //only plot custom area graphs if user had defined areas
+    if(this.windowPanel.data.customAreas.length > 0) {
+      this.windowPanel.data.customAreas.forEach((area) => {
+        graphData.custom.data[0].x.push(area.name);
+        graphData.custom.data[1].x.push(area.name);
+  
+        graphData.custom.data[0].y.push(area.metrics.originalMGPY);
+        graphData.custom.data[1].y.push(area.metrics.currentMGPY);
+      })
+      graphData.custom.layout = {
+        barmode: 'group'
+      }
+  
+  
+      graphData.customTotal.data[0].x.push("Custom Area Total");
+      graphData.customTotal.data[1].x.push("Custom Area Total");
+  
+      graphData.customTotal.data[0].y.push(this.windowPanel.data.customAreasTotal.originalMGPY);
+      graphData.customTotal.data[1].y.push(this.windowPanel.data.customAreasTotal.currentMGPY);
+  
+      graphData.customTotal.layout = {
+        barmode: 'group'
+      }
+
+      Plotly.newPlot(this.customGraph.nativeElement, graphData.custom.data, graphData.custom.layout);
+      Plotly.newPlot(this.customTotalGraph.nativeElement, graphData.customTotal.data, graphData.customTotal.layout);
+    }
+    
+
+    // var current = {
+    //   x: ['Recharge'],
+    //   y: [currentRecharge],
+    //   name: 'Current',
+    //   type: 'bar'
+    // };
+    
+    
+
+    //start display 10 units below min value, but not less than 0
+    // var minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
+    // //max recharge 75% of graph height
+    // var maxRecharge = Math.max(originalRecharge, currentRecharge);
+    // var maxScale = maxRecharge + .75 * (maxRecharge - minScale);
+    // //if both values are 0 just set it to 1
+    // if(maxScale == 0) {
+    //   maxScale = 1;
+    // }
+    
+    
   }
 
 }

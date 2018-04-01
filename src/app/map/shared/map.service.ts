@@ -30,7 +30,6 @@ export class MapService {
    }
 
   init(){
-  //  this.firestore.getList().subscribe(val => console.log(val));
   }
 
   setMap(newMap: any) {
@@ -80,10 +79,9 @@ export class MapService {
     this.mapHash[index].changeScenario(scenario);
   }
 
-  updateMetrics(map: any, originalRecharge: number, currentRecharge: number, mode: string) {
+  updateMetrics(map: any, originalRecharge: number, currentRecharge: number, mode: string, numcells: number) {
     let index = this.mapHash.indexOf(map);
-    console.log(originalRecharge)
-    this.detailPanelHash[index].updateMetrics(originalRecharge, currentRecharge, mode);
+    this.detailPanelHash[index].updateMetrics(originalRecharge, currentRecharge, mode, numcells);
   }
 
   // updateDetails(map: any, scenario: string) {

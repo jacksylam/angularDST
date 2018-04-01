@@ -2,8 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import {animate, transition, state, trigger, style, ViewChild} from '@angular/core';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
 import {MapService} from '../../map/shared/map.service';
-import { timeout } from 'q';
-
 @Component({
   selector: 'app-bottombar-panel',
   templateUrl: './bottombar-panel.component.html',
@@ -28,12 +26,12 @@ export class BottombarPanelComponent implements OnInit {
   @ViewChild('chart') chart;
 
   state = 'inactive';
-  covDetails;
   current = "";
-  original= "";
-  pchange= "";
-  diff= "";
-  mode="none";
+  original = "";
+  cells = 0;
+  pchange = "";
+  diff = "";
+  mode = "none";
   scenario = "Average";
   units = "Mgal/d"
   totalRecharge = 0;
@@ -49,15 +47,6 @@ export class BottombarPanelComponent implements OnInit {
 
   ngOnInit() {
     this.mapService.setDetailsPanel(this);
-    // this.covDetails.rechargeUpdate.subscribe(() => {
-    //   this.totalRecharge = this.covDetails.totalRecharge;
-    // })
-    // this.covDetails.baseLandcoverUpdate.subscribe(() => {
-    //   this.baseLandcover = this.covDetails.baseLandcover;
-    // })
-    // this.covDetails.scenarioUpdate.subscribe(() => {
-    //   this.scenario = scenarios[this.covDetails.scenario];
-    // })
   }
 
   ngAfterViewInit() {
@@ -68,7 +57,7 @@ export class BottombarPanelComponent implements OnInit {
     this.totalRecharge = totalRecharge;
     if(this.mode == "full") {
       //if update finished after switch to metric view, update metrics
-      this.updateMetrics(null, null, "full");
+      this.updateMetrics(null, null, "full", this.cells);
     }
   }
 
@@ -76,10 +65,10 @@ export class BottombarPanelComponent implements OnInit {
     this.totalOriginalRecharge = totalOriginalRecharge;
   }
 
-  updateMetrics(original: number, current: number, mode: string) {
+  updateMetrics(original: number, current: number, mode: string, numcells: number) {
     
     this.mode = mode;
-
+    this.cells = numcells;
     var convertedOrigin;
     var convertedCurrent;
     //no reason to update repeatedly, store full map data ahead of time
@@ -88,8 +77,8 @@ export class BottombarPanelComponent implements OnInit {
       this.ipyVals.original = this.totalOriginalRecharge;
       this.ipyVals.current = this.totalRecharge;
 
-      convertedOrigin = this.convertValue(this.totalOriginalRecharge);
-      convertedCurrent = this.convertValue(this.totalRecharge)
+      convertedOrigin = this.convertValue(this.totalOriginalRecharge, numcells);
+      convertedCurrent = this.convertValue(this.totalRecharge, numcells)
 
       
     }
@@ -97,15 +86,23 @@ export class BottombarPanelComponent implements OnInit {
       this.ipyVals.original = original;
       this.ipyVals.current = current;
 
-      convertedOrigin = this.convertValue(original);
-      convertedCurrent = this.convertValue(current)
+      convertedOrigin = this.convertValue(original, numcells);
+      convertedCurrent = this.convertValue(current, numcells)
     }
 
-    this.original = this.roundToPrecision(convertedOrigin, 4).toString();
-    this.current = this.roundToPrecision(convertedCurrent, 4).toString();
+    //use 3 significant figure precision
+    var precision = 3;
+
+    this.original = convertedOrigin.toPrecision(precision);
+    this.current = convertedCurrent.toPrecision(precision);
     var diff = convertedCurrent - convertedOrigin;
-    this.diff = this.roundToPrecision(diff, 4).toString();
-    this.pchange = this.roundToPrecision((diff / convertedOrigin * 100), 4).toString();
+    this.diff = diff.toPrecision(precision);
+    //ensure not dividing by 0
+    this.pchange = convertedOrigin == 0 ? "0" : (diff / convertedOrigin * 100).toPrecision(precision);
+    //if all values 0 just set pchange to 0
+    if(this.pchange == "NaN") {
+      this.pchange = "0"
+    }
     
     //bargraph can only be rendered if element exists
     //delay so transition has time to process (might want to switch how checking for mode)
@@ -119,11 +116,12 @@ export class BottombarPanelComponent implements OnInit {
   }
 
 
-  convertValue(valueIPY: number) {
-    //use 4 decimal precision
+  convertValue(valueIPY: number, cells: number) {
+    
     switch(this.units) {
       case "in/yr":
-        return valueIPY;
+        //ipy values are summation, need to divide by number of cells for average (0 if no cells)
+        return cells > 0 ? valueIPY / cells : 0;
       case "Mgal/d":
         return (valueIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
     }
@@ -132,21 +130,9 @@ export class BottombarPanelComponent implements OnInit {
   setUnits(type: string) {
     this.units = type;
     //update with stored ipy vals
-    this.updateMetrics(this.ipyVals.original, this.ipyVals.current, this.mode);
+    this.updateMetrics(this.ipyVals.original, this.ipyVals.current, this.mode, this.cells);
   }
 
-  roundToPrecision(value: number, precision: number) {
-    var roundMag = Math.pow(10, precision);
-    return Math.round(value * roundMag) / roundMag;
-  }
-
-  // updateDetails(scenario: string) {
-  //   var scenarios = {
-  //     "recharge_scenario0" : "Average",
-  //     "recharge_scenario1" : "Drought"
-  //   }
-  //   if(scenario != null) this.scenario = scenarios[scenario];
-  // }
 
   backToBase() {
     this.mode = "none";
@@ -179,7 +165,17 @@ export class BottombarPanelComponent implements OnInit {
     };
     
     var data = [original, current];
-    
+
+    //start display 10 units below min value, but not less than 0
+    var minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
+    //max recharge 75% of graph height
+    var maxRecharge = Math.max(originalRecharge, currentRecharge);
+    var maxScale = maxRecharge + .75 * (maxRecharge - minScale);
+    //if both values are 0 just set it to 1
+    if(maxScale == 0) {
+      maxScale = 1;
+    }
+
     var layout = {
       barmode: 'group',
       height: 275,
@@ -194,7 +190,7 @@ export class BottombarPanelComponent implements OnInit {
         pad: 0
       },
       yaxis: {
-        range: [Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0), Math.max(originalRecharge, currentRecharge) + 2]  // to set the xaxis range to 0 to 1
+        range: [minScale, maxScale]
       }
     };
     

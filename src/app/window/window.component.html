@@ -1,39 +1,171 @@
 
 
-
-    <div #panelDiv class="panel panel-default allowPointerEvents">
-      <div #dragBar class="panel-heading panel-heading-custom">
-        {{ windowPanel.title }} - {{ windowPanel.id + 1 }}
-        <button class="navbarButton" (click)="removeWindow()">
-          <span class="glyphicon glyphicon-remove"></span>
-        </button>
-        <!-- <button class="navbarButton" (click)="incAlpha()">
-          <span class="glyphicon glyphicon-plus"></span>
-        </button>
-        <button class="navbarButton" (click)="decAlpha()">
-          <span class="glyphicon glyphicon-minus"></span>
-        </button>
-        <button class="navbarButton" (click)="maximize()">
-          <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
-        </button> -->
-      </div>
-
-      <div class="map-container">
-        <!-- FIX AND UNCOMMENT HERE -->
-        <!-- <app-ngxgraph #child *ngIf="windowPanel.bodyType.split('-')[0] == 'ngxgraph'" [view]="getView" [type]="windowPanel.bodyType.split('-')[1]" [dbQuery]="windowPanel.dbQuery"></app-ngxgraph> -->
-
-
-        <app-map #map *ngIf="windowPanel.bodyType.split('-')[0] == 'map'"></app-map>
-
-      </div>
-
-      <app-sidebar-panel></app-sidebar-panel>
-      <app-bottombar-panel></app-bottombar-panel>
-      <app-sidebar-controls></app-sidebar-controls>
-      <div class="drag-bottom" #resizeBot></div>
-      <div class="drag-right" #resizeRight></div>
-      <div class="drag-corner" #resizeCorner></div>
+<div *ngIf="windowPanel.bodyType == 'map'; else reportBlock">
+  <div #panelDiv class="panel panel-default allowPointerEvents">
+  
+    <div #dragBar class="panel-heading panel-heading-custom">
+      {{ windowPanel.title }} - {{ windowPanel.tag }}
+      <button class="navbarButton" (click)="removeWindow()">
+        <span class="glyphicon glyphicon-remove"></span>
+      </button>
+      <!-- <button class="navbarButton" (click)="incAlpha()">
+        <span class="glyphicon glyphicon-plus"></span>
+      </button>
+      <button class="navbarButton" (click)="decAlpha()">
+        <span class="glyphicon glyphicon-minus"></span>
+      </button>
+      <button class="navbarButton" (click)="maximize()">
+        <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
+      </button> -->
     </div>
 
+    <div class="map-container">
+
+      <app-map #map></app-map>
+
+    </div>
+
+    <app-sidebar-panel></app-sidebar-panel>
+    <app-bottombar-panel></app-bottombar-panel>
+    <app-sidebar-controls></app-sidebar-controls>
+    <div class="drag-bottom" #resizeBot></div>
+    <div class="drag-right" #resizeRight></div>
+    <div class="drag-corner" #resizeCorner></div>
+
+  </div>
+</div>
+
+<ng-template #reportBlock>
+  <div #panelDiv class="panel panel-default allowPointerEvents">
+
+    <div #dragBar class="panel-heading panel-heading-custom">
+      {{ windowPanel.title }} - {{ windowPanel.tag }}
+      <button class="navbarButton" (click)="removeWindow()">
+        <span class="glyphicon glyphicon-remove"></span>
+      </button>
+      <!-- <button class="navbarButton" (click)="incAlpha()">
+        <span class="glyphicon glyphicon-plus"></span>
+      </button>
+      <button class="navbarButton" (click)="decAlpha()">
+        <span class="glyphicon glyphicon-minus"></span>
+      </button>
+      <button class="navbarButton" (click)="maximize()">
+        <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
+      </button> -->
+    </div>
+
+    <div class="report-container">
+
+      <h1>Report for Map {{ windowPanel.tag }}</h1>
+
+      <h2>Aquifers</h2>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Original Recharge (in/y)</th>
+          <th>Current Recharge (in/y)</th>
+          <th>Original Recharge (Mgal/d)</th>
+          <th>Current Recharge (Mgal/d)</th>
+          <th>Number of Cells (75m<sup>2</sup>)</th>
+          <th>Difference (Mgal/d)</th>
+          <th>Percent Change</th>
+        </tr>
+        <tr *ngFor="let aquifer of windowPanel.data.aquifers">
+          <td>{{aquifer.name}}</td>
+          <td>{{aquifer.metrics.originalIPY}}</td>
+          <td>{{aquifer.metrics.currentIPY}}</td>
+          <td>{{aquifer.metrics.originalMGPY}}</td>
+          <td>{{aquifer.metrics.currentMGPY}}</td>
+          <td>{{aquifer.metrics.cells}}</td>
+          <td>{{aquifer.metrics.difference}}</td>
+          <td>{{aquifer.metrics.pchange}}%</td>
+        </tr>
+      </table>
+
+      <div #aquiferGraph></div>
+
+      <h2>User Defined Areas</h2>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Original Recharge (in/y)</th>
+          <th>Current Recharge (in/y)</th>
+          <th>Original Recharge (Mgal/d)</th>
+          <th>Current Recharge (Mgal/d)</th>
+          <th>Number of Cells (75m<sup>2</sup>)</th>
+          <th>Difference (Mgal/d)</th>
+          <th>Percent Change</th>
+        </tr>
+        <tr *ngFor="let area of windowPanel.data.customAreas">
+          <td>{{area.name}}</td>
+          <td>{{area.metrics.originalIPY}}</td>
+          <td>{{area.metrics.currentIPY}}</td>
+          <td>{{area.metrics.originalMGPY}}</td>
+          <td>{{area.metrics.currentMGPY}}</td>
+          <td>{{area.metrics.cells}}</td>
+          <td>{{area.metrics.difference}}</td>
+          <td>{{area.metrics.pchange}}</td>
+        </tr>
+      </table>
+
+      <div #customGraph></div>
+
+      <h2>User Defined Areas Total</h2>
+      <table>
+        <tr>
+          <th>Original Recharge (in/y)</th>
+          <th>Current Recharge (in/y)</th>
+          <th>Original Recharge (Mgal/d)</th>
+          <th>Current Recharge (Mgal/d)</th>
+          <th>Number of Cells (75m<sup>2</sup>)</th>
+          <th>Difference (Mgal/d)</th>
+          <th>Percent Change</th>
+        </tr>
+        <tr>
+          <td>{{windowPanel.data.customAreasTotal.originalIPY}}</td>
+          <td>{{windowPanel.data.customAreasTotal.currentIPY}}</td>
+          <td>{{windowPanel.data.customAreasTotal.originalMGPY}}</td>
+          <td>{{windowPanel.data.customAreasTotal.currentMGPY}}</td>
+          <td>{{windowPanel.data.customAreasTotal.cells}}</td>
+          <td>{{windowPanel.data.customAreasTotal.difference}}</td>
+          <td>{{windowPanel.data.customAreasTotal.pchange}}</td>
+        </tr>
+      </table>
+
+      <div #customTotalGraph></div>
+
+      <h2>Map Total</h2>
+      <table>
+        <tr>
+          <th>Original Recharge (in/y)</th>
+          <th>Current Recharge (in/y)</th>
+          <th>Original Recharge (Mgal/d)</th>
+          <th>Current Recharge (Mgal/d)</th>
+          <th>Number of Cells (75m<sup>2</sup>)</th>
+          <th>Difference (Mgal/d)</th>
+          <th>Percent Change</th>
+        </tr>
+        <tr>
+          <td>{{windowPanel.data.total.originalIPY}}</td>
+          <td>{{windowPanel.data.total.currentIPY}}</td>
+          <td>{{windowPanel.data.total.originalMGPY}}</td>
+          <td>{{windowPanel.data.total.currentMGPY}}</td>
+          <td>{{windowPanel.data.total.cells}}</td>
+          <td>{{windowPanel.data.total.difference}}</td>
+          <td>{{windowPanel.data.total.pchange}}</td>
+        </tr>
+      </table>
+      
+      <div #fullGraph></div>
+
+    </div>
+
+    
+    <div class="drag-bottom" #resizeBot></div>
+    <div class="drag-right" #resizeRight></div>
+    <div class="drag-corner" #resizeCorner></div>
+  
+  </div>
+</ng-template>
 
 

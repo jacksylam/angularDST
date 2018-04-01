@@ -6,6 +6,7 @@ import { WINDOWS } from './windows';
 export class WindowService {
 
   numberOfWindows = 0;
+  tag = 1;
   numb = Math.random();
 
   getWindows(): Promise<WindowPanel[]> {
@@ -20,11 +21,15 @@ export class WindowService {
     }
   }
 
-  addWindow(win: WindowPanel) {
-    win.id = this.numberOfWindows;
-
-    this.numberOfWindows++;
-    console.log(this.numb);
+  addWindow(win: WindowPanel, associateWindow = -1) {
+    win.id = this.numberOfWindows++;
+    if(associateWindow < 0) {
+      win.tag = this.tag++;
+    }
+    else {
+      win.tag = associateWindow;
+    }
+    
     WINDOWS.push(win);
   }
 
@@ -38,14 +43,6 @@ export class WindowService {
   clearWindows() {
     WINDOWS.length = 0;
     this.numberOfWindows = 0;
-  }
-
-  addTestWindow(){
-    var newWindow = new WindowPanel("Map", "leafletmap", "");
-    newWindow.id = this.numberOfWindows;
-    this.numberOfWindows++;
-    WINDOWS.push(newWindow);
-
   }
 
 
