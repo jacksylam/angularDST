@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
+import jsPDF from 'jspdf'
 
 @Component({
   selector: 'app-window',
@@ -27,9 +28,21 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('customTotalGraph') customTotalGraph;
   @ViewChild('fullGraph') fullGraph;
 
+  @ViewChild('aquiferTable') aquiferTable;
+  @ViewChild('customTable') customTable;
+  @ViewChild('customTotalTable') customTotalTable;
+  @ViewChild('fullTable') fullTable;
+
   @Input() public title: string;
   @Input() public type: string;
   @Input() windowPanel: WindowPanel;
+
+  aquiferGraphImage: any;
+  customGraphImage: any;
+  customTotalGraphImage: any;
+  fullGraphImage: any;
+
+  pdf: any;
 
   mouseWindowLeft: number;
   mouseWindowTop: number;
@@ -72,7 +85,61 @@ export class WindowComponent implements AfterViewInit {
       this.mapComponent.setWindowId(this.windowPanel.tag);
     }
     else {
+
+      
+      this.pdf = new jsPDF('p', 'pt', 'letter');
+      this.pdf.fromHTML(this.aquiferTable.nativeElement);
+      this.pdf.canvas.height = 72 * 11;
+      this.pdf.canvas.width = 72 * 8.5;
       this.generateReportGraphs();
+
+      // var graphHandler = {
+      //   "#graph": (element, renderer) => { return true; }
+      // }
+
+      
+      // setTimeout(() => {
+        
+      // }, 500);
+      
+
+      
+
+
+
+
+
+
+
+
+
+      // var pdf = new jsPDF('p', 'pt', 'letter');
+
+      // var margins = {
+      //   top: 80,
+      //   bottom: 60,
+      //   left: 40,
+      //   width: 522
+      // };
+
+      // setTimeout(() => {
+      //   console.log(this.report.nativeElement);
+      //   pdf.fromHTML(this.report.nativeElement);
+      //   pdf.canvas.height = 72 * 11;
+      //   pdf.canvas.width = 72 * 8.5;
+      //   pdf.save("test.pdf");
+        
+      // }, 500); 
+      
+
+
+
+
+
+
+
+
+
     }
     
 
@@ -367,8 +434,25 @@ export class WindowComponent implements AfterViewInit {
       barmode: 'group'
     }
 
-    Plotly.newPlot(this.aquiferGraph.nativeElement, graphData.aquifers.data, graphData.aquifers.layout);
-    Plotly.newPlot(this.fullGraph.nativeElement, graphData.full.data, graphData.full.layout);
+    Plotly.plot(this.aquiferGraph.nativeElement, graphData.aquifers.data, graphData.aquifers.layout)
+    .then((graph) => {
+      Plotly.toImage(graph, {format: "jpeg", height:300,width:1000})
+      .then((image) => {
+        this.pdf.addImage(image, 'JPEG', 0, 0, 600, 300);
+        this.pdf.addHTML(this.customTable.nativeElement, () => {
+          this.pdf.save("test.pdf");
+        });
+        
+        
+      });
+      // console.log(aquiferGraphImage.__zone_symbol__value);
+      // this.pdf.addImage(aquiferGraphImage, 'JPEG', 15, 40, 300, 1000);
+        
+      //   this.pdf.save("test.pdf");
+      // console.log(this.aquiferGraphImage);
+    })
+
+    Plotly.plot(this.fullGraph.nativeElement, graphData.full.data, graphData.full.layout);
 
 
     //only plot custom area graphs if user had defined areas
@@ -395,8 +479,8 @@ export class WindowComponent implements AfterViewInit {
         barmode: 'group'
       }
 
-      Plotly.newPlot(this.customGraph.nativeElement, graphData.custom.data, graphData.custom.layout);
-      Plotly.newPlot(this.customTotalGraph.nativeElement, graphData.customTotal.data, graphData.customTotal.layout);
+      Plotly.plot(this.customGraph.nativeElement, graphData.custom.data, graphData.custom.layout);
+      Plotly.plot(this.customTotalGraph.nativeElement, graphData.customTotal.data, graphData.customTotal.layout);
     }
     
 
