@@ -1,7 +1,8 @@
 import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
-import jsPDF from 'jspdf'
+
+declare var jsPDF: any;
 
 @Component({
   selector: 'app-window',
@@ -9,6 +10,8 @@ import jsPDF from 'jspdf'
   styleUrls: ['./window.component.css'],
   providers: []
 })
+
+
 export class WindowComponent implements AfterViewInit {
 
   static lastClickDiv: any;
@@ -36,6 +39,7 @@ export class WindowComponent implements AfterViewInit {
   @Input() public title: string;
   @Input() public type: string;
   @Input() windowPanel: WindowPanel;
+
 
   aquiferGraphImage: any;
   customGraphImage: any;
@@ -86,11 +90,58 @@ export class WindowComponent implements AfterViewInit {
     }
     else {
 
+      var columns = [
+        {title: "ID", dataKey: "id"},
+        {title: "Name", dataKey: "name"}, 
+        {title: "Country", dataKey: "country"} 
+        
+    ];
+    var rows = [
+        {"id": 1, "name": "Shaw", "country": "Tanzania"},
+        {"id": 2, "name": "Nelson", "country": "Kazakhstan"},
+        {"id": 3, "name": "Garcia", "country": "Madagascar"}
+    ];
+    
+    // Only pt supported (not mm or in)
+    var doc = new jsPDF('p', 'pt');
+    doc.autoTable(columns, rows, {
+        styles: {fillColor: [100, 255, 255]},
+        columnStyles: {
+          id: {fillColor: 255}
+        },
+        margin: {top: 60},
+        addPageContent: function(data) {
+          doc.text("Header", 40, 30);
+        }
+    });
+    doc.save('table.pdf');
+
+      // this.pdf = new jsPDF('p', 'pt', 'letter');
+      // //this.pdf.fromHTML(this.aquiferTable.nativeElement);
+      // html2canvas(this.aquiferTable.nativeElement).then(canvas => {
+      //   var imgData = canvas.toDataURL('image/png');
+      //   this.pdf.canvas.height = 72 * 11;
+      //   this.pdf.canvas.width = 72 * 8.5;
+      //   this.pdf.addImage(imgData, 'PNG', 10, 10);
+      //   this.pdf.addPage();
+      //   html2canvas(this.customTable.nativeElement).then(canvas2 => {
+      //     var imgData = canvas2.toDataURL('image/png');
+      //     this.pdf.addImage(imgData, 'PNG', 10, 10);
+      //     //this.pdf.save('test.pdf');
+      //   });
+        
+      //});
+    //   var options = {
+    //     background: '#ffffff',
+    //     pagesplit: true
+    // };
+    
+    // var doc = new jsPDF('p', 'pt', 'letter');
+    // doc.addHTML(this.aquiferTable.nativeElement, 0, 0, options, function () {
+    //         doc.save("test.pdf");
+            
+    // });
       
-      this.pdf = new jsPDF('p', 'pt', 'letter');
-      this.pdf.fromHTML(this.aquiferTable.nativeElement);
-      this.pdf.canvas.height = 72 * 11;
-      this.pdf.canvas.width = 72 * 8.5;
       this.generateReportGraphs();
 
       // var graphHandler = {
@@ -438,10 +489,10 @@ export class WindowComponent implements AfterViewInit {
     .then((graph) => {
       Plotly.toImage(graph, {format: "jpeg", height:300,width:1000})
       .then((image) => {
-        this.pdf.addImage(image, 'JPEG', 0, 0, 600, 300);
-        this.pdf.addHTML(this.customTable.nativeElement, () => {
-          this.pdf.save("test.pdf");
-        });
+        //this.pdf.addImage(image, 'JPEG', 0, 0, 600, 300);
+        //this.pdf.addHTML(this.customTable.nativeElement, () => {
+          
+       // });
         
         
       });
