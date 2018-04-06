@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
+// import * as html2canvas from 'html2canvas';
 
 declare var jsPDF: any;
 
@@ -35,6 +36,8 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('customTable') customTable;
   @ViewChild('customTotalTable') customTotalTable;
   @ViewChild('fullTable') fullTable;
+
+  @ViewChild('report') report;
 
   @Input() public title: string;
   @Input() public type: string;
@@ -91,30 +94,44 @@ export class WindowComponent implements AfterViewInit {
     else {
 
       var columns = [
-        {title: "ID", dataKey: "id"},
-        {title: "Name", dataKey: "name"}, 
-        {title: "Country", dataKey: "country"} 
-        
+        {title: "Name", dataKey: "name"},
+        {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
+        {title: "Current Recharge (in/y)", dataKey: "criny"}, 
+        {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
+        {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
+        {title: "Number of Cells (75m" + "2".sup() + ")", dataKey: "numcells"}, 
+        {title: "Difference (Mgal/d)", dataKey: "diff"}, 
+        {title: "Percent Change", dataKey: "pchange"}, 
     ];
-    var rows = [
-        {"id": 1, "name": "Shaw", "country": "Tanzania"},
-        {"id": 2, "name": "Nelson", "country": "Kazakhstan"},
-        {"id": 3, "name": "Garcia", "country": "Madagascar"}
-    ];
+    var rows = [];
+
+    this.windowPanel.data.aquifers.forEach((aquifer) => {
+      rows.push({
+        name: aquifer.name,
+        oriny: aquifer.metrics.originalIPY,
+        criny: aquifer.metrics.currentIPY,
+        ormgd: aquifer.metrics.originalMGPY,
+        crmgd: aquifer.metrics.currentMGPY,
+        numcells: aquifer.metrics.cells,
+        diff: aquifer.metrics.difference,
+        pchange: aquifer.metrics.pchange
+      })
+    })
     
     // Only pt supported (not mm or in)
-    var doc = new jsPDF('p', 'pt');
-    doc.autoTable(columns, rows, {
-        styles: {fillColor: [100, 255, 255]},
-        columnStyles: {
-          id: {fillColor: 255}
-        },
-        margin: {top: 60},
-        addPageContent: function(data) {
-          doc.text("Header", 40, 30);
-        }
-    });
-    doc.save('table.pdf');
+    // var doc = new jsPDF('p', 'pt');
+    // doc.autoTable(columns, rows, {
+    //     styles: {fillColor: [100, 255, 255],
+    //       overflow: 'linebreak', font: 'arial', fontSize: 10, cellPadding: 4},
+    //     columnStyles: {
+    //       0: {columnWidth: 500}
+    //     },
+    //     margin: {top: 60},
+    //     addPageContent: function(data) {
+    //       doc.text("Header", 40, 30);
+    //     }
+    // });
+    // doc.save('table.pdf');
 
       // this.pdf = new jsPDF('p', 'pt', 'letter');
       // //this.pdf.fromHTML(this.aquiferTable.nativeElement);
@@ -142,7 +159,25 @@ export class WindowComponent implements AfterViewInit {
             
     // });
       
-      this.generateReportGraphs();
+      
+
+      var pdf = new jsPDF('p', 'pt', 'letter');
+var source = this.aquiferTable.nativeElement;
+var options = { background: '#fff', 
+pagesplit: true};
+
+pdf.addHTML(source, options, () => {
+  pdf.save('test.pdf'); 
+})
+
+// html2canvas(source).then((canvas) => {
+//   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10)
+//   pdf.save('test.pdf'); 
+// });
+  
+
+
+
 
       // var graphHandler = {
       //   "#graph": (element, renderer) => { return true; }
