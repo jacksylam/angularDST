@@ -1,7 +1,6 @@
 import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
-// import * as html2canvas from 'html2canvas';
 
 declare var jsPDF: any;
 
@@ -11,8 +10,6 @@ declare var jsPDF: any;
   styleUrls: ['./window.component.css'],
   providers: []
 })
-
-
 export class WindowComponent implements AfterViewInit {
 
   static lastClickDiv: any;
@@ -32,17 +29,14 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('customTotalGraph') customTotalGraph;
   @ViewChild('fullGraph') fullGraph;
 
-  @ViewChild('aquiferTable') aquiferTable;
-  @ViewChild('customTable') customTable;
-  @ViewChild('customTotalTable') customTotalTable;
-  @ViewChild('fullTable') fullTable;
-
-  @ViewChild('report') report;
+  // @ViewChild('aquiferTable') aquiferTable;
+  // @ViewChild('customTable') customTable;
+  // @ViewChild('customTotalTable') customTotalTable;
+  // @ViewChild('fullTable') fullTable;
 
   @Input() public title: string;
   @Input() public type: string;
   @Input() windowPanel: WindowPanel;
-
 
   aquiferGraphImage: any;
   customGraphImage: any;
@@ -50,6 +44,13 @@ export class WindowComponent implements AfterViewInit {
   fullGraphImage: any;
 
   pdf: any;
+  graphImageData = {
+    aquifers: null,
+    custom: null,
+    customTotal: null,
+    total: null
+  };
+  graphOrder = ["aquifers", "custom", "customTotal", "total"];
 
   mouseWindowLeft: number;
   mouseWindowTop: number;
@@ -93,91 +94,18 @@ export class WindowComponent implements AfterViewInit {
     }
     else {
 
-      var columns = [
-        {title: "Name", dataKey: "name"},
-        {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
-        {title: "Current Recharge (in/y)", dataKey: "criny"}, 
-        {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
-        {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
-        {title: "Number of Cells (75m" + "2".sup() + ")", dataKey: "numcells"}, 
-        {title: "Difference (Mgal/d)", dataKey: "diff"}, 
-        {title: "Percent Change", dataKey: "pchange"}, 
-    ];
-    var rows = [];
+      this.generateReportGraphs();
 
-    this.windowPanel.data.aquifers.forEach((aquifer) => {
-      rows.push({
-        name: aquifer.name,
-        oriny: aquifer.metrics.originalIPY,
-        criny: aquifer.metrics.currentIPY,
-        ormgd: aquifer.metrics.originalMGPY,
-        crmgd: aquifer.metrics.currentMGPY,
-        numcells: aquifer.metrics.cells,
-        diff: aquifer.metrics.difference,
-        pchange: aquifer.metrics.pchange
-      })
-    })
+      
+      
+
     
-    // Only pt supported (not mm or in)
-    // var doc = new jsPDF('p', 'pt');
-    // doc.autoTable(columns, rows, {
-    //     styles: {fillColor: [100, 255, 255],
-    //       overflow: 'linebreak', font: 'arial', fontSize: 10, cellPadding: 4},
-    //     columnStyles: {
-    //       0: {columnWidth: 500}
-    //     },
-    //     margin: {top: 60},
-    //     addPageContent: function(data) {
-    //       doc.text("Header", 40, 30);
-    //     }
-    // });
-    // doc.save('table.pdf');
-
+      
       // this.pdf = new jsPDF('p', 'pt', 'letter');
-      // //this.pdf.fromHTML(this.aquiferTable.nativeElement);
-      // html2canvas(this.aquiferTable.nativeElement).then(canvas => {
-      //   var imgData = canvas.toDataURL('image/png');
-      //   this.pdf.canvas.height = 72 * 11;
-      //   this.pdf.canvas.width = 72 * 8.5;
-      //   this.pdf.addImage(imgData, 'PNG', 10, 10);
-      //   this.pdf.addPage();
-      //   html2canvas(this.customTable.nativeElement).then(canvas2 => {
-      //     var imgData = canvas2.toDataURL('image/png');
-      //     this.pdf.addImage(imgData, 'PNG', 10, 10);
-      //     //this.pdf.save('test.pdf');
-      //   });
-        
-      //});
-    //   var options = {
-    //     background: '#ffffff',
-    //     pagesplit: true
-    // };
-    
-    // var doc = new jsPDF('p', 'pt', 'letter');
-    // doc.addHTML(this.aquiferTable.nativeElement, 0, 0, options, function () {
-    //         doc.save("test.pdf");
-            
-    // });
       
+      // this.pdf.canvas.height = 72 * 11;
+      // this.pdf.canvas.width = 72 * 8.5;
       
-
-      var pdf = new jsPDF('p', 'pt', 'letter');
-var source = this.aquiferTable.nativeElement;
-var options = { background: '#fff', 
-pagesplit: true};
-
-pdf.addHTML(source, options, () => {
-  pdf.save('test.pdf'); 
-})
-
-// html2canvas(source).then((canvas) => {
-//   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10)
-//   pdf.save('test.pdf'); 
-// });
-  
-
-
-
 
       // var graphHandler = {
       //   "#graph": (element, renderer) => { return true; }
@@ -432,6 +360,226 @@ pdf.addHTML(source, options, () => {
   }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //later should have different types, ignore parameter for now
+  download(type: string) {
+    var columnsName = [
+      {title: "Name", dataKey: "name"},
+      {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
+      {title: "Current Recharge (in/y)", dataKey: "criny"}, 
+      {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
+      {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
+      {title: "Number of Cells (75m^2)", dataKey: "numcells"}, 
+      {title: "Difference (Mgal/d)", dataKey: "diff"}, 
+      {title: "Percent Change", dataKey: "pchange"}, 
+    ];
+    var columnsNameless = [
+      {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
+      {title: "Current Recharge (in/y)", dataKey: "criny"}, 
+      {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
+      {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
+      {title: "Number of Cells (75m^2)", dataKey: "numcells"}, 
+      {title: "Difference (Mgal/d)", dataKey: "diff"}, 
+      {title: "Percent Change", dataKey: "pchange"}, 
+    ];
+
+    var rows = [];
+    
+
+    this.windowPanel.data.aquifers.forEach((aquifer) => {
+      rows.push({
+        name: aquifer.name,
+        oriny: aquifer.metrics.originalIPY,
+        criny: aquifer.metrics.currentIPY,
+        ormgd: aquifer.metrics.originalMGPY,
+        crmgd: aquifer.metrics.currentMGPY,
+        numcells: aquifer.metrics.cells,
+        diff: aquifer.metrics.difference,
+        pchange: aquifer.metrics.pchange
+      })
+    })
+  
+    var y = 50;
+    
+    this.pdf = new jsPDF('p', 'pt');
+
+    var width = this.pdf.internal.pageSize.width;    
+    var height = this.pdf.internal.pageSize.height;
+
+    this.pdf.text(50, y, "Aquifers");
+    this.pdf.autoTable(columnsName, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
+      columnStyles: {
+        name: {columnWidth: 90},
+      },
+      margin: {top: 60}
+    });
+
+    y = this.pdf.autoTable.previous.finalY + 50
+
+    if(y + 50 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+    
+
+    this.pdf.text(50, y, "Custom Areas");
+
+    rows = [];
+
+    this.windowPanel.data.customAreas.forEach((customArea) => {
+      rows.push({
+        name: customArea.name,
+        oriny: customArea.metrics.originalIPY,
+        criny: customArea.metrics.currentIPY,
+        ormgd: customArea.metrics.originalMGPY,
+        crmgd: customArea.metrics.currentMGPY,
+        numcells: customArea.metrics.cells,
+        diff: customArea.metrics.difference,
+        pchange: customArea.metrics.pchange
+      })
+    })
+
+    this.pdf.autoTable(columnsName, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
+      columnStyles: {
+        name: {columnWidth: 90},
+      },
+      margin: {top: 60}
+    });
+
+    y = this.pdf.autoTable.previous.finalY + 50
+
+    if(y + 50 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
+    this.pdf.text(50, y, "Custom Areas Total");
+
+    rows = [];
+
+    var customAreasTotal = this.windowPanel.data.customAreasTotal;
+    rows.push({
+      oriny: customAreasTotal.originalIPY,
+      criny: customAreasTotal.currentIPY,
+      ormgd: customAreasTotal.originalMGPY,
+      crmgd: customAreasTotal.currentMGPY,
+      numcells: customAreasTotal.cells,
+      diff: customAreasTotal.difference,
+      pchange: customAreasTotal.pchange
+    })
+
+    this.pdf.autoTable(columnsNameless, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
+      columnStyles: {
+        name: {columnWidth: 90},
+      },
+      margin: {top: 60}
+    });
+
+
+    y = this.pdf.autoTable.previous.finalY + 50
+
+    if(y + 50 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
+   // this.pdf.addImage(this.graphImageData[2], 'PNG', 15, y, 550, 250);
+
+
+    this.pdf.text(50, y, "Map Total");
+
+    rows = [];
+
+    var total = this.windowPanel.data.total
+    rows.push({
+      oriny: total.originalIPY,
+      criny: total.currentIPY,
+      ormgd: total.originalMGPY,
+      crmgd: total.currentMGPY,
+      numcells: total.cells,
+      diff: total.difference,
+      pchange: total.pchange
+    })
+    
+
+    this.pdf.autoTable(columnsNameless, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
+      columnStyles: {
+        name: {columnWidth: 90},
+      },
+      margin: {top: 60}
+    });
+
+    y = this.pdf.autoTable.previous.finalY + 50;
+
+    if(y + 50 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
+    this.pdf.text(50, y, "Graphs");
+
+    y += 10;
+
+    for(var i = 0; i < this.graphOrder.length; i++) {
+      if(y + 275 >= height) {
+        this.pdf.addPage();
+        y = 50;
+      }
+      if(this.graphImageData[this.graphOrder[i]]) {
+        this.pdf.addImage(this.graphImageData[this.graphOrder[i]], 'PNG', 10, y, 550, 275);
+        y += 275;
+      }
+      
+    }
+    
+
+    this.pdf.save("Report.pdf");
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   //graphs in Mgal/year, might want to add methods to change
   generateReportGraphs() {
 
@@ -507,7 +655,11 @@ pdf.addHTML(source, options, () => {
       graphData.aquifers.data[1].y.push(aquifer.metrics.currentMGPY);
     })
     graphData.aquifers.layout = {
-      barmode: 'group'
+      barmode: 'group',
+      margin: {
+        b: 125,
+        t: 20
+      }
     }
 
     graphData.full.data[0].x.push("Map Total");
@@ -517,28 +669,28 @@ pdf.addHTML(source, options, () => {
     graphData.full.data[1].y.push(this.windowPanel.data.total.currentMGPY);
 
     graphData.full.layout = {
-      barmode: 'group'
+      barmode: 'group',
+      margin: {
+        t: 20
+      }
     }
 
+    
     Plotly.plot(this.aquiferGraph.nativeElement, graphData.aquifers.data, graphData.aquifers.layout)
     .then((graph) => {
-      Plotly.toImage(graph, {format: "jpeg", height:300,width:1000})
-      .then((image) => {
-        //this.pdf.addImage(image, 'JPEG', 0, 0, 600, 300);
-        //this.pdf.addHTML(this.customTable.nativeElement, () => {
-          
-       // });
-        
-        
+      Plotly.toImage(graph, {format: "png", height: 450, width: 900})
+      .then((image) => {   
+        this.graphImageData.aquifers = image;
       });
-      // console.log(aquiferGraphImage.__zone_symbol__value);
-      // this.pdf.addImage(aquiferGraphImage, 'JPEG', 15, 40, 300, 1000);
-        
-      //   this.pdf.save("test.pdf");
-      // console.log(this.aquiferGraphImage);
-    })
+    });
 
-    Plotly.plot(this.fullGraph.nativeElement, graphData.full.data, graphData.full.layout);
+    Plotly.plot(this.fullGraph.nativeElement, graphData.full.data, graphData.full.layout)
+    .then((graph) => {
+      Plotly.toImage(graph, {format: "png", height: 450, width: 900})
+      .then((image) => {   
+        this.graphImageData.total = image;
+      });
+    });
 
 
     //only plot custom area graphs if user had defined areas
@@ -551,22 +703,41 @@ pdf.addHTML(source, options, () => {
         graphData.custom.data[1].y.push(area.metrics.currentMGPY);
       })
       graphData.custom.layout = {
-        barmode: 'group'
+        barmode: 'group',
+        margin: {
+          t: 20
+        }
       }
   
   
       graphData.customTotal.data[0].x.push("Custom Area Total");
       graphData.customTotal.data[1].x.push("Custom Area Total");
   
-      graphData.customTotal.data[0].y.push(this.windowPanel.data.customAreasTotal.originalMGPY);
+      graphData.customTotal.data[0].y.push(this.windowPanel.data.customAreasTotal.originalMGPY)
       graphData.customTotal.data[1].y.push(this.windowPanel.data.customAreasTotal.currentMGPY);
   
       graphData.customTotal.layout = {
-        barmode: 'group'
+        barmode: 'group',
+        margin: {
+          t: 20
+        }
       }
 
-      Plotly.plot(this.customGraph.nativeElement, graphData.custom.data, graphData.custom.layout);
-      Plotly.plot(this.customTotalGraph.nativeElement, graphData.customTotal.data, graphData.customTotal.layout);
+      Plotly.plot(this.customGraph.nativeElement, graphData.custom.data, graphData.custom.layout)
+      .then((graph) => {
+        Plotly.toImage(graph, {format: "png", height: 450, width: 900})
+        .then((image) => {   
+          this.graphImageData.custom = image;
+        });
+      });
+
+      Plotly.plot(this.customTotalGraph.nativeElement, graphData.customTotal.data, graphData.customTotal.layout)
+      .then((graph) => {
+        Plotly.toImage(graph, {format: "png", height: 450, width: 900})
+        .then((image) => {   
+          this.graphImageData.customTotal = image;
+        });
+      });
     }
     
 
@@ -588,8 +759,6 @@ pdf.addHTML(source, options, () => {
     // if(maxScale == 0) {
     //   maxScale = 1;
     // }
-    
-    
   }
 
 }

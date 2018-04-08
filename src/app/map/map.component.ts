@@ -745,7 +745,9 @@ export class MapComponent implements OnInit {
           var sampleCoord = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, aquifer.geometry.coordinates[0][0]);
           
           if(sampleCoord[0] >= __this.xmin && sampleCoord[0] <= __this.xmin + __this.xrange
-            && sampleCoord[1] >= __this.ymin && sampleCoord[1] <= __this.ymin + __this.yrange) {
+            && sampleCoord[1] >= __this.ymin && sampleCoord[1] <= __this.ymin + __this.yrange
+            && aquifer.properties.CODE != 0) {
+
             aquifers.addData(aquifer);
           }
   
@@ -854,7 +856,12 @@ export class MapComponent implements OnInit {
       };
       items = new L.featureGroup();
 
-      info.name = layer.feature.properties.SYSTEM;
+      var capName = layer.feature.properties.SYSTEM;
+      //switch from all upper case to capitalize first letter
+      capName.split(/([\s \-])/).forEach((substr) => {
+        info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
+      });
+
       info.metrics = this.getMetricsSuite(items.addLayer(layer));
 
       data.aquifers.push(info);

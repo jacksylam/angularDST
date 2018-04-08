@@ -54,64 +54,74 @@
       </button> -->
     </div>
 
-    <div class="report-container" #report>
-      <div #aquiferTable>
-        <h1>Report for Map {{ windowPanel.tag }}</h1>
+    <div class="download-button">
+      <button type="button" class="btn btn-primary btn-responsive" (click)="download('PDF')">Download as PDF</button>
+    </div>
 
-        <h2>Aquifers</h2>
-        <table>
-          <tr>
-            <th>Name</th>
-            <th>Original Recharge (in/y)</th>
-            <th>Current Recharge (in/y)</th>
-            <th>Original Recharge (Mgal/d)</th>
-            <th>Current Recharge (Mgal/d)</th>
-            <th>Number of Cells (75m<sup>2</sup>)</th>
-            <th>Difference (Mgal/d)</th>
-            <th>Percent Change</th>
-          </tr>
-          <tr *ngFor="let aquifer of windowPanel.data.aquifers">
-            <td>{{aquifer.name}}</td>
-            <td>{{aquifer.metrics.originalIPY}}</td>
-            <td>{{aquifer.metrics.currentIPY}}</td>
-            <td>{{aquifer.metrics.originalMGPY}}</td>
-            <td>{{aquifer.metrics.currentMGPY}}</td>
-            <td>{{aquifer.metrics.cells}}</td>
-            <td>{{aquifer.metrics.difference}}</td>
-            <td>{{aquifer.metrics.pchange}}%</td>
-          </tr>
-        </table>
-      </div>
+    <div class="report-container">
+      
+
+      <h1>Report for Map {{ windowPanel.tag }}</h1>
+
+      <h2>Aquifers</h2>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Original Recharge (in/y)</th>
+          <th>Current Recharge (in/y)</th>
+          <th>Original Recharge (Mgal/d)</th>
+          <th>Current Recharge (Mgal/d)</th>
+          <th>Number of Cells (75m<sup>2</sup>)</th>
+          <th>Difference (Mgal/d)</th>
+          <th>Percent Change</th>
+        </tr>
+        <tr *ngFor="let aquifer of windowPanel.data.aquifers">
+          <td>{{aquifer.name}}</td>
+          <td>{{aquifer.metrics.originalIPY}}</td>
+          <td>{{aquifer.metrics.currentIPY}}</td>
+          <td>{{aquifer.metrics.originalMGPY}}</td>
+          <td>{{aquifer.metrics.currentMGPY}}</td>
+          <td>{{aquifer.metrics.cells}}</td>
+          <td>{{aquifer.metrics.difference}}</td>
+          <td>{{aquifer.metrics.pchange}}%</td>
+        </tr>
+      </table>
+
+      <br>
 
       <div #aquiferGraph></div>
 
-      <div #customTable>
-        <h2>User Defined Areas</h2>
-        <table>
-          <tr>
-            <th>Name</th>
-            <th>Original Recharge (in/y)</th>
-            <th>Current Recharge (in/y)</th>
-            <th>Original Recharge (Mgal/d)</th>
-            <th>Current Recharge (Mgal/d)</th>
-            <th>Number of Cells (75m<sup>2</sup>)</th>
-            <th>Difference (Mgal/d)</th>
-            <th>Percent Change</th>
-          </tr>
-          <tr *ngFor="let area of windowPanel.data.customAreas">
-            <td>{{area.name}}</td>
-            <td>{{area.metrics.originalIPY}}</td>
-            <td>{{area.metrics.currentIPY}}</td>
-            <td>{{area.metrics.originalMGPY}}</td>
-            <td>{{area.metrics.currentMGPY}}</td>
-            <td>{{area.metrics.cells}}</td>
-            <td>{{area.metrics.difference}}</td>
-            <td>{{area.metrics.pchange}}</td>
-          </tr>
-        </table>
-      </div>
+      <br>
+
+      <h2>User Defined Areas</h2>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Original Recharge (in/y)</th>
+          <th>Current Recharge (in/y)</th>
+          <th>Original Recharge (Mgal/d)</th>
+          <th>Current Recharge (Mgal/d)</th>
+          <th>Number of Cells (75m<sup>2</sup>)</th>
+          <th>Difference (Mgal/d)</th>
+          <th>Percent Change</th>
+        </tr>
+        <tr *ngFor="let area of windowPanel.data.customAreas">
+          <td>{{area.name}}</td>
+          <td>{{area.metrics.originalIPY}}</td>
+          <td>{{area.metrics.currentIPY}}</td>
+          <td>{{area.metrics.originalMGPY}}</td>
+          <td>{{area.metrics.currentMGPY}}</td>
+          <td>{{area.metrics.cells}}</td>
+          <td>{{area.metrics.difference}}</td>
+          <td>{{area.metrics.pchange}}</td>
+        </tr>
+      </table>
+
+      <br>
 
       <div #customGraph></div>
+
+      <br>
 
       <h2>User Defined Areas Total</h2>
       <table>
@@ -135,7 +145,11 @@
         </tr>
       </table>
 
+      <br>
+
       <div #customTotalGraph></div>
+
+      <br>
 
       <h2>Map Total</h2>
       <table>
@@ -159,7 +173,11 @@
         </tr>
       </table>
       
+      <br>
+
       <div #fullGraph></div>
+
+      <br>
 
     </div>
 

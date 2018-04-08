@@ -25,7 +25,7 @@ export class DBConnectService {
 
 
   spatialSearch(geometry): Observable<Cover[]> {
-    var oAuthAccessToken = "token";
+    var oAuthAccessToken = "fbb71f198b9913c564762c87ab7917";
     //this will use the 0 indexed feature from the leaflet map, which should be a GeoJSON polygon, for the spatial search boundry
     //for(let i = 0; i < size; i++) {
       //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
