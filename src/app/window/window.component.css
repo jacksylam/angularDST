@@ -24,6 +24,7 @@
   padding: 10px;
   border-radius: 1%;
   overflow: scroll;
+  
 }
 
 
@@ -38,6 +39,12 @@
   cursor: pointer;
 }
 
+.download-button {
+  position: absolute;
+  top: 35px;
+  right: 25px;
+  z-index: 100;
+}
 
 .navbarButton {
   height: 20px; 

@@ -10,15 +10,20 @@
 
             <div class="metrics-container">
                 <div class="width-ctrl">
-                    <h3>Metric Mode: {{mode}}</h3>
-                    
+                    <br>
+                    Metric Mode: {{mode}}
+                    <br>
+
                     <!-- add something to check scenario for specific areas rather than currently selected one -->
                     <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 
-                    <h3>Original Recharge: {{original}} {{units}}</h3>
-                    <h3>Current Recharge: {{current}} {{units}}</h3>
-                    <h3>Number of Cells (75m<sup>2</sup>): {{cells}}</h3>
-                    <h3>Difference: {{diff}}, Percent Change: {{pchange}}%</h3>
+                    Original Recharge: {{original}} {{units}}
+                    <br>
+                    Current Recharge: {{current}} {{units}}
+                    <br>
+                    Number of Cells (75m<sup>2</sup>): {{cells}}
+                    <br>
+                    Difference: {{diff}}, Percent Change: {{pchange}}%
                 </div>
                 <div #chart> </div>
             </div>

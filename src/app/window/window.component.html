@@ -54,7 +54,12 @@
       </button> -->
     </div>
 
+    <div class="download-button">
+      <button type="button" class="btn btn-primary btn-responsive" (click)="download('PDF')">Download as PDF</button>
+    </div>
+
     <div class="report-container">
+      
 
       <h1>Report for Map {{ windowPanel.tag }}</h1>
 
@@ -82,7 +87,11 @@
         </tr>
       </table>
 
+      <br>
+
       <div #aquiferGraph></div>
+
+      <br>
 
       <h2>User Defined Areas</h2>
       <table>
@@ -108,7 +117,11 @@
         </tr>
       </table>
 
+      <br>
+
       <div #customGraph></div>
+
+      <br>
 
       <h2>User Defined Areas Total</h2>
       <table>
@@ -132,7 +145,11 @@
         </tr>
       </table>
 
+      <br>
+
       <div #customTotalGraph></div>
+
+      <br>
 
       <h2>Map Total</h2>
       <table>
@@ -156,7 +173,11 @@
         </tr>
       </table>
       
+      <br>
+
       <div #fullGraph></div>
+
+      <br>
 
     </div>
 

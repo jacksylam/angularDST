@@ -61,11 +61,12 @@
   }
 
   .width-ctrl {
+    top: 20px;
     min-width: 400px;
     width: 50%;
     color: rgb(56, 117, 194);
     font-weight: bold;
-    font-family: serif;
+    font-size: 16pt;
   }
 
   
