@@ -520,6 +520,11 @@ export class MapComponent implements OnInit {
       fillOpacity: 0
     }
 
+    //make sure aquifers aren't hidden
+    if(!this.mymap.hasLayer(this.types.aquifers.layer)) {
+      this.types.aquifers.layer.addTo(this.mymap);
+    }
+
     this.types.aquifers.layer.eachLayer((layer) => {
       layer.higlighted = false;
       //clicks intercepted by drawn shapes if behind
@@ -554,7 +559,13 @@ export class MapComponent implements OnInit {
   }
 
   private disableAquiferInteraction() {
+    var hidden = false;
     L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
+    //if hidden add to map to remove event listeners
+    if(!this.mymap.hasLayer(this.types.aquifers.layer)) {
+      this.types.aquifers.layer.addTo(this.mymap);
+      hidden = true;
+    }
     this.types.aquifers.layer.eachLayer((layer) => {
       layer.off('click')
       layer.bringToBack();
@@ -565,6 +576,11 @@ export class MapComponent implements OnInit {
         fillOpacity: 0
       });
     })
+    //remove again if was hidden
+    if(hidden) {
+      this.mymap.removeLayer(this.types.aquifers.layer);
+    }
+    
   }
 
 
