@@ -1,14 +1,14 @@
 import { Component, OnInit, ViewChild, ElementRef, EventEmitter } from '@angular/core';
-import {MapService} from '../map/shared/map.service';
-import {Http} from '@angular/http';
+import { MapService } from '../map/shared/map.service';
+import { Http } from '@angular/http';
 import 'rxjs/add/operator/map';
-import {Grid} from './shared/grid';
-import {Cover} from './shared/cover';
-import {DBConnectService} from './shared/dbconnect.service';
+import { Grid } from './shared/grid';
+import { Cover } from './shared/cover';
+import { DBConnectService } from './shared/dbconnect.service';
 import { isNullOrUndefined } from 'util';
 import 'rxjs/add/observable/forkJoin';
 import { Observable } from 'rxjs';
-import { CovDetailsService } from 'app/map/shared/cov-details.service';
+//import { CovDetailsService } from 'app/map/shared/cov-details.service';
 import { COVER_ENUM, COVER_INDEX_DETAILS, LC_TO_BUTTON_INDEX } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
@@ -18,7 +18,7 @@ import * as shpWriteGeojson from '../../../node_modules/shp-write/src/geojson'
 import * as shpWritePrj from '../../../node_modules/shp-write/src/prj';
 import { saveAs } from 'file-saver';
 import { WindowService } from '../window/shared/window.service';
-import {WindowPanel} from '../window/shared/windowPanel';
+import { WindowPanel } from '../window/shared/windowPanel';
 
 
 
@@ -36,7 +36,7 @@ declare var require: any;
 export class MapComponent implements OnInit {
 
   @ViewChild('mapid') mapid;
-  
+
 
   mymap: any;
   popup: any;
@@ -48,7 +48,7 @@ export class MapComponent implements OnInit {
   csvData: any;
   markerLayer = new L.LayerGroup;
   baseLayer: any;
-  
+
   layer: any;
   layers: any;
 
@@ -70,6 +70,15 @@ export class MapComponent implements OnInit {
 
   windowId: number;
 
+  //type metricSuite = {}
+
+  metrics: {
+    customAreas: {}[],
+    aquifers: {}[],
+    customAreasTotal: {},
+    total: {}
+  }
+
   // landCover: any;
   // landCoverLayer: any;
   // recharge: any;
@@ -81,7 +90,7 @@ export class MapComponent implements OnInit {
 
   // upperLeftLatLng: any;
   // lowerRightLatLng: any;
-  
+
   // gridHeightCells: number;
   // gridWidthLong: number;
   // gridHeightLat: number;
@@ -125,7 +134,7 @@ export class MapComponent implements OnInit {
     }
   };
 
-  //???
+  //???, can probably just remove
   readonly layerOrdering = [this.types.landCover, this.types.recharge, this.types.aquifers];
 
   static readonly utm = "+proj=utm +zone=4 +datum=NAD83 +units=m";
@@ -138,10 +147,10 @@ export class MapComponent implements OnInit {
   constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
-   }
+  }
 
   ngOnInit() {
-    
+
   }
 
   ngAfterViewInit() {
@@ -155,32 +164,29 @@ export class MapComponent implements OnInit {
     this.loadDrawControls();
 
     this.popup = L.popup();
-    //this.mymap.on('click', this.onMapClick);
-    //this.mymap.on('zoomend', this.loadMarkers.bind(this));
-    //this.mymap.on('moveend', this.loadMarkers.bind(this));
 
     //thinking I like the collapsed version with this stuff
-    this.layers = L.control.layers({"Base Map": empty}, null/*, {collapsed: false}*/).addTo(this.mymap)
+    this.layers = L.control.layers({ "Base Map": empty }, null/*, {collapsed: false}*/).addTo(this.mymap)
 
     this.initializeLayers();
 
     this.r = new FileReader();
 
     this.mymap.on('movestart', () => {
-      L.DomUtil.removeClass(this.mymap._container,'crosshair-cursor-enabled');
-      L.DomUtil.addClass(this.mymap._container,'leaflet-grab');
+      L.DomUtil.removeClass(this.mymap._container, 'crosshair-cursor-enabled');
+      L.DomUtil.addClass(this.mymap._container, 'leaflet-grab');
     });
     this.mymap.on('moveend', () => {
-      L.DomUtil.removeClass(this.mymap._container,'leaflet-grab');
-      L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
+      L.DomUtil.removeClass(this.mymap._container, 'leaflet-grab');
+      L.DomUtil.addClass(this.mymap._container, 'crosshair-cursor-enabled');
     });
 
     //need to add a way to store initial layer, just need layer and name probably, so manually add name at init
     this.mymap.on('baselayerchange', (e) => {
       //store current layer details
       this.baseLayer = e;
-      
-      switch(e.name) {
+
+      switch (e.name) {
         case "Land Cover":
           this.mapService.changeLayer(this, "landcover");
           this.enableShapeInteraction(false);
@@ -191,7 +197,7 @@ export class MapComponent implements OnInit {
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
             this.baseLayer.layer.setOpacity(this.opacity);
-          }, 400); 
+          }, 400);
 
           break;
         //need to figure out how you want to handle this, should modifications be disabled?
@@ -208,7 +214,7 @@ export class MapComponent implements OnInit {
           this.disableShapeInteraction();
           setTimeout(() => {
             this.baseLayer.layer.setOpacity(this.opacity);
-          }, 400); 
+          }, 400);
           break;
       }
     });
@@ -216,9 +222,9 @@ export class MapComponent implements OnInit {
 
     //possibly change if on recharge
     this.mymap.on('mouseover', () => {
-      L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
+      L.DomUtil.addClass(this.mymap._container, 'crosshair-cursor-enabled');
       this.mymap.on('mousemove', (e) => {
-        if(this.highlightedCell) {
+        if (this.highlightedCell) {
           this.mymap.removeLayer(this.highlightedCell);
           this.highlightedCell = null;
         }
@@ -232,12 +238,12 @@ export class MapComponent implements OnInit {
           var data = this.types.landCover.data._covjson.ranges.cover.values;
           var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
           var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-          
+
           //get difference from min to mouse position
           var diffx = convertedMousePoint[0] - this.xmin;
           var diffy = convertedMousePoint[1] - this.ymin;
           //do nothing if out of range of grid
-          if(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+          if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
             //round down to nearest 75
             diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
@@ -253,19 +259,19 @@ export class MapComponent implements OnInit {
               "type": "Feature",
               "properties": {},
               "geometry": {
-                  "type": "Polygon",
-                  "coordinates": [[c1, c2, c3, c4, c1]]
+                "type": "Polygon",
+                "coordinates": [[c1, c2, c3, c4, c1]]
               }
             };
-            this.highlightedCell = L.geoJSON(cellBounds, {interactive: false})
-            .setStyle({
-              fillColor: 'orange',
-              weight: 3,
-              opacity: 1,
-              color: 'orange',
-              fillOpacity: 0.2
-            })
-            .addTo(this.mymap)
+            this.highlightedCell = L.geoJSON(cellBounds, { interactive: false })
+              .setStyle({
+                fillColor: 'orange',
+                weight: 3,
+                opacity: 1,
+                color: 'orange',
+                fillOpacity: 0.2
+              })
+              .addTo(this.mymap)
 
             //add back 37.5 and rounded difference value to get cell coordinate
             var xCellVal = this.xmin + 37.5 + diffx;
@@ -279,9 +285,9 @@ export class MapComponent implements OnInit {
             var index = this.getIndex(xIndex, yIndex);
 
             //popup cell value
-            var popup = L.popup({autoPan: false})
-            .setLatLng(e.latlng);
-            if(data[index] == this.types.landCover.baseData[index]) {
+            var popup = L.popup({ autoPan: false })
+              .setLatLng(e.latlng);
+            if (data[index] == this.types.landCover.baseData[index]) {
               popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type)
             }
             else {
@@ -292,11 +298,11 @@ export class MapComponent implements OnInit {
 
         }, 1000)
       });
-      
+
     });
 
     this.mymap.on('mouseout', () => {
-      L.DomUtil.removeClass(this.mymap._container,'crosshair-cursor-enabled');
+      L.DomUtil.removeClass(this.mymap._container, 'crosshair-cursor-enabled');
       this.mymap.off('mousemove');
       clearTimeout(this.popupTimer);
       this.mymap.closePopup();
@@ -310,19 +316,19 @@ export class MapComponent implements OnInit {
     //defualt to custom shapes for drag upload, maybe change later
     this.uploadShapefileAsCustom(e.dataTransfer.files);
     //console.log(e.dataTransfer.files);
-      
+
   }
 
   uploadShapefileAsCustom(files: any[]) {
     //ensure reader initialized
-    if(this.r) {
+    if (this.r) {
       //think can redefine onload function, if not working might have to reinitialize file reader
       this.r.onload = (e) => {
         //console.log(this.r.result);
         shp(this.r.result).then((geojson) => {
           //console.log(geojson);
           //array if multiple shapefiles, else single object
-          if(Array.isArray(geojson)) {
+          if (Array.isArray(geojson)) {
             geojson.forEach(shpset => {
               this.parseAndAddShapes(shpset);
             });
@@ -333,13 +339,13 @@ export class MapComponent implements OnInit {
         });
       }
 
-      for(var i = 0; i < files.length; i++) {
+      for (var i = 0; i < files.length; i++) {
         this.r.readAsArrayBuffer(files[i]);
       }
     }
   }
 
-  
+
   uploadShapefileAsReference(files: any[]) {
 
     //name layer name of first file
@@ -348,7 +354,7 @@ export class MapComponent implements OnInit {
     fname = fname.substr(0, fname.lastIndexOf('.'));
 
     //ensure reader initialized
-    if(this.r) {
+    if (this.r) {
       //think can redefine onload function, if not working might have to reinitialize file reader
       this.r.onload = (e) => {
         //console.log(this.r.result);
@@ -357,13 +363,13 @@ export class MapComponent implements OnInit {
           var refLayer = L.geoJSON();
 
           //array if multiple shpfiles
-          if(Array.isArray(geojson)) {
+          if (Array.isArray(geojson)) {
             geojson.forEach((shpset) => {
               shpset.features.forEach(object => {
                 refLayer.addData(object);
               })
             })
-            
+
           }
           //else single element
           else {
@@ -371,7 +377,7 @@ export class MapComponent implements OnInit {
               refLayer.addData(object);
             })
           }
-          
+
           refLayer.setStyle({
             weight: 5,
             opacity: 1,
@@ -384,7 +390,7 @@ export class MapComponent implements OnInit {
         });
       }
 
-      for(var i = 0; i < files.length; i++) {
+      for (var i = 0; i < files.length; i++) {
         this.r.readAsArrayBuffer(files[i]);
       }
     }
@@ -406,7 +412,7 @@ export class MapComponent implements OnInit {
   //swap values in bottom level arrays
   private swapCoordinates(arrLevel: any[]) {
     //base case, values are not arrays
-    if(!Array.isArray(arrLevel[0])) {
+    if (!Array.isArray(arrLevel[0])) {
       var temp = arrLevel[0];
       arrLevel[0] = arrLevel[1];
       arrLevel[1] = temp;
@@ -420,14 +426,15 @@ export class MapComponent implements OnInit {
   private parseAndAddShapes(shapes: any) {
     shapes.features.forEach(shape => {
       var coordsBase = shape.geometry.coordinates;
-    
+
       //swap coordinates, who wants consistent standards anyway?
       //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
       this.swapCoordinates(coordsBase);
 
-       //multipolygons separated due to how shp-write package creates shapefiles, if problematic might have to heavily modify shp-write
-      if(shape.geometry.type == "MultiPolygon") {
-        for(var i = 0; i < coordsBase.length; i++) {
+      //multipolygons separated due to how shp-write package creates shapefiles, if problematic might have to heavily modify shp-write
+      //also appears to be a bug where sometimes it packs multiple shapes as just a polygon, might need to chack where bottom level shape is and separate next level up
+      if (shape.geometry.type == "MultiPolygon") {
+        for (var i = 0; i < coordsBase.length; i++) {
           this.addDrawnItem(L.polygon(coordsBase[i], {}));
         }
       }
@@ -438,7 +445,7 @@ export class MapComponent implements OnInit {
   }
 
   showHideObjects(showOrHide: string) {
-    if(showOrHide == "Show") {
+    if (showOrHide == "Show") {
       this.drawnItems.addTo(this.mymap);
     }
     else {
@@ -448,14 +455,14 @@ export class MapComponent implements OnInit {
 
   private changeLayerOpacity(opacity: number) {
     //shouldn't change base map opacity
-    if(this.baseLayer.name != "Base Map") {
+    if (this.baseLayer.name != "Base Map") {
       this.baseLayer.layer.setOpacity(opacity);
     }
     this.opacity = opacity;
   }
 
   public setMode(mode: string) {
-    switch(mode) {
+    switch (mode) {
       case "cell":
         this.addCellInteraction();
         break;
@@ -476,7 +483,7 @@ export class MapComponent implements OnInit {
 
 
   private disableInteraction(interaction: string) {
-    switch(interaction) {
+    switch (interaction) {
       case "cell":
         this.disableCellInteraction();
         break;
@@ -493,7 +500,7 @@ export class MapComponent implements OnInit {
 
 
   private addAquiferInteractions() {
-    if(this.interactionType == "aquifer") {
+    if (this.interactionType == "aquifer") {
       //already in aquifer mode
       return;
     }
@@ -521,7 +528,7 @@ export class MapComponent implements OnInit {
     }
 
     //make sure aquifers aren't hidden
-    if(!this.mymap.hasLayer(this.types.aquifers.layer)) {
+    if (!this.mymap.hasLayer(this.types.aquifers.layer)) {
       this.types.aquifers.layer.addTo(this.mymap);
     }
 
@@ -530,7 +537,7 @@ export class MapComponent implements OnInit {
       //clicks intercepted by drawn shapes if behind
       layer.bringToFront();
       layer.on('click', (e) => {
-        if(layer.highlighted) {
+        if (layer.highlighted) {
           layer.setStyle(unhighlight)
           layer.highlighted = false;
           highlightedAquifers.removeLayer(layer);
@@ -553,16 +560,16 @@ export class MapComponent implements OnInit {
         this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "aquifer", cells);
       });
     })
-    
+
     this.mapService.updateMetrics(this, 0, 0, "aquifer", 0);
-    
+
   }
 
   private disableAquiferInteraction() {
     var hidden = false;
-    L.DomUtil.addClass(this.mymap._container,'crosshair-cursor-enabled');
+    L.DomUtil.addClass(this.mymap._container, 'crosshair-cursor-enabled');
     //if hidden add to map to remove event listeners
-    if(!this.mymap.hasLayer(this.types.aquifers.layer)) {
+    if (!this.mymap.hasLayer(this.types.aquifers.layer)) {
       this.types.aquifers.layer.addTo(this.mymap);
       hidden = true;
     }
@@ -577,16 +584,16 @@ export class MapComponent implements OnInit {
       });
     })
     //remove again if was hidden
-    if(hidden) {
+    if (hidden) {
       this.mymap.removeLayer(this.types.aquifers.layer);
     }
-    
+
   }
 
 
   private addCellInteraction() {
 
-    if(this.interactionType == "cell") {
+    if (this.interactionType == "cell") {
       //already in cell mode
       return;
     }
@@ -599,7 +606,7 @@ export class MapComponent implements OnInit {
 
     //really need to refoactor this to a generalized function since used 3 times
     this.mymap.on('click', (e) => {
-      if(this.selectedCell) {
+      if (this.selectedCell) {
         this.mymap.removeLayer(this.selectedCell);
       }
       var convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
@@ -607,12 +614,12 @@ export class MapComponent implements OnInit {
       var data = this.types.landCover.data._covjson.ranges.cover.values;
       var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
       var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-      
+
       //get difference from min to mouse position
       var diffx = convertedMousePoint[0] - this.xmin;
       var diffy = convertedMousePoint[1] - this.ymin;
       //do nothing if out of range of grid
-      if(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+      if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
         //round down to nearest 75
         diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
@@ -628,20 +635,20 @@ export class MapComponent implements OnInit {
           "type": "Feature",
           "properties": {},
           "geometry": {
-              "type": "Polygon",
-              "coordinates": [[c1, c2, c3, c4, c1]]
+            "type": "Polygon",
+            "coordinates": [[c1, c2, c3, c4, c1]]
           }
         };
         //should also make highlight styles global variables since used a lot
-        this.selectedCell = L.geoJSON(cellBounds, {interactive: false})
-        .setStyle({
+        this.selectedCell = L.geoJSON(cellBounds, { interactive: false })
+          .setStyle({
             fillColor: 'black',
             weight: 3,
             opacity: 1,
             color: 'black',  //Outline color
             fillOpacity: 0.2
-        })
-        .addTo(this.mymap)
+          })
+          .addTo(this.mymap)
 
         //add back 37.5 and rounded difference value to get cell coordinate
         var xCellVal = this.xmin + 37.5 + diffx;
@@ -672,7 +679,7 @@ export class MapComponent implements OnInit {
 
   private enableShapeInteraction(metrics: boolean) {
 
-    if(this.interactionType == "custom" && metrics == this.shapeMetricsEnabled) {
+    if (this.interactionType == "custom" && metrics == this.shapeMetricsEnabled) {
       //already in cell mode and same metric type
       return;
     }
@@ -692,7 +699,7 @@ export class MapComponent implements OnInit {
 
 
   private disableCellInteraction() {
-    if(this.selectedCell) {
+    if (this.selectedCell) {
       this.mymap.removeLayer(this.selectedCell);
     }
     this.mymap.off('click');
@@ -717,7 +724,7 @@ export class MapComponent implements OnInit {
   }
 
   private getWholeMapMetrics() {
-    if(this.interactionType == "full") {
+    if (this.interactionType == "full") {
       //already in full map mode
       return;
     }
@@ -735,7 +742,7 @@ export class MapComponent implements OnInit {
   private initializeLayers() {
     var __this = this;
 
-    CovJSON.read(MapComponent.landCoverFile).then(function(coverage) {
+    CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
       var xs = coverage._covjson.domain.axes.x.values;
       var ys = coverage._covjson.domain.axes.y.values;
 
@@ -751,23 +758,23 @@ export class MapComponent implements OnInit {
       //load aquifers after boundaries found so can filter out external aquifers
       shp(MapComponent.aquifersFile).then((geojson) => {
         // this.aquifers = L.featureGroup
-  
+
         var aquifers = L.geoJSON();
         //two shape files, so array
         //might want to just remove "lines" shapefile
         geojson[0].features.forEach(aquifer => {
-          
+
           //convert one point to UTM and check if in bounds (if one point in bounds the aquifer should be internal)
           var sampleCoord = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, aquifer.geometry.coordinates[0][0]);
-          
-          if(sampleCoord[0] >= __this.xmin && sampleCoord[0] <= __this.xmin + __this.xrange
+
+          if (sampleCoord[0] >= __this.xmin && sampleCoord[0] <= __this.xmin + __this.xrange
             && sampleCoord[1] >= __this.ymin && sampleCoord[1] <= __this.ymin + __this.yrange
             && aquifer.properties.CODE != 0) {
 
             aquifers.addData(aquifer);
           }
-  
-         
+
+
         })
         aquifers.setStyle({
           weight: 5,
@@ -803,12 +810,12 @@ export class MapComponent implements OnInit {
 
       __this.loadCover(__this.types.landCover, false);
 
-      
-    })
-    
 
-    
-    CovJSON.read(MapComponent.rechargeFile).then(function(coverage) {
+    })
+
+
+
+    CovJSON.read(MapComponent.rechargeFile).then(function (coverage) {
       __this.types.recharge.data = coverage;
       //deepcopy values for comparisons with modified types
       __this.types.recharge.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.recharge.values));
@@ -820,7 +827,7 @@ export class MapComponent implements OnInit {
       var rechargeVals = __this.types.recharge.data._covjson.ranges.recharge.values;
     });
 
-    
+
 
     this.shapeMetricsEnabled = false;
     this.interactionType = "custom";
@@ -861,7 +868,7 @@ export class MapComponent implements OnInit {
       customAreasTotal: {},
       total: {}
     };
-    
+
 
     var items;
 
@@ -910,7 +917,7 @@ export class MapComponent implements OnInit {
     console.log(data);
   }
 
-  
+
   //could probably refactor to use this for generating and passing metrics to bottombar
   //also could use something similar to report generation for passing name and metric breakdown
   //maybe have subfunctions in generate report for different parts
@@ -942,8 +949,8 @@ export class MapComponent implements OnInit {
     var precision = 3;
 
     //pass in null if want whole map (just use arrays rather than shape)
-    if(items == null) {
-      for(var i = 0; i < rechargeVals.length; i++) {
+    if (items == null) {
+      for (var i = 0; i < rechargeVals.length; i++) {
         metrics.currentIPY += rechargeVals[i];
         metrics.originalIPY += this.types.recharge.baseData[i]
       }
@@ -952,24 +959,24 @@ export class MapComponent implements OnInit {
     }
     else {
       var indexes = this.getInternalIndexes(items.toGeoJSON());
-  
+
       //number of cells enclosed
       metrics.cells = indexes.length;
-  
+
       //get total IPY over cells
       indexes.forEach((index) => {
         metrics.originalIPY += this.types.recharge.baseData[index];
         metrics.currentIPY += rechargeVals[index];
-      });  
+      });
     }
-    
+
 
     //compute metrics in MGPY
     metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
     metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
 
     //if no cells leave at default value of 0 to avoid dividing by 0
-    if(metrics.cells > 0) {
+    if (metrics.cells > 0) {
       //average IPY summation over cells
       metrics.originalIPY /= metrics.cells;
       metrics.currentIPY /= metrics.cells;
@@ -987,7 +994,7 @@ export class MapComponent implements OnInit {
     roundedMetrics.cells = metrics.cells.toString();
     roundedMetrics.difference = metrics.difference.toPrecision(precision);
     roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
-    
+
 
     return roundedMetrics;
   }
@@ -1012,7 +1019,7 @@ export class MapComponent implements OnInit {
 
 
 
-  
+
   //NOTE: WHEN GETTING NEW NODE MODULES PROBABLY WILL NEED TO DOWNLOAD EARLIER VERSION, THEN REDOWNLOAD NEW ONE
   //shpwrite module uses an old version, whereas this uses newer methods
   //is there a workaround to make this work better?
@@ -1023,31 +1030,31 @@ export class MapComponent implements OnInit {
     var zip = new JSZip();
     //redefine shp-write zip feature with desired file hierarchy
     //do you want to include lines or points? Don't actually do anything, maybe just remove these
-    [shpWriteGeojson.point(shapes), shpWriteGeojson.line(shapes), shpWriteGeojson.polygon(shapes)].forEach(function(l) {
-        if (l.geometries.length && l.geometries[0].length) {
-          shpwrite.write(
-            // field definitions
-            l.properties,
-            // geometry type
-            l.type,
-            // geometries
-            l.geometries,
-            function(err, files) {
-              var fileName = "DefinedAreas";
-              zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-              zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-              zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-              zip.file(fileName + '.prj', shpWritePrj);
-            }
-          );
-        }
+    [shpWriteGeojson.point(shapes), shpWriteGeojson.line(shapes), shpWriteGeojson.polygon(shapes)].forEach(function (l) {
+      if (l.geometries.length && l.geometries[0].length) {
+        shpwrite.write(
+          // field definitions
+          l.properties,
+          // geometry type
+          l.type,
+          // geometries
+          l.geometries,
+          function (err, files) {
+            var fileName = "DefinedAreas";
+            zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+            zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+            zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+            zip.file(fileName + '.prj', shpWritePrj);
+          }
+        );
+      }
     });
 
 
     zip.generateAsync({ type: "base64" }).then((file) => {
-      saveAs(new Blob([this.base64ToArrayBuffer(file)], {type: "data:application/zip"}), name + ".zip")
+      saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name + ".zip")
     })
-    
+
 
   }
 
@@ -1056,17 +1063,17 @@ export class MapComponent implements OnInit {
     var bs = window.atob(base64);
     var len = bs.length;
     var bytes = new Uint8Array(len);
-    for (var i = 0; i < len; i++)        {
-        bytes[i] = bs.charCodeAt(i);
+    for (var i = 0; i < len; i++) {
+      bytes[i] = bs.charCodeAt(i);
     }
     return bytes.buffer;
-}
+  }
 
 
-  
 
 
-  private loadDrawControls(){
+
+  private loadDrawControls() {
     this.drawnItems = new L.featureGroup();
     this.uneditableItems = new L.featureGroup();
     this.highlightedItems = new L.featureGroup();
@@ -1079,14 +1086,14 @@ export class MapComponent implements OnInit {
 
     //might want to add some kind of undo button
     L.DrawToolbar.include({
-      getModeHandlers: function(map) {
+      getModeHandlers: function (map) {
         return [
           {
             enabled: true,
             handler: new L.Draw.Polygon(map, {}),
             title: L.drawLocal.draw.toolbar.buttons.polygon,
           },
-          
+
           {
             enabled: true,
             handler: new L.Draw.Rectangle(map, {}),
@@ -1094,11 +1101,14 @@ export class MapComponent implements OnInit {
           },
           {
             enabled: true,
-            handler: new L.Draw.Marker(map, {icon: new L.divIcon({
-              className: 'leaflet-mouse-marker',
-              iconAnchor: [0, 0],
-              iconSize: [0, 0]}
-            )}),
+            handler: new L.Draw.Marker(map, {
+              icon: new L.divIcon({
+                className: 'leaflet-mouse-marker',
+                iconAnchor: [0, 0],
+                iconSize: [0, 0]
+              }
+              )
+            }),
             title: 'Select map cell'
           }
         ]
@@ -1106,9 +1116,9 @@ export class MapComponent implements OnInit {
     });
 
     this.drawControl = new L.Control.Draw({
-        edit: {
-          featureGroup: this.drawnItems
-        }
+      edit: {
+        featureGroup: this.drawnItems
+      }
     });
     this.mymap.addControl(this.drawControl);
 
@@ -1139,25 +1149,25 @@ export class MapComponent implements OnInit {
       })
     });
 
-    this.mymap.on(L.Draw.Event.CREATED,  (event) => {
+    this.mymap.on(L.Draw.Event.CREATED, (event) => {
       //console.log(event.layer);
-      if(event.layerType == "marker") {
+      if (event.layerType == "marker") {
         var bounds = this.getCell(event.layer._latlng);
         //check if was out of map boundaries, do nothing if it was
-        if(bounds) {
+        if (bounds) {
           this.addDrawnItem(new L.Rectangle(bounds), false);
         }
       }
       else {
         this.addDrawnItem(event.layer)
       }
-     
+
     });
   }
 
   //might want to refactor so hover uses this function too
   //though a bit weird since hover function needs more info from computed values
-  private getCell(clickLocation: {lat: number, lng: number}): any {
+  private getCell(clickLocation: { lat: number, lng: number }): any {
     var convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [clickLocation.lng, clickLocation.lat]);
 
     var cellBounds = null;
@@ -1165,12 +1175,12 @@ export class MapComponent implements OnInit {
     var data = this.types.landCover.data._covjson.ranges.cover.values;
     var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
     var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-    
+
     //get difference from min to mouse position
     var diffx = convertedMousePoint[0] - this.xmin;
     var diffy = convertedMousePoint[1] - this.ymin;
     //do nothing if out of range of grid
-    if(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+    if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
       //round down to nearest 75
       diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
@@ -1203,7 +1213,7 @@ export class MapComponent implements OnInit {
   //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
   //maybe check if one is contained in another
   private addDrawnItem(layer, editable: boolean = true) {
-    
+
     //this.downloadShapefile(this.drawnItems)
 
     var __this = this;
@@ -1221,7 +1231,7 @@ export class MapComponent implements OnInit {
     this.highlightedItems.addLayer(layer);
 
     this.drawnItems.addLayer(layer);
-    if(!editable) {
+    if (!editable) {
       this.uneditableItems.addLayer(layer);
     }
     //this.loadcovJSON("Kiawe", this.mymap, this.layers);
@@ -1250,8 +1260,8 @@ export class MapComponent implements OnInit {
       fillOpacity: 0
     }
 
-    layer.on('click', function() {
-      if(this.highlighted) {
+    layer.on('click', function () {
+      if (this.highlighted) {
         this.setStyle(unhighlight);
         this.highlighted = false;
         __this.highlightedItems.removeLayer(this);
@@ -1262,7 +1272,7 @@ export class MapComponent implements OnInit {
         __this.highlightedItems.addLayer(this);
       }
       //if indicated that metrics are to be computed, recompute on change
-      if(emitMetrics) {
+      if (emitMetrics) {
         __this.getSelectedShapeMetrics();
       }
     })
@@ -1271,7 +1281,7 @@ export class MapComponent implements OnInit {
 
   public resize(width: number, height: number) {
 
-    
+
     this.mapid.nativeElement.style.height = height - 50 + 'px';
     this.mapid.nativeElement.style.width = width - 20 + 'px';
 
@@ -1285,18 +1295,18 @@ export class MapComponent implements OnInit {
 
     var numItems = this.highlightedItems.getLayers().length;
 
-    if(numItems != 0) {
+    if (numItems != 0) {
       //deal with errors too
 
       Observable.forkJoin(this.highlightedItems.toGeoJSON().features.map(element => {
         return this.DBService.spatialSearch(element.geometry)
       }))
-      .subscribe((data) => {
-        //console.log(typeof data);
-        //use file(s) generated as cover
-        handler(data);
-      });
-      
+        .subscribe((data) => {
+          //console.log(typeof data);
+          //use file(s) generated as cover
+          handler(data);
+        });
+
     }
   }
 
@@ -1308,7 +1318,7 @@ export class MapComponent implements OnInit {
 
 
     //type base indicates should be changed back to base values
-    if(type == "base") {
+    if (type == "base") {
       var covData = this.types.landCover.data._covjson.ranges.cover.values;
       var rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
       var indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
@@ -1322,9 +1332,9 @@ export class MapComponent implements OnInit {
     else {
       //var __this = this;
       //might as well update recharge as well, async so shouldnt affect performance of core app
-      
+
       //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
-      
+
       //should grey out report generation button while this is going
       //might also want to add some sort of loading indicator
       var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
@@ -1343,7 +1353,7 @@ export class MapComponent implements OnInit {
         });
         //reload recharge cover
         this.loadCover(this.types.recharge, true)
-        
+
         //handle recharge sums (aquifers and total) here
         this.mapService.updateRechargeSum(this, rechargeVals);
         //reenable report generation
@@ -1359,7 +1369,7 @@ export class MapComponent implements OnInit {
       this.loadCover(this.types.landCover, false);
     }
 
-    
+
   }
 
   private getInternalIndexes(geojsonFeatures: any): number[] {
@@ -1375,24 +1385,24 @@ export class MapComponent implements OnInit {
       var ymax = Number.NEGATIVE_INFINITY;
       var ymin = Number.POSITIVE_INFINITY;
 
-      for(var i = 0; i < pointsBase.length; i++) {
+      for (var i = 0; i < pointsBase.length; i++) {
         convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
       }
 
-      for(var i = 0; i < convertedPoints.length - 1; i++) {
+      for (var i = 0; i < convertedPoints.length - 1; i++) {
         //coordinates are in long lat order (I think)
 
         //get max and min vals to limit coordinates need to compare
-        if(convertedPoints[i][0] > xmax) {
+        if (convertedPoints[i][0] > xmax) {
           xmax = convertedPoints[i][0];
         }
-        if(convertedPoints[i][0] < xmin) {
+        if (convertedPoints[i][0] < xmin) {
           xmin = convertedPoints[i][0];
         }
-        if(convertedPoints[i][1] > ymax) {
+        if (convertedPoints[i][1] > ymax) {
           ymax = convertedPoints[i][1];
         }
-        if(convertedPoints[i][1] < ymin) {
+        if (convertedPoints[i][1] < ymin) {
           ymin = convertedPoints[i][1];
         }
         //convert these points, less conversions than trying to convert grid points
@@ -1400,7 +1410,7 @@ export class MapComponent implements OnInit {
           x: convertedPoints[i][0],
           y: convertedPoints[i][1]
         });
-        b.push( {
+        b.push({
           x: convertedPoints[i + 1][0],
           y: convertedPoints[i + 1][1]
         });
@@ -1425,31 +1435,31 @@ export class MapComponent implements OnInit {
       //again, assume values are in order
       //find min and max indexes
       //check if ascending or descending order, findIndex returns first occurance
-      if(xs[0] < xs[1]) {
-        minxIndex = xs.findIndex(function(val) {return val >= xmin});
+      if (xs[0] < xs[1]) {
+        minxIndex = xs.findIndex(function (val) { return val >= xmin });
         //> not >= so returns index after last even if on edge 
-        maxxIndex = xs.findIndex(function(val) {return val > xmax});
+        maxxIndex = xs.findIndex(function (val) { return val > xmax });
       }
       else {
-        maxxIndex = xs.findIndex(function(val) {return val < xmin});
-        minxIndex = xs.findIndex(function(val) {return val <= xmax});
+        maxxIndex = xs.findIndex(function (val) { return val < xmin });
+        minxIndex = xs.findIndex(function (val) { return val <= xmax });
       }
-      if(ys[0] < ys[1]) {
-        minyIndex = ys.findIndex(function(val) {return val >= ymin});
-        maxyIndex = ys.findIndex(function(val) {return val > ymax});
+      if (ys[0] < ys[1]) {
+        minyIndex = ys.findIndex(function (val) { return val >= ymin });
+        maxyIndex = ys.findIndex(function (val) { return val > ymax });
       }
       else {
-        maxyIndex = ys.findIndex(function(val) {return val < ymin});
-        minyIndex = ys.findIndex(function(val) {return val <= ymax});
+        maxyIndex = ys.findIndex(function (val) { return val < ymin });
+        minyIndex = ys.findIndex(function (val) { return val <= ymax });
       }
 
       //check if shape boundaries out of coverage range
-      if(minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
+      if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
         //convert cell coords to long lat and raycast
         //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-        for(var xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-          for(var yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-            if(this.isInternal(a, b, {x: xs[xIndex], y: ys[yIndex]})) {
+        for (var xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+          for (var yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+            if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
               indexes.push(this.getIndex(xIndex, yIndex))
             }
           }
@@ -1461,16 +1471,16 @@ export class MapComponent implements OnInit {
   }
 
   //can specify origin if 0, 0 is in range, not necessary for cover being used (0,0 not in range)
-  private isInternal(a: any[], b: any[], point: any, origin: any = {x: 0, y: 0}): boolean {
+  private isInternal(a: any[], b: any[], point: any, origin: any = { x: 0, y: 0 }): boolean {
     //raycasting algorithm, point is internal if intersects an odd number of edges
     var internal = false;
-    for(var i = 0; i < a.length; i++) {
+    for (var i = 0; i < a.length; i++) {
       //segments intersect iff endpoints of each segment are on opposite sides of the other segment
       //check if angle formed is counterclockwise to determine which side endpoints fall on
-      if(this.ccw(a[i], origin, point) != this.ccw(b[i], origin, point) && this.ccw(a[i], b[i], origin) != this.ccw(a[i], b[i], point)) {
+      if (this.ccw(a[i], origin, point) != this.ccw(b[i], origin, point) && this.ccw(a[i], b[i], origin) != this.ccw(a[i], b[i], point)) {
         internal = !internal
       }
-      
+
     }
     return internal;
   }
@@ -1486,13 +1496,13 @@ export class MapComponent implements OnInit {
   //prolly need parameter to say whether to start layer toggled on or off, might want to add this to types def
   //update names and make sure works
   private loadCover(coverage, legend: boolean) {
-    if(coverage.layer != undefined) {
+    if (coverage.layer != undefined) {
       this.mymap.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
     }
     //remove old layer from map and control
     //__this.currentCover = coverages;
-    
+
     //var xaxis = coverage._covjson.domain.axes.x.values;
     //var yaxis = coverage._covjson.domain.axes.y.values;
 
@@ -1504,17 +1514,17 @@ export class MapComponent implements OnInit {
     // rechargeVals.splice(100000, 100000, ...test);
     //console.log(coverage);
     // work with Coverage object
-    var layer = C.dataLayer(coverage.data, {parameter: coverage.parameter, palette: coverage.palette})
-    .on('afterAdd', () => {
-      if(legend) {
-        //see how behaves, probably need this back
-        // this.legend = C.legend(layer);
-        // this.legend.addTo(this.mymap);
-        C.legend(layer)
-        .addTo(this.mymap);
-      }
-    })
-    .setOpacity(this.opacity)
+    var layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
+      .on('afterAdd', () => {
+        if (legend) {
+          //see how behaves, probably need this back
+          // this.legend = C.legend(layer);
+          // this.legend.addTo(this.mymap);
+          C.legend(layer)
+            .addTo(this.mymap);
+        }
+      })
+      .setOpacity(this.opacity)
     //uses base layers now
     // //ensure recharge layer on top (don't want to have to remove covers to view it)
     // if(this.types.recharge.layer != undefined) {
@@ -1523,17 +1533,17 @@ export class MapComponent implements OnInit {
     //recharge disabled by default
 
     //a bit sketchy, might want to change to keep current layer, though might not ever happen if can't update in recharge (should still change it)
-    if(coverage != this.types.recharge) {
+    if (coverage != this.types.recharge) {
       layer.addTo(this.mymap);
       this.baseLayer = {
         name: "Land Cover",
         layer: layer
       }
     }
-    
+
     this.layers.addBaseLayer(layer, coverage.label);
     coverage.layer = layer;
-    
+
   }
 
 
@@ -1554,20 +1564,20 @@ export class MapComponent implements OnInit {
     var g;
     var b;
     var first = true;
-    for(var i = 0; i < 4; i++) {
-      for(var j = 0; j < 3; j++) {
-        for(var k = 0; k < 3; k++) {
-          if(palette.length >= 31) {
+    for (var i = 0; i < 4; i++) {
+      for (var j = 0; j < 3; j++) {
+        for (var k = 0; k < 3; k++) {
+          if (palette.length >= 31) {
             break;
           }
           //avoid black so lines stand out more (have 5 extra colors)
-          if(!first) {
+          if (!first) {
             r = (Math.round(range / 3 * i)).toString(16);
             g = (Math.round(range / 2 * j)).toString(16);
             b = (Math.round(range / 2 * k)).toString(16);
-            if(r.length < 2) r = "0" + r;
-            if(g.length < 2) g = "0" + g;
-            if(b.length < 2) b = "0" + b;
+            if (r.length < 2) r = "0" + r;
+            if (g.length < 2) g = "0" + g;
+            if (b.length < 2) b = "0" + b;
             color = "#" + r + g + b;
             palette.push(color);
           }
@@ -1577,12 +1587,12 @@ export class MapComponent implements OnInit {
         }
       }
     }
-    
-    for(i = 0; i < 30; i++) {
+
+    for (i = 0; i < 30; i++) {
       COVER_INDEX_DETAILS[i].color = palette[i];
       document.documentElement.style.setProperty("--color" + (LC_TO_BUTTON_INDEX[i + 1]).toString(), palette[i + 1]);
     }
-    
+
     //palette = this.agitate(palette);
     return palette;
   }
