@@ -52,8 +52,10 @@ export class WindowComponent implements AfterViewInit {
   };
   graphOrder = ["aquifers", "custom", "customTotal", "total"];
 
-  mouseWindowLeft: number;
-  mouseWindowTop: number;
+  lastMousePos: {
+    xPos: number,
+    yPos: number
+  }
   maximized = false;
 
   saveHeight: number;
@@ -158,12 +160,17 @@ export class WindowComponent implements AfterViewInit {
     
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-      this.windowPanel.left = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().left, 10);
-      this.windowPanel.top = parseInt(this.panelDiv.nativeElement.getBoundingClientRect().top, 10);
-      this.mouseWindowLeft = mouseX - this.windowPanel.left;
-      this.mouseWindowTop = mouseY - this.windowPanel.top;
+      // const mouseX = e.clientX;
+      // const mouseY = e.clientY;
+
+      // this.mouseWindowLeft = this.panelDiv.nativeElement.offsetLeft;
+      // this.mouseWindowTop = this.panelDiv.nativeElement.offsetTop;
+      this.lastMousePos = {
+        xPos: e.clientX,
+        yPos: e.clientY
+      }
+      e.stopPropagation();
+      e.preventDefault();
       WindowComponent.lastClickDiv = this;
       document.addEventListener('mousemove', this.startDragging);
 
@@ -179,7 +186,7 @@ export class WindowComponent implements AfterViewInit {
     // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
     // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
-    //ResizeButon
+    
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
@@ -229,16 +236,15 @@ export class WindowComponent implements AfterViewInit {
   }
 
   startResizing(e, type, __this){
-    const container = WindowComponent.lastClickDiv;
 
     if(type == "bot" || type == "both") {
       let mouseY = e.clientY;
-      let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(container.panelDiv.nativeElement.style.height);
+      let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(__this.panelDiv.nativeElement.style.height);
 
       //minimum size
       if(newHeight >= 400) {
         WindowComponent.lastMouseYPosition = mouseY;
-        container.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
+        __this.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
         if(this.mapComponent) {
           //for some reason percent size allows map to change width but not height, so change manually
           __this.mapComponent.resize(__this.mapComponent.width, newHeight);
@@ -248,11 +254,11 @@ export class WindowComponent implements AfterViewInit {
     }
     if(type == "right" || type == "both") {
       let mouseX = e.clientX;
-      let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(container.panelDiv.nativeElement.style.width);
+      let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(__this.panelDiv.nativeElement.style.width);
       //minimum size
       if(newWidth >= 400) {
         WindowComponent.lastMouseXPosition = mouseX;
-        container.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
+        __this.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
         if(this.mapComponent) {
           //for some reason percent size allows map to change width but not height, so change manually
           __this.mapComponent.resize(newWidth, __this.mapComponent.height);
@@ -264,30 +270,36 @@ export class WindowComponent implements AfterViewInit {
 
 
 
-  //acts weird if grab after scroll, think the coordinates get messed up somehow if off initial screen
   startDragging(e) {
     const container = WindowComponent.lastClickDiv;
 
-    let left = e.clientX - container.mouseWindowLeft;
-    let top = e.clientY - container.mouseWindowTop;
+    var left = e.clientX - container.lastMousePos.xPos + container.panelDiv.nativeElement.offsetLeft;
+    var top = e.clientY - container.lastMousePos.yPos + container.panelDiv.nativeElement.offsetTop;
 
 
-    if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 10) {
-      left = -parseInt(container.panelDiv.nativeElement.style.width) + 10;
+    if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 20) {
+      left = -parseInt(container.panelDiv.nativeElement.style.width) + 20;
+      container.lastMousePos.xPos = 20;
+    }
+    else {
+      container.lastMousePos.xPos = e.clientX;
     }
     if(top < 50) {
       top = 50;
+      container.lastMousePos.yPos = 50;
+    }
+    else {
+      container.lastMousePos.yPos = e.clientY;
     }
 
-    container.windowPanel.left = left
-    container.windowPanel.top = top;
+    
     container.panelDiv.nativeElement.style.left = left + 'px';
     container.panelDiv.nativeElement.style.top = top + 'px';
 
       //PanelExtend
       // container.panelExtendDiv.nativeElement.style.left = left  + 'px';
       // container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
-    window.getSelection().removeAllRanges();
+    //window.getSelection().removeAllRanges();
    }
 
   stopDragging() {
@@ -557,8 +569,65 @@ export class WindowComponent implements AfterViewInit {
         this.pdf.addImage(this.graphImageData[this.graphOrder[i]], 'PNG', 10, y, 550, 275);
         y += 275;
       }
-      
+
     }
+
+    //the joys of formatting
+    var fSize = 9;
+    //extra space since whitespace doesn't seem to be accounted for in width computation
+    var h1 = "Disclaimer:   ";
+    var t1 = "The website authors, webmasters, the USGS, the United States Government, and the University of Hawai‘i make no warranty as to accuracy or completeness and are not obligated to provide any support, consulting, training or assistance with regard to the use, operation, and performance of this website. The user assumes all risks for any damages whatsoever resulting from loss of use, data, or profits arising in connection with the access, use, quality, or performance of this website."
+    var h2 = "Limitations:  ";
+    var t2 = "The user is responsible for understanding the limitations of this website, assumptions of the website’s methods, and the implications of these limitations and assumptions for any analysis done using this website. This website has limited ability to (1) assess differences in runoff related to different land cover types, such as urban vs. vegetated surfaces, (2) assess groundwater/surface-water interaction, (3) surface flow between model cells, or (4) differences between native and non-native forests. Some data used in the models, such as future climate and runoff from ungaged basins, are highly uncertain. The website does not distinguish between what is plausible and what is unrealistic; the user is responsible for knowing the plausibility of scenarios they test.";
+    //first line offsets after header
+    var offset1 = this.pdf.getStringUnitWidth(h1) * 9;
+    var offset2 = this.pdf.getStringUnitWidth(h2) * 9;
+    //width of page with 50 padding on either end
+    var pwidth = this.pdf.internal.pageSize.width;
+    //width of line after header
+    var firstLineWidth1 = pwidth - offset1;
+    //get first line (different from other lines since bolded header)
+    var firstLineText1 = this.pdf.splitTextToSize(t1, firstLineWidth1)[0]
+    //remaining text after first line (remove one extra character to get rid of space)
+    var remainingText1 = t1.substring(firstLineText1.length + 1, t1.length);
+    //get the rest of the lines of text, split at page width
+    var restLinesText1 = this.pdf.splitTextToSize(remainingText1, pwidth);
+
+    //width of line after header
+    var firstLineWidth2 = pwidth - offset1;
+    //get first line (different from other lines since bolded header)
+    var firstLineText2 = this.pdf.splitTextToSize(t2, firstLineWidth2)[0]
+    //remaining text after first line (remove one extra character to get rid of space)
+    var remainingText2 = t1.substring(firstLineText2.length + 1, t2.length);
+    //get the rest of the lines of text, split at page width
+    var restLinesText2 = this.pdf.splitTextToSize(remainingText2, pwidth);
+
+    this.pdf.setFontSize(fSize);
+    
+    this.pdf.setFontType("bold");
+    this.pdf.text(50, y, h1);
+    this.pdf.setFontType("normal");
+    this.pdf.text(50 + offset1, y, firstLineText1);
+    this.pdf.text(50, y + 10, restLinesText1);
+
+    //add 10 space for each line plus 10 for buffer
+    y += (restLinesText1.length + 1) * 10 + 10
+    
+    if(y >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
+    this.pdf.setFontType("bold");
+    this.pdf.text(50, y, h2);
+    this.pdf.setFontType("normal");
+    this.pdf.text(50 + offset1, y, firstLineText2);
+    this.pdf.text(50, y + 10, restLinesText2);
+
+    //default font size 16
+    //this.pdf.text(50, y, );
+
+    //Limitations (DRAFT)—
     
 
     this.pdf.save("Report.pdf");
