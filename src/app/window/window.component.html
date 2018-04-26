@@ -2,10 +2,10 @@
 
 <div *ngIf="windowPanel.bodyType == 'map'; else reportBlock">
   <div #panelDiv class="panel panel-default allowPointerEvents">
-  
+    <!-- <div class="scroll-better"></div> -->
     <div #dragBar class="panel-heading panel-heading-custom">
       {{ windowPanel.title }} - {{ windowPanel.tag }}
-      <button class="navbarButton" (click)="removeWindow()">
+      <button class="navbarButton"s (click)="removeWindow()">
         <span class="glyphicon glyphicon-remove"></span>
       </button>
       <!-- <button class="navbarButton" (click)="incAlpha()">
@@ -188,5 +188,7 @@
   
   </div>
 </ng-template>
+<div #phantomScrollLock class="phantom-scroll-lock"></div>
+<div #phantomScrollSmooth class="phantom-scroll-smooth"></div>
 
 

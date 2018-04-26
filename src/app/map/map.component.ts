@@ -738,11 +738,30 @@ export class MapComponent implements OnInit {
     this.mapService.updateMetrics(this, null, null, "full", this.types.recharge.baseData.length);
   }
 
+
+
+
+
+
+
+
+
+
+
+
   //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
   private initializeLayers() {
     var __this = this;
 
-    CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
+    this.metrics = {
+      customAreas: [],
+      aquifers: [],
+      customAreasTotal: {},
+      total: {}
+    }
+
+    var init2;
+    var init1 = CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
       var xs = coverage._covjson.domain.axes.x.values;
       var ys = coverage._covjson.domain.axes.y.values;
 
@@ -756,7 +775,7 @@ export class MapComponent implements OnInit {
 
 
       //load aquifers after boundaries found so can filter out external aquifers
-      shp(MapComponent.aquifersFile).then((geojson) => {
+      init2 = shp(MapComponent.aquifersFile).then((geojson) => {
         // this.aquifers = L.featureGroup
 
         var aquifers = L.geoJSON();
@@ -811,7 +830,7 @@ export class MapComponent implements OnInit {
       __this.loadCover(__this.types.landCover, false);
 
 
-    })
+    });
 
 
 
@@ -833,13 +852,11 @@ export class MapComponent implements OnInit {
     this.interactionType = "custom";
     this.currentScenario = "recharge_scenario0"
 
-    //changed to set when layer added, shouldnt need this
-    // Promise.all([init1, init2]).then(() => {
-    //   this.baseLayer = {
-    //     name: "Land Cover",
-    //     layer: this.types.landCover.layer
-    //   }
-    // })
+    //initialize metrics
+    Promise.all([init1, init2]).then(() => {
+      __this.metrics = this.createMetrics();
+        console.log(__this.metrics)
+    })
   }
 
 
@@ -862,6 +879,14 @@ export class MapComponent implements OnInit {
 
 
   generateReport() {
+    var data = this.metrics;
+    var reportWindow = new WindowPanel("Report", "report", data);
+    this.windowService.addWindow(reportWindow, this.windowId);
+  }
+
+
+
+  createMetrics() {
     var data = {
       customAreas: [],
       aquifers: [],
@@ -911,11 +936,36 @@ export class MapComponent implements OnInit {
     //again, make sure to go back and modify all full map metrics to disclude background cells
     data.total = this.getMetricsSuite(null);
 
-    var reportWindow = new WindowPanel("Report", "report", data);
-    this.windowService.addWindow(reportWindow, this.windowId);
 
-    console.log(data);
+
+    return data;
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   //could probably refactor to use this for generating and passing metrics to bottombar

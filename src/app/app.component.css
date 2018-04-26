@@ -13,6 +13,8 @@
 
 .navbar-default{
   background-color:rgb(56, 117, 194);
+  width: 100%;
+  z-index: 10000;
 }
 
 .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:focus, .navbar-default .navbar-nav>.active>a:hover{

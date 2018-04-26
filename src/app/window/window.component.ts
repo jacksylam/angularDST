@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
+import { animate, transition, state, trigger, style, Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
 
@@ -10,6 +10,7 @@ declare var jsPDF: any;
   styleUrls: ['./window.component.css'],
   providers: []
 })
+
 export class WindowComponent implements AfterViewInit {
 
   static lastClickDiv: any;
@@ -28,6 +29,8 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('customGraph') customGraph;
   @ViewChild('customTotalGraph') customTotalGraph;
   @ViewChild('fullGraph') fullGraph;
+  @ViewChild('phantomScrollLock') phantomScrollLock;
+  @ViewChild('phantomScrollSmooth') phantomScrollSmooth;
 
   // @ViewChild('aquiferTable') aquiferTable;
   // @ViewChild('customTable') customTable;
@@ -38,10 +41,14 @@ export class WindowComponent implements AfterViewInit {
   @Input() public type: string;
   @Input() windowPanel: WindowPanel;
 
+
+
+
   aquiferGraphImage: any;
   customGraphImage: any;
   customTotalGraphImage: any;
   fullGraphImage: any;
+  scrollLock: boolean;
 
   pdf: any;
   graphImageData = {
@@ -52,9 +59,13 @@ export class WindowComponent implements AfterViewInit {
   };
   graphOrder = ["aquifers", "custom", "customTotal", "total"];
 
-  lastMousePos: {
-    xPos: number,
-    yPos: number
+  mouseCornerOffset: {
+    left: number,
+    top: number
+  }
+  scrollPos: {
+    left: number,
+    top: number
   }
   maximized = false;
 
@@ -79,6 +90,7 @@ export class WindowComponent implements AfterViewInit {
   ngAfterViewInit() {
     var __this = this;
     var resizeFunct;
+    this.scrollLock = false;
 
     this.divsIndex = WindowComponent.windowDivs.length;
     WindowComponent.windowDivs.push(this.panelDiv.nativeElement);
@@ -98,82 +110,56 @@ export class WindowComponent implements AfterViewInit {
 
       this.generateReportGraphs();
 
-      
-      
-
-    
-      
-      // this.pdf = new jsPDF('p', 'pt', 'letter');
-      
-      // this.pdf.canvas.height = 72 * 11;
-      // this.pdf.canvas.width = 72 * 8.5;
-      
-
-      // var graphHandler = {
-      //   "#graph": (element, renderer) => { return true; }
-      // }
-
-      
-      // setTimeout(() => {
-        
-      // }, 500);
-      
-
-      
-
-
-
-
-
-
-
-
-
-      // var pdf = new jsPDF('p', 'pt', 'letter');
-
-      // var margins = {
-      //   top: 80,
-      //   bottom: 60,
-      //   left: 40,
-      //   width: 522
-      // };
-
-      // setTimeout(() => {
-      //   console.log(this.report.nativeElement);
-      //   pdf.fromHTML(this.report.nativeElement);
-      //   pdf.canvas.height = 72 * 11;
-      //   pdf.canvas.width = 72 * 8.5;
-      //   pdf.save("test.pdf");
-        
-      // }, 500); 
-      
-
-
-
-
-
-
-
-
 
     }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
-      // const mouseX = e.clientX;
-      // const mouseY = e.clientY;
+      // const mouseX = e.pageX;
+      // const mouseY = e.pageY;
+      //transition = false;
 
       // this.mouseWindowLeft = this.panelDiv.nativeElement.offsetLeft;
       // this.mouseWindowTop = this.panelDiv.nativeElement.offsetTop;
-      this.lastMousePos = {
-        xPos: e.clientX,
-        yPos: e.clientY
+      this.mouseCornerOffset = {
+        left: e.pageX - this.panelDiv.nativeElement.offsetLeft,
+        top: e.pageY - this.panelDiv.nativeElement.offsetTop
       }
+
+      this.scrollPos = {
+        left: window.pageXOffset,
+        top: window.pageYOffset
+      }
+      //console.log(this.scrollPos);
+
       e.stopPropagation();
       e.preventDefault();
-      WindowComponent.lastClickDiv = this;
-      document.addEventListener('mousemove', this.startDragging);
+      this.phantomScrollLock.nativeElement.style.top = window.pageYOffset == 0 ? '0px' : window.pageYOffset + window.innerHeight + 'px';
+      this.phantomScrollLock.nativeElement.style.left = window.pageXOffset == 0 ? '0px' : window.pageXOffset + window.innerWidth + 'px';
 
+      this.phantomScrollSmooth.nativeElement.style.top = this.phantomScrollLock.nativeElement.style.top;
+      this.phantomScrollSmooth.nativeElement.style.left = this.phantomScrollLock.nativeElement.style.left;
+      
+      WindowComponent.lastClickDiv = this;
+      //console.log(WindowComponent.lastClickDiv.scrollPos);
+      document.addEventListener('mousemove', this.startDragging);
+      document.addEventListener('scroll', this.scrollDrag);
       this.bringWindowForward();
     })
 
@@ -188,12 +174,12 @@ export class WindowComponent implements AfterViewInit {
 
     
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
+      const mouseX = e.pageX;
+      const mouseY = e.pageY;
       WindowComponent.lastClickDiv = this;
 
-      WindowComponent.lastMouseXPosition = e.clientX;
-      WindowComponent.lastMouseYPosition = e.clientY;
+      WindowComponent.lastMouseXPosition = e.pageX;
+      WindowComponent.lastMouseYPosition = e.pageY;
       
       //need to pass __this in to function, so save anonymous function call for removal
       document.addEventListener('mousemove', resizeFunct = (e) => {
@@ -204,9 +190,9 @@ export class WindowComponent implements AfterViewInit {
     })
 
     this.resizeRight.nativeElement.addEventListener('mousedown', (e) => {
-      const mouseX = e.clientX;
+      const mouseX = e.pageX;
       WindowComponent.lastClickDiv = this;
-      WindowComponent.lastMouseXPosition = e.clientX;
+      WindowComponent.lastMouseXPosition = e.pageX;
       
       
       //need to pass __this in to function, so save anonymous function call for removal
@@ -218,9 +204,9 @@ export class WindowComponent implements AfterViewInit {
     })
 
     this.resizeBot.nativeElement.addEventListener('mousedown', (e) => {
-      const mouseY = e.clientY;
+      const mouseY = e.pageY;
       WindowComponent.lastClickDiv = this;
-      WindowComponent.lastMouseYPosition = e.clientY;
+      WindowComponent.lastMouseYPosition = e.pageY;
       
       
       //need to pass __this in to function, so save anonymous function call for removal
@@ -238,7 +224,7 @@ export class WindowComponent implements AfterViewInit {
   startResizing(e, type, __this){
 
     if(type == "bot" || type == "both") {
-      let mouseY = e.clientY;
+      let mouseY = e.pageY;
       let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(__this.panelDiv.nativeElement.style.height);
 
       //minimum size
@@ -253,7 +239,7 @@ export class WindowComponent implements AfterViewInit {
       
     }
     if(type == "right" || type == "both") {
-      let mouseX = e.clientX;
+      let mouseX = e.pageX;
       let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(__this.panelDiv.nativeElement.style.width);
       //minimum size
       if(newWidth >= 400) {
@@ -268,30 +254,21 @@ export class WindowComponent implements AfterViewInit {
 
   }
 
-
-
   startDragging(e) {
     const container = WindowComponent.lastClickDiv;
-
-    var left = e.clientX - container.lastMousePos.xPos + container.panelDiv.nativeElement.offsetLeft;
-    var top = e.clientY - container.lastMousePos.yPos + container.panelDiv.nativeElement.offsetTop;
+    var left = e.pageX - container.mouseCornerOffset.left;
+    var top = e.pageY - container.mouseCornerOffset.top;
 
 
     if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 20) {
       left = -parseInt(container.panelDiv.nativeElement.style.width) + 20;
-      container.lastMousePos.xPos = 20;
+      
     }
-    else {
-      container.lastMousePos.xPos = e.clientX;
-    }
+    
     if(top < 50) {
       top = 50;
-      container.lastMousePos.yPos = 50;
+      
     }
-    else {
-      container.lastMousePos.yPos = e.clientY;
-    }
-
     
     container.panelDiv.nativeElement.style.left = left + 'px';
     container.panelDiv.nativeElement.style.top = top + 'px';
@@ -303,7 +280,37 @@ export class WindowComponent implements AfterViewInit {
    }
 
   stopDragging() {
+    //WindowComponent.lastClickDiv.phantomScrollLock.nativeElement.style.top = '0px';
+    //WindowComponent.lastClickDiv.phantomScrollLock.nativeElement.style.left =  '0px';
     document.removeEventListener('mousemove', this.startDragging);
+    document.removeEventListener('scroll', this.scrollDrag);
+  }
+
+  scrollDrag(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    const container = WindowComponent.lastClickDiv;
+    //console.log(container)
+    var left = window.pageXOffset - container.scrollPos.left + container.panelDiv.nativeElement.offsetLeft;
+    var top = window.pageYOffset - container.scrollPos.top + container.panelDiv.nativeElement.offsetTop;
+
+    console.log(e);
+    console.log(top);
+
+    container.scrollPos.left = window.pageXOffset;
+    container.scrollPos.top = window.pageYOffset;
+
+    if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 20) {
+      left = -parseInt(container.panelDiv.nativeElement.style.width) + 20;
+      
+    }
+    
+    if(top < 50) {
+      top = 50;
+    }
+    
+    container.panelDiv.nativeElement.style.left = left + 'px';
+    container.panelDiv.nativeElement.style.top = top + 'px';
   }
 
   bringWindowForward() {

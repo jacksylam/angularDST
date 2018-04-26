@@ -5,6 +5,7 @@
   position: absolute;
   z-index: 0;
   border-radius: 1%;
+  transition: left .01s ease-in, top .01s ease-in;
 }
 
 .map-container {
@@ -26,6 +27,8 @@
   overflow: scroll;
   
 }
+
+
 
 
 .panel-default>.panel-heading-custom {
@@ -128,4 +131,21 @@ table, th, td {
 
 th, td {
   padding: 15px;
+}
+
+
+
+.phantom-scroll-lock {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.phantom-scroll-smooth {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  transition: left .5s ease-in, top .5s ease-in;
+  pointer-events: none;
 }
