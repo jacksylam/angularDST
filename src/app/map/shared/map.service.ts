@@ -148,6 +148,11 @@ export class MapService {
     this.mapHash[index].downloadShapefile();
   }
 
+  downloadRaster(controlPanel: any, type: string, format: string) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.mapHash[index].downloadRaster(type, format);
+  }
+
 
   setUnits(controlPanel: any, unitType: string) {
     let index = this.controlPanelHash.indexOf(controlPanel);

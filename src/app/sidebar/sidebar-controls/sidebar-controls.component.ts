@@ -65,6 +65,10 @@ export class SidebarControlsComponent implements OnInit {
     this.mapService.downloadShapefile(this);
   }
 
+  downloadRaster(type: string, format: string) {
+    this.mapService.downloadRaster(this, type, format);
+  }
+
   setUnits(unitType: string) {
     //should switch mapService coordination to window service
     this.mapService.setUnits(this, unitType);

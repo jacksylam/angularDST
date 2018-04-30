@@ -70,13 +70,13 @@ export class MapComponent implements OnInit {
 
   windowId: number;
 
-  //type metricSuite = {}
+  customAreasCount = 1;
 
   metrics: {
-    customAreas: {}[],
-    aquifers: {}[],
-    customAreasTotal: {},
-    total: {}
+    customAreas: any[],
+    aquifers: any[],
+    customAreasTotal: any,
+    total: any
   }
 
   // landCover: any;
@@ -760,6 +760,11 @@ export class MapComponent implements OnInit {
       total: {}
     }
 
+    var metricCoordination = {
+      rechargeVals: false,
+      aquifers: false
+    };
+
     var init2;
     var init1 = CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
       var xs = coverage._covjson.domain.axes.x.values;
@@ -804,6 +809,17 @@ export class MapComponent implements OnInit {
         __this.types.aquifers.layer = aquifers;
         aquifers.addTo(__this.mymap);
         __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
+        
+        //can't compute metrics until recharge vals and aquifers are set
+        if(metricCoordination.rechargeVals) {
+          //document.body.style.cursor='wait';
+          __this.metrics = __this.createMetrics();
+          //document.body.style.cursor='default';
+        }
+        else {
+          //indicate aquifers are set
+          metricCoordination.aquifers = true;
+        }
       });
 
       // var xutm = coverage._covjson.domain.axes.x.values;
@@ -844,6 +860,18 @@ export class MapComponent implements OnInit {
 
       __this.loadCover(__this.types.recharge, true);
       var rechargeVals = __this.types.recharge.data._covjson.ranges.recharge.values;
+
+      //Race conditions? Don't think js can have race conditions since single threaded, should complete conditional before allowing other things to run
+      //can't set metrics until aquifers in place and recharge values set
+      if(metricCoordination.aquifers) {
+        //document.body.style.cursor='wait';
+        __this.metrics = __this.createMetrics();
+      }
+      else {
+        //indicate recharge vals are set
+        metricCoordination.rechargeVals = true;
+      }
+      
     });
 
 
@@ -852,16 +880,46 @@ export class MapComponent implements OnInit {
     this.interactionType = "custom";
     this.currentScenario = "recharge_scenario0"
 
-    //initialize metrics
-    Promise.all([init1, init2]).then(() => {
-      __this.metrics = this.createMetrics();
-        console.log(__this.metrics)
-    })
+    // //initialize metrics
+    // Promise.all([init1, init2]).then(() => {
+    //   //__this.metrics = this.createMetrics();
+    //     console.log(__this.metrics)
+    // })
   }
 
 
 
 
+
+
+  downloadRaster(type: string, format: string) {
+
+    var data = "";
+
+    if(format == "asc") {
+      console.log(this.types[type].data)
+      var dims = this.types[type].data._covjson.domain.axes;
+      var vals = type == "recharge" ? this.types[type].data._covjson.ranges.recharge.values :  this.types[type].data._covjson.ranges.cover.values;
+      
+      //generate header lines
+      data += "ncols " + dims.x.values.length + "\n";
+      data += "nrols " + dims.y.values.length + "\n";
+      data += "xllcorner " + this.xmin + "\n";
+      data += "yllcorner " + this.ymin + "\n";
+      data += "cellsize " + 75 + "\n";
+      data += "NODATA_value -9999 \n";
+  
+      //add data
+      vals.forEach((val) => {
+        data += val + " "
+      })
+    }
+    
+
+    
+
+    saveAs(new Blob([data], {type: 'text/plain;charset=utf-8'}), type + "." + format);
+  }
 
 
 
@@ -894,8 +952,9 @@ export class MapComponent implements OnInit {
       total: {}
     };
 
-
     var items;
+
+    var __this = this;
 
     this.types.aquifers.layer.eachLayer((layer) => {
       var info = {
@@ -909,13 +968,10 @@ export class MapComponent implements OnInit {
       capName.split(/([\s \-])/).forEach((substr) => {
         info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
       });
-
       info.metrics = this.getMetricsSuite(items.addLayer(layer));
-
       data.aquifers.push(info);
     })
-
-    var count = 1;
+    
     this.drawnItems.eachLayer((layer) => {
       var info = {
         name: "",
@@ -923,7 +979,7 @@ export class MapComponent implements OnInit {
       };
       items = new L.featureGroup();
       //add custom naming options later, for now just name by number
-      info.name = "Custom Area " + (count++).toString();
+      info.name = "Custom Area " + (__this.customAreasCount++).toString();
       info.metrics = this.getMetricsSuite(items.addLayer(layer));
 
       data.customAreas.push(info);
@@ -937,8 +993,30 @@ export class MapComponent implements OnInit {
     data.total = this.getMetricsSuite(null);
 
 
-
     return data;
+  }
+
+  updateMetrics(updatedPoints) {
+    var items;
+
+    //assuming eachlayer returns same order every time, should correspond
+    var i = 0;
+    this.types.aquifers.layer.eachLayer((layer) => {
+      items = new L.featureGroup();
+      this.metrics.aquifers[i++].metrics = this.getMetricsSuite(items.addLayer(layer));
+    })
+
+    i = 0;
+    this.drawnItems.eachLayer((layer) => {
+      items = new L.featureGroup();
+      this.metrics.customAreas[i++].metrics = this.getMetricsSuite(items.addLayer(layer));
+    })
+
+    this.metrics.customAreasTotal = this.getMetricsSuite(this.drawnItems);
+
+    //again, make sure to go back and modify all full map metrics to disclude background cells
+    this.metrics.total = this.getMetricsSuite(null);
+
   }
 
 
@@ -995,6 +1073,7 @@ export class MapComponent implements OnInit {
     }
 
     var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    
 
     var precision = 3;
 
@@ -1293,7 +1372,22 @@ export class MapComponent implements OnInit {
     //   MapComponent.baseStyle = JSON.parse(JSON.stringify(layer.options));
     // }
     this.addInteractionToLayer(layer, false, this);
+
+
+    var info = {
+      name: "",
+      metrics: {}
+    };
+    var items = new L.featureGroup();
+    //add custom naming options later, for now just name by number
+    info.name = "Custom Area " + (__this.customAreasCount++).toString();
+    info.metrics = this.getMetricsSuite(items.addLayer(layer));
+
+    this.metrics.customAreas.push(info);
   }
+
+
+
 
   private addInteractionToLayer(layer: any, emitMetrics: boolean, __this) {
     var highlight = {
@@ -1406,6 +1500,9 @@ export class MapComponent implements OnInit {
 
         //handle recharge sums (aquifers and total) here
         this.mapService.updateRechargeSum(this, rechargeVals);
+
+
+        this.updateMetrics(null);
         //reenable report generation
       });
 

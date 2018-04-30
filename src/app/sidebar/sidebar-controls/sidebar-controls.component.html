@@ -64,6 +64,11 @@
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectReference.click()"><div class="shift">Upload Shapefile<br>as Reference Layer</div></button>
 
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button>
+
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download Recharge<br>as ASCII Grid</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'asc')"><div class="shift">Download Land<br>Cover as ASCII Grid</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'covjson')"><div class="shift">Download Recharge<br>as covjson</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'covjson')"><div class="shift">Download Land<br>Cover as covjson</div></button>
       
       <br><br>
       
