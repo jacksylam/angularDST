@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/core';
 import {MapService} from '../../map/shared/map.service';
-
+import {FormBuilder, FormGroup} from '@angular/forms';
 
 @Component({
   selector: 'app-sidebar-controls',
@@ -26,6 +26,7 @@ export class SidebarControlsComponent implements OnInit {
   @ViewChild("menu") menuDiv;
   @ViewChild("leftScrollbar") leftScrollbarDiv;
   
+  options: FormGroup;
 
   baselayer = "landcover";
 
@@ -37,7 +38,14 @@ export class SidebarControlsComponent implements OnInit {
 
   scrollLock = false;
 
-  constructor(private mapService: MapService) { }
+  constructor(private mapService: MapService, private fb: FormBuilder) {
+    this.options = fb.group({
+      shapes: false,
+      recharge: false,
+      cover: false,
+      format: 'covjson'
+    });
+  }
 
   ngOnInit() {
     this.mapService.setControlPanel(this);

@@ -91,10 +91,10 @@ export class MapComponent implements OnInit {
   // upperLeftLatLng: any;
   // lowerRightLatLng: any;
 
-  // gridHeightCells: number;
   // gridWidthLong: number;
   // gridHeightLat: number;
   gridWidthCells: number;
+  gridHeightCells: number;
   xmin: number;
   ymin: number;
   xrange: number;
@@ -832,7 +832,7 @@ export class MapComponent implements OnInit {
       // //test conversion
       // //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
       __this.gridWidthCells = xs.length;
-      // __this.gridHeightCells = yutm.length;
+      __this.gridHeightCells = ys.length;
       // //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
       // __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
       // __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
@@ -897,13 +897,12 @@ export class MapComponent implements OnInit {
     var data = "";
 
     if(format == "asc") {
-      console.log(this.types[type].data)
-      var dims = this.types[type].data._covjson.domain.axes;
+      //console.log(this.types[type].data)
       var vals = type == "recharge" ? this.types[type].data._covjson.ranges.recharge.values :  this.types[type].data._covjson.ranges.cover.values;
       
       //generate header lines
-      data += "ncols " + dims.x.values.length + "\n";
-      data += "nrols " + dims.y.values.length + "\n";
+      data += "ncols " + this.gridWidthCells + "\n";
+      data += "nrols " + this.gridHeightCells + "\n";
       data += "xllcorner " + this.xmin + "\n";
       data += "yllcorner " + this.ymin + "\n";
       data += "cellsize " + 75 + "\n";

@@ -65,6 +65,20 @@
 
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button>
 
+
+      <form class="example-container" [formGroup]="options">
+        <mat-checkbox FormControlName='shapes'>Custom Areas<br>(as Shapefile)</mat-checkbox>
+        <mat-checkbox FormControlName='cover'>Land Cover</mat-checkbox>
+        <mat-checkbox FormControlName='recharge'>Recharge</mat-checkbox>
+        <div>
+          <label>Recharge/Land Cover File Format: </label>
+          <mat-radio-group FormControlName='format'>
+            <mat-radio-button value="covjson">covjson</mat-radio-button>
+            <mat-radio-button value="asc">asc</mat-radio-button>
+          </mat-radio-group>
+        </div>
+      </form>
+      
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download Recharge<br>as ASCII Grid</div></button>
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'asc')"><div class="shift">Download Land<br>Cover as ASCII Grid</div></button>
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'covjson')"><div class="shift">Download Recharge<br>as covjson</div></button>

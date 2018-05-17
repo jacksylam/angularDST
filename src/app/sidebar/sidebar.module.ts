@@ -8,6 +8,8 @@ import { BottombarPanelComponent } from './bottombar-panel/bottombar-panel.compo
 import { SidebarControlsComponent } from './sidebar-controls/sidebar-controls.component';
 import {GraphsComponent} from '../graphs/graphs.component';
 import {MatSliderModule} from '@angular/material/slider';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatRadioModule} from '@angular/material/radio';
 import {MatSelectModule} from '@angular/material/select';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -20,7 +22,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     MatSliderModule,
     FormsModule,
     MatSelectModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    ReactiveFormsModule,
+    MatCheckboxModule,
+    MatRadioModule
   ],
   declarations: [
     SidebarMenuComponent, 
