@@ -294,8 +294,8 @@ export class WindowComponent implements AfterViewInit {
     var left = window.pageXOffset - container.scrollPos.left + container.panelDiv.nativeElement.offsetLeft;
     var top = window.pageYOffset - container.scrollPos.top + container.panelDiv.nativeElement.offsetTop;
 
-    console.log(e);
-    console.log(top);
+    //console.log(e);
+    //console.log(top);
 
     container.scrollPos.left = window.pageXOffset;
     container.scrollPos.top = window.pageYOffset;

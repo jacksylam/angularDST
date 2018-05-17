@@ -37,6 +37,7 @@ export class MapComponent implements OnInit {
 
   @ViewChild('mapid') mapid;
 
+  static aquiferIndices: number[]
 
   mymap: any;
   popup: any;
@@ -91,10 +92,10 @@ export class MapComponent implements OnInit {
   // upperLeftLatLng: any;
   // lowerRightLatLng: any;
 
-  // gridHeightCells: number;
   // gridWidthLong: number;
   // gridHeightLat: number;
   gridWidthCells: number;
+  gridHeightCells: number;
   xmin: number;
   ymin: number;
   xrange: number;
@@ -749,7 +750,6 @@ export class MapComponent implements OnInit {
 
 
 
-  //include base land covers and add button so can change back (allows for holes to be cut in shapes and mistakes to be restored)
   private initializeLayers() {
     var __this = this;
 
@@ -765,8 +765,8 @@ export class MapComponent implements OnInit {
       aquifers: false
     };
 
-    var init2;
-    var init1 = CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
+    
+    CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
       var xs = coverage._covjson.domain.axes.x.values;
       var ys = coverage._covjson.domain.axes.y.values;
 
@@ -780,7 +780,7 @@ export class MapComponent implements OnInit {
 
 
       //load aquifers after boundaries found so can filter out external aquifers
-      init2 = shp(MapComponent.aquifersFile).then((geojson) => {
+      shp(MapComponent.aquifersFile).then((geojson) => {
         // this.aquifers = L.featureGroup
 
         var aquifers = L.geoJSON();
@@ -832,15 +832,15 @@ export class MapComponent implements OnInit {
       // //test conversion
       // //L.marker(__this.lowerRightLatLng).addTo(__this.mymap);
       __this.gridWidthCells = xs.length;
-      // __this.gridHeightCells = yutm.length;
+      __this.gridHeightCells = ys.length;
       // //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
       // __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
       // __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
       // __this.coverBase = coverage;
 
       __this.types.landCover.data = coverage;
-      //deepcopy values for comparisons with modified types
-      __this.types.landCover.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.cover.values));
+      //deepcopy values for comparisons with modified types, array of primitives, so can use array.from
+      __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
       //console.log(__this.currentCover._covjson.domain.axes);
 
       __this.loadCover(__this.types.landCover, false);
@@ -853,7 +853,7 @@ export class MapComponent implements OnInit {
     CovJSON.read(MapComponent.rechargeFile).then(function (coverage) {
       __this.types.recharge.data = coverage;
       //deepcopy values for comparisons with modified types
-      __this.types.recharge.baseData = JSON.parse(JSON.stringify(coverage._covjson.ranges.recharge.values));
+      __this.types.recharge.baseData = Array.from(coverage._covjson.ranges.recharge.values);
       __this.mapService.setTotalAndCurrentRecharge(__this, __this.types.recharge.baseData);
       //console.log(__this.currentCover._covjson.domain.axes);
       //change this
@@ -894,31 +894,86 @@ export class MapComponent implements OnInit {
 
   downloadRaster(type: string, format: string) {
 
-    var data = "";
+    var data = this.types[type].data._covjson;
+    var fcontents;
 
     if(format == "asc") {
-      console.log(this.types[type].data)
-      var dims = this.types[type].data._covjson.domain.axes;
-      var vals = type == "recharge" ? this.types[type].data._covjson.ranges.recharge.values :  this.types[type].data._covjson.ranges.cover.values;
+      var vals = type == "recharge" ? data.ranges.recharge.values :  data.ranges.cover.values;
       
       //generate header lines
-      data += "ncols " + dims.x.values.length + "\n";
-      data += "nrols " + dims.y.values.length + "\n";
-      data += "xllcorner " + this.xmin + "\n";
-      data += "yllcorner " + this.ymin + "\n";
-      data += "cellsize " + 75 + "\n";
-      data += "NODATA_value -9999 \n";
+      fcontents = "ncols " + this.gridWidthCells + "\n";
+      fcontents += "nrows " + this.gridHeightCells + "\n";
+      fcontents += "xllcorner " + this.xmin + "\n";
+      fcontents += "yllcorner " + this.ymin + "\n";
+      fcontents += "cellsize " + 75 + "\n";
+      fcontents += "NODATA_value -9999 \n";
   
       //add data
       vals.forEach((val) => {
-        data += val + " "
+        fcontents += val + " "
       })
+    }
+    else if(format == "covjson") {
+      fcontents = JSON.stringify(data);
     }
     
 
-    
+    saveAs(new Blob([fcontents], {type: 'text/plain;charset=utf-8'}), type + "." + format);
+  }
 
-    saveAs(new Blob([data], {type: 'text/plain;charset=utf-8'}), type + "." + format);
+
+  uploadLandCoverRaster(format: string, setDefault: boolean, file: any) {
+      var __this = this;
+  
+      this.metrics = {
+        customAreas: [],
+        aquifers: [],
+        customAreasTotal: {},
+        total: {}
+      }
+  
+      var metricCoordination = {
+        rechargeVals: false,
+        aquifers: false
+      };
+  
+      if(format = "asc") {
+        if (this.r) {
+          //think can redefine onload function, if not working might have to reinitialize file reader
+          this.r.onload = (e) => {
+            //get data values after first six detail lines
+            var data = this.r.result.split('\n')[6];
+            //split on spaces, tabs, or commas for values
+            var vals = data.split(/[ \t,]+/);
+
+            this.types.landCover.data._covjson.ranges.cover.values = vals;
+            if(setDefault) {
+              //array of primitives, can deep copy with array.from
+              this.types.landCover.baseData = Array.from(vals);
+            }
+          }
+    
+          
+          this.r.readAsText(file);
+          
+        }
+      }
+      else {
+        //PROBABLY NEED TO LOAD FROM 
+        CovJSON.read(file).then(function (coverage) {
+  
+          __this.types.landCover.data = coverage;
+          
+          if(setDefault) {
+            __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
+          }
+    
+          __this.loadCover(__this.types.landCover, false);
+    
+    
+        });
+      }
+      
   }
 
 
@@ -944,6 +999,23 @@ export class MapComponent implements OnInit {
 
 
 
+
+
+
+
+
+
+
+
+
+
+  /*
+  parts:
+  get aquifer indices
+  compute aquifer metrics
+  compute full map metrics
+  */
+
   createMetrics() {
     var data = {
       customAreas: [],
@@ -956,7 +1028,33 @@ export class MapComponent implements OnInit {
 
     var __this = this;
 
-    this.types.aquifers.layer.eachLayer((layer) => {
+    if(!MapComponent.aquiferIndices) {
+      MapComponent.aquiferIndices = [];
+      this.getAquiferIndices(this.types.aquifers);
+      
+      // var layer;
+      // for(var key in this.types.aquifers.layer._layers) {
+      //   layer = this.types.aquifers.layer._layers[key];
+      //   break;
+      // }
+      //   items = new L.featureGroup();
+      //   var indexes = this.getInternalIndexes(items.addLayer(layer).toGeoJSON());
+      // console.log(indexes.length);
+      
+      //COMPLETE THIS
+
+    }
+    return;
+
+    //this.types.aquifers.layer.eachLayer((layer) => {
+      var layer;
+      for(var key in this.types.aquifers.layer._layers) {
+        layer = this.types.aquifers.layer._layers[key];
+        break;
+      }
+      console.log(layer);
+      
+
       var info = {
         name: "",
         metrics: {}
@@ -968,9 +1066,12 @@ export class MapComponent implements OnInit {
       capName.split(/([\s \-])/).forEach((substr) => {
         info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
       });
-      info.metrics = this.getMetricsSuite(items.addLayer(layer));
-      data.aquifers.push(info);
-    })
+      // setTimeout(() => {
+      //   info.metrics = this.getMetricsSuite(items.addLayer(layer));
+      //   data.aquifers.push(info);
+      // }, 1000)
+      
+    //});
     
     this.drawnItems.eachLayer((layer) => {
       var info = {
@@ -980,21 +1081,439 @@ export class MapComponent implements OnInit {
       items = new L.featureGroup();
       //add custom naming options later, for now just name by number
       info.name = "Custom Area " + (__this.customAreasCount++).toString();
-      info.metrics = this.getMetricsSuite(items.addLayer(layer));
+      //info.metrics = this.getMetricsSuite(items.addLayer(layer));
 
       data.customAreas.push(info);
-    })
+    });
 
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    data.customAreasTotal = this.getMetricsSuite(this.drawnItems);
+   // data.customAreasTotal = this.getMetricsSuite(this.drawnItems);
 
     //again, make sure to go back and modify all full map metrics to disclude background cells
-    data.total = this.getMetricsSuite(null);
+    //data.total = this.getMetricsSuite(null);
 
 
     return data;
   }
+
+
+
+
+
+
+  private getAquiferIndices(aquifers: any): number[] {
+    var aquiferIndexes: any;
+
+    //var layers = []
+
+    for(var key in aquifers.layer._layers) {
+      var indexes = [];
+      aquiferIndexes.key = indexes;
+
+      // //console.log(aquifers.layer._layers[id])
+      // var items = new L.featureGroup();
+      // var test = this.getInternalIndexes(items.addLayer(aquifers.layer._layers[id]).toGeoJSON());
+      // console.log(test.length);
+
+      //var shape = aquifers;
+      //array due to potential cutouts, shouldn't have any cutouts
+      var pointsBase = aquifers.layer._layers[key].feature.geometry.coordinates[0];
+      var convertedPoints = [];
+      var a = [];
+      var b = [];
+      var xmax = Number.NEGATIVE_INFINITY;
+      var xmin = Number.POSITIVE_INFINITY;
+      var ymax = Number.NEGATIVE_INFINITY;
+      var ymin = Number.POSITIVE_INFINITY;
+
+      for (var i = 0; i < pointsBase.length; i++) {
+        convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
+      }
+
+      for (var i = 0; i < convertedPoints.length - 1; i++) {
+        //coordinates are in long lat order (I think)
+
+        //get max and min vals to limit coordinates need to compare
+        if (convertedPoints[i][0] > xmax) {
+          xmax = convertedPoints[i][0];
+        }
+        if (convertedPoints[i][0] < xmin) {
+          xmin = convertedPoints[i][0];
+        }
+        if (convertedPoints[i][1] > ymax) {
+          ymax = convertedPoints[i][1];
+        }
+        if (convertedPoints[i][1] < ymin) {
+          ymin = convertedPoints[i][1];
+        }
+        //convert these points, less conversions than trying to convert grid points
+        a.push({
+          x: convertedPoints[i][0],
+          y: convertedPoints[i][1]
+        });
+        b.push({
+          x: convertedPoints[i + 1][0],
+          y: convertedPoints[i + 1][1]
+        });
+      }
+
+      //convert max min values and find range of cells
+      //no need to check every single one
+      //convert coordinate and get x value
+      // var xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
+      // var xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
+      // var ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
+      // var yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
+
+      var xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+      var ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+      var minxIndex: number;
+      var maxxIndex: number;
+      var minyIndex: number;
+      var maxyIndex: number;
+
+      //again, assume values are in order
+      //find min and max indexes
+      //check if ascending or descending order, findIndex returns first occurance
+      if (xs[0] < xs[1]) {
+        minxIndex = xs.findIndex(function (val) { return val >= xmin });
+        //> not >= so returns index after last even if on edge 
+        maxxIndex = xs.findIndex(function (val) { return val > xmax });
+      }
+      else {
+        maxxIndex = xs.findIndex(function (val) { return val < xmin });
+        minxIndex = xs.findIndex(function (val) { return val <= xmax });
+      }
+      if (ys[0] < ys[1]) {
+        minyIndex = ys.findIndex(function (val) { return val >= ymin });
+        maxyIndex = ys.findIndex(function (val) { return val > ymax });
+      }
+      else {
+        maxyIndex = ys.findIndex(function (val) { return val < ymin });
+        minyIndex = ys.findIndex(function (val) { return val <= ymax });
+      }
+
+
+
+      //var recursiveDepth = 10;
+
+      var checkIndices = []
+
+      //check if shape boundaries out of coverage range
+      if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
+        //convert cell coords to long lat and raycast
+        //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
+        // for (var xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+        //   for (var yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+        //     // if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+        //     //   indexes.push(this.getIndex(xIndex, yIndex))
+        //     // }
+        //     checkIndices.push(this.getIndex(xIndex, yIndex));
+        //   }
+          
+        // }
+
+
+        //also recursive depth and should be approximate speedup factor for single action
+        //need to balance this with total time taken though, speed will be about numChunks * timeoutInterval (depending on how long chunk processing takes)
+        var numChunks = 100
+        var timeoutInterval = 100;
+
+        //compute chunk size
+        var xrange = maxxIndex - minxIndex;
+        var yrange = maxyIndex - minyIndex;
+        var totalSize = xrange * yrange
+        var chunkSize = Math.floor(totalSize / numChunks);
+        //final chunk size may need to be larger if not divisible
+        var finalChunkSize = chunkSize + (totalSize - chunkSize * numChunks)
+
+        // console.log(minyIndex)
+        // console.log(minxIndex)
+        // console.log(yrange)
+        // console.log(xrange)
+
+        var chunkIndices = (chunk: number) => {
+          var indices = {
+            minx: 0,
+            maxx: 0,
+            miny: 0,
+            maxy: 0
+          };
+
+          var thisChunkSize = chunk == numChunks - 1 ? finalChunkSize : chunkSize;
+          
+          var minOffset = chunk * chunkSize;
+          var maxOffset = minOffset + thisChunkSize;
+          indices.minx = minxIndex + Math.floor(minOffset / yrange);
+          indices.miny = minyIndex + minOffset % yrange;
+          indices.maxx = minxIndex + Math.floor(maxOffset / yrange);
+          indices.maxy = minyIndex + maxOffset % yrange;
+
+          //console.log(minOffset);
+          //console.log(maxOffset);
+
+          return indices;
+        }
+
+        var task = (chunk: number) => {
+          //console.log(totalSize);
+          if(chunk >= numChunks) {
+            console.log(indexes);
+            return;
+          }
+          else {
+            var range = chunkIndices(chunk);
+            //console.log(range);
+
+            /*
+            2 cases:
+            ranges minx == maxx, go from miny to maxy, end
+            ranges minx != maxx, go from miny to maxyindex, if theres more than 2 x indexes, center cases go full range, last x index go from minyindex to ranges miny
+            */
+
+            if(range.minx == range.maxx) {
+              var xIndex = range.minx;
+              for (var yIndex = range.miny; yIndex < range.maxy; yIndex++) {
+                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                  //console.log("push");
+                  indexes.push(this.getIndex(xIndex, yIndex));
+                }
+              }
+            }
+            
+
+            else {
+              var xIndex = range.minx;
+              //start point to end of range for first index
+              for (var yIndex = range.miny; yIndex < maxyIndex; yIndex++) {
+                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                  //console.log("push");
+                  indexes.push(this.getIndex(xIndex, yIndex));
+                }
+              }
+
+              //if center x indices go full y range
+              for (var xIndex = range.minx + 1; xIndex < range.maxx; xIndex++) {
+                for (var yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+                  //console.log(xIndex * chunk + yIndex);
+                  if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                    //console.log("push");
+                    indexes.push(this.getIndex(xIndex, yIndex));
+                    
+                  }
+                }
+              }
+
+              xIndex = range.maxx;
+              //start of y range up to end point for final index
+              for (var yIndex = minyIndex; yIndex < range.maxy; yIndex++) {
+                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                  //console.log("push");
+                  indexes.push(this.getIndex(xIndex, yIndex));
+                }
+              }
+            }
+            
+
+            // for (var xIndex = range.minx; xIndex < range.maxx; xIndex++) {
+            //   for (var yIndex = range.miny; yIndex < range.maxy; yIndex++) {
+            //     //console.log(xIndex * chunk + yIndex);
+            //     if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+            //       console.log("push");
+            //       indexes.push(this.getIndex(xIndex, yIndex));
+                  
+            //     }
+            //   }
+            // }
+            
+            setTimeout(() => {
+              return task(chunk + 1);
+            }, timeoutInterval);
+            
+          }
+        }
+
+        task(0);
+
+        // var task = setInterval(() => {
+          
+        //   if(chunk >= numChunks) {
+        //     clearInterval(task);
+        //     console.log(indexes);
+        //     return;
+        //   }
+
+          
+        //   if(this.isInternal(a, b, xs[xIndex], ys[yIndex])) {
+        //     indexes.push(this.getIndex(xIndex, yIndex));
+        //     console.log("?");
+        //   }
+          
+        // }, 100)
+
+      }
+    }
+    //});
+
+    
+    return indexes;
+  }
+
+
+
+
+
+  //could probably refactor to use this for generating and passing metrics to bottombar
+  //also could use something similar to report generation for passing name and metric breakdown
+  //maybe have subfunctions in generate report for different parts
+
+  //also need to update all full map computations to disclude background cells
+  getMetricsSuite(items: any) {
+    var metrics = {
+      originalIPY: 0,
+      currentIPY: 0,
+      originalMGPY: 0,
+      currentMGPY: 0,
+      cells: 0,
+      difference: 0,
+      pchange: 0
+    }
+
+    var roundedMetrics = {
+      originalIPY: "",
+      currentIPY: "",
+      originalMGPY: "",
+      currentMGPY: "",
+      cells: "",
+      difference: "",
+      pchange: ""
+    }
+
+    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    
+
+    var precision = 3;
+
+    //pass in null if want whole map (just use arrays rather than shape)
+    if (items == null) {
+
+     
+      setTimeout(() => {
+      for (var i = 0; i < rechargeVals.length; i++) {
+
+        //var task = () => {
+          metrics.currentIPY += rechargeVals[i];
+          metrics.originalIPY += this.types.recharge.baseData[i];
+        //}
+
+//BREAK UP
+        //requestidlecallback not working properly, try manual concession on events
+        // if(this.concede) {
+        //   while(this.concede) {
+        //     setTimeout(() => {}, 100);
+        //   }
+          
+        // }
+        
+        
+      }
+          
+        //}, {timeout: 1000});
+        
+      }, 1000);
+
+      metrics.cells = rechargeVals.length;
+    }
+    else {
+      var indexes = this.getInternalIndexes(items.toGeoJSON());
+
+      //number of cells enclosed
+      metrics.cells = indexes.length;
+
+      
+      setTimeout(() => {
+      //get total IPY over cells
+      indexes.forEach((index) => {
+
+        //var task = () => {
+          metrics.originalIPY += this.types.recharge.baseData[index];
+          metrics.currentIPY += rechargeVals[index];
+        //}
+//BREAK UP
+        //(window as any).requestIdleCallback(() => {
+
+          
+
+        //setTimeout(() => {task();}, 10000);
+        //}, {timeout: 1000});
+      });
+    }, 1000);
+    }
+
+//PUT IN CALLBACK
+    
+      //compute metrics in MGPY
+      metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+      metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+
+      //if no cells leave at default value of 0 to avoid dividing by 0
+      if (metrics.cells > 0) {
+        //average IPY summation over cells
+        metrics.originalIPY /= metrics.cells;
+        metrics.currentIPY /= metrics.cells;
+
+        //get difference and percent change
+        metrics.difference = metrics.currentMGPY - metrics.originalMGPY;
+        //make sure not dividing by 0 if no recharge in selected cells
+        metrics.pchange = metrics.originalMGPY == 0 ? 0 : metrics.difference / metrics.originalMGPY * 100;
+      }
+
+      roundedMetrics.originalIPY = metrics.originalIPY.toPrecision(precision);
+      roundedMetrics.currentIPY = metrics.currentIPY.toPrecision(precision);
+      roundedMetrics.originalMGPY = metrics.originalMGPY.toPrecision(precision);
+      roundedMetrics.currentMGPY = metrics.currentMGPY.toPrecision(precision);
+      roundedMetrics.cells = metrics.cells.toString();
+      roundedMetrics.difference = metrics.difference.toPrecision(precision);
+      roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
+
+    
+
+    console.log("test");
+    return roundedMetrics;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   updateMetrics(updatedPoints) {
     var items;
@@ -1046,87 +1565,7 @@ export class MapComponent implements OnInit {
 
 
 
-  //could probably refactor to use this for generating and passing metrics to bottombar
-  //also could use something similar to report generation for passing name and metric breakdown
-  //maybe have subfunctions in generate report for different parts
 
-  //also need to update all full map computations to disclude background cells
-  getMetricsSuite(items: any) {
-    var metrics = {
-      originalIPY: 0,
-      currentIPY: 0,
-      originalMGPY: 0,
-      currentMGPY: 0,
-      cells: 0,
-      difference: 0,
-      pchange: 0
-    }
-
-    var roundedMetrics = {
-      originalIPY: "",
-      currentIPY: "",
-      originalMGPY: "",
-      currentMGPY: "",
-      cells: "",
-      difference: "",
-      pchange: ""
-    }
-
-    var rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    
-
-    var precision = 3;
-
-    //pass in null if want whole map (just use arrays rather than shape)
-    if (items == null) {
-      for (var i = 0; i < rechargeVals.length; i++) {
-        metrics.currentIPY += rechargeVals[i];
-        metrics.originalIPY += this.types.recharge.baseData[i]
-      }
-
-      metrics.cells = rechargeVals.length;
-    }
-    else {
-      var indexes = this.getInternalIndexes(items.toGeoJSON());
-
-      //number of cells enclosed
-      metrics.cells = indexes.length;
-
-      //get total IPY over cells
-      indexes.forEach((index) => {
-        metrics.originalIPY += this.types.recharge.baseData[index];
-        metrics.currentIPY += rechargeVals[index];
-      });
-    }
-
-
-    //compute metrics in MGPY
-    metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-    metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-
-    //if no cells leave at default value of 0 to avoid dividing by 0
-    if (metrics.cells > 0) {
-      //average IPY summation over cells
-      metrics.originalIPY /= metrics.cells;
-      metrics.currentIPY /= metrics.cells;
-
-      //get difference and percent change
-      metrics.difference = metrics.currentMGPY - metrics.originalMGPY;
-      //make sure not dividing by 0 if no recharge in selected cells
-      metrics.pchange = metrics.originalMGPY == 0 ? 0 : metrics.difference / metrics.originalMGPY * 100;
-    }
-
-    roundedMetrics.originalIPY = metrics.originalIPY.toPrecision(precision);
-    roundedMetrics.currentIPY = metrics.currentIPY.toPrecision(precision);
-    roundedMetrics.originalMGPY = metrics.originalMGPY.toPrecision(precision);
-    roundedMetrics.currentMGPY = metrics.currentMGPY.toPrecision(precision);
-    roundedMetrics.cells = metrics.cells.toString();
-    roundedMetrics.difference = metrics.difference.toPrecision(precision);
-    roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
-
-
-    return roundedMetrics;
-  }
 
 
 
