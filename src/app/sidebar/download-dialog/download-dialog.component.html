@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Download Information for Map {{id}}</h2>
+
+<form>
+  <mat-checkbox (change)="updateValue('shapes', $event.checked)">Custom Areas (as Shapefile)</mat-checkbox>
+  <br>
+  <mat-checkbox (change)="updateValue('cover', $event.checked)">Land Cover</mat-checkbox>
+  <br>
+  <mat-checkbox (change)="updateValue('recharge', $event.checked)">Recharge</mat-checkbox>
+  <br>
+  <br>
+  <div *ngIf="options.recharge || options.cover">
+    <label>Recharge/Land Cover File Format: </label>
+    <br>
+    <mat-radio-group (change)="updateValue('format', $event.value)" [value]="'covjson'">
+      <mat-radio-button value="covjson">covjson</mat-radio-button>
+      <br>
+      <mat-radio-button value="asc">asc</mat-radio-button>
+    </mat-radio-group>
+  </div>
+</form>
+
+<br>
+
+<mat-dialog-actions>
+  <button class="mat-raised-button"(click)="close()">Cancel</button>
+  <button class="mat-raised-button mat-primary"(click)="close('submit')">Download</button>
+</mat-dialog-actions>

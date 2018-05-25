@@ -57,15 +57,26 @@
       </div>
 
       <br><br>
-      <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
+      <!-- <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
       <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
 
       <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'reference')" #fileSelectReference />
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectReference.click()"><div class="shift">Upload Shapefile<br>as Reference Layer</div></button>
 
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button> -->
 
+      <div class="outline btn-group-vertical internal-menu">
+        <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Save/Apply Changes</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('download')"><div class="shift">Download</div></button>
+        <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('upload')"><div class="shift">Upload</div></button>
+      </div>
 
+      <!-- <div class="outline btn-group-vertical internal-menu">
+      <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
+      <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload</div></button> -->
+
+      <!-- <br> -->
+<!-- 
       <form class="example-container" [formGroup]="options">
         <mat-checkbox FormControlName='shapes'>Custom Areas<br>(as Shapefile)</mat-checkbox>
         <mat-checkbox FormControlName='cover'>Land Cover</mat-checkbox>
@@ -77,12 +88,18 @@
             <mat-radio-button value="asc">asc</mat-radio-button>
           </mat-radio-group>
         </div>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download</div></button>
       </form>
+    </div> -->
+
       
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download Recharge<br>as ASCII Grid</div></button>
+
+
+      
+      <!-- <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download Recharge<br>as ASCII Grid</div></button>
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'asc')"><div class="shift">Download Land<br>Cover as ASCII Grid</div></button>
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'covjson')"><div class="shift">Download Recharge<br>as covjson</div></button>
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'covjson')"><div class="shift">Download Land<br>Cover as covjson</div></button>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'covjson')"><div class="shift">Download Land<br>Cover as covjson</div></button> -->
       
       <br><br>
       

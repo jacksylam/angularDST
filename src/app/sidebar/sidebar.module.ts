@@ -13,6 +13,9 @@ import {MatRadioModule} from '@angular/material/radio';
 import {MatSelectModule} from '@angular/material/select';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UploadDialogComponent } from './upload-dialog/upload-dialog.component';
+import { DownloadDialogComponent } from './download-dialog/download-dialog.component';
+import {MatDialogModule} from "@angular/material";
 
 @NgModule({
   imports: [
@@ -25,20 +28,29 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     MatFormFieldModule,
     ReactiveFormsModule,
     MatCheckboxModule,
-    MatRadioModule
+    MatRadioModule,
+    MatDialogModule
   ],
   declarations: [
     SidebarMenuComponent, 
     SidebarPanelComponent, 
     BottombarPanelComponent,
     SidebarControlsComponent,
-    GraphsComponent
+    GraphsComponent,
+    UploadDialogComponent,
+    DownloadDialogComponent
   ],
   exports: [
     SidebarMenuComponent,
     SidebarPanelComponent,
     BottombarPanelComponent,
-    SidebarControlsComponent
+    SidebarControlsComponent,
+    UploadDialogComponent,
+    DownloadDialogComponent
+  ],
+  entryComponents: [
+    UploadDialogComponent,
+    DownloadDialogComponent
   ]
 })
 export class SidebarModule { }

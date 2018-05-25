@@ -2,6 +2,9 @@ import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/core';
 import {MapService} from '../../map/shared/map.service';
 import {FormBuilder, FormGroup} from '@angular/forms';
+import {MatDialog, MatDialogConfig} from "@angular/material";
+import {UploadDialogComponent} from "../upload-dialog/upload-dialog.component"
+import {DownloadDialogComponent} from "../download-dialog/download-dialog.component"
 
 @Component({
   selector: 'app-sidebar-controls',
@@ -38,13 +41,40 @@ export class SidebarControlsComponent implements OnInit {
 
   scrollLock = false;
 
-  constructor(private mapService: MapService, private fb: FormBuilder) {
+  constructor(private mapService: MapService, private fb: FormBuilder, private dialog: MatDialog) {
+    //probably won't need this (replaced with dialog)
     this.options = fb.group({
       shapes: false,
       recharge: false,
       cover: false,
       format: 'covjson'
     });
+
+  }
+
+  openDialog(type: string) {
+    switch(type) {
+      case "upload":
+        this.dialog.open(UploadDialogComponent, {data: {id: "test"}}).afterClosed()
+        .subscribe((data) => {
+          if(data) {
+            this.mapService.upload(this, data);
+          }
+        });
+        break;
+
+      case "download":
+        this.dialog.open(DownloadDialogComponent, {data: {id: "test"}}).afterClosed()
+        .subscribe((data) => {
+          if(data) {
+            this.mapService.download(this, data);
+          }
+        });
+        break;
+
+      default:
+        console.log("Invalid dialog");
+    }
   }
 
   ngOnInit() {
@@ -69,13 +99,13 @@ export class SidebarControlsComponent implements OnInit {
     this.mapService.uploadShapefile(this, type, e.target.files);
   }
 
-  download() {
-    this.mapService.downloadShapefile(this);
-  }
+  // download() {
+  //   this.mapService.downloadShapefile(this);
+  // }
 
-  downloadRaster(type: string, format: string) {
-    this.mapService.downloadRaster(this, type, format);
-  }
+  // downloadRaster(type: string, format: string) {
+  //   this.mapService.downloadRaster(this, type, format);
+  // }
 
   setUnits(unitType: string) {
     //should switch mapService coordination to window service

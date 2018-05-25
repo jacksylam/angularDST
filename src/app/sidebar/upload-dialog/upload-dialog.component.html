@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Upload Information to Map {{id}}</h2>
+
+<!-- reactive forms things not working properly, manually set with events -->
+<form>
+  <mat-checkbox (change)="updateValue('shapes', $event.checked)">Custom Areas (as Shapefile)</mat-checkbox>
+  <br>
+  <mat-checkbox (change)="updateValue('cover', $event.checked)">Land Cover*</mat-checkbox>
+  <br>
+  <br>
+  <div *ngIf="info.cover">
+    <label>Overwritting default values will cause any modifications to be compared<br>
+      to these values instead of the pre-defined values for the island.</label>
+    <br>
+    <mat-checkbox (change)="updateValue('overwrite', $event.checked)">Overwrite default land cover values?</mat-checkbox>
+    <br>
+  </div>
+  
+  <div *ngIf="info.shapes">
+    <br>
+    <label>Upload shapefile as: </label>
+    <br>
+    <mat-radio-group (change)="updateValue('format', $event.value)" [value]="'custom'">
+      <mat-radio-button value="custom">Custom Areas (Allows for these areas to be modified for analysis)</mat-radio-button>
+      <br>
+      <mat-radio-button value="reference">Reference Layer (Toggleable non-interactive overlay)</mat-radio-button>
+    </mat-radio-group>
+  </div>
+</form>
+
+<br>
+
+*Uploading a land cover file will overwite any existing modifications.
+
+<br>
+
+<mat-dialog-actions>
+  <button class="mat-raised-button"(click)="close()">Cancel</button>
+  <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="close($event)" multiple #fileSelect/>
+  <button class="mat-raised-button mat-primary" (click)="fileSelect.click()">Select Files</button>
+</mat-dialog-actions>

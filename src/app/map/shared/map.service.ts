@@ -143,16 +143,25 @@ export class MapService {
   }
 
 
-  downloadShapefile(controlPanel: any) {
+  // downloadShapefile(controlPanel: any) {
+  //   let index = this.controlPanelHash.indexOf(controlPanel);
+  //   this.mapHash[index].downloadShapefile();
+  // }
+
+  // downloadRaster(controlPanel: any, type: string, format: string) {
+  //   let index = this.controlPanelHash.indexOf(controlPanel);
+  //   this.mapHash[index].downloadRaster(type, format);
+  // }
+
+  download(controlPanel: any, info: any) {
     let index = this.controlPanelHash.indexOf(controlPanel);
-    this.mapHash[index].downloadShapefile();
+    this.mapHash[index].download(info);
   }
 
-  downloadRaster(controlPanel: any, type: string, format: string) {
+  upload(controlPanel: any, info: any) {
     let index = this.controlPanelHash.indexOf(controlPanel);
-    this.mapHash[index].downloadRaster(type, format);
+    this.mapHash[index].upload(info);
   }
-
 
   setUnits(controlPanel: any, unitType: string) {
     let index = this.controlPanelHash.indexOf(controlPanel);
