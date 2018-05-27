@@ -1585,53 +1585,69 @@ export class MapComponent implements OnInit {
       return split.length < 2 ? "" : split[split.length - 1];
     }
 
-    let verify = (file, format) => {
-      //should be shapefile if zip
-      if(format == "zip") {
 
-      }
-      //only land cover allowed, so assumes land cover format desired
-      else if(format == "covjson") {
+    let verify = (zipped: boolean, file: any, format: string) => {
 
-      }
-      else if(format == "asc") {
+      return new Promise((accept, reject) => {
+        //should be shapefile if zip
+        if(format == "zip") {
 
-      }
-      //just return false if bad format, should never get here
-      else {
-        return false
-      }
+        }
+        //only land cover allowed, so assumes land cover format desired
+        else if(format == "covjson") {
 
-      //return true until write verification code
-      return true;
+        }
+        else if(format == "asc") {
+
+        }
+        //just reject if bad format, should never get here
+        else {
+          reject();
+        }
+
+        //accept with test data until implemented
+        accept("test");
+      })
+
+      
     }
 
 
     //checks if a valid top level file exists in the provided lists
     //returns valid file and type if exists, else returns null
     //probably need to pass in if zipped for verification (need to know how to read file)
-    let checkFiles = (files: any[], accept: string[]) => {
+    let checkFiles = (zipped: boolean, acceptFormats: string[], files: any[]) => {
 
-      console.log(files);
+      return new Promise((accept, reject) => {
 
-      for(let i = 0; i < files.length; i++) {
-        let type = getType(files[i].name);
-        console.log(type);
-        //check if file extension indicates acceptible format
-        if(accept.includes(type)) {
-          //verify the file to be desired format
-          if(verify(files[i], type)) {
-            //if file valid return info
-            return {
-              file: files[i],
-              type: type
-            };
+        let numProcessed = 0;
+
+        for(let i = 0; i < files.length; i++) {
+          let type = getType(files[i].name);
+          //console.log(type);
+          //check if file extension indicates acceptible format
+          if(acceptFormats.includes(type)) {
+            //verify the file to be desired format
+            verify(zipped, files[i], type).then((data) => {
+
+              //accept with returned data if file verified
+              accept(data);
+
+            }, () => {
+              //increment number processed (and failed) and check if all others failed
+              //reject if all failed
+              if(++numProcessed >= files.length) {
+                reject();
+              }
+
+            });
+              
+            }
           }
-        }
-        
-      }
+          
+        });
 
-      return null;
+
     }
 
     //gets list of files in zip folder
@@ -1666,46 +1682,61 @@ export class MapComponent implements OnInit {
 
                 //NOTE: zipped files need to be read using:
         //  file.async('text').then((data) => {})
-        let breakdown = {
-          zipped: false,
-          format: null,
-          file: null
-        }
+
+        let acceptedFormats = type == "cover" ? ["covjson", "asc"] : ["zip"];
+
+        //need to read files in verify, no need to reread, just return desired data
 
         //check top level files for valid file
-        let check = checkFiles(info.files, ["covjson", "asc"])
-        //set details if found
-        if(check != null) {
-          breakdown.file = check.file;
-          breakdown.format = check.type;
 
-          resolve(breakdown);
-        }
-        //if no match check zip files
-        else {
+        //MAKE FILE VERIFICATION RESOLVE WITH DESIRED DATA IF FILE FOUND, AND REJECT OTHERWISE
+        let check = checkFiles(false, acceptedFormats, info.files).then((data) => {
+          //valid file found, resolve with the file's data
+          resolve(data);
+        }, () => {
+
+          let numProcessed = 0;
+
+          //valid file not found in top level, check zipped files
           for(let i = 0; i < info.files.length; i++) {
             let type = getType(info.files[i].name);
             //find zip files
             if(type == "zip") {
               //get the zipped files and check them
               getZippedFiles(info.files[i]).then((files) => {
-                check = checkFiles((files as any[]), ["covjson", "asc"]);
 
-                if(check != null) {
-                  breakdown.file = check.file;
-                  breakdown.format = check.type;
-                  breakdown.zipped = true;
-        
-                  resolve(breakdown);
-                }
-                else {
-                  reject();
-                }
+                checkFiles(true, acceptedFormats, files as any).then((data) => {
+
+                  resolve(data)
+
+                }, () => {
+
+                  //increment number processed (and failed) and check if all others failed
+                  //reject if all failed
+                  if(++numProcessed >= info.files.length) {
+                    reject();
+                  }
+
+                });
               });
             }
           }
-        }
-      })
+        });
+
+
+
+        //set details if found
+        // if(check != null) {
+        //   breakdown.file = check.file;
+        //   breakdown.format = check.type;
+
+        //   resolve(breakdown);
+        // }
+        //if no match check zip files
+        //else {
+          
+       // }
+      });
     }
 
     //-------------------------------------------------------------------------------------------
@@ -1727,7 +1758,7 @@ export class MapComponent implements OnInit {
 
     return new Promise((resolve) => {
       //get file details
-      let details = {
+      let data = {
         notFound: [],
         shapes: null,
         cover: null
@@ -1743,22 +1774,22 @@ export class MapComponent implements OnInit {
 
         parsing.push(new Promise((resolve) => {
 
-          process("shapes").then((breakdown) => {
+          process("shapes").then((values) => {
 
-            details.cover = breakdown;
+            data.shapes = values;
             resolve();
             
           }, () => {
-            details.notFound.push("shapes");
+            data.notFound.push("shapes");
             resolve();
           });
         }));
 
 
-        details.shapes = {
-          zipped: false,
-          file: null
-        }
+        // data.shapes = {
+        //   zipped: false,
+        //   file: null
+        // }
       }
 
 
@@ -1767,13 +1798,13 @@ export class MapComponent implements OnInit {
       if(info.cover) {
         parsing.push(new Promise((resolve) => {
 
-          process("cover").then((breakdown) => {
+          process("cover").then((values) => {
 
-            details.cover = breakdown;
+            data.cover = values;
             resolve();
             
           }, () => {
-            details.notFound.push("cover");
+            data.notFound.push("cover");
             resolve();
           });
         }));
@@ -1796,7 +1827,7 @@ export class MapComponent implements OnInit {
       }
 
       Promise.all(parsing).then(() => {
-        resolve(details);
+        resolve(data);
       })
     });
     
