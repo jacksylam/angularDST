@@ -142,7 +142,11 @@ export class MapComponent implements OnInit {
   static readonly longlat = "+proj=longlat";
   static readonly proj4 = (proj4x as any).default;
 
-  r: FileReader;
+  fileHandler: {
+    reader: FileReader,
+    working: Promise<any>[],
+    busy: boolean
+  };
 
 
   constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http) {
@@ -171,7 +175,11 @@ export class MapComponent implements OnInit {
 
     this.initializeLayers();
 
-    this.r = new FileReader();
+    this.fileHandler = {
+      reader: new FileReader(),
+      working: [],
+      busy: false
+    }
 
     this.mymap.on('movestart', () => {
       L.DomUtil.removeClass(this.mymap._container, 'crosshair-cursor-enabled');
@@ -315,89 +323,89 @@ export class MapComponent implements OnInit {
   dropHandler(e) {
     e.preventDefault();
     //defualt to custom shapes for drag upload, maybe change later
-    this.uploadShapefileAsCustom(e.dataTransfer.files);
+    //this.uploadShapefileAsCustom(e.dataTransfer.files);
     //console.log(e.dataTransfer.files);
 
   }
 
-  uploadShapefileAsCustom(files: any[]) {
-    //ensure reader initialized
-    if (this.r) {
-      //think can redefine onload function, if not working might have to reinitialize file reader
-      this.r.onload = (e) => {
-        //console.log(this.r.result);
-        shp(this.r.result).then((geojson) => {
-          //console.log(geojson);
-          //array if multiple shapefiles, else single object
-          if (Array.isArray(geojson)) {
-            geojson.forEach(shpset => {
-              this.parseAndAddShapes(shpset);
-            });
-          }
-          else {
-            this.parseAndAddShapes(geojson);
-          }
-        });
-      }
+  // uploadShapefileAsCustom(files: any[]) {
+  //   //ensure reader initialized
+  //   if (this.r) {
+  //     //think can redefine onload function, if not working might have to reinitialize file reader
+  //     this.r.onload = (e) => {
+  //       //console.log(this.r.result);
+  //       shp(this.r.result).then((geojson) => {
+  //         //console.log(geojson);
+  //         //array if multiple shapefiles, else single object
+  //         if (Array.isArray(geojson)) {
+  //           geojson.forEach(shpset => {
+  //             this.parseAndAddShapes(shpset);
+  //           });
+  //         }
+  //         else {
+  //           this.parseAndAddShapes(geojson);
+  //         }
+  //       });
+  //     }
 
-      for (let i = 0; i < files.length; i++) {
-        this.r.readAsArrayBuffer(files[i]);
-      }
-    }
-  }
-
-
-  uploadShapefileAsReference(files: any[]) {
-
-    //name layer name of first file
-    let fname = files[0].name;
-    //strip extension
-    fname = fname.substr(0, fname.lastIndexOf('.'));
-
-    //ensure reader initialized
-    if (this.r) {
-      //think can redefine onload function, if not working might have to reinitialize file reader
-      this.r.onload = (e) => {
-        //console.log(this.r.result);
-        shp(this.r.result).then((geojson) => {
-
-          let refLayer = L.geoJSON();
-
-          //array if multiple shpfiles
-          if (Array.isArray(geojson)) {
-            geojson.forEach((shpset) => {
-              shpset.features.forEach(object => {
-                refLayer.addData(object);
-              })
-            })
-
-          }
-          //else single element
-          else {
-            geojson.features.forEach(object => {
-              refLayer.addData(object);
-            })
-          }
-
-          refLayer.setStyle({
-            weight: 5,
-            opacity: 1,
-            color: 'black',
-            fillOpacity: 0
-          });
-          refLayer.addTo(this.mymap);
-          this.layers.addOverlay(refLayer, fname);
-
-        });
-      }
-
-      for (let i = 0; i < files.length; i++) {
-        this.r.readAsArrayBuffer(files[i]);
-      }
-    }
+  //     for (let i = 0; i < files.length; i++) {
+  //       this.r.readAsArrayBuffer(files[i]);
+  //     }
+  //   }
+  // }
 
 
-  }
+  // uploadShapefileAsReference(files: any[]) {
+
+  //   //name layer name of first file
+  //   let fname = files[0].name;
+  //   //strip extension
+  //   fname = fname.substr(0, fname.lastIndexOf('.'));
+
+  //   //ensure reader initialized
+  //   if (this.r) {
+  //     //think can redefine onload function, if not working might have to reinitialize file reader
+  //     this.r.onload = (e) => {
+  //       //console.log(this.r.result);
+  //       shp(this.r.result).then((geojson) => {
+
+  //         let refLayer = L.geoJSON();
+
+  //         //array if multiple shpfiles
+  //         if (Array.isArray(geojson)) {
+  //           geojson.forEach((shpset) => {
+  //             shpset.features.forEach(object => {
+  //               refLayer.addData(object);
+  //             })
+  //           })
+
+  //         }
+  //         //else single element
+  //         else {
+  //           geojson.features.forEach(object => {
+  //             refLayer.addData(object);
+  //           })
+  //         }
+
+  //         refLayer.setStyle({
+  //           weight: 5,
+  //           opacity: 1,
+  //           color: 'black',
+  //           fillOpacity: 0
+  //         });
+  //         refLayer.addTo(this.mymap);
+  //         this.layers.addOverlay(refLayer, fname);
+
+  //       });
+  //     }
+
+  //     for (let i = 0; i < files.length; i++) {
+  //       this.r.readAsArrayBuffer(files[i]);
+  //     }
+  //   }
+
+
+  // }
 
 
   //should anything be here?
@@ -895,59 +903,59 @@ export class MapComponent implements OnInit {
   
 
 
-  uploadLandCoverRaster(format: string, setDefault: boolean, file: any) {
-      let __this = this;
+  // uploadLandCoverRaster(format: string, setDefault: boolean, file: any) {
+  //     let __this = this;
   
-      this.metrics = {
-        customAreas: [],
-        aquifers: [],
-        customAreasTotal: {},
-        total: {}
-      }
+  //     this.metrics = {
+  //       customAreas: [],
+  //       aquifers: [],
+  //       customAreasTotal: {},
+  //       total: {}
+  //     }
   
-      let metricCoordination = {
-        rechargeVals: false,
-        aquifers: false
-      };
+  //     let metricCoordination = {
+  //       rechargeVals: false,
+  //       aquifers: false
+  //     };
   
-      if(format = "asc") {
-        if (this.r) {
-          //think can redefine onload function, if not working might have to reinitialize file reader
-          this.r.onload = (e) => {
-            //get data values after first six detail lines
-            let data = this.r.result.split('\n')[6];
-            //split on spaces, tabs, or commas for values
-            let vals = data.split(/[ \t,]+/);
+  //     if(format = "asc") {
+  //       if (this.r) {
+  //         //think can redefine onload function, if not working might have to reinitialize file reader
+  //         this.r.onload = (e) => {
+  //           //get data values after first six detail lines
+  //           let data = this.r.result.split('\n')[6];
+  //           //split on spaces, tabs, or commas for values
+  //           let vals = data.split(/[ \t,]+/);
 
-            this.types.landCover.data._covjson.ranges.cover.values = vals;
-            if(setDefault) {
-              //array of primitives, can deep copy with array.from
-              this.types.landCover.baseData = Array.from(vals);
-            }
-          }
+  //           this.types.landCover.data._covjson.ranges.cover.values = vals;
+  //           if(setDefault) {
+  //             //array of primitives, can deep copy with array.from
+  //             this.types.landCover.baseData = Array.from(vals);
+  //           }
+  //         }
     
           
-          this.r.readAsText(file);
+  //         this.r.readAsText(file);
           
-        }
-      }
-      else {
-        //PROBABLY NEED TO LOAD FROM 
-        CovJSON.read(file).then(function (coverage) {
+  //       }
+  //     }
+  //     else {
+  //       //PROBABLY NEED TO LOAD FROM 
+  //       CovJSON.read(file).then(function (coverage) {
   
-          __this.types.landCover.data = coverage;
+  //         __this.types.landCover.data = coverage;
           
-          if(setDefault) {
-            __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
-          }
+  //         if(setDefault) {
+  //           __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
+  //         }
     
-          __this.loadCover(__this.types.landCover, false);
+  //         __this.loadCover(__this.types.landCover, false);
     
     
-        });
-      }
+  //       });
+  //     }
       
-  }
+  // }
 
 
 
@@ -1244,7 +1252,7 @@ export class MapComponent implements OnInit {
         let task = (chunk: number) => {
           //console.log(totalSize);
           if(chunk >= numChunks) {
-            console.log(indexes);
+            //console.log(indexes);
             return;
           }
           else {
@@ -1561,17 +1569,21 @@ export class MapComponent implements OnInit {
 
 
   upload(info: any) {
-    this.verifyFilesAndGetDetails(info).then((details) => {
-      console.log(details);
+    this.verifyFilesAndGetData(info).then((data) => {
+      console.log(data);
+    }, (message) => {
+      //fail if already uploading
+      //give error asking user to wait for current upload to finish
+
     });
   }
 
 
 
 
-  verifyFilesAndGetDetails(info: any) {
+  verifyFilesAndGetData(info: any) {
 
-    console.log(info)
+    //console.log(info)
 
     //auxillary functions
 
@@ -1587,29 +1599,134 @@ export class MapComponent implements OnInit {
 
 
     let verify = (zipped: boolean, file: any, format: string) => {
-
-      return new Promise((accept, reject) => {
-        //should be shapefile if zip
-        if(format == "zip") {
-
-        }
-        //only land cover allowed, so assumes land cover format desired
-        else if(format == "covjson") {
-
-        }
-        else if(format == "asc") {
-
-        }
-        //just reject if bad format, should never get here
-        else {
-          reject();
-        }
-
-        //accept with test data until implemented
-        accept("test");
-      })
+      console.log(format);
 
       
+
+      let verification = new Promise((accept, reject) => {
+
+
+        
+        //wait until all previous items in the queue verified
+        Promise.all(this.fileHandler.working.slice(0, position)).then(() => {
+          //should be shapefile if zip
+          if(format == "zip") {
+            console.log("test");
+            //need to use jszip async method to read zip files
+            if(zipped) {
+              file.async('arraybuffer').then((data) => {
+                shp(data).then((geojson) => {
+                  
+                  //check if zip successfully processed to geojson object
+                  //might not need this if rejects, prolly does
+                  if(geojson) {
+                    accept(geojson);
+                  }
+                }, (fail) => {
+                  //does it reject if unsuccessful? does it give an error message?
+                  console.log(fail);
+                  reject();
+                });
+              });
+            }
+            else {
+              if (this.fileHandler.reader) {
+                //think can redefine onload function, if not working might have to reinitialize file reader
+                this.fileHandler.reader.onload = (e) => {
+                  //console.log(this.r.result);
+                  shp(this.fileHandler.reader.result).then((geojson) => {
+                    console.log(geojson);
+                    //check if zip successfully processed to geojson object
+                    //might not need this if rejects, prolly does
+                    if(geojson) {
+                      console.log(geojson);
+                      accept(geojson);
+                    }
+                  }, (fail) => {
+                    //does it reject if unsuccessful? does it give an error message?
+                    console.log(fail);
+                    reject();
+                  });
+                }
+                this.fileHandler.reader.readAsArrayBuffer(file);
+
+              }
+              else {
+                //if file reader not initilized just reject
+                reject()
+              }
+            }
+          }
+
+          //only land cover allowed, so assumes land cover format desired
+
+          /*
+          verify:
+            - value range
+            - number of values
+            - for land covjson the parameter name as well since available (should be cover not recharge)
+          */
+
+
+
+          else if(format == "covjson") {
+            console.log("test");
+            //for now just accept with data as json object, verify after figure out formatting issues
+            if(zipped) {
+              file.async('text').then((data) => {
+                accept(JSON.parse(data));
+              });
+            }
+            else {
+              if (this.fileHandler.reader) {
+                this.fileHandler.reader.onload = (e) => {
+                  accept(JSON.parse(this.fileHandler.reader.result));
+                }
+                this.fileHandler.reader.readAsText(file);
+              }
+              else {
+                reject()
+              }
+            }
+
+          }
+
+          //ASC DOESN'T HAVE ANYTHING TO INDICATE VALUE TYPE NEED TO VERIFY THE RANGE OF THE VALUES
+
+          else if(format == "asc") {
+            if(zipped) {
+              file.async('text').then((data) => {
+                //for now just pass through raw data, should do all parsing and stuff here though for verification
+                accept(data);
+              });
+            }
+            else {
+              if (this.fileHandler.reader) {
+                this.fileHandler.reader.onload = (e) => {
+                  accept(this.fileHandler.reader.result);
+                }
+                this.fileHandler.reader.readAsText(file);
+              }
+              else {
+                reject()
+              }
+
+            }
+          }
+          //just reject if bad format, should never get here
+          else {
+            reject();
+          }
+        });
+        
+      });
+
+      //push this functions promise into queue, get position in queue
+      let position = this.fileHandler.working.push(verification);
+
+        
+
+      return verification;
     }
 
 
@@ -1617,19 +1734,22 @@ export class MapComponent implements OnInit {
     //returns valid file and type if exists, else returns null
     //probably need to pass in if zipped for verification (need to know how to read file)
     let checkFiles = (zipped: boolean, acceptFormats: string[], files: any[]) => {
-
+      console.log(acceptFormats)
       return new Promise((accept, reject) => {
 
         let numProcessed = 0;
 
         for(let i = 0; i < files.length; i++) {
-          let type = getType(files[i].name);
+          let type = getType(files[i].name); 
+          console.log(type);       
           //console.log(type);
           //check if file extension indicates acceptible format
           if(acceptFormats.includes(type)) {
+            console.log(type);
             //verify the file to be desired format
             verify(zipped, files[i], type).then((data) => {
 
+              console.log("verified");
               //accept with returned data if file verified
               accept(data);
 
@@ -1643,6 +1763,11 @@ export class MapComponent implements OnInit {
             });
               
             }
+            else {
+              if(++numProcessed >= files.length) {
+                reject();
+              }
+            }
           }
           
         });
@@ -1653,35 +1778,41 @@ export class MapComponent implements OnInit {
     //gets list of files in zip folder
     let getZippedFiles = (zip: any) => {
 
-      return new Promise((resolve) => {
-        let files = []
+      let zippedFiles = new Promise((resolve) => {
+        //push this functions promise into queue, get position in queue
+        
+        //wait until all previous items in the queue verified
+        Promise.all(this.fileHandler.working.slice(0, position)).then(() => {
+          let files = []
+          console.log(this.fileHandler.working);
 
-        if (this.r) {
-          //think can redefine onload function, if not working might have to reinitialize file reader
-          this.r.onload = (e) => {
-            let zipFiles = new JSZip();
+          if (this.fileHandler.reader) {
+            this.fileHandler.reader.onload = (e) => {
+              let zipFiles = new JSZip();
 
-            let data = this.r.result;
+              let data = this.fileHandler.reader.result;
 
-            zipFiles.loadAsync(data).then((contents) => {
-              Object.keys(contents.files).forEach((name) => {
-                files.push(contents.files[name]);
+              zipFiles.loadAsync(data).then((contents) => {
+                Object.keys(contents.files).forEach((name) => {
+                  files.push(contents.files[name]);
+                });
+                resolve(files)
               });
-              resolve(files)
-            });
-          }
+            }
 
-          this.r.readAsArrayBuffer(zip);
-        }
+            this.fileHandler.reader.readAsArrayBuffer(zip);
+          }
+        });
       });
+      let position = this.fileHandler.working.push(zippedFiles);
+      return zippedFiles;
     }
 
 
     let process = (type: string) => {
+      console.log(type)
       return new Promise((resolve, reject) => {
 
-                //NOTE: zipped files need to be read using:
-        //  file.async('text').then((data) => {})
 
         let acceptedFormats = type == "cover" ? ["covjson", "asc"] : ["zip"];
 
@@ -1705,7 +1836,7 @@ export class MapComponent implements OnInit {
               //get the zipped files and check them
               getZippedFiles(info.files[i]).then((files) => {
 
-                checkFiles(true, acceptedFormats, files as any).then((data) => {
+                checkFiles(true, acceptedFormats, files as any[]).then((data) => {
 
                   resolve(data)
 
@@ -1719,6 +1850,11 @@ export class MapComponent implements OnInit {
 
                 });
               });
+            }
+            else {
+              if(++numProcessed >= info.files.length) {
+                reject();
+              }
             }
           }
         });
@@ -1756,81 +1892,97 @@ export class MapComponent implements OnInit {
     */
 
 
-    return new Promise((resolve) => {
-      //get file details
-      let data = {
-        notFound: [],
-        shapes: null,
-        cover: null
+    return new Promise((resolve, reject) => {
+      //
+      if(this.fileHandler.busy) {
+        reject("Upload failed. Another upload is already in progress, please wait until this upload completes.")
       }
 
+      else {
+        //indicate upload in progress
+        this.fileHandler.busy = true;
+
+        //get file details
+        let data = {
+          notFound: [],
+          shapes: null,
+          cover: null
+        }
 
 
-      
-
-      let parsing = []
-
-      if(info.shapes) {
-
-        parsing.push(new Promise((resolve) => {
-
-          process("shapes").then((values) => {
-
-            data.shapes = values;
-            resolve();
-            
-          }, () => {
-            data.notFound.push("shapes");
-            resolve();
-          });
-        }));
 
 
-        // data.shapes = {
-        //   zipped: false,
-        //   file: null
-        // }
+
+        let parsing = []
+
+        if(info.shapes) {
+          parsing.push(new Promise((resolve) => {
+
+            process("shapes").then((values) => {
+
+              console.log(values);
+
+              data.shapes = values;
+              resolve();
+              
+            }, () => {
+              data.notFound.push("shapes");
+              resolve();
+            });
+          }));
+
+
+          // data.shapes = {
+          //   zipped: false,
+          //   file: null
+          // }
+        }
+
+
+
+
+        if(info.cover) {
+          parsing.push(new Promise((resolve) => {
+
+            process("cover").then((values) => {
+
+              console.log(values);
+
+              data.cover = values;
+              resolve();
+              
+            }, () => {
+              data.notFound.push("cover");
+              resolve();
+            });
+          }));
+
+
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+          // //if valid file never found indicate cover could not be found
+          // if(check == null) {
+          //   details.notFound.push("cover");
+          // }
+          // else {
+          //   console.log(check);
+          // }
+
+        }
+
+        Promise.all(parsing).then(() => {
+          //reset working queue, don't want to remove inline since using Promise.all for coordination (if remove might mess up function)
+          this.fileHandler.working = []
+          //indicate upload complete
+          this.fileHandler.busy = false;
+          resolve(data);
+        });
       }
-
-
-      
-
-      if(info.cover) {
-        parsing.push(new Promise((resolve) => {
-
-          process("cover").then((values) => {
-
-            data.cover = values;
-            resolve();
-            
-          }, () => {
-            data.notFound.push("cover");
-            resolve();
-          });
-        }));
-
-
-
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-        // //if valid file never found indicate cover could not be found
-        // if(check == null) {
-        //   details.notFound.push("cover");
-        // }
-        // else {
-        //   console.log(check);
-        // }
-
-      }
-
-      Promise.all(parsing).then(() => {
-        resolve(data);
-      })
     });
-    
   }
 
 
