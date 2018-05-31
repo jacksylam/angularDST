@@ -40,13 +40,16 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { FileUploadModule } from 'ng2-file-upload';
 import { NgUploaderModule } from 'ngx-uploader';
+import { MessageDialogComponent } from './message-dialog/message-dialog.component';
+import {MatDialogModule} from "@angular/material";
 
 @NgModule({
   declarations: [
     AppComponent,
     MapComponent,
     HomeComponent,
-    WindowComponent
+    WindowComponent,
+    MessageDialogComponent
   ],
   imports: [
     HttpModule,
@@ -59,12 +62,16 @@ import { NgUploaderModule } from 'ngx-uploader';
     AngularFireAuthModule, // imports firebase/auth, only needed for auth features   
     // HttpClientModule
     FileUploadModule,
-    NgUploaderModule
+    NgUploaderModule,
+    MatDialogModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
   providers: [WindowService, MapService, MapFirestoreService, DBConnectService, CovDetailsService],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  entryComponents: [
+    MessageDialogComponent
+  ]
 })
 
 

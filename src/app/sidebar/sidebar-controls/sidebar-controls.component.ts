@@ -1,8 +1,7 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/core';
 import {MapService} from '../../map/shared/map.service';
-import {FormBuilder, FormGroup} from '@angular/forms';
-import {MatDialog, MatDialogConfig} from "@angular/material";
+import {MatDialog} from "@angular/material";
 import {UploadDialogComponent} from "../upload-dialog/upload-dialog.component"
 import {DownloadDialogComponent} from "../download-dialog/download-dialog.component"
 
@@ -28,8 +27,6 @@ export class SidebarControlsComponent implements OnInit {
   
   @ViewChild("menu") menuDiv;
   @ViewChild("leftScrollbar") leftScrollbarDiv;
-  
-  options: FormGroup;
 
   baselayer = "landcover";
 
@@ -41,15 +38,7 @@ export class SidebarControlsComponent implements OnInit {
 
   scrollLock = false;
 
-  constructor(private mapService: MapService, private fb: FormBuilder, private dialog: MatDialog) {
-    //probably won't need this (replaced with dialog)
-    this.options = fb.group({
-      shapes: false,
-      recharge: false,
-      cover: false,
-      format: 'covjson'
-    });
-
+  constructor(private mapService: MapService, private dialog: MatDialog) {
   }
 
   openDialog(type: string) {

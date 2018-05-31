@@ -20,6 +20,8 @@ import { saveAs } from 'file-saver';
 import { WindowService } from '../window/shared/window.service';
 import { WindowPanel } from '../window/shared/windowPanel';
 import { isGeoJSONObject } from 'geojson-validation'
+import { MessageDialogComponent } from "../message-dialog/message-dialog.component"
+import {MatDialog} from "@angular/material";
 
 
 
@@ -38,7 +40,7 @@ export class MapComponent implements OnInit {
 
   @ViewChild('mapid') mapid;
 
-  static aquiferIndices: number[]
+  static aquiferIndices: any;
 
   mymap: any;
   popup: any;
@@ -107,7 +109,7 @@ export class MapComponent implements OnInit {
   validLandcoverRange: {
     min: number,
     max: number
-  }
+  };
 
   numCustomOverlays = 0;
 
@@ -157,7 +159,7 @@ export class MapComponent implements OnInit {
   };
 
 
-  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http) {
+  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
   }
@@ -863,9 +865,7 @@ export class MapComponent implements OnInit {
       //deepcopy values for comparisons with modified types, array of primitives, so can use array.from
       __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
       //console.log(__this.currentCover._covjson.domain.axes);
-
       __this.loadCover(__this.types.landCover, false);
-
 
     });
 
@@ -910,65 +910,6 @@ export class MapComponent implements OnInit {
 
 
 
-
-
-
-  
-
-
-  // uploadLandCoverRaster(format: string, setDefault: boolean, file: any) {
-  //     let __this = this;
-  
-  //     this.metrics = {
-  //       customAreas: [],
-  //       aquifers: [],
-  //       customAreasTotal: {},
-  //       total: {}
-  //     }
-  
-  //     let metricCoordination = {
-  //       rechargeVals: false,
-  //       aquifers: false
-  //     };
-  
-  //     if(format = "asc") {
-  //       if (this.r) {
-  //         //think can redefine onload function, if not working might have to reinitialize file reader
-  //         this.r.onload = (e) => {
-  //           //get data values after first six detail lines
-  //           let data = this.r.result.split('\n')[6];
-  //           //split on spaces, tabs, or commas for values
-  //           let vals = data.split(/[ \t,]+/);
-
-  //           this.types.landCover.data._covjson.ranges.cover.values = vals;
-  //           if(setDefault) {
-  //             //array of primitives, can deep copy with array.from
-  //             this.types.landCover.baseData = Array.from(vals);
-  //           }
-  //         }
-    
-          
-  //         this.r.readAsText(file);
-          
-  //       }
-  //     }
-  //     else {
-  //       //PROBABLY NEED TO LOAD FROM 
-  //       CovJSON.read(file).then(function (coverage) {
-  
-  //         __this.types.landCover.data = coverage;
-          
-  //         if(setDefault) {
-  //           __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
-  //         }
-    
-  //         __this.loadCover(__this.types.landCover, false);
-    
-    
-  //       });
-  //     }
-      
-  // }
 
 
 
@@ -1018,72 +959,53 @@ export class MapComponent implements OnInit {
       total: {}
     };
 
-    let items;
-
     let __this = this;
-    
-    let test = true;
 
+    //if already computed no need to recompute
+    //static since aquifers are always the same
     if(!MapComponent.aquiferIndices) {
-      MapComponent.aquiferIndices = [];
-      this.getAquiferIndices(this.types.aquifers);
-      
-      // let layer;
-      // for(let key in this.types.aquifers.layer._layers) {
-      //   layer = this.types.aquifers.layer._layers[key];
-      //   break;
-      // }
-      //   items = new L.featureGroup();
-      //   let indexes = this.getInternalIndexes(items.addLayer(layer).toGeoJSON());
-      // console.log(indexes.length);
-      
-      //COMPLETE THIS
+      MapComponent.aquiferIndices = {};
+      this.getAquiferIndices(this.types.aquifers).then(() => {
 
-    }
-    //again, make sure to go back and modify all full map metrics to disclude background cells
-    data.total = this.getMetricsSuite(null);
-
-    if(test) {
-      return data;
-    }
+        for(let key in this.types.aquifers.layer._layers) {
+          let layer = this.types.aquifers.layer._layers[key];
+  
+          let info = {
+            name: "",
+            metrics: {}
+          };
     
+          let capName = layer.feature.properties.SYSTEM;
+          //switch from all upper case to capitalize first letter
+          capName.split(/([\s \-])/).forEach((substr) => {
+            info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
+          });
+  
+          info.metrics = this.getMetricsSuite(MapComponent.aquiferIndices[capName]);
+          data.aquifers.push(info);
+        }
 
-    //this.types.aquifers.layer.eachLayer((layer) => {
-      let layer;
-      for(let key in this.types.aquifers.layer._layers) {
-        layer = this.types.aquifers.layer._layers[key];
-        break;
-      }
-      console.log(layer);
-      
-
-      let info = {
-        name: "",
-        metrics: {}
-      };
-      items = new L.featureGroup();
-
-      let capName = layer.feature.properties.SYSTEM;
-      //switch from all upper case to capitalize first letter
-      capName.split(/([\s \-])/).forEach((substr) => {
-        info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
+      }, () => {
+        //should never reject, only if an aquifer is out of range, that would be strange
+        this.dialog.open(MessageDialogComponent, {data: {message: "An error has occured in aquifer resource. Please refresh the page or submit a bug report if this error persists", type: "Error"}});
       });
-      // setTimeout(() => {
-      //   info.metrics = this.getMetricsSuite(items.addLayer(layer));
-      //   data.aquifers.push(info);
-      // }, 1000)
-      
-    //});
+    }
+    //if already computed just get aquifer metrics
+    else {
+
+    }
+
+
+    data.total = this.getMetricsSuite(null);
     
     this.drawnItems.eachLayer((layer) => {
       let info = {
         name: "",
         metrics: {}
       };
-      items = new L.featureGroup();
       //add custom naming options later, for now just name by number
       info.name = "Custom Area " + (__this.customAreasCount++).toString();
-      //info.metrics = this.getMetricsSuite(items.addLayer(layer));
+      info.metrics = this.getMetricsSuite(this.getInternalIndexes(layer));
 
       data.customAreas.push(info);
     });
@@ -1091,9 +1013,6 @@ export class MapComponent implements OnInit {
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
    // data.customAreasTotal = this.getMetricsSuite(this.drawnItems);
-
-    //again, make sure to go back and modify all full map metrics to disclude background cells
-    data.total = this.getMetricsSuite(null);
 
 
     return data;
@@ -1107,260 +1026,255 @@ export class MapComponent implements OnInit {
   private getAquiferIndices(aquifers: any): any {
     //let aquiferIndexes: any;
 
-    
+    console.log(aquifers)
     
     //let layers = []
+    return new Promise((resolve, reject) => {
 
-    for(let key in aquifers.layer._layers) {
-      let indexes = [];
-      
-      //aquiferIndexes.key = indexes;
+      let complete = 0;
+      let numAquifers = Object.keys(aquifers.layer._layers).length;
 
-      // //console.log(aquifers.layer._layers[id])
-      // let items = new L.featureGroup();
-      // let test = this.getInternalIndexes(items.addLayer(aquifers.layer._layers[id]).toGeoJSON());
-      // console.log(test.length);
+      for(let key in aquifers.layer._layers) {
+        let indexes = [];
 
-      //let shape = aquifers;
-      //array due to potential cutouts, shouldn't have any cutouts
-      let pointsBase = aquifers.layer._layers[key].feature.geometry.coordinates[0];
-      let convertedPoints = [];
-      let a = [];
-      let b = [];
-      let xmax = Number.NEGATIVE_INFINITY;
-      let xmin = Number.POSITIVE_INFINITY;
-      let ymax = Number.NEGATIVE_INFINITY;
-      let ymin = Number.POSITIVE_INFINITY;
+        //index aquifers by name
+        let aquiferCode = aquifers.layer._layers[key].feature.properties.SYSTEM;
+        
+        //aquiferIndexes.key = indexes;
 
-      for (let i = 0; i < pointsBase.length; i++) {
-        convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
-      }
+        // //console.log(aquifers.layer._layers[id])
+        // let items = new L.featureGroup();
+        // let test = this.getInternalIndexes(items.addLayer(aquifers.layer._layers[id]).toGeoJSON());
+        // console.log(test.length);
 
-      for (let i = 0; i < convertedPoints.length - 1; i++) {
-        //coordinates are in long lat order (I think)
+        //let shape = aquifers;
+        //array due to potential cutouts, shouldn't have any cutouts
+        let pointsBase = aquifers.layer._layers[key].feature.geometry.coordinates[0];
+        let convertedPoints = [];
+        let a = [];
+        let b = [];
+        let xmax = Number.NEGATIVE_INFINITY;
+        let xmin = Number.POSITIVE_INFINITY;
+        let ymax = Number.NEGATIVE_INFINITY;
+        let ymin = Number.POSITIVE_INFINITY;
 
-        //get max and min vals to limit coordinates need to compare
-        if (convertedPoints[i][0] > xmax) {
-          xmax = convertedPoints[i][0];
-        }
-        if (convertedPoints[i][0] < xmin) {
-          xmin = convertedPoints[i][0];
-        }
-        if (convertedPoints[i][1] > ymax) {
-          ymax = convertedPoints[i][1];
-        }
-        if (convertedPoints[i][1] < ymin) {
-          ymin = convertedPoints[i][1];
-        }
-        //convert these points, less conversions than trying to convert grid points
-        a.push({
-          x: convertedPoints[i][0],
-          y: convertedPoints[i][1]
-        });
-        b.push({
-          x: convertedPoints[i + 1][0],
-          y: convertedPoints[i + 1][1]
-        });
-      }
-
-      //convert max min values and find range of cells
-      //no need to check every single one
-      //convert coordinate and get x value
-      // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
-      // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
-      // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
-      // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
-
-      let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-      let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-
-      let minxIndex: number;
-      let maxxIndex: number;
-      let minyIndex: number;
-      let maxyIndex: number;
-
-      //again, assume values are in order
-      //find min and max indexes
-      //check if ascending or descending order, findIndex returns first occurance
-      if (xs[0] < xs[1]) {
-        minxIndex = xs.findIndex(function (val) { return val >= xmin });
-        //> not >= so returns index after last even if on edge 
-        maxxIndex = xs.findIndex(function (val) { return val > xmax });
-      }
-      else {
-        maxxIndex = xs.findIndex(function (val) { return val < xmin });
-        minxIndex = xs.findIndex(function (val) { return val <= xmax });
-      }
-      if (ys[0] < ys[1]) {
-        minyIndex = ys.findIndex(function (val) { return val >= ymin });
-        maxyIndex = ys.findIndex(function (val) { return val > ymax });
-      }
-      else {
-        maxyIndex = ys.findIndex(function (val) { return val < ymin });
-        minyIndex = ys.findIndex(function (val) { return val <= ymax });
-      }
-
-
-
-      //let recursiveDepth = 10;
-
-      let checkIndices = []
-
-      //check if shape boundaries out of coverage range
-      if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
-        //convert cell coords to long lat and raycast
-        //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-        // for (let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-        //   for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-        //     // if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-        //     //   indexes.push(this.getIndex(xIndex, yIndex))
-        //     // }
-        //     checkIndices.push(this.getIndex(xIndex, yIndex));
-        //   }
-          
-        // }
-
-
-        //also recursive depth and should be approximate speedup factor for single action
-        //need to balance this with total time taken though, speed will be about numChunks * timeoutInterval (depending on how long chunk processing takes)
-        let numChunks = 100
-        let timeoutInterval = 100;
-
-        //compute chunk size
-        let xrange = maxxIndex - minxIndex;
-        let yrange = maxyIndex - minyIndex;
-        let totalSize = xrange * yrange
-        let chunkSize = Math.floor(totalSize / numChunks);
-        //final chunk size may need to be larger if not divisible
-        let finalChunkSize = chunkSize + (totalSize - chunkSize * numChunks)
-
-        // console.log(minyIndex)
-        // console.log(minxIndex)
-        // console.log(yrange)
-        // console.log(xrange)
-
-        let chunkIndices = (chunk: number) => {
-          let indices = {
-            minx: 0,
-            maxx: 0,
-            miny: 0,
-            maxy: 0
-          };
-
-          let thisChunkSize = chunk == numChunks - 1 ? finalChunkSize : chunkSize;
-          
-          let minOffset = chunk * chunkSize;
-          let maxOffset = minOffset + thisChunkSize;
-          indices.minx = minxIndex + Math.floor(minOffset / yrange);
-          indices.miny = minyIndex + minOffset % yrange;
-          indices.maxx = minxIndex + Math.floor(maxOffset / yrange);
-          indices.maxy = minyIndex + maxOffset % yrange;
-
-          //console.log(minOffset);
-          //console.log(maxOffset);
-
-          return indices;
+        for (let i = 0; i < pointsBase.length; i++) {
+          convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
         }
 
-        let task = (chunk: number) => {
-          //console.log(totalSize);
-          if(chunk >= numChunks) {
-            //console.log(indexes);
-            return;
+        for (let i = 0; i < convertedPoints.length - 1; i++) {
+          //coordinates are in long lat order (I think)
+
+          //get max and min vals to limit coordinates need to compare
+          if (convertedPoints[i][0] > xmax) {
+            xmax = convertedPoints[i][0];
           }
-          else {
-            let range = chunkIndices(chunk);
-            //console.log(range);
+          if (convertedPoints[i][0] < xmin) {
+            xmin = convertedPoints[i][0];
+          }
+          if (convertedPoints[i][1] > ymax) {
+            ymax = convertedPoints[i][1];
+          }
+          if (convertedPoints[i][1] < ymin) {
+            ymin = convertedPoints[i][1];
+          }
+          //convert these points, less conversions than trying to convert grid points
+          a.push({
+            x: convertedPoints[i][0],
+            y: convertedPoints[i][1]
+          });
+          b.push({
+            x: convertedPoints[i + 1][0],
+            y: convertedPoints[i + 1][1]
+          });
+        }
 
-            /*
-            2 cases:
-            ranges minx == maxx, go from miny to maxy, end
-            ranges minx != maxx, go from miny to maxyindex, if theres more than 2 x indexes, center cases go full range, last x index go from minyindex to ranges miny
-            */
+        //convert max min values and find range of cells
+        //no need to check every single one
+        //convert coordinate and get x value
+        // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
+        // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
+        // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
+        // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
 
-            if(range.minx == range.maxx) {
-              let xIndex = range.minx;
-              for (let yIndex = range.miny; yIndex < range.maxy; yIndex++) {
-                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                  //console.log("push");
-                  indexes.push(this.getIndex(xIndex, yIndex));
-                }
-              }
-            }
+        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+        let minxIndex: number;
+        let maxxIndex: number;
+        let minyIndex: number;
+        let maxyIndex: number;
+
+        //again, assume values are in order
+        //find min and max indexes
+        //check if ascending or descending order, findIndex returns first occurance
+        if (xs[0] < xs[1]) {
+          minxIndex = xs.findIndex(function (val) { return val >= xmin });
+          //> not >= so returns index after last even if on edge 
+          maxxIndex = xs.findIndex(function (val) { return val > xmax });
+        }
+        else {
+          maxxIndex = xs.findIndex(function (val) { return val < xmin });
+          minxIndex = xs.findIndex(function (val) { return val <= xmax });
+        }
+        if (ys[0] < ys[1]) {
+          minyIndex = ys.findIndex(function (val) { return val >= ymin });
+          maxyIndex = ys.findIndex(function (val) { return val > ymax });
+        }
+        else {
+          maxyIndex = ys.findIndex(function (val) { return val < ymin });
+          minyIndex = ys.findIndex(function (val) { return val <= ymax });
+        }
+
+
+
+        //let recursiveDepth = 10;
+
+        let checkIndices = []
+
+        //check if shape boundaries out of coverage range
+        if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
+          //convert cell coords to long lat and raycast
+          //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
+          // for (let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+          //   for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+          //     // if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+          //     //   indexes.push(this.getIndex(xIndex, yIndex))
+          //     // }
+          //     checkIndices.push(this.getIndex(xIndex, yIndex));
+          //   }
             
+          // }
 
-            else {
-              let xIndex = range.minx;
-              //start point to end of range for first index
-              for (let yIndex = range.miny; yIndex < maxyIndex; yIndex++) {
-                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                  //console.log("push");
-                  indexes.push(this.getIndex(xIndex, yIndex));
-                }
+
+          //also recursive depth and should be approximate speedup factor for single action
+          //need to balance this with total time taken though, speed will be about numChunks * timeoutInterval (depending on how long chunk processing takes)
+          let numChunks = 100
+          let timeoutInterval = 100;
+
+          //compute chunk size
+          let xrange = maxxIndex - minxIndex;
+          let yrange = maxyIndex - minyIndex;
+          let totalSize = xrange * yrange
+          let chunkSize = Math.floor(totalSize / numChunks);
+          //final chunk size may need to be larger if not divisible
+          let finalChunkSize = chunkSize + (totalSize - chunkSize * numChunks)
+
+          // console.log(minyIndex)
+          // console.log(minxIndex)
+          // console.log(yrange)
+          // console.log(xrange)
+
+          let chunkIndices = (chunk: number) => {
+            let indices = {
+              minx: 0,
+              maxx: 0,
+              miny: 0,
+              maxy: 0
+            };
+
+            let thisChunkSize = chunk == numChunks - 1 ? finalChunkSize : chunkSize;
+            
+            let minOffset = chunk * chunkSize;
+            let maxOffset = minOffset + thisChunkSize;
+            indices.minx = minxIndex + Math.floor(minOffset / yrange);
+            indices.miny = minyIndex + minOffset % yrange;
+            indices.maxx = minxIndex + Math.floor(maxOffset / yrange);
+            indices.maxy = minyIndex + maxOffset % yrange;
+
+            return indices;
+          }
+
+          let task = (chunk: number) => {
+            if(chunk >= numChunks) {
+              //finished, map this aquifer's code to its internal indices
+              MapComponent.aquiferIndices[aquiferCode] = indexes;
+              //resolve promise if all complete
+              if(++complete >= numAquifers) {
+                resolve();
               }
+              return;
+            }
+            else {
+              let range = chunkIndices(chunk);
 
-              //if center x indices go full y range
-              for (let xIndex = range.minx + 1; xIndex < range.maxx; xIndex++) {
-                for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-                  //console.log(xIndex * chunk + yIndex);
+
+              /*
+              2 cases:
+              ranges minx == maxx, go from miny to maxy, end
+              ranges minx != maxx, go from miny to maxyindex, if theres more than 2 x indexes, center cases go full range, last x index go from minyindex to ranges miny
+              */
+
+              if(range.minx == range.maxx) {
+                let xIndex = range.minx;
+                for (let yIndex = range.miny; yIndex < range.maxy; yIndex++) {
                   if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                    //console.log("push");
                     indexes.push(this.getIndex(xIndex, yIndex));
-                    
                   }
                 }
               }
+              
 
-              xIndex = range.maxx;
-              //start of y range up to end point for final index
-              for (let yIndex = minyIndex; yIndex < range.maxy; yIndex++) {
-                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                  //console.log("push");
-                  indexes.push(this.getIndex(xIndex, yIndex));
+              else {
+                let xIndex = range.minx;
+                //start point to end of range for first index
+                for (let yIndex = range.miny; yIndex < maxyIndex; yIndex++) {
+                  if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                    indexes.push(this.getIndex(xIndex, yIndex));
+                  }
+                }
+
+                //if center x indices go full y range
+                for (let xIndex = range.minx + 1; xIndex < range.maxx; xIndex++) {
+                  for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+                    if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                      indexes.push(this.getIndex(xIndex, yIndex));
+                      
+                    }
+                  }
+                }
+
+                xIndex = range.maxx;
+                //start of y range up to end point for final index
+                for (let yIndex = minyIndex; yIndex < range.maxy; yIndex++) {
+                  if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                    indexes.push(this.getIndex(xIndex, yIndex));
+                  }
                 }
               }
+              
+              
+              setTimeout(() => {
+                return task(chunk + 1);
+              }, timeoutInterval);
+              
             }
-            
-
-            // for (let xIndex = range.minx; xIndex < range.maxx; xIndex++) {
-            //   for (let yIndex = range.miny; yIndex < range.maxy; yIndex++) {
-            //     //console.log(xIndex * chunk + yIndex);
-            //     if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-            //       console.log("push");
-            //       indexes.push(this.getIndex(xIndex, yIndex));
-                  
-            //     }
-            //   }
-            // }
-            
-            setTimeout(() => {
-              return task(chunk + 1);
-            }, timeoutInterval);
-            
           }
+
+          task(0);
+
+          // let task = setInterval(() => {
+            
+          //   if(chunk >= numChunks) {
+          //     clearInterval(task);
+          //     console.log(indexes);
+          //     return;
+          //   }
+
+            
+          //   if(this.isInternal(a, b, xs[xIndex], ys[yIndex])) {
+          //     indexes.push(this.getIndex(xIndex, yIndex));
+          //     console.log("?");
+          //   }
+            
+          // }, 100)
+
         }
-
-        task(0);
-
-        // let task = setInterval(() => {
-          
-        //   if(chunk >= numChunks) {
-        //     clearInterval(task);
-        //     console.log(indexes);
-        //     return;
-        //   }
-
-          
-        //   if(this.isInternal(a, b, xs[xIndex], ys[yIndex])) {
-        //     indexes.push(this.getIndex(xIndex, yIndex));
-        //     console.log("?");
-        //   }
-          
-        // }, 100)
-
+        else {
+          reject();
+        }
       }
-    }
-    //});
+    });
 
     
     //return indexes;
@@ -1375,7 +1289,7 @@ export class MapComponent implements OnInit {
   //maybe have subfunctions in generate report for different parts
 
   //also need to update all full map computations to disclude background cells
-  getMetricsSuite(items: any) {
+  getMetricsSuite(indexes: number[]) {
     let metrics = {
       originalIPY: 0,
       currentIPY: 0,
@@ -1386,6 +1300,66 @@ export class MapComponent implements OnInit {
       pchange: 0
     }
 
+    let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
+    
+
+    
+
+    //pass in null if want whole map
+    if (indexes == null) {
+      for (let i = 0; i < rechargeVals.length; i++) {
+        //if background value don't count
+        if(lcVals[i] != 0) {
+          metrics.cells++;
+          metrics.currentIPY += rechargeVals[i];
+          metrics.originalIPY += this.types.recharge.baseData[i];   
+        }
+      }
+          
+        //}, {timeout: 1000});
+        
+      
+
+      metrics.cells = rechargeVals.length;
+    }
+    else {
+
+      
+      
+      //get total IPY over cells
+      indexes.forEach((index) => {
+        if(lcVals[index]) {
+          metrics.cells++;
+          metrics.originalIPY += this.types.recharge.baseData[index];
+          metrics.currentIPY += rechargeVals[index];
+        }
+      });
+    
+    }
+    
+    //compute metrics in MGPY
+    metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+
+    //if no cells leave at default value of 0 to avoid dividing by 0
+    if (metrics.cells > 0) {
+      //average IPY summation over cells
+      metrics.originalIPY /= metrics.cells;
+      metrics.currentIPY /= metrics.cells;
+
+      //get difference and percent change
+      metrics.difference = metrics.currentMGPY - metrics.originalMGPY;
+      //make sure not dividing by 0 if no recharge in selected cells
+      metrics.pchange = metrics.originalMGPY == 0 ? 0 : metrics.difference / metrics.originalMGPY * 100;
+    }
+
+    return metrics;
+      
+  }
+
+
+  private roundMetrics(metrics: {originalIPY: number, currentIPY: number, originalMGPY: number, currentMGPY: number, cells: number, difference: number, pchange: number} ) {
     let roundedMetrics = {
       originalIPY: "",
       currentIPY: "",
@@ -1396,96 +1370,17 @@ export class MapComponent implements OnInit {
       pchange: ""
     }
 
-    let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    
-
     let precision = 3;
 
-    //pass in null if want whole map (just use arrays rather than shape)
-    if (items == null) {
+    roundedMetrics.originalIPY = metrics.originalIPY.toPrecision(precision);
+    roundedMetrics.currentIPY = metrics.currentIPY.toPrecision(precision);
+    roundedMetrics.originalMGPY = metrics.originalMGPY.toPrecision(precision);
+    roundedMetrics.currentMGPY = metrics.currentMGPY.toPrecision(precision);
+    roundedMetrics.cells = metrics.cells.toString();
+    roundedMetrics.difference = metrics.difference.toPrecision(precision);
+    roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
 
-     
-      
-      for (let i = 0; i < rechargeVals.length; i++) {
 
-        //let task = () => {
-          metrics.currentIPY += rechargeVals[i];
-          metrics.originalIPY += this.types.recharge.baseData[i];
-        //}
-
-//BREAK UP
-        //requestidlecallback not working properly, try manual concession on events
-        // if(this.concede) {
-        //   while(this.concede) {
-        //     setTimeout(() => {}, 100);
-        //   }
-          
-        // }
-        
-        
-      }
-          
-        //}, {timeout: 1000});
-        
-      
-
-      metrics.cells = rechargeVals.length;
-    }
-    else {
-      let indexes = this.getInternalIndexes(items.toGeoJSON());
-
-      //number of cells enclosed
-      metrics.cells = indexes.length;
-
-      
-      
-      //get total IPY over cells
-      indexes.forEach((index) => {
-
-        //let task = () => {
-          metrics.originalIPY += this.types.recharge.baseData[index];
-          metrics.currentIPY += rechargeVals[index];
-        //}
-//BREAK UP
-        //(window as any).requestIdleCallback(() => {
-
-          
-
-        //setTimeout(() => {task();}, 10000);
-        //}, {timeout: 1000});
-      });
-    
-    }
-
-//PUT IN CALLBACK
-    
-      //compute metrics in MGPY
-      metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-      metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-
-      //if no cells leave at default value of 0 to avoid dividing by 0
-      if (metrics.cells > 0) {
-        //average IPY summation over cells
-        metrics.originalIPY /= metrics.cells;
-        metrics.currentIPY /= metrics.cells;
-
-        //get difference and percent change
-        metrics.difference = metrics.currentMGPY - metrics.originalMGPY;
-        //make sure not dividing by 0 if no recharge in selected cells
-        metrics.pchange = metrics.originalMGPY == 0 ? 0 : metrics.difference / metrics.originalMGPY * 100;
-      }
-
-      roundedMetrics.originalIPY = metrics.originalIPY.toPrecision(precision);
-      roundedMetrics.currentIPY = metrics.currentIPY.toPrecision(precision);
-      roundedMetrics.originalMGPY = metrics.originalMGPY.toPrecision(precision);
-      roundedMetrics.currentMGPY = metrics.currentMGPY.toPrecision(precision);
-      roundedMetrics.cells = metrics.cells.toString();
-      roundedMetrics.difference = metrics.difference.toPrecision(precision);
-      roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
-
-    
-
-    //console.log("test");
     return roundedMetrics;
   }
 
@@ -1583,13 +1478,26 @@ export class MapComponent implements OnInit {
 
   upload(info: any) {
     this.verifyFilesAndGetData(info).then((data) => {
-      console.log(data);
-      console.log(info);
 
+      console.log(data);
+      if(data.notFound.length != 0) {
+        let message = ""
+        if(data.notFound.includes("shapes")) {
+          message += "Could not find valid shapefile:\n\t- Must contain all necessary data objects inside a zip folder.\n\n";
+        }
+        if(data.notFound.includes("cover")) {
+          message += "Could not find a valid land cover file:\n\t- Must be in a valid covjson or asc format.\n\t- Must contain "
+            + (this.gridWidthCells * this.gridHeightCells).toString()
+            + " whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "].\n\n";
+        }
+        message += "Files are accepted as uploaded or contained within a zip folder."
+        this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Warning"}});
+      }
+      
       if(info.shapes) {
         if(data.shapes != null) {
           if(info.format == "custom") {
-            if(data.shapes.isArray()) {
+            if(Array.isArray(data.shapes)) {
               data.shapes.forEach(shpset => {
                 this.parseAndAddShapes(shpset);
               });
@@ -1634,11 +1542,19 @@ export class MapComponent implements OnInit {
 
       if(info.cover) {
         if(data.cover != null) {
-          this.types.landCover.data._covjson.ranges.cover.values = data.cover;
+          
+          let base = this.types.landCover.data._covjson.ranges.cover.values;
+
           if(info.overwrite) {
-            //array of primitives, can deep copy with array.from
-            this.types.landCover.baseData = Array.from([]);
+            this.types.landCover.baseData = data.cover;
           }
+
+          //values stored in an ndarray, breaks if internal array replaced, so need to iterate and replace values in pre-made array
+          //might have something to do with the formatting bug, look back into this when that figured out
+          for(let i = 0; i < base.length; i++) {
+            base[i] = data.cover[i];
+          }
+
           this.loadCover(this.types.landCover, false);
 
           //NEED TO UPDATE RECHARGE AS WELL, ASK SEAN ABOUT FORMAT OF QUERY
@@ -1651,9 +1567,8 @@ export class MapComponent implements OnInit {
 
 
     }, (message) => {
-      //fail if already uploading
-      //give error asking user to wait for current upload to finish
-
+      //fail if already uploading or other issues occured while uploading
+      this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Error"}});
     });
   }
 
@@ -1678,7 +1593,6 @@ export class MapComponent implements OnInit {
 
 
     let verify = (zipped: boolean, file: any, format: string) => {
-      console.log(format);
 
       
 
@@ -1687,7 +1601,7 @@ export class MapComponent implements OnInit {
 
         
         //wait until all previous items in the queue verified
-        Promise.all(this.fileHandler.working.slice(0, position - 1)).then(() => {
+        this.waitForAllComplete(this.fileHandler.working.slice(0, position)).then(() => {
 
           let test: (data) => void;
 
@@ -1696,7 +1610,6 @@ export class MapComponent implements OnInit {
 
             let test = (data) => {
               shp(data).then((geojson) => {
-                console.log("im also not a failure")
                 
                 //if array validate each element as geojson object, return valid ones if exist, reject if all invalid
                 if(Array.isArray(geojson)) {
@@ -1722,30 +1635,32 @@ export class MapComponent implements OnInit {
                     reject()
                   }
                 }
-              }, () => {
+              }, (e) => {
                 //shp couldn't parse at all, reject
                 reject();
               });
             }
-
-            console.log("test");
             //need to use jszip async method to read zip files
             if(zipped) {
-              console.log("in here")
+
               file.async('arraybuffer').then((data) => {
-                console.log("im not a failure")
-                console.log(data);
                 
                 test(data);
 
               });
             }
             else {
-              console.log("???");
               if(this.fileHandler.reader) {
+
+                this.fileHandler.reader.onerror = (e) => {
+                  reject();
+                }
+                this.fileHandler.reader.onabort = (e) => {
+                  reject();
+                }
+
                 //think can redefine onload function, if not working might have to reinitialize file reader
                 this.fileHandler.reader.onload = (e) => {
-                  //console.log(this.r.result);
                   test(this.fileHandler.reader.result);
                 }
                 this.fileHandler.reader.readAsArrayBuffer(file);
@@ -1777,7 +1692,6 @@ export class MapComponent implements OnInit {
               reject();
             }
 
-            console.log("test");
             if(zipped) {
               file.async('text').then((data) => {
                 test(JSON.parse(data));
@@ -1785,6 +1699,14 @@ export class MapComponent implements OnInit {
             }
             else {
               if (this.fileHandler.reader) {
+
+                this.fileHandler.reader.onerror = (e) => {
+                  reject();
+                }
+                this.fileHandler.reader.onabort = (e) => {
+                  reject();
+                }
+
                 this.fileHandler.reader.onload = (e) => {
                   test(JSON.parse(this.fileHandler.reader.result));
                 }
@@ -1805,16 +1727,23 @@ export class MapComponent implements OnInit {
               //split on spaces, tabs, or commas for values
               let vals = valChunk.split(/[ \t,]+/);
 
+              //if whitespace at the end might reult in a blank element, remove this
+              if(vals[vals.length - 1] == "") {
+                vals.splice(vals.length - 1, 1);
+              }
+
               //verify number of values
               if(vals.length != this.gridWidthCells * this.gridHeightCells) {
                 reject();
               }
-              //ensure values valid
-              vals.forEach((value) => {
-                if(!value.isInteger || value < this.validLandcoverRange.min || value > this.validLandcoverRange.max) {
-                  reject()
+              //convert values to numbers and ensure valid
+              for(let i = 0; i < vals.length; i++) {
+                //values strings, convert to numbers
+                vals[i] = Number(vals[i]);
+                if(vals[i] % 1 != 0 || vals[i] < this.validLandcoverRange.min || vals[i] > this.validLandcoverRange.max) {
+                  reject();
                 }
-              });
+              }
               //if everything looks good accept, passing back the value array
               accept(vals);
             }
@@ -1822,18 +1751,26 @@ export class MapComponent implements OnInit {
 
             if(zipped) {
               file.async('text').then((data) => {
-                test(data)
+                test(data);
               });
             }
             else {
               if (this.fileHandler.reader) {
+
+                this.fileHandler.reader.onerror = (e) => {
+                  reject();
+                }
+                this.fileHandler.reader.onabort = (e) => {
+                  reject();
+                }
+
                 this.fileHandler.reader.onload = (e) => {
                   test(this.fileHandler.reader.result);
                 }
                 this.fileHandler.reader.readAsText(file);
               }
               else {
-                reject()
+                reject();
               }
 
             }
@@ -1859,33 +1796,26 @@ export class MapComponent implements OnInit {
     //returns valid file and type if exists, else returns null
     //probably need to pass in if zipped for verification (need to know how to read file)
     let checkFiles = (zipped: boolean, acceptFormats: string[], files: any[]) => {
-      console.log(acceptFormats)
       return new Promise((accept, reject) => {
 
         let numProcessed = 0;
 
         for(let i = 0; i < files.length; i++) {
-          let type = getType(files[i].name); 
-          console.log(type);       
-          //console.log(type);
+          let type = getType(files[i].name);      
           //check if file extension indicates acceptible format
           if(acceptFormats.includes(type)) {
-            console.log(type);
             //verify the file to be desired format
             verify(zipped, files[i], type).then((data) => {
 
-              console.log("verified");
               //accept with returned data if file verified
               accept(data);
 
-            }, () => {
+            }, (e) => {
               //increment number processed (and failed) and check if all others failed
               //reject if all failed
               if(++numProcessed >= files.length) {
-                console.log(files.length)
                 reject();
               }
-              console.log(numProcessed)
 
             });
               
@@ -1905,29 +1835,32 @@ export class MapComponent implements OnInit {
     //gets list of files in zip folder
     let getZippedFiles = (zip: any) => {
 
-      let zippedFiles = new Promise((resolve) => {
+      let zippedFiles = new Promise((accept, reject) => {
         //push this functions promise into queue, get position in queue
         
         //wait until all previous items in the queue verified
-        console.log();
-        Promise.all(this.fileHandler.working.slice(0, position - 1)).then(() => {
-          let files = []
-          console.log(this.fileHandler.working);
+        this.waitForAllComplete(this.fileHandler.working.slice(0, position)).then(() => {
+          let files = [];
 
           if (this.fileHandler.reader) {
+
+            this.fileHandler.reader.onerror = (e) => {
+              reject();
+            }
+            this.fileHandler.reader.onabort = (e) => {
+              reject();
+            }
+
             this.fileHandler.reader.onload = (e) => {
               let zipFiles = new JSZip();
 
               let data = this.fileHandler.reader.result;
 
-              console.log("before read");
-
               zipFiles.loadAsync(data).then((contents) => {
-                console.log("after read");
                 Object.keys(contents.files).forEach((name) => {
                   files.push(contents.files[name]);
                 });
-                resolve(files)
+                accept(files)
               });
             }
 
@@ -1936,14 +1869,12 @@ export class MapComponent implements OnInit {
         });
       });
       let position = this.fileHandler.working.push(zippedFiles);
-      console.log(position);
-      console.log(this.fileHandler.working.slice(0, position))
+      
       return zippedFiles;
     }
 
 
     let process = (type: string) => {
-      console.log(type)
       return new Promise((accept, reject) => {
 
 
@@ -1957,8 +1888,7 @@ export class MapComponent implements OnInit {
         let check = checkFiles(false, acceptedFormats, info.files).then((data) => {
           //valid file found, resolve with the file's data
           accept(data);
-        }, () => {
-          console.log("check rejected")
+        }, (e) => {
           let numProcessed = 0;
 
           //valid file not found in top level, check zipped files
@@ -1966,17 +1896,14 @@ export class MapComponent implements OnInit {
             let type = getType(info.files[i].name);
             //find zip files
             if(type == "zip") {
-              console.log("get zip");
               //get the zipped files and check them
               getZippedFiles(info.files[i]).then((files) => {
-
-                console.log("got zip");
 
                 checkFiles(true, acceptedFormats, files as any[]).then((data) => {
 
                   accept(data)
 
-                }, () => {
+                }, (e) => {
 
                   //increment number processed (and failed) and check if all others failed
                   //reject if all failed
@@ -1985,6 +1912,10 @@ export class MapComponent implements OnInit {
                   }
 
                 });
+              }, (e) => {
+                if(++numProcessed >= info.files.length) {
+                  reject();
+                }
               });
             }
             else {
@@ -2029,12 +1960,24 @@ export class MapComponent implements OnInit {
 
 
     return new Promise<any>((accept, reject) => {
-      //
+      
       if(this.fileHandler.busy) {
-        reject("Upload failed. Another upload is already in progress, please wait until this upload completes.\nIf this error message is persistent please refresh the page and try again")
+        reject("Upload failed. Another upload is already in progress, please wait until this upload completes.")
       }
-
       else {
+
+        //timeout after 10 seconds in case something goes wrong
+        setTimeout(() => {
+          //let pending file operations resolve then reset
+          this.waitForAllComplete(this.fileHandler.working).then(() => {
+            this.fileHandler.working = [];
+            //allow new upload
+            this.fileHandler.busy = false;
+          }, (e) => {});
+
+          reject("Upload failed. Operation timed out or an error occured while uploading.");
+        }, 10000)
+
         //indicate upload in progress
         this.fileHandler.busy = true;
 
@@ -2056,12 +1999,10 @@ export class MapComponent implements OnInit {
 
             process("shapes").then((values) => {
 
-              console.log(values);
-
               data.shapes = values;
               resolve();
               
-            }, () => {
+            }, (e) => {
               data.notFound.push("shapes");
               resolve();
             });
@@ -2082,42 +2023,67 @@ export class MapComponent implements OnInit {
 
             process("cover").then((values) => {
 
-              console.log(values);
-
               data.cover = values;
               resolve();
               
-            }, () => {
+            }, (e) => {
               data.notFound.push("cover");
               resolve();
             });
           }));
 
 
-
+        }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-          // //if valid file never found indicate cover could not be found
-          // if(check == null) {
-          //   details.notFound.push("cover");
-          // }
-          // else {
-          //   console.log(check);
-          // }
-
-        }
+        
 
         Promise.all(parsing).then(() => {
           //reset working queue, don't want to remove inline since using Promise.all for coordination (if remove might mess up function)
-          this.fileHandler.working = []
-          //indicate upload complete
-          this.fileHandler.busy = false;
+          //might still have things working if resolved before all processed, so resolve all in queue before resetting
+          this.waitForAllComplete(this.fileHandler.working).then(() => {
+            this.fileHandler.working = [];
+            //indicate upload complete after state reset finished
+            this.fileHandler.busy = false;
+          }, (e) => {
+            this.fileHandler.working = [];
+            //indicate upload complete after state reset finished
+            this.fileHandler.busy = false;
+          });
           accept(data);
+        }, (e) => {
+          //should never happen, none of these promises should reject
+          reject("Upload failed. An unxpected error has occured");
         });
       }
+    });
+  }
+
+
+  private waitForAllComplete(promises: Promise<any>[]): Promise<any> {
+    return new Promise((resolve) => {
+      //just in case new promises added to array, otherwise might never resolve
+      let numPromises = promises.length;
+      let complete = 0;
+      if(numPromises == 0) {
+        resolve();
+      }
+      else {
+        //increment number complete after each promise in list resolves or rejects, resolve after all complete
+        promises.forEach((promise) => {
+          promise.then(() => {
+            if(++complete >= numPromises) {
+              resolve();
+            }
+          }, (e) => {
+            if(++complete >= numPromises) {
+              resolve();
+            }
+          })
+        });
+      }
+      
     });
   }
 
@@ -2787,16 +2753,12 @@ export class MapComponent implements OnInit {
     //console.log(coverage);
     // work with Coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
-      .on('afterAdd', () => {
-        if (legend) {
-          //see how behaves, probably need this back
-          // this.legend = C.legend(layer);
-          // this.legend.addTo(this.mymap);
-          C.legend(layer)
-            .addTo(this.mymap);
-        }
-      })
-      .setOpacity(this.opacity)
+    .on('afterAdd', () => {
+      if (legend) {
+        C.legend(layer).addTo(this.mymap);
+      }
+    })
+    .setOpacity(this.opacity);
     //uses base layers now
     // //ensure recharge layer on top (don't want to have to remove covers to view it)
     // if(this.types.recharge.layer != undefined) {
@@ -2805,12 +2767,12 @@ export class MapComponent implements OnInit {
     //recharge disabled by default
 
     //a bit sketchy, might want to change to keep current layer, though might not ever happen if can't update in recharge (should still change it)
-    if (coverage != this.types.recharge) {
+    if(coverage != this.types.recharge) {
       layer.addTo(this.mymap);
       this.baseLayer = {
         name: "Land Cover",
         layer: layer
-      }
+      };
     }
 
     this.layers.addBaseLayer(layer, coverage.label);
@@ -2829,7 +2791,7 @@ export class MapComponent implements OnInit {
 
   //generate 31 colors
   private colorPalette(): string[] {
-    let palette = []
+    let palette = [];
     let range = 255;
     let color;
     let r;
