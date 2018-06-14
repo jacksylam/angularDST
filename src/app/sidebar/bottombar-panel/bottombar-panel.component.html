@@ -17,13 +17,13 @@
                     <!-- add something to check scenario for specific areas rather than currently selected one -->
                     <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 
-                    Original Recharge: {{original}} {{units}}
+                    Original Recharge: {{displayMetrics.values.original}} {{displayMetrics.units}}
                     <br>
-                    Current Recharge: {{current}} {{units}}
+                    Current Recharge: {{displayMetrics.values.current}} {{displayMetrics.units}}
                     <br>
-                    Number of Cells (75m<sup>2</sup>): {{cells}}
+                    Number of Cells (75m<sup>2</sup>): {{displayMetrics.cells}}
                     <br>
-                    Difference: {{diff}}, Percent Change: {{pchange}}%
+                    Difference: {{displayMetrics.values.diff}}, Percent Change: {{displayMetrics.values.pchange}}%
                 </div>
                 <div #chart> </div>
             </div>

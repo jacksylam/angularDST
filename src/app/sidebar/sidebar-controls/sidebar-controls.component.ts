@@ -38,13 +38,15 @@ export class SidebarControlsComponent implements OnInit {
 
   scrollLock = false;
 
+  id: number;
+
   constructor(private mapService: MapService, private dialog: MatDialog) {
   }
 
   openDialog(type: string) {
     switch(type) {
       case "upload":
-        this.dialog.open(UploadDialogComponent, {data: {id: "test"}}).afterClosed()
+        this.dialog.open(UploadDialogComponent, {data: {id: this.id}}).afterClosed()
         .subscribe((data) => {
           if(data) {
             this.mapService.upload(this, data);
@@ -53,7 +55,7 @@ export class SidebarControlsComponent implements OnInit {
         break;
 
       case "download":
-        this.dialog.open(DownloadDialogComponent, {data: {id: "test"}}).afterClosed()
+        this.dialog.open(DownloadDialogComponent, {data: {id: this.id}}).afterClosed()
         .subscribe((data) => {
           if(data) {
             this.mapService.download(this, data);
@@ -64,6 +66,10 @@ export class SidebarControlsComponent implements OnInit {
       default:
         console.log("Invalid dialog");
     }
+  }
+
+  setWindowId(id: number) {
+    this.id = id;
   }
 
   ngOnInit() {

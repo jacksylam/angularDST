@@ -26,16 +26,37 @@ export class BottombarPanelComponent implements OnInit {
   @ViewChild('chart') chart;
 
   state = 'inactive';
-  current = "";
-  original = "";
-  cells = 0;
-  pchange = "";
-  diff = "";
-  mode = "none";
-  scenario = "Average";
-  units = "Mgal/d"
-  totalRecharge = 0;
-  totalOriginalRecharge = 0;
+
+  metrics = {
+    IPY: {
+      original: "",
+      current: "",
+      diff: "",
+      pchange: ""
+    },
+    MGPD: {
+      original: "",
+      current: "",
+      diff: "",
+      pchange: ""
+    },
+    cells: ""
+  }
+
+  displayMetrics = {
+    values: {
+      original: "",
+      current: "",
+      difference: "",
+      pchange: ""
+    },   
+    cells: "",
+    units: ""
+  }
+
+  units: string;
+
+  mode: string;
 
   //store ipy values passed for recalculation on unit change (don't want to use stored values to prevent compounded precision loss due to rounding)
   ipyVals = {
@@ -43,94 +64,64 @@ export class BottombarPanelComponent implements OnInit {
     original: 0
   }
 
-  constructor(private mapService: MapService,) { }
+  constructor(private mapService: MapService) { }
 
   ngOnInit() {
     this.mapService.setDetailsPanel(this);
+    this.units = "MGPD";
+    this.mode = "none";
+    this.displayMetrics.units = "Mgal/day"
   }
 
   ngAfterViewInit() {
     
   }
 
-  updateTotalRecharge(totalRecharge: number) {
-    this.totalRecharge = totalRecharge;
-    if(this.mode == "full") {
-      //if update finished after switch to metric view, update metrics
-      this.updateMetrics(null, null, "full", this.cells);
-    }
-  }
 
-  setTotalRecharge(totalOriginalRecharge: number) {
-    this.totalOriginalRecharge = totalOriginalRecharge;
-  }
-
-  updateMetrics(original: number, current: number, mode: string, numcells: number) {
+  updateMetrics(mode: string, metrics: any) {
     
+    
+
+    this.metrics = metrics;
+
+    console.log(this.metrics);
+    
+    this.displayMetrics.values = metrics[this.units];
+
     this.mode = mode;
-    this.cells = numcells;
-    var convertedOrigin;
-    var convertedCurrent;
-    //no reason to update repeatedly, store full map data ahead of time
-    //should do the same for aquifers since also static
-    if(mode == "full") {
-      this.ipyVals.original = this.totalOriginalRecharge;
-      this.ipyVals.current = this.totalRecharge;
-
-      convertedOrigin = this.convertValue(this.totalOriginalRecharge, numcells);
-      convertedCurrent = this.convertValue(this.totalRecharge, numcells)
-
-      
-    }
-    else {
-      this.ipyVals.original = original;
-      this.ipyVals.current = current;
-
-      convertedOrigin = this.convertValue(original, numcells);
-      convertedCurrent = this.convertValue(current, numcells)
-    }
-
-    //use 3 significant figure precision
-    var precision = 3;
-
-    this.original = convertedOrigin.toPrecision(precision);
-    this.current = convertedCurrent.toPrecision(precision);
-    var diff = convertedCurrent - convertedOrigin;
-    this.diff = diff.toPrecision(precision);
-    //ensure not dividing by 0
-    this.pchange = convertedOrigin == 0 ? "0" : (diff / convertedOrigin * 100).toPrecision(precision);
-    //if all values 0 just set pchange to 0
-    if(this.pchange == "NaN") {
-      this.pchange = "0"
-    }
     
     //bargraph can only be rendered if element exists
     //delay so transition has time to process (might want to switch how checking for mode)
     setTimeout(() => {
       if(this.chart) {
-        this.generateBargraph(convertedOrigin, convertedCurrent);
+        this.generateBargraph(parseFloat(metrics[this.units].original), parseFloat(metrics[this.units].current));
       }
     }, 200);
     
     
   }
 
-
-  convertValue(valueIPY: number, cells: number) {
-    
-    switch(this.units) {
-      case "in/yr":
-        //ipy values are summation, need to divide by number of cells for average (0 if no cells)
-        return cells > 0 ? valueIPY / cells : 0;
-      case "Mgal/d":
-        return (valueIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-    }
-  }
-
   setUnits(type: string) {
+
     this.units = type;
+
+    switch(type) {
+      case "IPY": {
+        this.displayMetrics.units = "in/y";
+        break;
+      }
+      case "MGPD": {
+        this.displayMetrics.units = "Mgal/day";
+        break;
+      }
+    }
     //update with stored ipy vals
-    this.updateMetrics(this.ipyVals.original, this.ipyVals.current, this.mode, this.cells);
+    this.displayMetrics.values = this.metrics[type];
+
+    //regenerate bargraph with new units if in a recharge vis mode
+    if(this.mode != "none") {
+      this.generateBargraph(parseFloat(this.metrics[this.units].original), parseFloat(this.metrics[this.units].current));
+    }
   }
 
 
@@ -150,33 +141,33 @@ export class BottombarPanelComponent implements OnInit {
 
   generateBargraph(originalRecharge: number, currentRecharge: number) {
   
-    var original = {
+    let original = {
       x: ['Recharge'],
       y: [originalRecharge],
       name: 'Original',
       type: 'bar'
     };
     
-    var current = {
+    let current = {
       x: ['Recharge'],
       y: [currentRecharge],
       name: 'Current',
       type: 'bar'
     };
     
-    var data = [original, current];
+    let data = [original, current];
 
     //start display 10 units below min value, but not less than 0
-    var minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
+    let minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
     //max recharge 75% of graph height
-    var maxRecharge = Math.max(originalRecharge, currentRecharge);
-    var maxScale = maxRecharge + .75 * (maxRecharge - minScale);
+    let maxRecharge = Math.max(originalRecharge, currentRecharge);
+    let maxScale = maxRecharge + .75 * (maxRecharge - minScale);
     //if both values are 0 just set it to 1
     if(maxScale == 0) {
       maxScale = 1;
     }
 
-    var layout = {
+    let layout = {
       barmode: 'group',
       height: 275,
       width: 350,

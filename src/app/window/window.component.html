@@ -27,7 +27,7 @@
 
     <app-sidebar-panel></app-sidebar-panel>
     <app-bottombar-panel></app-bottombar-panel>
-    <app-sidebar-controls></app-sidebar-controls>
+    <app-sidebar-controls #controls></app-sidebar-controls>
     <div class="drag-bottom" #resizeBot></div>
     <div class="drag-right" #resizeRight></div>
     <div class="drag-corner" #resizeCorner></div>
@@ -77,13 +77,13 @@
         </tr>
         <tr *ngFor="let aquifer of windowPanel.data.aquifers">
           <td>{{aquifer.name}}</td>
-          <td>{{aquifer.metrics.originalIPY}}</td>
-          <td>{{aquifer.metrics.currentIPY}}</td>
-          <td>{{aquifer.metrics.originalMGPY}}</td>
-          <td>{{aquifer.metrics.currentMGPY}}</td>
-          <td>{{aquifer.metrics.cells}}</td>
-          <td>{{aquifer.metrics.difference}}</td>
-          <td>{{aquifer.metrics.pchange}}%</td>
+          <td>{{aquifer.roundedMetrics.IPY.original}}</td>
+          <td>{{aquifer.roundedMetrics.IPY.current}}</td>
+          <td>{{aquifer.roundedMetrics.MGPD.original}}</td>
+          <td>{{aquifer.roundedMetrics.MGPD.current}}</td>
+          <td>{{aquifer.roundedMetrics.cells}}</td>
+          <td>{{aquifer.roundedMetrics.MGPD.diff}}</td>
+          <td>{{aquifer.roundedMetrics.MGPD.pchange}}%</td>
         </tr>
       </table>
 
@@ -107,13 +107,13 @@
         </tr>
         <tr *ngFor="let area of windowPanel.data.customAreas">
           <td>{{area.name}}</td>
-          <td>{{area.metrics.originalIPY}}</td>
-          <td>{{area.metrics.currentIPY}}</td>
-          <td>{{area.metrics.originalMGPY}}</td>
-          <td>{{area.metrics.currentMGPY}}</td>
-          <td>{{area.metrics.cells}}</td>
-          <td>{{area.metrics.difference}}</td>
-          <td>{{area.metrics.pchange}}</td>
+          <td>{{area.roundedMetrics.IPY.original}}</td>
+          <td>{{area.roundedMetrics.IPY.current}}</td>
+          <td>{{area.roundedMetrics.MGPD.original}}</td>
+          <td>{{area.roundedMetrics.MGPD.current}}</td>
+          <td>{{area.roundedMetrics.cells}}</td>
+          <td>{{area.roundedMetrics.MGPD.difference}}</td>
+          <td>{{area.roundedMetrics.MGPD.pchange}}</td>
         </tr>
       </table>
 
@@ -135,13 +135,13 @@
           <th>Percent Change</th>
         </tr>
         <tr>
-          <td>{{windowPanel.data.customAreasTotal.originalIPY}}</td>
-          <td>{{windowPanel.data.customAreasTotal.currentIPY}}</td>
-          <td>{{windowPanel.data.customAreasTotal.originalMGPY}}</td>
-          <td>{{windowPanel.data.customAreasTotal.currentMGPY}}</td>
-          <td>{{windowPanel.data.customAreasTotal.cells}}</td>
-          <td>{{windowPanel.data.customAreasTotal.difference}}</td>
-          <td>{{windowPanel.data.customAreasTotal.pchange}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.IPY.original}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.IPY.current}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.MGPD.original}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.MGPD.current}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.cells}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.MGPD.difference}}</td>
+          <td>{{windowPanel.data.customAreasTotal.roundedMetrics.MGPD.pchange}}</td>
         </tr>
       </table>
 
@@ -163,13 +163,13 @@
           <th>Percent Change</th>
         </tr>
         <tr>
-          <td>{{windowPanel.data.total.originalIPY}}</td>
-          <td>{{windowPanel.data.total.currentIPY}}</td>
-          <td>{{windowPanel.data.total.originalMGPY}}</td>
-          <td>{{windowPanel.data.total.currentMGPY}}</td>
-          <td>{{windowPanel.data.total.cells}}</td>
-          <td>{{windowPanel.data.total.difference}}</td>
-          <td>{{windowPanel.data.total.pchange}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.IPY.original}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.IPY.current}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.MGPD.original}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.MGPD.current}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.cells}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.MGPD.difference}}</td>
+          <td>{{windowPanel.data.total.roundedMetrics.MGPD.pchange}}</td>
         </tr>
       </table>
       

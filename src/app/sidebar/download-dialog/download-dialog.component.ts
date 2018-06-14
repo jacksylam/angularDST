@@ -12,6 +12,9 @@ export class DownloadDialogComponent implements OnInit {
   id: number
 
   constructor(private dialogRef: MatDialogRef<DownloadDialogComponent>, @Inject(MAT_DIALOG_DATA) data) {
+    
+    this.id = data.id;
+
     this.options = {
       shapes: false,
       recharge: false,

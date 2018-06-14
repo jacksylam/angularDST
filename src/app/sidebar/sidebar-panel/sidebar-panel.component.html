@@ -23,43 +23,45 @@
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-primary btn-responsive btn-label">Land Covers</button>
 
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-t4" (click)="changeCover('advanced')">Create Advanced Mapping</button>
+
           <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-t4" (click)="changeCover('base')">Revert to Base</button>
 
           <p></p>
 
           <button type="button" class="btn btn-primary btn-responsive btn-sublabel1">Non-Irrigated</button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c0" (click)="changeCover('Alien Forest')"><div class="shift">Alien Forest</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c1" (click)="changeCover('Alien Forest Fog')"><div class="shift">Alien Forest in Fog Zone</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c2" (click)="changeCover('Developed Low-Intensity')"><div class="shift">Developed, Low-Intensity</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c3" (click)="changeCover('Grass Shrub 1870')"><div class="shift">Grass/Shrub - Predevelopment</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c1" (click)="changeCover('Alien Forest in Fog Zone')"><div class="shift">Alien Forest in Fog Zone</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c2" (click)="changeCover('Developed, Low-Intensity')"><div class="shift">Developed, Low-Intensity</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c3" (click)="changeCover('Grass/Shrub - Predevelopment')"><div class="shift">Grass/Shrub - Predevelopment</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c4" (click)="changeCover('Grassland')"><div class="shift">Grassland</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c5" (click)="changeCover('Kiawe/Phreatophytes')"><div class="shift">Kiawe/Phreatophytes</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c6" (click)="changeCover('Macadamia')"><div class="shift">Macadamia</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c7" (click)="changeCover('Native Forest')"><div class="shift">Native Forest</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c8" (click)="changeCover('Native Forest Fog')"><div class="shift">Native Forest in Fog Zone</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c8" (click)="changeCover('Native Forest in Fog Zone')"><div class="shift">Native Forest in Fog Zone</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c9" (click)="changeCover('Near-Coastal or Estuarine Water Body')"><div class="long">Near-Coastal or Estuarine Water Body</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c10" (click)="changeCover('Open Native Forest Grass Shrub 1870')"><div class="long">Open Native Forest - Predevelopment</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c10" (click)="changeCover('Open Native Forest - Predevelopment')"><div class="long">Open Native Forest - Predevelopment</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c11" (click)="changeCover('Reservoirs')"><div class="shift">Reservoirs</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c12" (click)="changeCover('Shrubland')"><div class="shift">Shrub Land</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c13" (click)="changeCover('Sparse Grassland 1870')"><div class="medium">Sparse Grassland - Predevelopment</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c14" (click)="changeCover('Sparsely Vegetated')"><div class="shift">Sparsely Vegetated, Barren</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c15" (click)="changeCover('Sugarcane 1870')"><div class="shift">Sugarcane - Predevelopment</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c16" (click)="changeCover('Tree Plantation')"><div class="shift">Tree Plantatation</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c12" (click)="changeCover('Shrubland')"><div class="shift">Shrubland</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c13" (click)="changeCover('Sparse Grassland - Predevelopment')"><div class="medium">Sparse Grassland - Predevelopment</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c14" (click)="changeCover('Sparsely Vegetated, Barren')"><div class="shift">Sparsely Vegetated, Barren</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c15" (click)="changeCover('Sugarcane - Predevelopment')"><div class="shift">Sugarcane - Predevelopment</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c16" (click)="changeCover('Tree Plantation')"><div class="shift">Tree Plantation</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c17" (click)="changeCover('Water Body')"><div class="shift">Water Body</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c18" (click)="changeCover('Wetland')"><div class="shift">WetLand</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t2 c18" (click)="changeCover('Wetland')"><div class="shift">Wetland</div></button>
         
           <p></p>
         
           <button type="button" class="btn btn-primary btn-responsive btn-sublabel2">Irrigated</button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c20" (click)="changeCover('Coffee')"><div class="shift">Coffee</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c21" (click)="changeCover('Corn')"><div class="shift">Corn</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c22" (click)="changeCover('Developed High-Intensity')"><div class="shift">Developed, High-Intensity</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c23" (click)="changeCover('Developed Medium-Intensity')"><div class="shift">Developed, Medium-Intensity</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c22" (click)="changeCover('Developed, High-Intensity')"><div class="shift">Developed, High-Intensity</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c23" (click)="changeCover('Developed, Medium-Intensity')"><div class="shift">Developed, Medium-Intensity</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c24" (click)="changeCover('Diversified Agriculture')"><div class="shift">Diversified Agriculture</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c25" (click)="changeCover('Golf Course')"><div class="shift">Golf Course</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c26" (click)="changeCover('Pineapple')"><div class="shift">Pineapple</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c27" (click)="changeCover('Sugarcane (drip)')"><div class="shift">Sugarcane - Drip Irrigation</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c28" (click)="changeCover('Sugarcane (furrow)')"><div class="shift">Sugarcane - Furrow Irrigation</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c27" (click)="changeCover('Sugarcane - Drip Irrigation')"><div class="shift">Sugarcane - Drip Irrigation</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c28" (click)="changeCover('Sugarcane - Furrow Irrigation')"><div class="shift">Sugarcane - Furrow Irrigation</div></button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-t3 c29" (click)="changeCover('Taro')"><div class="shift">Taro</div></button>
         </div>
       </div>

@@ -41,22 +41,22 @@
     
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
 
-      <br><br>
+      <p></p>
 
       <div class="outline slider-background">
         <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">Layer Opacity</button>
         <br><mat-slider class="slider-shift" [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
       </div>
 
-      <br>
+      <p></p>
 
       <div class="outline btn-group-vertical internal-menu">
         <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('Mgal/d')"><div class="shift">Mgal/d</div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('in/yr')"><div class="shift">in/yr</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('MGPD')"><div class="shift">Mgal/d</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('IPY')"><div class="shift">in/yr</div></button>
       </div>
 
-      <br><br>
+      <p></p>
       <!-- <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
       <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
 
@@ -101,7 +101,7 @@
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'covjson')"><div class="shift">Download Recharge<br>as covjson</div></button>
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'covjson')"><div class="shift">Download Land<br>Cover as covjson</div></button> -->
       
-      <br><br>
+      <p></p>
       
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()"><div class="shift">Generate Report</div></button>
 

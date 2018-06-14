@@ -42,6 +42,10 @@ import { FileUploadModule } from 'ng2-file-upload';
 import { NgUploaderModule } from 'ngx-uploader';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
 import {MatDialogModule} from "@angular/material";
+import { AdvancedMappingDialogComponent } from './advanced-mapping-dialog/advanced-mapping-dialog.component';
+import {MatSelectModule} from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -49,7 +53,8 @@ import {MatDialogModule} from "@angular/material";
     MapComponent,
     HomeComponent,
     WindowComponent,
-    MessageDialogComponent
+    MessageDialogComponent,
+    AdvancedMappingDialogComponent
   ],
   imports: [
     HttpModule,
@@ -63,14 +68,18 @@ import {MatDialogModule} from "@angular/material";
     // HttpClientModule
     FileUploadModule,
     NgUploaderModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
   providers: [WindowService, MapService, MapFirestoreService, DBConnectService, CovDetailsService],
   bootstrap: [AppComponent],
   entryComponents: [
-    MessageDialogComponent
+    MessageDialogComponent,
+    AdvancedMappingDialogComponent
   ]
 })
 

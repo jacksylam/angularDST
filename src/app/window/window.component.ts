@@ -20,6 +20,7 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('dragBar') dragBar;
   @ViewChild('panelDiv') panelDiv;
   @ViewChild('map') mapComponent;
+  @ViewChild('controls') controlPanel;
   @ViewChild('glyphSize') glyphSize;
   @ViewChild('resizeCorner') resizeCorner;
   @ViewChild('resizeBot') resizeBot;
@@ -105,12 +106,10 @@ export class WindowComponent implements AfterViewInit {
     if(this.mapComponent) {
       this.mapComponent.resize(this.windowPanel.width, this.windowPanel.height);
       this.mapComponent.setWindowId(this.windowPanel.tag);
+      this.controlPanel.setWindowId(this.windowPanel.tag);
     }
     else {
-
       this.generateReportGraphs();
-
-
     }
 
     
@@ -405,8 +404,10 @@ export class WindowComponent implements AfterViewInit {
       {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
       {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
       {title: "Number of Cells (75m^2)", dataKey: "numcells"}, 
-      {title: "Difference (Mgal/d)", dataKey: "diff"}, 
-      {title: "Percent Change", dataKey: "pchange"}, 
+      {title: "Difference (Mgal/d)", dataKey: "diffmgd"},
+      {title: "Percent Change (Mgal/d)", dataKey: "pchangemgd"},
+      {title: "Difference (in/y)", dataKey: "diffiny"},
+      {title: "Percent Change (in/y)", dataKey: "pchangeiny"}  
     ];
     var columnsNameless = [
       {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
@@ -414,8 +415,10 @@ export class WindowComponent implements AfterViewInit {
       {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
       {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
       {title: "Number of Cells (75m^2)", dataKey: "numcells"}, 
-      {title: "Difference (Mgal/d)", dataKey: "diff"}, 
-      {title: "Percent Change", dataKey: "pchange"}, 
+      {title: "Difference (Mgal/d)", dataKey: "diffmgd"},
+      {title: "Percent Change (Mgal/d)", dataKey: "pchangemgd"},
+      {title: "Difference (in/y)", dataKey: "diffiny"},
+      {title: "Percent Change (in/y)", dataKey: "pchangeiny"} 
     ];
 
     var rows = [];
@@ -424,13 +427,15 @@ export class WindowComponent implements AfterViewInit {
     this.windowPanel.data.aquifers.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
-        oriny: aquifer.metrics.originalIPY,
-        criny: aquifer.metrics.currentIPY,
-        ormgd: aquifer.metrics.originalMGPY,
-        crmgd: aquifer.metrics.currentMGPY,
-        numcells: aquifer.metrics.cells,
-        diff: aquifer.metrics.difference,
-        pchange: aquifer.metrics.pchange
+        oriny: aquifer.roundedMetrics.IPY.original,
+        criny: aquifer.roundedMetrics.IPY.current,
+        ormgd: aquifer.roundedMetrics.MGPD.original,
+        crmgd: aquifer.roundedMetrics.MGPD.current,
+        numcells: aquifer.roundedMetrics.cells,
+        diffmgd: aquifer.roundedMetrics.MGPD.diff,
+        pchangemgd: aquifer.roundedMetrics.MGPD.pchange,
+        diffiny: aquifer.roundedMetrics.IPY.diff,
+        pchangeiny: aquifer.roundedMetrics.IPY.pchange
       })
     })
   
@@ -467,13 +472,15 @@ export class WindowComponent implements AfterViewInit {
     this.windowPanel.data.customAreas.forEach((customArea) => {
       rows.push({
         name: customArea.name,
-        oriny: customArea.metrics.originalIPY,
-        criny: customArea.metrics.currentIPY,
-        ormgd: customArea.metrics.originalMGPY,
-        crmgd: customArea.metrics.currentMGPY,
-        numcells: customArea.metrics.cells,
-        diff: customArea.metrics.difference,
-        pchange: customArea.metrics.pchange
+        oriny: customArea.roundedMetrics.IPY.original,
+        criny: customArea.roundedMetrics.IPY.current,
+        ormgd: customArea.roundedMetrics.MGPD.original,
+        crmgd: customArea.roundedMetrics.MGPD.current,
+        numcells: customArea.roundedMetrics.cells,
+        diffmgd: customArea.roundedMetrics.MGPD.diff,
+        pchangemgd: customArea.roundedMetrics.MGPD.pchange,
+        diffiny: customArea.roundedMetrics.IPY.diff,
+        pchangeiny: customArea.roundedMetrics.IPY.pchange
       })
     })
 
@@ -500,13 +507,15 @@ export class WindowComponent implements AfterViewInit {
 
     var customAreasTotal = this.windowPanel.data.customAreasTotal;
     rows.push({
-      oriny: customAreasTotal.originalIPY,
-      criny: customAreasTotal.currentIPY,
-      ormgd: customAreasTotal.originalMGPY,
-      crmgd: customAreasTotal.currentMGPY,
-      numcells: customAreasTotal.cells,
-      diff: customAreasTotal.difference,
-      pchange: customAreasTotal.pchange
+      oriny: customAreasTotal.roundedMetrics.IPY.original,
+      criny: customAreasTotal.roundedMetrics.IPY.current,
+      ormgd: customAreasTotal.roundedMetrics.MGPD.original,
+      crmgd: customAreasTotal.roundedMetrics.MGPD.current,
+      numcells: customAreasTotal.roundedMetrics.cells,
+      diffmgd: customAreasTotal.roundedMetrics.MGPD.diff,
+      pchangemgd: customAreasTotal.roundedMetrics.MGPD.pchange,
+      diffiny: customAreasTotal.roundedMetrics.IPY.diff,
+      pchangeiny: customAreasTotal.roundedMetrics.IPY.pchange
     })
 
     this.pdf.autoTable(columnsNameless, rows, {
@@ -536,13 +545,15 @@ export class WindowComponent implements AfterViewInit {
 
     var total = this.windowPanel.data.total
     rows.push({
-      oriny: total.originalIPY,
-      criny: total.currentIPY,
-      ormgd: total.originalMGPY,
-      crmgd: total.currentMGPY,
-      numcells: total.cells,
-      diff: total.difference,
-      pchange: total.pchange
+      oriny: total.roundedMetrics.IPY.original,
+      criny: total.roundedMetrics.IPY.current,
+      ormgd: total.roundedMetrics.MGPD.original,
+      crmgd: total.roundedMetrics.MGPD.current,
+      numcells: total.roundedMetrics.cells,
+      diffmgd: total.roundedMetrics.MGPD.diff,
+      pchangemgd: total.roundedMetrics.MGPD.pchange,
+      diffiny: total.roundedMetrics.IPY.diff,
+      pchangeiny: total.roundedMetrics.IPY.pchange
     })
     
 
@@ -727,8 +738,8 @@ export class WindowComponent implements AfterViewInit {
       graphData.aquifers.data[0].x.push(aquifer.name);
       graphData.aquifers.data[1].x.push(aquifer.name);
 
-      graphData.aquifers.data[0].y.push(aquifer.metrics.originalMGPY);
-      graphData.aquifers.data[1].y.push(aquifer.metrics.currentMGPY);
+      graphData.aquifers.data[0].y.push(aquifer.roundedMetrics.MGPD.original);
+      graphData.aquifers.data[1].y.push(aquifer.roundedMetrics.MGPD.current);
     })
     graphData.aquifers.layout = {
       barmode: 'group',
@@ -741,8 +752,8 @@ export class WindowComponent implements AfterViewInit {
     graphData.full.data[0].x.push("Map Total");
     graphData.full.data[1].x.push("Map Total");
 
-    graphData.full.data[0].y.push(this.windowPanel.data.total.originalMGPY);
-    graphData.full.data[1].y.push(this.windowPanel.data.total.currentMGPY);
+    graphData.full.data[0].y.push(this.windowPanel.data.total.roundedMetrics.MGPD.original);
+    graphData.full.data[1].y.push(this.windowPanel.data.total.roundedMetrics.MGPD.current);
 
     graphData.full.layout = {
       barmode: 'group',
@@ -775,8 +786,8 @@ export class WindowComponent implements AfterViewInit {
         graphData.custom.data[0].x.push(area.name);
         graphData.custom.data[1].x.push(area.name);
   
-        graphData.custom.data[0].y.push(area.metrics.originalMGPY);
-        graphData.custom.data[1].y.push(area.metrics.currentMGPY);
+        graphData.custom.data[0].y.push(area.roundedMetrics.MGPD.original);
+        graphData.custom.data[1].y.push(area.roundedMetrics.MGPD.current);
       })
       graphData.custom.layout = {
         barmode: 'group',
@@ -789,8 +800,8 @@ export class WindowComponent implements AfterViewInit {
       graphData.customTotal.data[0].x.push("Custom Area Total");
       graphData.customTotal.data[1].x.push("Custom Area Total");
   
-      graphData.customTotal.data[0].y.push(this.windowPanel.data.customAreasTotal.originalMGPY)
-      graphData.customTotal.data[1].y.push(this.windowPanel.data.customAreasTotal.currentMGPY);
+      graphData.customTotal.data[0].y.push(this.windowPanel.data.customAreasTotal.roundedMetrics.MGPD.original)
+      graphData.customTotal.data[1].y.push(this.windowPanel.data.customAreasTotal.roundedMetrics.MGPD.current);
   
       graphData.customTotal.layout = {
         barmode: 'group',

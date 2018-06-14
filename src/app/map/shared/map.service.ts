@@ -79,9 +79,9 @@ export class MapService {
     this.mapHash[index].changeScenario(scenario);
   }
 
-  updateMetrics(map: any, originalRecharge: number, currentRecharge: number, mode: string, numcells: number) {
+  updateMetrics(map: any, mode: string, metrics: any) {
     let index = this.mapHash.indexOf(map);
-    this.detailPanelHash[index].updateMetrics(originalRecharge, currentRecharge, mode, numcells);
+    this.detailPanelHash[index].updateMetrics(mode, metrics);
   }
 
   // updateDetails(map: any, scenario: string) {
@@ -89,33 +89,33 @@ export class MapService {
   //   this.detailPanelHash[index].updateDetails(scenario);
   // }
 
-  updateRechargeSum(map: any, rechargeArr: number[]) {
-    var totalRecharge = 0;
-    rechargeArr.forEach(element => {
-      totalRecharge += element;
-    });
-    let index = this.mapHash.indexOf(map);
-    this.detailPanelHash[index].updateTotalRecharge(totalRecharge);
-  }
+  // updateRechargeSum(map: any, rechargeArr: number[]) {
+  //   var totalRecharge = 0;
+  //   rechargeArr.forEach(element => {
+  //     totalRecharge += element;
+  //   });
+  //   let index = this.mapHash.indexOf(map);
+  //   this.detailPanelHash[index].updateTotalRecharge(totalRecharge);
+  // }
 
-  setTotalRecharge(map: any, rechargeArr: number[]) {
-    var totalRecharge = 0;
-    rechargeArr.forEach(element => {
-      totalRecharge += element;
-    });
-    let index = this.mapHash.indexOf(map);
-    this.detailPanelHash[index].setTotalRecharge(totalRecharge);
-  }
+  // setTotalRecharge(map: any, rechargeArr: number[]) {
+  //   var totalRecharge = 0;
+  //   rechargeArr.forEach(element => {
+  //     totalRecharge += element;
+  //   });
+  //   let index = this.mapHash.indexOf(map);
+  //   this.detailPanelHash[index].setTotalRecharge(totalRecharge);
+  // }
 
-  setTotalAndCurrentRecharge(map: any, rechargeArr: number[]) {
-    var totalRecharge = 0;
-    rechargeArr.forEach(element => {
-      totalRecharge += element;
-    });
-    let index = this.mapHash.indexOf(map);
-    this.detailPanelHash[index].setTotalRecharge(totalRecharge);
-    this.detailPanelHash[index].updateTotalRecharge(totalRecharge);
-  }
+  // setTotalAndCurrentRecharge(map: any, rechargeArr: number[]) {
+  //   var totalRecharge = 0;
+  //   rechargeArr.forEach(element => {
+  //     totalRecharge += element;
+  //   });
+  //   let index = this.mapHash.indexOf(map);
+  //   this.detailPanelHash[index].setTotalRecharge(totalRecharge);
+  //   this.detailPanelHash[index].updateTotalRecharge(totalRecharge);
+  // }
 
   baseDetails(map: any) {
     let index = this.mapHash.indexOf(map);

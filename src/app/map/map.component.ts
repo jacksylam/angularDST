@@ -22,6 +22,7 @@ import { WindowPanel } from '../window/shared/windowPanel';
 import { isGeoJSONObject } from 'geojson-validation'
 import { MessageDialogComponent } from "../message-dialog/message-dialog.component"
 import {MatDialog} from "@angular/material";
+import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advanced-mapping-dialog.component';
 
 
 
@@ -41,6 +42,7 @@ export class MapComponent implements OnInit {
   @ViewChild('mapid') mapid;
 
   static aquiferIndices: any;
+  static aquiferIndexingComplete = false;
 
   mymap: any;
   popup: any;
@@ -74,6 +76,8 @@ export class MapComponent implements OnInit {
 
   windowId: number;
 
+  advancedMappingState: any;
+
   customAreasCount = 1;
 
   metrics: {
@@ -82,6 +86,8 @@ export class MapComponent implements OnInit {
     customAreasTotal: any,
     total: any
   }
+
+  defaultMetrics: any;
 
   // landCover: any;
   // landCoverLayer: any;
@@ -191,6 +197,22 @@ export class MapComponent implements OnInit {
       busy: false
     };
 
+    this.defaultMetrics = {
+      IPY: {
+        original: "0",
+        current: "0",
+        diff: "0",
+        pchange: "0"
+      },
+      MGPD: {
+        original: "0",
+        current: "0",
+        diff: "0",
+        pchange: "0"
+      },
+      cells: "0"
+    };
+
     //think there's a value in the middle that's invalid, may need to give valid values if issue, probably ok and more efficient like this though
     this.validLandcoverRange = {
       min: 0,
@@ -217,7 +239,6 @@ export class MapComponent implements OnInit {
           this.enableShapeInteraction(false);
           this.drawControl.addTo(this.mymap);
           this.mapService.baseDetails(this);
-
           //throws an error for some reason if run immediately (though it still works...)
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
@@ -235,8 +256,11 @@ export class MapComponent implements OnInit {
         case "Recharge Rate":
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
-          this.mapService.updateMetrics(this, null, null, "full", this.types.recharge.baseData.length);
+          console.log(this.metrics.total);
+          this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics);
           this.disableShapeInteraction();
+          //throws an error for some reason if run immediately (though it still works...)
+          //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
             this.baseLayer.layer.setOpacity(this.opacity);
           }, 400);
@@ -536,7 +560,7 @@ export class MapComponent implements OnInit {
 
     this.interactionType = "aquifer";
 
-    let highlightedAquifers = L.featureGroup();
+    let highlightedAquifers = [];
 
     let highlight = {
       fillColor: 'black',
@@ -565,28 +589,36 @@ export class MapComponent implements OnInit {
         if (layer.highlighted) {
           layer.setStyle(unhighlight)
           layer.highlighted = false;
-          highlightedAquifers.removeLayer(layer);
+          //remove aquifer name from highlighted list
+          highlightedAquifers.splice(highlightedAquifers.indexOf(layer.feature.properties.SYSTEM), 1);
         }
         else {
           layer.setStyle(highlight)
           layer.highlighted = true;
-          highlightedAquifers.addLayer(layer);
+          //add highlighted aquifer name to list
+          highlightedAquifers.push(layer.feature.properties.SYSTEM);
         }
 
-        let originalRecharge = 0;
-        let currentRecharge = 0;
-        let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-        let indexes = this.getInternalIndexes(highlightedAquifers.toGeoJSON());
-        let cells = indexes.length;
-        indexes.forEach((index) => {
-          originalRecharge += this.types.recharge.baseData[index];
-          currentRecharge += rechargeVals[index];
-        })
-        this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "aquifer", cells);
+        //let originalRecharge = 0;
+        //let currentRecharge = 0;
+        //let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+        let indexes = [];
+        highlightedAquifers.forEach((name) => {
+          indexes = indexes.concat(MapComponent.aquiferIndices[name]);
+          //console.log(MapComponent.aquiferIndices[name])
+        });
+
+
+        //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
+
+        //get rounded metrics from indexes and send to bottom panel
+        let metrics = this.roundMetrics(this.getMetricsSuite(indexes));
+        //console.log(indexes);
+        this.mapService.updateMetrics(this, "aquifer", metrics);
       });
     })
 
-    this.mapService.updateMetrics(this, 0, 0, "aquifer", 0);
+    this.mapService.updateMetrics(this, "aquifer", this.defaultMetrics);
 
   }
 
@@ -685,11 +717,14 @@ export class MapComponent implements OnInit {
 
         //convert to data cell index
         let index = this.getIndex(xIndex, yIndex);
-        this.getSelectedCellMetrics(index);
+
+        //send get rounded metrics and send to bottom panel
+        let metrics = this.roundMetrics(this.getMetricsSuite([index]));
+        this.mapService.updateMetrics(this, "cell", metrics);
       }
     });
 
-    this.mapService.updateMetrics(this, 0, 0, "cell", 0);
+    this.mapService.updateMetrics(this, "cell", this.defaultMetrics);
   }
 
   private disableShapeInteraction() {
@@ -730,23 +765,21 @@ export class MapComponent implements OnInit {
     this.mymap.off('click');
   }
 
-  private getSelectedCellMetrics(index: number) {
-    let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    this.mapService.updateMetrics(this, this.types.recharge.baseData[index], rechargeVals[index], "cell", 1);
-  }
+  // private getSelectedCellMetrics(index: number) {
+    
+  // }
 
   private getSelectedShapeMetrics() {
-    let originalRecharge = 0;
-    let currentRecharge = 0;
-    let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
     let indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
-    let cells = indexes.length;
-    indexes.forEach((index) => {
-      originalRecharge += this.types.recharge.baseData[index];
-      currentRecharge += rechargeVals[index];
-    })
-    this.mapService.updateMetrics(this, originalRecharge, currentRecharge, "custom", cells);
+
+    //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
+
+    //get rounded metrics for highlighted sshapes and send to bottom panel
+    let metrics = this.roundMetrics(this.getMetricsSuite(indexes))
+    this.mapService.updateMetrics(this, "custom", metrics);
   }
+
+
 
   private getWholeMapMetrics() {
     if (this.interactionType == "full") {
@@ -760,7 +793,7 @@ export class MapComponent implements OnInit {
 
     this.interactionType = "full";
 
-    this.mapService.updateMetrics(this, null, null, "full", this.types.recharge.baseData.length);
+    this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics);
   }
 
 
@@ -875,7 +908,6 @@ export class MapComponent implements OnInit {
       __this.types.recharge.data = coverage;
       //deepcopy values for comparisons with modified types
       __this.types.recharge.baseData = Array.from(coverage._covjson.ranges.recharge.values);
-      __this.mapService.setTotalAndCurrentRecharge(__this, __this.types.recharge.baseData);
       //console.log(__this.currentCover._covjson.domain.axes);
       //change this
 
@@ -928,6 +960,7 @@ export class MapComponent implements OnInit {
 
   generateReport() {
     let data = this.metrics;
+    console.log(data);
     let reportWindow = new WindowPanel("Report", "report", data);
     this.windowService.addWindow(reportWindow, this.windowId);
   }
@@ -955,64 +988,98 @@ export class MapComponent implements OnInit {
     let data = {
       customAreas: [],
       aquifers: [],
-      customAreasTotal: {},
-      total: {}
+      customAreasTotal: {
+        metrics: {},
+        roundedMetrics: {}
+      },
+      total: {
+        metrics: {},
+        roundedMetrics: {}
+      }
     };
 
     let __this = this;
 
+    //used twice, so set function
+    let getAquiferMetrics = () => {
+      this.types.aquifers.layer.eachLayer((layer) => {
+    
+        let info = {
+          name: "",
+          metrics: {},
+          roundedMetrics: {}
+        };
+
+        let capName = layer.feature.properties.SYSTEM;
+        //switch from all upper case to capitalize first letter
+        capName.split(/([\s \-])/).forEach((substr) => {
+          info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
+        });
+
+        let aquiferMetrics = this.getMetricsSuite(MapComponent.aquiferIndices[capName]);
+        
+         info.metrics = aquiferMetrics;
+         info.roundedMetrics = this.roundMetrics(aquiferMetrics);
+        
+         data.aquifers.push(info);
+      });
+    }
+
     //if already computed no need to recompute
     //static since aquifers are always the same
     if(!MapComponent.aquiferIndices) {
+
       MapComponent.aquiferIndices = {};
+      //store promise so if method called again knows to wait for completion
       this.getAquiferIndices(this.types.aquifers).then(() => {
 
-        for(let key in this.types.aquifers.layer._layers) {
-          let layer = this.types.aquifers.layer._layers[key];
-  
-          let info = {
-            name: "",
-            metrics: {}
-          };
-    
-          let capName = layer.feature.properties.SYSTEM;
-          //switch from all upper case to capitalize first letter
-          capName.split(/([\s \-])/).forEach((substr) => {
-            info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
-          });
-  
-          info.metrics = this.getMetricsSuite(MapComponent.aquiferIndices[capName]);
-          data.aquifers.push(info);
-        }
+        console.log("complete");
+
+        //indicate indexing has been completed
+        MapComponent.aquiferIndexingComplete = true;
+
+        getAquiferMetrics();
 
       }, () => {
         //should never reject, only if an aquifer is out of range, that would be strange
         this.dialog.open(MessageDialogComponent, {data: {message: "An error has occured in aquifer resource. Please refresh the page or submit a bug report if this error persists", type: "Error"}});
       });
     }
-    //if already computed just get aquifer metrics
-    else {
-
+    //if already triggered getAquiferIndices but not yet complete don't do anything, the metrics computed on completion will have current values
+    //otherwise just compute aquifer metrics
+    else if(MapComponent.aquiferIndexingComplete) {
+      getAquiferMetrics();
     }
 
 
-    data.total = this.getMetricsSuite(null);
+    let total = this.getMetricsSuite(null);
+    data.total.metrics = total;
+    data.total.roundedMetrics = this.roundMetrics(total);
     
+
+    let items = new L.featureGroup();
     this.drawnItems.eachLayer((layer) => {
       let info = {
         name: "",
-        metrics: {}
+        metrics: {},
+        roundedMetrics: {}
       };
       //add custom naming options later, for now just name by number
       info.name = "Custom Area " + (__this.customAreasCount++).toString();
-      info.metrics = this.getMetricsSuite(this.getInternalIndexes(layer));
+      console.log(layer.toGeoJSON())
+      let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()));
+      info.metrics = itemMetrics;
+      info.roundedMetrics = this.roundMetrics(itemMetrics);
+
 
       data.customAreas.push(info);
     });
 
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-   // data.customAreasTotal = this.getMetricsSuite(this.drawnItems);
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()));
+    data.customAreasTotal.metrics = customTotal;
+    data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
 
     return data;
@@ -1291,20 +1358,23 @@ export class MapComponent implements OnInit {
   //also need to update all full map computations to disclude background cells
   getMetricsSuite(indexes: number[]) {
     let metrics = {
-      originalIPY: 0,
-      currentIPY: 0,
-      originalMGPY: 0,
-      currentMGPY: 0,
-      cells: 0,
-      difference: 0,
-      pchange: 0
+      IPY: {
+        original: 0,
+        current: 0,
+        diff: 0,
+        pchange: 0
+      },
+      MGPD: {
+        original: 0,
+        current: 0,
+        diff: 0,
+        pchange: 0
+      },
+      cells: 0
     }
 
     let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
     let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
-    
-
-    
 
     //pass in null if want whole map
     if (indexes == null) {
@@ -1312,46 +1382,41 @@ export class MapComponent implements OnInit {
         //if background value don't count
         if(lcVals[i] != 0) {
           metrics.cells++;
-          metrics.currentIPY += rechargeVals[i];
-          metrics.originalIPY += this.types.recharge.baseData[i];   
+          metrics.IPY.current += rechargeVals[i];
+          metrics.IPY.original += this.types.recharge.baseData[i];   
         }
       }
-          
-        //}, {timeout: 1000});
-        
-      
 
       metrics.cells = rechargeVals.length;
     }
     else {
-
-      
-      
       //get total IPY over cells
       indexes.forEach((index) => {
         if(lcVals[index]) {
           metrics.cells++;
-          metrics.originalIPY += this.types.recharge.baseData[index];
-          metrics.currentIPY += rechargeVals[index];
+          metrics.IPY.current += rechargeVals[index];
+          metrics.IPY.original += this.types.recharge.baseData[index];
         }
       });
     
     }
     
-    //compute metrics in MGPY
-    metrics.originalMGPY = (metrics.originalIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-    metrics.currentMGPY = (metrics.currentIPY * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    //compute metrics in MGPD
+    metrics.MGPD.original = (metrics.IPY.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    metrics.MGPD.current = (metrics.IPY.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
 
     //if no cells leave at default value of 0 to avoid dividing by 0
     if (metrics.cells > 0) {
       //average IPY summation over cells
-      metrics.originalIPY /= metrics.cells;
-      metrics.currentIPY /= metrics.cells;
+      metrics.IPY.original /= metrics.cells;
+      metrics.IPY.current /= metrics.cells;
 
       //get difference and percent change
-      metrics.difference = metrics.currentMGPY - metrics.originalMGPY;
+      metrics.MGPD.diff = metrics.MGPD.current - metrics.MGPD.original;
+      metrics.IPY.diff = metrics.IPY.current - metrics.IPY.original;
       //make sure not dividing by 0 if no recharge in selected cells
-      metrics.pchange = metrics.originalMGPY == 0 ? 0 : metrics.difference / metrics.originalMGPY * 100;
+      metrics.MGPD.pchange = metrics.MGPD.original == 0 ? 0 : metrics.MGPD.diff / metrics.MGPD.original * 100;
+      metrics.IPY.pchange = metrics.IPY.original == 0 ? 0 : metrics.IPY.diff / metrics.IPY.original * 100;
     }
 
     return metrics;
@@ -1359,26 +1424,34 @@ export class MapComponent implements OnInit {
   }
 
 
-  private roundMetrics(metrics: {originalIPY: number, currentIPY: number, originalMGPY: number, currentMGPY: number, cells: number, difference: number, pchange: number} ) {
+  private roundMetrics(metrics: any) {
     let roundedMetrics = {
-      originalIPY: "",
-      currentIPY: "",
-      originalMGPY: "",
-      currentMGPY: "",
-      cells: "",
-      difference: "",
-      pchange: ""
-    }
+      IPY: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      MGPD: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      cells: ""
+    };
 
     let precision = 3;
 
-    roundedMetrics.originalIPY = metrics.originalIPY.toPrecision(precision);
-    roundedMetrics.currentIPY = metrics.currentIPY.toPrecision(precision);
-    roundedMetrics.originalMGPY = metrics.originalMGPY.toPrecision(precision);
-    roundedMetrics.currentMGPY = metrics.currentMGPY.toPrecision(precision);
+    roundedMetrics.IPY.original = metrics.IPY.original.toPrecision(precision);
+    roundedMetrics.IPY.current = metrics.IPY.current.toPrecision(precision);
+    roundedMetrics.MGPD.original = metrics.MGPD.original.toPrecision(precision);
+    roundedMetrics.MGPD.current = metrics.MGPD.current.toPrecision(precision);
+    roundedMetrics.IPY.diff = metrics.IPY.diff.toPrecision(precision);
+    roundedMetrics.MGPD.diff = metrics.MGPD.diff.toPrecision(precision);
+    roundedMetrics.IPY.pchange = metrics.IPY.pchange.toPrecision(precision);
+    roundedMetrics.MGPD.pchange = metrics.MGPD.pchange.toPrecision(precision);
     roundedMetrics.cells = metrics.cells.toString();
-    roundedMetrics.difference = metrics.difference.toPrecision(precision);
-    roundedMetrics.pchange = metrics.pchange.toPrecision(precision);
 
 
     return roundedMetrics;
@@ -1414,27 +1487,28 @@ export class MapComponent implements OnInit {
 
 
 
+  //REVAMP THIS TO BE MORE EFFICIENT USING UPDATED POINTS LIST
+  updateMetrics(updateObjects: any) {
+    // let items;
 
-  updateMetrics(updatedPoints) {
-    let items;
+    // //assuming eachlayer returns same order every time, should correspond
+    // let i = 0;
+    // this.types.aquifers.layer.eachLayer((layer) => {
+    //   items = new L.featureGroup();
+    //   this.metrics.aquifers[i++].metrics = this.getMetricsSuite(items.addLayer(layer));
+    // })
 
-    //assuming eachlayer returns same order every time, should correspond
-    let i = 0;
-    this.types.aquifers.layer.eachLayer((layer) => {
-      items = new L.featureGroup();
-      this.metrics.aquifers[i++].metrics = this.getMetricsSuite(items.addLayer(layer));
-    })
+    // i = 0;
+    // this.drawnItems.eachLayer((layer) => {
+    //   items = new L.featureGroup();
+    //   this.metrics.customAreas[i++].metrics = this.getMetricsSuite(items.addLayer(layer));
+    // })
 
-    i = 0;
-    this.drawnItems.eachLayer((layer) => {
-      items = new L.featureGroup();
-      this.metrics.customAreas[i++].metrics = this.getMetricsSuite(items.addLayer(layer));
-    })
+    // this.metrics.customAreasTotal = this.getMetricsSuite(this.drawnItems);
 
-    this.metrics.customAreasTotal = this.getMetricsSuite(this.drawnItems);
+    // this.metrics.total = this.getMetricsSuite(null);
 
-    //again, make sure to go back and modify all full map metrics to disclude background cells
-    this.metrics.total = this.getMetricsSuite(null);
+    this.metrics = this.createMetrics();
 
   }
 
@@ -2348,7 +2422,13 @@ export class MapComponent implements OnInit {
         this.drawnItems.removeLayer(layer)
         this.highlightedItems.removeLayer(layer)
         this.uneditableItems.removeLayer(layer)
-      })
+      });
+      
+      if(Object.keys(event.layers._layers).length > 0) {
+        //NEED TO CHANGE THIS WHEN CREATE IMPROVED METRICS UPDATE
+        //RIGHT NOW RECOMPUTES EVERYTHING SO FINE, BUT NEED TO CREATE REFERENCE TO METRIC OBJECTS TO JUST REMOVE
+        this.updateMetrics(event.layers.toGeoJSON());
+      }
     });
 
     //remove individual cells from edit control (can be deleted but not edited)
@@ -2367,6 +2447,13 @@ export class MapComponent implements OnInit {
       this.uneditableItems.eachLayer((layer) => {
         this.drawnItems.addLayer(layer);
       })
+    });
+
+    //if anything edited update metrics
+    this.mymap.on(L.Draw.Event.EDITED, (event) => {
+      if(Object.keys(event.layers._layers).length > 0) {
+        this.updateMetrics(event.layers.toGeoJSON());
+      }
     });
 
     this.mymap.on(L.Draw.Event.CREATED, (event) => {
@@ -2467,12 +2554,16 @@ export class MapComponent implements OnInit {
 
     let info = {
       name: "",
-      metrics: {}
+      metrics: {},
+      roundedMetrics: {}
     };
     let items = new L.featureGroup();
     //add custom naming options later, for now just name by number
     info.name = "Custom Area " + (__this.customAreasCount++).toString();
-    info.metrics = this.getMetricsSuite(items.addLayer(layer));
+    let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()));
+
+    info.metrics = itemMetrics;
+    info.roundedMetrics = this.roundMetrics(itemMetrics);
 
     this.metrics.customAreas.push(info);
   }
@@ -2526,14 +2617,14 @@ export class MapComponent implements OnInit {
 
   //can update recharge on select, all handled async, so shouldn't be an issue as long as landcover update handled in app
   //speaking of which, need to know how indexing works and write in-app computation of grid cells to change from that
-  private updateRecharge(cover: string, handler) {
+  private updateRecharge(geojsonObjects: any, handler: any) {
 
     let numItems = this.highlightedItems.getLayers().length;
 
     if (numItems != 0) {
       //deal with errors too
 
-      Observable.forkJoin(this.highlightedItems.toGeoJSON().features.map(element => {
+      Observable.forkJoin(geojsonObjects.features.map(element => {
         return this.DBService.spatialSearch(element.geometry)
       }))
         .subscribe((data) => {
@@ -2551,63 +2642,185 @@ export class MapComponent implements OnInit {
     //test download
     //this.downloadShapefile(this.highlightedItems.toGeoJSON());
 
+    let geojsonObjects = this.highlightedItems.toGeoJSON();
+    let indexes = this.getInternalIndexes(geojsonObjects);
 
-    //type base indicates should be changed back to base values
-    if (type == "base") {
-      let covData = this.types.landCover.data._covjson.ranges.cover.values;
-      let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
-      let indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
-      indexes.forEach(index => {
-        covData[index] = this.types.landCover.baseData[index];
-        rechargeData[index] = this.types.recharge.baseData[index];
-      });
-      this.loadCover(this.types.landCover, false);
-      this.loadCover(this.types.recharge, false);
+    if(indexes.length == 0) {
+      this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small", type: "Info"}});
     }
     else {
-      //let __this = this;
-      //might as well update recharge as well, async so shouldnt affect performance of core app
 
-      //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
+      let covData = this.types.landCover.data._covjson.ranges.cover.values;
+      let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+      
+      if(type == "advanced") {
 
-      //should grey out report generation button while this is going
-      //might also want to add some sort of loading indicator
-      let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+        //NEED TO ASK IF TYPE 0 (BACKGROUND) VALID LAND COVER IN DATA SET (IS INDEX 0 BACKGROUND IN DB?)
+        let info: any = {}
 
-      this.updateRecharge(type, (update) => {
-        update.forEach(area => {
-          //how does it behave if out of coverage range? chack db response and modify so doesn't throw an error
-          area.forEach(record => {
-            let recordBase = record.value;
-            let x = recordBase.x;
-            let y = recordBase.y;
-            let index = this.getIndex(x, y);
-            //does the array include base? if not have to shift
-            rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
-          });
+        let containedTypes = new Set();
+
+        indexes.forEach(index => {
+          containedTypes.add(COVER_INDEX_DETAILS[covData[index]].type);
         });
-        //reload recharge cover
-        this.loadCover(this.types.recharge, true)
 
-        //handle recharge sums (aquifers and total) here
-        this.mapService.updateRechargeSum(this, rechargeVals);
+        info.sourceTypes = Array.from(containedTypes);
+
+        info.allTypes = Object.keys(COVER_ENUM);
+
+        info.state = this.advancedMappingState;
+
+        this.dialog.open(AdvancedMappingDialogComponent, {data: info}).afterClosed()
+        .subscribe((data) => {
+          //console.log(data);
+          //default closing disabled, data should always exist, still check just in case
+          if(data) {
+            //check if a mapping was created or if operation canceled
+            if(data.mapping) {
 
 
-        this.updateMetrics(null);
-        //reenable report generation
-      });
+              let covRemap = new Promise((resolve) => {
+                indexes.forEach(index => {
+                  //set to default type
+                  let mappedType = data.mapping.default;
+                  let currentType = COVER_INDEX_DETAILS[covData[index]].type;
+                  //if mapping exists assign to mapped type
+                  if(data.mapping[currentType]) {
+                    mappedType = data.mapping[currentType];
+                  }
+      
+                  //if mapped type is base assign base value
+                  if(mappedType == "base") {
+                    covData[index] = this.types.landCover.baseData[index];
+                  }
+                  //if mapped type isn't "no change" change cover to mapped value
+                  else if(mappedType != "No Change") {
+                    covData[index] = COVER_ENUM[mappedType];
+                  }
+      
+                });
+                //reload layer from changes
+                this.loadCover(this.types.landCover, false);
+                resolve()
+              });
 
-      let data = this.types.landCover.data._covjson.ranges.cover.values;
-      let indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
-      indexes.forEach(index => {
-        data[index] = COVER_ENUM[type];
-      });
+              this.updateRecharge(geojsonObjects, (update) => {
+                //ensure coverage remapping complete before processing recharge values
+                covRemap.then(() => {
+                  update.forEach(area => {
+                    //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+                    area.forEach(record => {
+                      let recordBase = record.value;
+                      let x = recordBase.x;
+                      let y = recordBase.y;
+                      let index = this.getIndex(x, y);
+                      //does the array include base? if not have to shift
+      
+                      //coverage reassignment completed first, so use this value (covData[index]) to get index in db results
+                      let mappedType = covData[index];
+                      rechargeData[index] = recordBase[this.currentScenario][mappedType];
+                    });
+                  });
+                  //reload recharge cover
+                  this.loadCover(this.types.recharge, true)
+          
+                  this.updateMetrics(geojsonObjects);
+                  //reenable report generation
+                })
+                
+              });
+              
+            }
 
-      //reload layer from changes
-      this.loadCover(this.types.landCover, false);
+            //save state
+            this.advancedMappingState = data.state;
+          }
+        });
+
+        // this.updateRecharge(type, geojsonObjects, (update) => {
+        //   update.forEach(area => {
+        //     //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+        //     area.forEach(record => {
+        //       let recordBase = record.value;
+        //       let x = recordBase.x;
+        //       let y = recordBase.y;
+        //       let index = this.getIndex(x, y);
+        //       //does the array include base? if not have to shift
+        //       rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
+        //     });
+        //   });
+        //   //reload recharge cover
+        //   this.loadCover(this.types.recharge, true)
+
+        //   this.updateMetrics(geojsonObjects);
+        //   //reenable report generation
+        // });
+        //get enclosed land cover types and pass to dialog
+        //asynchronously submit database request since need same areas regardless of landcover values
+        //get mapping back from dialog
+        /*
+        use format: 
+          {
+            <source land cover>: <destination land cover>
+            ...
+          }
+          create full mapping for all contained land covers for efficiency
+          if default value selected mapping should have all non-selected land covers mapped to this values
+          if default value is "no change" should be mapped to themselves
+        */
+      }
+      //type base indicates should be changed back to base values
+      else if (type == "base") {
+        indexes.forEach(index => {
+          covData[index] = this.types.landCover.baseData[index];
+          rechargeData[index] = this.types.recharge.baseData[index];
+        });
+        this.loadCover(this.types.landCover, false);
+        this.loadCover(this.types.recharge, false);
+
+
+        this.updateMetrics(geojsonObjects);
+      }
+      else {
+        //let __this = this;
+        //might as well update recharge as well, async so shouldnt affect performance of core app
+
+        //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
+
+        //should grey out report generation button while this is going
+        //might also want to add some sort of loading indicator
+        
+
+        
+
+        this.updateRecharge(geojsonObjects, (update) => {
+          update.forEach(area => {
+            //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+            area.forEach(record => {
+              let recordBase = record.value;
+              let x = recordBase.x;
+              let y = recordBase.y;
+              let index = this.getIndex(x, y);
+              //does the array include base? if not have to shift
+              rechargeData[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
+            });
+          });
+          //reload recharge cover
+          this.loadCover(this.types.recharge, true)
+
+          this.updateMetrics(geojsonObjects);
+          //reenable report generation
+        });
+
+        indexes.forEach(index => {
+          covData[index] = COVER_ENUM[type];
+        });
+
+        //reload layer from changes
+        this.loadCover(this.types.landCover, false);
+      }
+
     }
-
-
   }
 
   private getInternalIndexes(geojsonFeatures: any): number[] {

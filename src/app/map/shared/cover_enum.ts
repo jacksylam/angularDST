@@ -2,24 +2,24 @@ export const COVER_ENUM =
 Object.freeze({
     "Background" : 0,
     "Native Forest" : 1,
-    "Native Forest Fog" : 2,
+    "Native Forest in Fog Zone" : 2,
     "Alien Forest" : 3,
-    "Alien Forest Fog" : 4,
+    "Alien Forest in Fog Zone" : 4,
     "Kiawe/Phreatophytes" : 5,
     "Shrubland" : 6,
     "Grassland" : 7,
-    "Developed Low-Intensity" : 8,
-    "Developed Medium-Intensity" : 9,
-    "Developed High-Intensity" : 10,
-    "Sparsely Vegetated" : 11,
+    "Developed, Low-Intensity" : 8,
+    "Developed, Medium-Intensity" : 9,
+    "Developed, High-Intensity" : 10,
+    "Sparsely Vegetated, Barren" : 11,
     "Wetland" : 12,
     "Water Body" : 13,
     "Reservoirs" : 14,
     "Golf Course" : 15,
     "Pineapple" : 16,
-    "Sugarcane (furrow)" : 17,
-    "Sugarcane (drip)" : 18,
-    "Sugarcane 1870" : 19,
+    "Sugarcane - Furrow Irrigation" : 17,
+    "Sugarcane - Drip Irrigation" : 18,
+    "Sugarcane - Predevelopment" : 19,
     //"Pineapple" : 20,
     "Corn" : 21,
     "Coffee" : 22,
@@ -27,9 +27,9 @@ Object.freeze({
     "Diversified Agriculture" : 24,
     "Tree Plantation" : 25,
     "Taro" : 26,
-    "Grass Shrub 1870" : 27,
-    "Open Native Forest Grass Shrub 1870" : 28,
-    "Sparse Grassland 1870" : 29,
+    "Grass/Shrub - Predevelopment" : 27,
+    "Open Native Forest - Predevelopment" : 28,
+    "Sparse Grassland - Predevelopment" : 29,
     "Near-Coastal or Estuarine Water Body" : 30
 
     // "AlienForest": ["#ffffff", "#000000", "#000000"],
@@ -86,7 +86,7 @@ export var COVER_INDEX_DETAILS = {
         "color": "red"
     },
     2: {
-        "type": "Native Forest Fog",
+        "type": "Native Forest in Fog Zone",
         "color": "red"
     },
     3: {
@@ -94,7 +94,7 @@ export var COVER_INDEX_DETAILS = {
         "color": "red"
     },
     4: {
-        "type": "Alien Forest Fog",
+        "type": "Alien Forest in Fog Zone",
         "color": "red"
     },
     5: {
@@ -110,19 +110,19 @@ export var COVER_INDEX_DETAILS = {
         "color": "red"
     },
     8: {
-        "type": "Developed Low-Intensity",
+        "type": "Developed, Low-Intensity",
         "color": "red"
     },
     9: {
-        "type": "Developed Medium-Intensity",
+        "type": "Developed, Medium-Intensity",
         "color": "red"
     },
     10: {
-        "type": "Developed High-Intensity",
+        "type": "Developed, High-Intensity",
         "color": "red"
     },
     11: {
-        "type": "Sparsely Vegetated",
+        "type": "Sparsely Vegetated, Barren",
         "color": "red"
     },
     12: {
@@ -146,15 +146,15 @@ export var COVER_INDEX_DETAILS = {
         "color": "red"
     },
     17: {
-        "type": "Sugarcane (furrow)",
+        "type": "Sugarcane - Furrow Irrigation",
         "color": "red"
     },
     18: {
-        "type": "Sugarcane (drip)",
+        "type": "Sugarcane - Drip Irrigation",
         "color": "red"
     },
     19: {
-        "type": "Sugarcane 1870",
+        "type": "Sugarcane - Predevelopment",
         "color": "red"
     },
     20: {
@@ -186,15 +186,15 @@ export var COVER_INDEX_DETAILS = {
         "color": "red"
     },
     27: {
-        "type": "Grass Shrub 1870",
+        "type": "Grass/Shrub - Predevelopment",
         "color": "red"
     },
     28: {
-        "type": "Open Native Forest Grass Shrub 1870",
+        "type": "Open Native Forest - Predevelopment",
         "color": "red"
     },
     29: {
-        "type": "Sparse Grassland 1870",
+        "type": "Sparse Grassland - Predevelopment",
         "color": "red"
     },
     30: {
