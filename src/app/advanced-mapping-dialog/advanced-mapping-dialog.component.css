@@ -1,3 +1,26 @@
-md-dialog-content {
-    max-height: 20px;
-  }
+.md-dialog-container {
+  max-height: 20px;
+}
+
+.arrow {
+  position: relative;
+  top: 20px;
+  font-size: 48px;
+}
+
+.source {
+  position: relative;
+}
+
+.target {
+  position: relative;
+  left: 20px;
+}
+
+.main-container {
+  width: 100%;
+}
+
+.no-wrap {
+  white-space: nowrap;
+}

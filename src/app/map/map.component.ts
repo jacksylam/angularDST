@@ -2260,6 +2260,7 @@ export class MapComponent implements OnInit {
       //redefine shp-write zip feature with desired file hierarchy
       //do you want to include lines or points? Don't actually do anything, maybe just remove these
       [shpWriteGeojson.point(shapes), shpWriteGeojson.line(shapes), shpWriteGeojson.polygon(shapes)].forEach(function (l) {
+        console.log(l.type);
         if (l.geometries.length && l.geometries[0].length) {
           shpwrite.write(
             // field definitions

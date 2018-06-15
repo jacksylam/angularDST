@@ -1,7 +1,7 @@
-<div>
+<div class="main-container">
     
-  <div *ngFor="let field of formState">
-    <mat-form-field>
+  <div class="no-wrap" *ngFor="let field of formState">
+    <mat-form-field class="source">
       <mat-select placeholder="Source Land Cover" [(value)]="field.source" (change)="sourceChange($event, field)">
         <div *ngFor="let cover of sourceTypes">
           <div *ngIf="!assigned.includes(cover) || field.source==cover">
@@ -10,8 +10,10 @@
         </div>
       </mat-select>
     </mat-form-field>
-    <mat-icon style="font-size: 48px; top: 200px;">arrow_right</mat-icon>
-    <mat-form-field>
+
+    <mat-icon class="arrow">arrow_right</mat-icon>
+    
+    <mat-form-field  class="target">
       <mat-select placeholder="Target Land Cover" [(value)]="field.target">
         <mat-option value="base">Revert to Base Land Cover</mat-option>
         <div *ngFor="let cover of allTypes">
@@ -19,7 +21,7 @@
         </div>
       </mat-select>
     </mat-form-field>
-    <button mat-icon-button (click)="removeOption(field)">
+    <button class="target" mat-icon-button (click)="removeOption(field)">
       <mat-icon aria-label="Remove a mapping.">remove_circle</mat-icon>
     </button>
   </div>
@@ -34,8 +36,8 @@
 
   <div>
     Everything Else
-    <mat-icon>arrow_right</mat-icon>
-    <mat-form-field>
+    <mat-icon class="arrow">arrow_right</mat-icon>
+    <mat-form-field class="target">
       <mat-select [(value)]="defaultType">
         <mat-option value="No Change">No Change</mat-option>
         <mat-option value="base">Revert to Base Land Cover</mat-option>
