@@ -94,8 +94,8 @@
 .drag-bottom {
   position: absolute;
   width: calc(100% - 7px);
-  height: 15px;
-  top: calc(100% - 15px);
+  height: 10px;
+  top: calc(100% - 5px);
 }
 
 .drag-bottom:hover {
@@ -104,9 +104,9 @@
 
 .drag-right {
   position: absolute;
-  width: 15px;
+  width: 10px;
   height: calc(100% - 45px);
-  left: calc(100% - 7px);
+  left: calc(100% - 5px);
 }
 
 .drag-right:hover {
@@ -117,8 +117,8 @@
   position: absolute;
   width: 15px;
   height: 15px;
-  top: calc(100% - 15px);
-  left: calc(100% - 15px);
+  top: calc(100% - 7px);
+  left: calc(100% - 7px);
 }
 
 .drag-corner:hover {
@@ -148,4 +148,35 @@ th, td {
   height: 1px;
   transition: left .5s ease-in, top .5s ease-in;
   pointer-events: none;
+}
+
+.no-border {
+  border: none;
+}
+
+
+.no-border-cell-title {
+  border: none;
+  width: 40%;
+}
+
+.no-border-cell-description {
+  border: none;
+  width: 60%;
+  padding-top: 30px;
+}
+
+.no-border-cell-internal {
+  border: none;
+  width: 50%;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+.nested-table {
+  width: 200px;
+}
+
+.header-table {
+  width: 850px;
 }

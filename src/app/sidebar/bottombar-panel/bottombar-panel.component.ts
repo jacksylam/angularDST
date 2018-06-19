@@ -40,7 +40,7 @@ export class BottombarPanelComponent implements OnInit {
       diff: "",
       pchange: ""
     },
-    cells: ""
+    area: ""
   }
 
   displayMetrics = {
@@ -50,7 +50,7 @@ export class BottombarPanelComponent implements OnInit {
       difference: "",
       pchange: ""
     },   
-    cells: "",
+    area: "",
     units: ""
   }
 
@@ -84,9 +84,10 @@ export class BottombarPanelComponent implements OnInit {
 
     this.metrics = metrics;
 
-    console.log(this.metrics);
+    //console.log(this.metrics);
     
     this.displayMetrics.values = metrics[this.units];
+    this.displayMetrics.area = metrics.area;
 
     this.mode = mode;
     

@@ -27,6 +27,9 @@ export class AdvancedMappingDialogComponent implements OnInit {
     this.cancel();
   }
 
+
+  //CHANGE "BACKGROUND" TO "NO RECHARGE" AND PUT AT END
+
   constructor(private dialogRef: MatDialogRef<AdvancedMappingDialogComponent>, @Inject(MAT_DIALOG_DATA) info) {
     this.sourceTypes = info.sourceTypes;
     this.allTypes = info.allTypes;

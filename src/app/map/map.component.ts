@@ -43,6 +43,7 @@ export class MapComponent implements OnInit {
 
   static aquiferIndices: any;
   static aquiferIndexingComplete = false;
+  static readonly METER_TO_MILE_FACTOR = 0.000621371;
 
   mymap: any;
   popup: any;
@@ -119,6 +120,12 @@ export class MapComponent implements OnInit {
 
   numCustomOverlays = 0;
 
+
+  undoStack: any[];
+  redoStack: any[];
+  
+
+
   //static baseStyle: any;
 
   //remember to reformat file so parameter isnt "recharge", etc
@@ -190,6 +197,9 @@ export class MapComponent implements OnInit {
     this.layers = L.control.layers({ "Base Map": empty }, null/*, {collapsed: false}*/).addTo(this.mymap)
 
     this.initializeLayers();
+
+    this.undoStack = [];
+    this.redoStack = [];
 
     this.fileHandler = {
       reader: new FileReader(),
@@ -951,6 +961,147 @@ export class MapComponent implements OnInit {
 
 
 
+/*
+  actions format:
+
+  {
+    type: <type of action>
+    details: {
+      ...
+    }
+  }
+
+  if shape add or remove details will have shape's layer (do inverse action)
+  if modify shape will have layer of shape and old geometry
+  if change land cover will have dictionary of indices changed to old land covers, use database to get recharge to cut down some memory usage
+  if upload have all uploaded shape layers, reference layers, mapping of modified land covers
+*/
+
+
+  //push all actions to undo stack (pop and push to redo stack when action undone)
+  undo() {
+    let action = this.undoStack.pop();
+    this.createAction("undo", {action: action});
+    switch(action.type) {
+      case "add": {
+
+        break;
+      }
+      case "remove": {
+
+        break;
+      }
+      case "modify": {
+
+        break;
+      }
+      case "update": {
+        
+        break;
+      }
+    }
+  }
+
+
+  //redo stack wiped when action performed, when pop off undo stack push to redo stack, when pop from redo push back to undo
+  redo() {
+    let action = this.redoStack.pop();
+    this.createAction("redo", {action: action});
+  }
+
+
+  //used to construct undo and redo stacks from actions
+  createAction(actionType: string, details: any) {
+    switch(actionType) {
+      case "add": {
+        //clear redo stack
+        this.redoStack = [];
+        break;
+      }
+      case "remove": {
+        //clear redo stack
+        this.redoStack = [];
+        break;
+      }
+      case "modify": {
+        //clear redo stack
+        this.redoStack = [];
+        break;
+      }
+      case "update": {
+        //clear redo stack
+        this.redoStack = [];
+        break;
+      }
+      case "upload": {
+        //clear redo stack
+        this.redoStack = [];
+        break;
+      }
+      case "undo": {
+        let inverseAction = this.createInverseAction(details.action);
+        this.redoStack.push(inverseAction);
+        break;
+      }
+      case "redo": {
+        let inverseAction = this.createInverseAction(details.action);
+        this.undoStack.push(inverseAction);
+        break;
+      }
+      default: {
+        console.log("Unrecognized action type.");
+      }
+    }
+
+    
+
+  }
+
+  //do you really need this? start creating actions then decide
+  createInverseAction(action: any): any {
+    switch(action.type) {
+      case "add": {
+
+        break;
+      }
+      case "remove": {
+
+        break;
+      }
+      case "modify": {
+
+        break;
+      }
+      case "update": {
+
+        break;
+      }
+      case "upload": {
+
+        break;
+      }
+      default: {
+        console.log("Not an invertible action type.");
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1066,7 +1217,7 @@ export class MapComponent implements OnInit {
       };
       //add custom naming options later, for now just name by number
       info.name = "Custom Area " + (__this.customAreasCount++).toString();
-      console.log(layer.toGeoJSON())
+      //console.log(layer.toGeoJSON())
       let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()));
       info.metrics = itemMetrics;
       info.roundedMetrics = this.roundMetrics(itemMetrics);
@@ -1080,7 +1231,6 @@ export class MapComponent implements OnInit {
     let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()));
     data.customAreasTotal.metrics = customTotal;
     data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
-
 
     return data;
   }
@@ -1370,30 +1520,32 @@ export class MapComponent implements OnInit {
         diff: 0,
         pchange: 0
       },
-      cells: 0
+      area: 0
     }
 
     let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
     let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
+
+    let cells = 0
 
     //pass in null if want whole map
     if (indexes == null) {
       for (let i = 0; i < rechargeVals.length; i++) {
         //if background value don't count
         if(lcVals[i] != 0) {
-          metrics.cells++;
+          cells++;
           metrics.IPY.current += rechargeVals[i];
           metrics.IPY.original += this.types.recharge.baseData[i];   
         }
       }
 
-      metrics.cells = rechargeVals.length;
+      cells = rechargeVals.length;
     }
     else {
       //get total IPY over cells
       indexes.forEach((index) => {
         if(lcVals[index]) {
-          metrics.cells++;
+          cells++;
           metrics.IPY.current += rechargeVals[index];
           metrics.IPY.original += this.types.recharge.baseData[index];
         }
@@ -1405,11 +1557,14 @@ export class MapComponent implements OnInit {
     metrics.MGPD.original = (metrics.IPY.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
     metrics.MGPD.current = (metrics.IPY.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
 
+    //get square miles
+    metrics.area = Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2) * cells;
+
     //if no cells leave at default value of 0 to avoid dividing by 0
-    if (metrics.cells > 0) {
+    if (cells > 0) {
       //average IPY summation over cells
-      metrics.IPY.original /= metrics.cells;
-      metrics.IPY.current /= metrics.cells;
+      metrics.IPY.original /= cells;
+      metrics.IPY.current /= cells;
 
       //get difference and percent change
       metrics.MGPD.diff = metrics.MGPD.current - metrics.MGPD.original;
@@ -1438,7 +1593,7 @@ export class MapComponent implements OnInit {
         diff: "",
         pchange: ""
       },
-      cells: ""
+      area: ""
     };
 
     let precision = 3;
@@ -1449,9 +1604,9 @@ export class MapComponent implements OnInit {
     roundedMetrics.MGPD.current = metrics.MGPD.current.toPrecision(precision);
     roundedMetrics.IPY.diff = metrics.IPY.diff.toPrecision(precision);
     roundedMetrics.MGPD.diff = metrics.MGPD.diff.toPrecision(precision);
-    roundedMetrics.IPY.pchange = metrics.IPY.pchange.toPrecision(precision);
-    roundedMetrics.MGPD.pchange = metrics.MGPD.pchange.toPrecision(precision);
-    roundedMetrics.cells = metrics.cells.toString();
+    roundedMetrics.IPY.pchange = metrics.IPY.pchange.toPrecision(precision) + "%";
+    roundedMetrics.MGPD.pchange = metrics.MGPD.pchange.toPrecision(precision) + "%";
+    roundedMetrics.area = metrics.area.toPrecision(precision);
 
 
     return roundedMetrics;
@@ -2567,6 +2722,12 @@ export class MapComponent implements OnInit {
     info.roundedMetrics = this.roundMetrics(itemMetrics);
 
     this.metrics.customAreas.push(info);
+
+    //update custom areas total
+    //can definately improve upon this
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()));
+    this.metrics.customAreasTotal.metrics = customTotal;
+    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
 
@@ -2657,6 +2818,8 @@ export class MapComponent implements OnInit {
       if(type == "advanced") {
 
         //NEED TO ASK IF TYPE 0 (BACKGROUND) VALID LAND COVER IN DATA SET (IS INDEX 0 BACKGROUND IN DB?)
+        //it is
+
         let info: any = {}
 
         let containedTypes = new Set();

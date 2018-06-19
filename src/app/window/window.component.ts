@@ -2,7 +2,7 @@ import { animate, transition, state, trigger, style, Component, AfterViewInit, I
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
 
-declare var jsPDF: any;
+declare let jsPDF: any;
 
 @Component({
   selector: 'app-window',
@@ -89,8 +89,8 @@ export class WindowComponent implements AfterViewInit {
   constructor(private windowService: WindowService, private _renderer: Renderer) { }
 
   ngAfterViewInit() {
-    var __this = this;
-    var resizeFunct;
+    let __this = this;
+    let resizeFunct;
     this.scrollLock = false;
 
     this.divsIndex = WindowComponent.windowDivs.length;
@@ -255,8 +255,8 @@ export class WindowComponent implements AfterViewInit {
 
   startDragging(e) {
     const container = WindowComponent.lastClickDiv;
-    var left = e.pageX - container.mouseCornerOffset.left;
-    var top = e.pageY - container.mouseCornerOffset.top;
+    let left = e.pageX - container.mouseCornerOffset.left;
+    let top = e.pageY - container.mouseCornerOffset.top;
 
 
     if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 20) {
@@ -290,8 +290,8 @@ export class WindowComponent implements AfterViewInit {
     e.preventDefault();
     const container = WindowComponent.lastClickDiv;
     //console.log(container)
-    var left = window.pageXOffset - container.scrollPos.left + container.panelDiv.nativeElement.offsetLeft;
-    var top = window.pageYOffset - container.scrollPos.top + container.panelDiv.nativeElement.offsetTop;
+    let left = window.pageXOffset - container.scrollPos.left + container.panelDiv.nativeElement.offsetLeft;
+    let top = window.pageYOffset - container.scrollPos.top + container.panelDiv.nativeElement.offsetTop;
 
     //console.log(e);
     //console.log(top);
@@ -397,99 +397,152 @@ export class WindowComponent implements AfterViewInit {
 
   //later should have different types, ignore parameter for now
   download(type: string) {
-    var columnsName = [
+    let columnsName = [
       {title: "Name", dataKey: "name"},
-      {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
-      {title: "Current Recharge (in/y)", dataKey: "criny"}, 
-      {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
-      {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
-      {title: "Number of Cells (75m^2)", dataKey: "numcells"}, 
-      {title: "Difference (Mgal/d)", dataKey: "diffmgd"},
-      {title: "Percent Change (Mgal/d)", dataKey: "pchangemgd"},
-      {title: "Difference (in/y)", dataKey: "diffiny"},
-      {title: "Percent Change (in/y)", dataKey: "pchangeiny"}  
+      {title: "Area (Square Miles)", dataKey: "area"}, 
+      {title: "Baseline", dataKey: "oriny"}, 
+      {title: "This Analysis", dataKey: "criny"}, 
+      {title: "Baseline", dataKey: "ormgd"}, 
+      {title: "This Analysis", dataKey: "crmgd"},
+      {title: "Million Gallons Per Day", dataKey: "diff"},
+      {title: "Percent Change", dataKey: "pchange"}
     ];
-    var columnsNameless = [
-      {title: "Original Recharge (in/y)", dataKey: "oriny"}, 
-      {title: "Current Recharge (in/y)", dataKey: "criny"}, 
-      {title: "Original Recharge (Mgal/d)", dataKey: "ormgd"}, 
-      {title: "Current Recharge (Mgal/d)", dataKey: "crmgd"},
-      {title: "Number of Cells (75m^2)", dataKey: "numcells"}, 
-      {title: "Difference (Mgal/d)", dataKey: "diffmgd"},
-      {title: "Percent Change (Mgal/d)", dataKey: "pchangemgd"},
-      {title: "Difference (in/y)", dataKey: "diffiny"},
-      {title: "Percent Change (in/y)", dataKey: "pchangeiny"} 
+    let columnsSummary = [
+      {title: "", dataKey: "type"}, 
+      {title: "User Defined Areas", dataKey: "uda"}, 
+      {title: "Island", dataKey: "total"}
+    ];
+    let infoHeaders = [
+      {title: "", dataKey: "blank"},
+      {title: "Total Recharge\n(Million Gallons Per Day)", dataKey: "cat1"},
+      {title: "Average Recharge\n(Inches Per Year)", dataKey: "cat2"},
+      {title: "Volumetric Difference", dataKey: "cat3"}
     ];
 
-    var rows = [];
     
+  
+    let y = 50;
+    
+    this.pdf = new jsPDF('p', 'pt');
+
+    let width = this.pdf.internal.pageSize.width;    
+    let height = this.pdf.internal.pageSize.height;
+
+    let titleSize = 18;
+    let descriptionSize = 8;
+    let disclaimerSize = 9;
+
+    let nameWidth = 90;
+    //subtract 80 from width, 40 buffer on each side
+    let remainingWidth = width - 80 - nameWidth;
+    let normalWidth = remainingWidth / 7;
+    let blankWidth = nameWidth + normalWidth;
+
+    let rows = [];
+    
+    this.pdf.autoTable(infoHeaders, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4, halign: "center"},
+      columnStyles: {
+        blank: {columnWidth: blankWidth},
+        cat1: {columnWidth: normalWidth * 2},
+        cat2: {columnWidth: normalWidth * 2},
+        cat3: {columnWidth: normalWidth * 2}
+      },
+      margin: {top: 60}
+    });
+
+    //rows = [];
 
     this.windowPanel.data.aquifers.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
+        area: aquifer.roundedMetrics.area,
         oriny: aquifer.roundedMetrics.IPY.original,
         criny: aquifer.roundedMetrics.IPY.current,
         ormgd: aquifer.roundedMetrics.MGPD.original,
         crmgd: aquifer.roundedMetrics.MGPD.current,
-        numcells: aquifer.roundedMetrics.cells,
-        diffmgd: aquifer.roundedMetrics.MGPD.diff,
-        pchangemgd: aquifer.roundedMetrics.MGPD.pchange,
-        diffiny: aquifer.roundedMetrics.IPY.diff,
-        pchangeiny: aquifer.roundedMetrics.IPY.pchange
+        diff: aquifer.roundedMetrics.MGPD.diff,
+        pchange: aquifer.roundedMetrics.MGPD.pchange,
       })
     })
-  
-    var y = 50;
-    
-    this.pdf = new jsPDF('p', 'pt');
 
-    var width = this.pdf.internal.pageSize.width;    
-    var height = this.pdf.internal.pageSize.height;
-
-    this.pdf.text(50, y, "Aquifers");
+    this.pdf.setFontSize(titleSize);
+    this.pdf.text(50, y, "Aquifer Systems");
+    this.pdf.setFontSize(descriptionSize);
+    this.pdf.text(220, y - 5, "Hydrological units established by the Hawaii State Comission on Water Resource");
+    this.pdf.text(220, y + 5, "Management to manage groundwater resources");
     this.pdf.autoTable(columnsName, rows, {
-      startY: y + 20,
+      startY: y + 50,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
-        name: {columnWidth: 90},
+        name: {columnWidth: nameWidth},
+        area: {columnWidth: normalWidth},
+        oriny: {columnWidth: normalWidth},
+        criny: {columnWidth: normalWidth},
+        ormgd: {columnWidth: normalWidth},
+        crmgd: {columnWidth: normalWidth},
+        diff: {columnWidth: normalWidth},
+        pchange: {columnWidth: normalWidth}
       },
       margin: {top: 60}
     });
 
-    y = this.pdf.autoTable.previous.finalY + 50
+    y = this.pdf.autoTable.previous.finalY + 50;
 
     if(y + 50 >= height) {
       this.pdf.addPage();
       y = 50;
     }
     
-
-    this.pdf.text(50, y, "Custom Areas");
+    this.pdf.setFontSize(titleSize);
+    this.pdf.text(50, y, "User Defined Areas");
+    this.pdf.setFontSize(descriptionSize);
+    this.pdf.text(220, y, "Areas of land cover change designated by the user for this analysis");
 
     rows = [];
+
+    this.pdf.autoTable(infoHeaders, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4, halign: "center"},
+      columnStyles: {
+        blank: {columnWidth: blankWidth},
+        cat1: {columnWidth: normalWidth * 2},
+        cat2: {columnWidth: normalWidth * 2},
+        cat3: {columnWidth: normalWidth * 2}
+      },
+      margin: {top: 60}
+    });
 
     this.windowPanel.data.customAreas.forEach((customArea) => {
       rows.push({
         name: customArea.name,
+        area: customArea.roundedMetrics.area,
         oriny: customArea.roundedMetrics.IPY.original,
         criny: customArea.roundedMetrics.IPY.current,
         ormgd: customArea.roundedMetrics.MGPD.original,
         crmgd: customArea.roundedMetrics.MGPD.current,
-        numcells: customArea.roundedMetrics.cells,
-        diffmgd: customArea.roundedMetrics.MGPD.diff,
-        pchangemgd: customArea.roundedMetrics.MGPD.pchange,
-        diffiny: customArea.roundedMetrics.IPY.diff,
-        pchangeiny: customArea.roundedMetrics.IPY.pchange
-      })
-    })
+        diff: customArea.roundedMetrics.MGPD.diff,
+        pchange: customArea.roundedMetrics.MGPD.pchange,
+      });
+    });
 
     this.pdf.autoTable(columnsName, rows, {
-      startY: y + 20,
+      startY: y + 50,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
-        name: {columnWidth: 90},
+        name: {columnWidth: nameWidth},
+        area: {columnWidth: normalWidth},
+        oriny: {columnWidth: normalWidth},
+        criny: {columnWidth: normalWidth},
+        ormgd: {columnWidth: normalWidth},
+        crmgd: {columnWidth: normalWidth},
+        diff: {columnWidth: normalWidth},
+        pchange: {columnWidth: normalWidth}
       },
       margin: {top: 60}
     });
@@ -501,24 +554,51 @@ export class WindowComponent implements AfterViewInit {
       y = 50;
     }
 
-    this.pdf.text(50, y, "Custom Areas Total");
+
+    this.pdf.setFontSize(titleSize);
+    this.pdf.text(50, y, "Summary");
 
     rows = [];
+    let total = this.windowPanel.data.total
+    let customAreasTotal = this.windowPanel.data.customAreasTotal;
 
-    var customAreasTotal = this.windowPanel.data.customAreasTotal;
     rows.push({
-      oriny: customAreasTotal.roundedMetrics.IPY.original,
-      criny: customAreasTotal.roundedMetrics.IPY.current,
-      ormgd: customAreasTotal.roundedMetrics.MGPD.original,
-      crmgd: customAreasTotal.roundedMetrics.MGPD.current,
-      numcells: customAreasTotal.roundedMetrics.cells,
-      diffmgd: customAreasTotal.roundedMetrics.MGPD.diff,
-      pchangemgd: customAreasTotal.roundedMetrics.MGPD.pchange,
-      diffiny: customAreasTotal.roundedMetrics.IPY.diff,
-      pchangeiny: customAreasTotal.roundedMetrics.IPY.pchange
-    })
+      type: "Area Total (Square Miles)",
+      uda: customAreasTotal.roundedMetrics.area,
+      total: total.roundedMetrics.area
+    });
+    rows.push({
+      type: "Total Recharge, Baseline (Million Gallons Per Day)",
+      uda: customAreasTotal.roundedMetrics.MGPD.original,
+      total: total.roundedMetrics.MGPD.original
+    });
+    rows.push({
+      type: "Total Recharge, This Analysis (Million Gallons Per Day)",
+      uda: customAreasTotal.roundedMetrics.MGPD.current,
+      total: total.roundedMetrics.MGPD.current
+    });
+    rows.push({
+      type: "Average Recharge, Baseline (Inches Per Year)",
+      uda: customAreasTotal.roundedMetrics.IPY.original,
+      total: total.roundedMetrics.IPY.original
+    });
+    rows.push({
+      type: "Average Recharge, This Analysis (Inches Per Year)",
+      uda: customAreasTotal.roundedMetrics.IPY.current,
+      total: total.roundedMetrics.IPY.current
+    });
+    rows.push({
+      type: "Volumetric Difference (Million Gallons Per Day)",
+      uda: customAreasTotal.roundedMetrics.MGPD.diff,
+      total: total.roundedMetrics.MGPD.diff
+    });
+    rows.push({
+      type: "Volumetric Percent Change",
+      uda: customAreasTotal.roundedMetrics.MGPD.pchange,
+      total: total.roundedMetrics.MGPD.pchange
+    });
 
-    this.pdf.autoTable(columnsNameless, rows, {
+    this.pdf.autoTable(columnsSummary, rows, {
       startY: y + 20,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
@@ -529,43 +609,41 @@ export class WindowComponent implements AfterViewInit {
     });
 
 
-    y = this.pdf.autoTable.previous.finalY + 50
+  //   y = this.pdf.autoTable.previous.finalY + 50
 
-    if(y + 50 >= height) {
-      this.pdf.addPage();
-      y = 50;
-    }
+  //   if(y + 50 >= height) {
+  //     this.pdf.addPage();
+  //     y = 50;
+  //   }
 
-   // this.pdf.addImage(this.graphImageData[2], 'PNG', 15, y, 550, 250);
+  //  // this.pdf.addImage(this.graphImageData[2], 'PNG', 15, y, 550, 250);
 
 
-    this.pdf.text(50, y, "Map Total");
+  //   this.pdf.text(50, y, "Map Total");
 
-    rows = [];
+  //   rows = [];
 
-    var total = this.windowPanel.data.total
-    rows.push({
-      oriny: total.roundedMetrics.IPY.original,
-      criny: total.roundedMetrics.IPY.current,
-      ormgd: total.roundedMetrics.MGPD.original,
-      crmgd: total.roundedMetrics.MGPD.current,
-      numcells: total.roundedMetrics.cells,
-      diffmgd: total.roundedMetrics.MGPD.diff,
-      pchangemgd: total.roundedMetrics.MGPD.pchange,
-      diffiny: total.roundedMetrics.IPY.diff,
-      pchangeiny: total.roundedMetrics.IPY.pchange
-    })
+    
+  //   rows.push({
+  //     oriny: total.roundedMetrics.IPY.original,
+  //     criny: total.roundedMetrics.IPY.current,
+  //     ormgd: total.roundedMetrics.MGPD.original,
+  //     crmgd: total.roundedMetrics.MGPD.current,
+  //     numcells: total.roundedMetrics.area,
+  //     diff: total.roundedMetrics.MGPD.diff,
+  //     pchange: total.roundedMetrics.MGPD.pchange,
+  //   })
     
 
-    this.pdf.autoTable(columnsNameless, rows, {
-      startY: y + 20,
-      styles: {
-        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
-      columnStyles: {
-        name: {columnWidth: 90},
-      },
-      margin: {top: 60}
-    });
+  //   this.pdf.autoTable(columnsNameless, rows, {
+  //     startY: y + 20,
+  //     styles: {
+  //       overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
+  //     columnStyles: {
+  //       name: {columnWidth: 90},
+  //     },
+  //     margin: {top: 60}
+  //   });
 
     y = this.pdf.autoTable.previous.finalY + 50;
 
@@ -578,7 +656,7 @@ export class WindowComponent implements AfterViewInit {
 
     y += 10;
 
-    for(var i = 0; i < this.graphOrder.length; i++) {
+    for(let i = 0; i < this.graphOrder.length; i++) {
       if(y + 275 >= height) {
         this.pdf.addPage();
         y = 50;
@@ -590,37 +668,38 @@ export class WindowComponent implements AfterViewInit {
 
     }
 
+
     //the joys of formatting
-    var fSize = 9;
+
     //extra space since whitespace doesn't seem to be accounted for in width computation
-    var h1 = "Disclaimer:   ";
-    var t1 = "The website authors, webmasters, the USGS, the United States Government, and the University of Hawai‘i make no warranty as to accuracy or completeness and are not obligated to provide any support, consulting, training or assistance with regard to the use, operation, and performance of this website. The user assumes all risks for any damages whatsoever resulting from loss of use, data, or profits arising in connection with the access, use, quality, or performance of this website."
-    var h2 = "Limitations:  ";
-    var t2 = "The user is responsible for understanding the limitations of this website, assumptions of the website’s methods, and the implications of these limitations and assumptions for any analysis done using this website. This website has limited ability to (1) assess differences in runoff related to different land cover types, such as urban vs. vegetated surfaces, (2) assess groundwater/surface-water interaction, (3) surface flow between model cells, or (4) differences between native and non-native forests. Some data used in the models, such as future climate and runoff from ungaged basins, are highly uncertain. The website does not distinguish between what is plausible and what is unrealistic; the user is responsible for knowing the plausibility of scenarios they test.";
+    let h1 = "Disclaimer:   ";
+    let t1 = "The website authors, webmasters, the USGS, the United States Government, and the University of Hawai‘i make no warranty as to accuracy or completeness and are not obligated to provide any support, consulting, training or assistance with regard to the use, operation, and performance of this website. The user assumes all risks for any damages whatsoever resulting from loss of use, data, or profits arising in connection with the access, use, quality, or performance of this website."
+    let h2 = "Limitations:  ";
+    let t2 = "The user is responsible for understanding the limitations of this website, assumptions of the website’s methods, and the implications of these limitations and assumptions for any analysis done using this website. This website has limited ability to (1) assess differences in runoff related to different land cover types, such as urban vs. vegetated surfaces, (2) assess groundwater/surface-water interaction, (3) surface flow between model cells, or (4) differences between native and non-native forests. Some data used in the models, such as future climate and runoff from ungaged basins, are highly uncertain. The website does not distinguish between what is plausible and what is unrealistic; the user is responsible for knowing the plausibility of scenarios they test.";
     //first line offsets after header
-    var offset1 = this.pdf.getStringUnitWidth(h1) * 9;
-    var offset2 = this.pdf.getStringUnitWidth(h2) * 9;
+    let offset1 = this.pdf.getStringUnitWidth(h1) * 9;
+    let offset2 = this.pdf.getStringUnitWidth(h2) * 9;
     //width of page with 50 padding on either end
-    var pwidth = this.pdf.internal.pageSize.width;
+    let pwidth = this.pdf.internal.pageSize.width;
     //width of line after header
-    var firstLineWidth1 = pwidth - offset1;
+    let firstLineWidth1 = pwidth - offset1;
     //get first line (different from other lines since bolded header)
-    var firstLineText1 = this.pdf.splitTextToSize(t1, firstLineWidth1)[0]
+    let firstLineText1 = this.pdf.splitTextToSize(t1, firstLineWidth1)[0]
     //remaining text after first line (remove one extra character to get rid of space)
-    var remainingText1 = t1.substring(firstLineText1.length + 1, t1.length);
+    let remainingText1 = t1.substring(firstLineText1.length + 1, t1.length);
     //get the rest of the lines of text, split at page width
-    var restLinesText1 = this.pdf.splitTextToSize(remainingText1, pwidth);
+    let restLinesText1 = this.pdf.splitTextToSize(remainingText1, pwidth);
 
     //width of line after header
-    var firstLineWidth2 = pwidth - offset1;
+    let firstLineWidth2 = pwidth - offset1;
     //get first line (different from other lines since bolded header)
-    var firstLineText2 = this.pdf.splitTextToSize(t2, firstLineWidth2)[0]
+    let firstLineText2 = this.pdf.splitTextToSize(t2, firstLineWidth2)[0]
     //remaining text after first line (remove one extra character to get rid of space)
-    var remainingText2 = t1.substring(firstLineText2.length + 1, t2.length);
+    let remainingText2 = t1.substring(firstLineText2.length + 1, t2.length);
     //get the rest of the lines of text, split at page width
-    var restLinesText2 = this.pdf.splitTextToSize(remainingText2, pwidth);
+    let restLinesText2 = this.pdf.splitTextToSize(remainingText2, pwidth);
 
-    this.pdf.setFontSize(fSize);
+    this.pdf.setFontSize(disclaimerSize);
     
     this.pdf.setFontType("bold");
     this.pdf.text(50, y, h1);
@@ -670,7 +749,7 @@ export class WindowComponent implements AfterViewInit {
   //graphs in Mgal/year, might want to add methods to change
   generateReportGraphs() {
 
-    var graphData = {
+    let graphData = {
       aquifers: {
         data: [{
           x: [],
@@ -828,7 +907,7 @@ export class WindowComponent implements AfterViewInit {
     }
     
 
-    // var current = {
+    // let current = {
     //   x: ['Recharge'],
     //   y: [currentRecharge],
     //   name: 'Current',
@@ -838,10 +917,10 @@ export class WindowComponent implements AfterViewInit {
     
 
     //start display 10 units below min value, but not less than 0
-    // var minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
+    // let minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
     // //max recharge 75% of graph height
-    // var maxRecharge = Math.max(originalRecharge, currentRecharge);
-    // var maxScale = maxRecharge + .75 * (maxRecharge - minScale);
+    // let maxRecharge = Math.max(originalRecharge, currentRecharge);
+    // let maxScale = maxRecharge + .75 * (maxRecharge - minScale);
     // //if both values are 0 just set it to 1
     // if(maxScale == 0) {
     //   maxScale = 1;
