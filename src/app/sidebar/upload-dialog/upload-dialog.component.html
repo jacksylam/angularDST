@@ -29,12 +29,12 @@
 
 <br>
 
-*Uploading a land cover file will overwite any existing modifications.
+*Uploading a land cover file will overwite any modifications made to areas specified by the file.
 
 <br>
 
 <mat-dialog-actions>
-  <button class="mat-raised-button"(click)="close()">Cancel</button>
+  <button mat-raised-button (click)="close()">Cancel</button>
   <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="close($event)" multiple #fileSelect/>
-  <button class="mat-raised-button mat-primary" (click)="fileSelect.click()">Select Files</button>
+  <button mat-raised-button class="mat-primary" (click)="fileSelect.click()">Select Files</button>
 </mat-dialog-actions>

@@ -305,8 +305,8 @@ export class MapComponent implements OnInit {
           if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
             //round down to nearest 75
-            diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
-            diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
+            diffx = Math.floor(diffx / 75) * 75;
+            diffy = Math.floor(diffy / 75) * 75;
 
             //get cell boundaries as geojson object to draw on map
             //cell corners
@@ -689,8 +689,8 @@ export class MapComponent implements OnInit {
       if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
         //round down to nearest 75
-        diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
-        diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
+        diffx = Math.floor(diffx / 75) * 75;
+        diffy = Math.floor(diffy / 75) * 75;
 
         //get cell boundaries as geojson object to draw on map
         //cell corners
@@ -1774,14 +1774,21 @@ export class MapComponent implements OnInit {
           
           let base = this.types.landCover.data._covjson.ranges.cover.values;
 
-          if(info.overwrite) {
-            this.types.landCover.baseData = data.cover;
-          }
+          
 
-          //values stored in an ndarray, breaks if internal array replaced, so need to iterate and replace values in pre-made array
-          //might have something to do with the formatting bug, look back into this when that figured out
+          
           for(let i = 0; i < base.length; i++) {
-            base[i] = data.cover[i];
+            //don't replace if nodata value
+            if(data.cover.values[i] != data.cover.nodata) {
+              base[i] = data.cover.values[i];
+
+              //if overwriting base values, set value in baseData array
+              if(info.overwrite) {
+                this.types.landCover.baseData[i] = data.cover.values[i];
+              }
+            }
+
+            
           }
 
           this.loadCover(this.types.landCover, false);
@@ -1821,7 +1828,7 @@ export class MapComponent implements OnInit {
     }
 
 
-    let verify = (zipped: boolean, file: any, format: string) => {
+    let verifyAndParse = (zipped: boolean, file: any, format: string) => {
 
       
 
@@ -1951,30 +1958,194 @@ export class MapComponent implements OnInit {
 
           else if(format == "asc") {
             test = (data) => {
-              //get data values after first six detail lines
-              let valChunk = data.split('\n')[6];
-              //split on spaces, tabs, or commas for values
-              let vals = valChunk.split(/[ \t,]+/);
 
-              //if whitespace at the end might reult in a blank element, remove this
-              if(vals[vals.length - 1] == "") {
-                vals.splice(vals.length - 1, 1);
-              }
+              //INSTEAD OF THIS, LETS JUST CONSTRUCT A FULL DATA GRID, FILL IN MISSING VALUES WITH NO DATA VALUE
+              //ONLY NEED TO BASS BACK VALUE GRID AND NO DATA VALUE
+              // let parsedData = {
+              //   ncols: 0,
+              //   nrows: 0,
+              //   xStart: 0,
+              //   yStart: 0,
+              //   nodata: 0,
+              //   values: []
+              // };
+              let parsedData: {
+                nodata: number,
+                values: number[]
+              };
 
-              //verify number of values
-              if(vals.length != this.gridWidthCells * this.gridHeightCells) {
+              //split into elements
+              let details = data.split('\n');
+
+              let ncols = Number(details[0].split(/[ \t,]+/)[1]);
+              let nrows = Number(details[1].split(/[ \t,]+/)[1]);
+              let xCorner = Number(details[2].split(/[ \t,]+/)[1]);
+              let yCorner = Number(details[3].split(/[ \t,]+/)[1]);
+              let cellSize = Number(details[4].split(/[ \t,]+/)[1]);
+              let noData = Number(details[5].split(/[ \t,]+/)[1]);
+
+              //for now, reject different resolutions
+              // if(cellSize != 75) {
+              //   reject();
+              // }
+
+              //ensure noData value is not an otherwise valid value (whole number in value range)
+              if(noData % 1 == 0 && noData >= this.validLandcoverRange.min && noData <= this.validLandcoverRange.max) {
                 reject();
               }
+
+              
+
+
+              //all of these weird mapping things need to change when fix covjson
+              let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+              let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+              let getCentroidComponentIndices = (x, y) => {
+                let diffx = x - this.xmin;
+                let diffy = y - this.ymin;
+  
+                //don't need this, just check indexOf
+                //reject if out of range of grid
+                // if (!(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange)) {
+                //   reject();
+                // }
+  
+                //round down to nearest 75 (get cell leading edge)
+                diffx = Math.floor(diffx / 75) * 75;
+                diffy = Math.floor(diffy / 75) * 75;
+  
+                //add to min offset and add 37.5 to get centroid
+                let xCellVal = this.xmin + 37.5 + diffx;
+                let yCellVal = this.ymin + 37.5 + diffy;
+  
+                
+                //find index of cell with coordinates
+                return {
+                  xIndex: xs.indexOf(xCellVal),
+                  yIndex: ys.indexOf(yCellVal)
+                };
+              }
+
+
+              
+              let minCentroid = getCentroidComponentIndices(xCorner, yCorner);
+
+              //check if corner centroid valid, reject if it isn't
+              if(minCentroid.xIndex < 0 || minCentroid.yIndex < 0) {
+                reject();
+              }
+
+              //values array might have newlines in it (especially between rows)
+              let vals = [];
+              for(let i = 6; i < details.length; i++) {
+                //get data values after first six detail lines
+                //split on spaces, tabs, or commas for values
+                vals = vals.concat(details[i].split(/[ \t,]+/));
+                
+                //if whitespace at the end might reult in whitespace only element, remove these
+                if(vals[vals.length - 1].trim() == "") {
+                  vals.splice(vals.length - 1, 1);
+                }
+                
+              }
+          
+              //verify number of values
+              if(vals.length != ncols * nrows) {
+                console.log(vals.length);
+                console.log(ncols * nrows)
+                reject();
+              }
+          
               //convert values to numbers and ensure valid
               for(let i = 0; i < vals.length; i++) {
                 //values strings, convert to numbers
                 vals[i] = Number(vals[i]);
-                if(vals[i] % 1 != 0 || vals[i] < this.validLandcoverRange.min || vals[i] > this.validLandcoverRange.max) {
+                //whole number in valid range or no data value
+                if((vals[i] % 1 != 0 || vals[i] < this.validLandcoverRange.min || vals[i] > this.validLandcoverRange.max) && vals[i] != noData) {
+                  console.log("test2");
                   reject();
                 }
               }
+          
+              let getLocalIndex = (x, y) => {
+                return y * ncols + x;
+              }
+
+              //if proper resolution just fill in grid sequentially
+              if(cellSize == 75) {
+
+                //if standard cell size only need to add indexes, since will align to grid once shifted
+                let maxXIndex = minCentroid.xIndex + ncols;
+                let maxYIndex = minCentroid.yIndex - nrows;
+                //reject if grid goes out of range
+                if(maxXIndex > this.gridWidthCells || maxYIndex > this.gridHeightCells) {
+                  console.log(maxXIndex);
+                  console.log(maxYIndex);
+                  console.log(this.gridWidthCells);
+                  console.log(this.gridHeightCells);
+                  reject();
+                }
+            
+                //grid exact size, just accept with provided value grid
+                if(ncols == this.gridWidthCells && nrows == this.gridHeightCells) {
+                  parsedData = {
+                    nodata: noData,
+                    //initialize to full grid size array with all noData values
+                    values: vals
+                  };
+                }
+                //otherwise need to insert values into full grid
+                else {
+                  parsedData = {
+                    nodata: noData,
+                    //initialize to full grid size array with all noData values
+                    values: new Array(this.gridWidthCells * this.gridHeightCells).fill(noData)
+                  };
+
+                  for(let localX = 0; localX < ncols; localX++) {
+                    for(let localY = 0; localY < nrows; localY++) {
+                      let globalIndex = this.getIndex(minCentroid.xIndex + localX, minCentroid.yIndex + localY);
+                      let localIndex = getLocalIndex(localX, localY);
+                      parsedData.values[globalIndex] = vals[localIndex];
+                    }
+                  }
+                }
+
+                
+              }
+              
+              else {
+                //get range of grid, ensure in bounds
+                let maxXOffset = ncols * cellSize;
+                let maxYOffset = nrows * cellSize;
+                let maxX = xCorner + maxXOffset;
+                let maxY = yCorner + maxYOffset;
+
+                let maxCentroid = getCentroidComponentIndices(maxX, maxY);
+                //check if max corner centroid valid, reject if it isn't
+                if(maxCentroid.xIndex < 0 || maxCentroid.yIndex < 0) {
+                  reject();
+                }
+
+                parsedData = {
+                  nodata: noData,
+                  //initialize to full grid size array with all noData values
+                  values: new Array(this.gridWidthCells * this.gridHeightCells).fill(noData)
+                };
+
+                //DO OTHER THINGS
+                //reject for now
+                reject()
+              }
+              
+
+
+
+
+              
               //if everything looks good accept, passing back the value array
-              accept(vals);
+              accept(parsedData);
             }
 
 
@@ -2034,7 +2205,7 @@ export class MapComponent implements OnInit {
           //check if file extension indicates acceptible format
           if(acceptFormats.includes(type)) {
             //verify the file to be desired format
-            verify(zipped, files[i], type).then((data) => {
+            verifyAndParse(zipped, files[i], type).then((data) => {
 
               //accept with returned data if file verified
               accept(data);
@@ -2646,8 +2817,8 @@ export class MapComponent implements OnInit {
     if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
 
       //round down to nearest 75
-      diffx = diffx == 0 ? 0 : Math.floor(diffx / 75) * 75
-      diffy = diffy == 0 ? 0 : Math.floor(diffy / 75) * 75
+      diffx = Math.floor(diffx / 75) * 75;
+      diffy = Math.floor(diffy / 75) * 75;
 
       //get cell boundaries as geojson object to draw on map
       //cell corners
