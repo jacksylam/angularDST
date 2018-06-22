@@ -1895,7 +1895,6 @@ export class MapComponent implements OnInit {
                   reject();
                 }
 
-                //think can redefine onload function, if not working might have to reinitialize file reader
                 this.fileHandler.reader.onload = (e) => {
                   test(this.fileHandler.reader.result);
                 }
@@ -1960,7 +1959,7 @@ export class MapComponent implements OnInit {
             test = (data) => {
 
               //INSTEAD OF THIS, LETS JUST CONSTRUCT A FULL DATA GRID, FILL IN MISSING VALUES WITH NO DATA VALUE
-              //ONLY NEED TO BASS BACK VALUE GRID AND NO DATA VALUE
+              //ONLY NEED TO PASS BACK VALUE GRID AND NO DATA VALUE
               // let parsedData = {
               //   ncols: 0,
               //   nrows: 0,
@@ -2038,16 +2037,18 @@ export class MapComponent implements OnInit {
 
               //values array might have newlines in it (especially between rows)
               let vals = [];
+              //console.log(details.length);
               for(let i = 6; i < details.length; i++) {
                 //get data values after first six detail lines
                 //split on spaces, tabs, or commas for values
                 vals = vals.concat(details[i].split(/[ \t,]+/));
+                //console.log(details[i].length)
                 
                 //if whitespace at the end might reult in whitespace only element, remove these
                 if(vals[vals.length - 1].trim() == "") {
                   vals.splice(vals.length - 1, 1);
                 }
-                
+                //console.log(vals[vals.length - 1]);
               }
           
               //verify number of values
@@ -2069,7 +2070,9 @@ export class MapComponent implements OnInit {
               }
           
               let getLocalIndex = (x, y) => {
-                return y * ncols + x;
+                //grid goes from lower left (left to right bottom to top)
+                //global indices are offset from min value, these are raw so need to offset from bottom on y axis
+                return (nrows - y) * ncols + x;
               }
 
               //if proper resolution just fill in grid sequentially
@@ -2105,7 +2108,7 @@ export class MapComponent implements OnInit {
 
                   for(let localX = 0; localX < ncols; localX++) {
                     for(let localY = 0; localY < nrows; localY++) {
-                      let globalIndex = this.getIndex(minCentroid.xIndex + localX, minCentroid.yIndex + localY);
+                      let globalIndex = this.getIndex(minCentroid.xIndex + localX, minCentroid.yIndex - localY);
                       let localIndex = getLocalIndex(localX, localY);
                       parsedData.values[globalIndex] = vals[localIndex];
                     }
@@ -2135,8 +2138,64 @@ export class MapComponent implements OnInit {
                 };
 
                 //DO OTHER THINGS
-                //reject for now
-                reject()
+
+                //need to get cells of all values since won't align even after shifted
+                //higher resolution, overlap and overwrite
+                if(cellSize < 75) {
+                  for(let i = 0; i < ncols; i++) {
+                    for(let j = 0; j < nrows; j++) {
+                      //get containing cell
+                      let xOffset = cellSize * i;
+                      let yOffset = cellSize * j;
+                      let x = xCorner + xOffset;
+                      let y = yCorner + yOffset;
+                      //find centroid coordinates
+                      let centroid = getCentroidComponentIndices(x, y);
+                      //put values in grid
+                      let globalIndex = this.getIndex(centroid.xIndex, centroid.yIndex);
+                      let localIndex = getLocalIndex(centroid.xIndex, centroid.yIndex);
+                      parsedData.values[globalIndex] = vals[localIndex];
+                    }
+                  }
+                  
+                }
+                //lower resolution, will have cells no covered, need to go back over and blend values
+                else {
+                  //put in all specified grid values
+                  for(let i = 0; i < ncols; i++) {
+                    for(let j = 0; j < nrows; j++) {
+                      //get containing cell
+                      let xOffset = cellSize * i;
+                      let yOffset = cellSize * j;
+                      let x = xCorner + xOffset;
+                      let y = yCorner + yOffset;
+                      //find centroid coordinates
+                      let centroid = getCentroidComponentIndices(x, y);
+                      //put values in grid
+                      let globalIndex = this.getIndex(centroid.xIndex, centroid.yIndex);
+                      let localIndex = getLocalIndex(centroid.xIndex, centroid.yIndex);
+                      parsedData.values[globalIndex] = vals[localIndex];
+                    }
+                  }
+
+                  //go back over and fill in gaps
+                  //can't do this... might have nodata values in provided grid, don't want to shove junk values in these
+
+                  // let lastValue = 
+                  // for(let localX = 0; localX < ncols; localX++) {
+                  //   for(let localY = 0; localY < nrows; localY++) {
+                  //     let globalIndex = this.getIndex(minCentroid.xIndex + localX, minCentroid.yIndex - localY);
+                  //     if(parsedData.values[globalIndex] == noData) {
+                  //       parsedData.values[globalIndex] = lastValue;
+                  //     }
+                  //     else {
+                  //       lastValue = parsedData.values[globalIndex];
+                  //     }
+                  //   }
+                  // }
+
+                  //for now just leave like this (same as higher resolution), probably want to figure out a good way to fill out gaps
+                }
               }
               
 
@@ -2533,9 +2592,15 @@ export class MapComponent implements OnInit {
         fcontents += "cellsize " + 75 + "\n";
         fcontents += "NODATA_value -9999 \n";
     
+        let colCounter = 0;
         //add data
         vals.forEach((val) => {
           fcontents += val + " "
+          //should have newline at the end of every row
+          if(++colCounter >= this.gridWidthCells) {
+            fcontents += "\n";
+            colCounter = 0;
+          }
         })
       }
       else if(format == "covjson") {
