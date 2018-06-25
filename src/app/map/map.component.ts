@@ -2072,7 +2072,7 @@ export class MapComponent implements OnInit {
               let getLocalIndex = (x, y) => {
                 //grid goes from lower left (left to right bottom to top)
                 //global indices are offset from min value, these are raw so need to offset from bottom on y axis
-                return (nrows - y) * ncols + x;
+                return (y - minCentroid.yIndex) * ncols + (x - minCentroid.xIndex);
               }
 
               //if proper resolution just fill in grid sequentially
@@ -2161,6 +2161,7 @@ export class MapComponent implements OnInit {
                 }
                 //lower resolution, will have cells no covered, need to go back over and blend values
                 else {
+                  let lastCentroid: {xIndex: number, yIndex: number};
                   //put in all specified grid values
                   for(let i = 0; i < ncols; i++) {
                     for(let j = 0; j < nrows; j++) {
@@ -2175,6 +2176,27 @@ export class MapComponent implements OnInit {
                       let globalIndex = this.getIndex(centroid.xIndex, centroid.yIndex);
                       let localIndex = getLocalIndex(centroid.xIndex, centroid.yIndex);
                       parsedData.values[globalIndex] = vals[localIndex];
+
+                      if(centroid.xIndex == lastCentroid.xIndex) {
+                        for(let betweenX = lastCentroid.xIndex + 1; betweenX < centroid.xIndex; betweenX++) {
+                          globalIndex = this.getIndex(betweenX, centroid.yIndex);
+                          localIndex = getLocalIndex(lastCentroid.xIndex, lastCentroid.yIndex);
+                          parsedData.values[globalIndex] = vals[localIndex];
+                        }
+                      }
+                      else {
+                        for(let betweenX = lastCentroid.xIndex + 1; betweenX <= maxX; betweenX++) {
+                          globalIndex = this.getIndex(betweenX, lastCentroid.yIndex);
+                          localIndex = getLocalIndex(lastCentroid.xIndex, lastCentroid.yIndex);
+                          parsedData.values[globalIndex] = vals[localIndex];
+                        }
+                        for(let betweenX = xCorner; betweenX < centroid.xIndex; betweenX++) {
+                          globalIndex = this.getIndex(betweenX, centroid.yIndex);
+                          localIndex = getLocalIndex(lastCentroid.xIndex, lastCentroid.yIndex);
+                          parsedData.values[globalIndex] = vals[localIndex];
+                        }
+                      }
+                      lastCentroid = centroid;
                     }
                   }
 
