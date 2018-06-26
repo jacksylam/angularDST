@@ -1508,20 +1508,37 @@ export class MapComponent implements OnInit {
   //also need to update all full map computations to disclude background cells
   getMetricsSuite(indexes: number[]) {
     let metrics = {
-      IPY: {
-        original: 0,
-        current: 0,
-        diff: 0,
-        pchange: 0
+      USC: {
+        IPY: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        MGPD: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        area: 0
       },
-      MGPD: {
-        original: 0,
-        current: 0,
-        diff: 0,
-        pchange: 0
-      },
-      area: 0
-    }
+      Metric: {
+        IPY: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        MGPD: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        area: 0
+      }
+    };
 
     let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
     let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
@@ -1534,8 +1551,8 @@ export class MapComponent implements OnInit {
         //if background value don't count
         if(lcVals[i] != 0) {
           cells++;
-          metrics.IPY.current += rechargeVals[i];
-          metrics.IPY.original += this.types.recharge.baseData[i];   
+          metrics.USC.IPY.current += rechargeVals[i];
+          metrics.USC.IPY.original += this.types.recharge.baseData[i];   
         }
       }
 
@@ -1546,32 +1563,32 @@ export class MapComponent implements OnInit {
       indexes.forEach((index) => {
         if(lcVals[index]) {
           cells++;
-          metrics.IPY.current += rechargeVals[index];
-          metrics.IPY.original += this.types.recharge.baseData[index];
+          metrics.USC.IPY.current += rechargeVals[index];
+          metrics.USC.IPY.original += this.types.recharge.baseData[index];
         }
       });
     
     }
     
     //compute metrics in MGPD
-    metrics.MGPD.original = (metrics.IPY.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-    metrics.MGPD.current = (metrics.IPY.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    metrics.USC.MGPD.original = (metrics.USC.IPY.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    metrics.USC.MGPD.current = (metrics.USC.IPY.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
 
     //get square miles
-    metrics.area = Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2) * cells;
+    metrics.USC.area = Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2) * cells;
 
     //if no cells leave at default value of 0 to avoid dividing by 0
     if (cells > 0) {
       //average IPY summation over cells
-      metrics.IPY.original /= cells;
-      metrics.IPY.current /= cells;
+      metrics.USC.IPY.original /= cells;
+      metrics.USC.IPY.current /= cells;
 
       //get difference and percent change
-      metrics.MGPD.diff = metrics.MGPD.current - metrics.MGPD.original;
-      metrics.IPY.diff = metrics.IPY.current - metrics.IPY.original;
+      metrics.USC.MGPD.diff = metrics.USC.MGPD.current - metrics.USC.MGPD.original;
+      metrics.USC.IPY.diff = metrics.USC.IPY.current - metrics.USC.IPY.original;
       //make sure not dividing by 0 if no recharge in selected cells
-      metrics.MGPD.pchange = metrics.MGPD.original == 0 ? 0 : metrics.MGPD.diff / metrics.MGPD.original * 100;
-      metrics.IPY.pchange = metrics.IPY.original == 0 ? 0 : metrics.IPY.diff / metrics.IPY.original * 100;
+      metrics.USC.MGPD.pchange = metrics.USC.MGPD.original == 0 ? 0 : metrics.USC.MGPD.diff / metrics.USC.MGPD.original * 100;
+      metrics.USC.IPY.pchange = metrics.USC.IPY.original == 0 ? 0 : metrics.USC.IPY.diff / metrics.USC.IPY.original * 100;
     }
 
     return metrics;
@@ -1581,32 +1598,59 @@ export class MapComponent implements OnInit {
 
   private roundMetrics(metrics: any) {
     let roundedMetrics = {
-      IPY: {
-        original: "",
-        current: "",
-        diff: "",
-        pchange: ""
+      USC: {
+        IPY: {
+          original: "",
+          current: "",
+          diff: "",
+          pchange: ""
+        },
+        MGPD: {
+          original: "",
+          current: "",
+          diff: "",
+          pchange: ""
+        },
+        area: ""
       },
-      MGPD: {
-        original: "",
-        current: "",
-        diff: "",
-        pchange: ""
-      },
-      area: ""
+      Metric: {
+        IPY: {
+          original: "",
+          current: "",
+          diff: "",
+          pchange: ""
+        },
+        MGPD: {
+          original: "",
+          current: "",
+          diff: "",
+          pchange: ""
+        },
+        area: ""
+      }
     };
 
     let precision = 3;
 
-    roundedMetrics.IPY.original = metrics.IPY.original.toPrecision(precision);
-    roundedMetrics.IPY.current = metrics.IPY.current.toPrecision(precision);
-    roundedMetrics.MGPD.original = metrics.MGPD.original.toPrecision(precision);
-    roundedMetrics.MGPD.current = metrics.MGPD.current.toPrecision(precision);
-    roundedMetrics.IPY.diff = metrics.IPY.diff.toPrecision(precision);
-    roundedMetrics.MGPD.diff = metrics.MGPD.diff.toPrecision(precision);
-    roundedMetrics.IPY.pchange = metrics.IPY.pchange.toPrecision(precision) + "%";
-    roundedMetrics.MGPD.pchange = metrics.MGPD.pchange.toPrecision(precision) + "%";
-    roundedMetrics.area = metrics.area.toPrecision(precision);
+    roundedMetrics.USC.IPY.original = metrics.USC.IPY.original.toPrecision(precision);
+    roundedMetrics.USC.IPY.current = metrics.USC.IPY.current.toPrecision(precision);
+    roundedMetrics.USC.MGPD.original = metrics.USC.MGPD.original.toPrecision(precision);
+    roundedMetrics.USC.MGPD.current = metrics.USC.MGPD.current.toPrecision(precision);
+    roundedMetrics.USC.IPY.diff = metrics.USC.IPY.diff.toPrecision(precision);
+    roundedMetrics.USC.MGPD.diff = metrics.USC.MGPD.diff.toPrecision(precision);
+    roundedMetrics.USC.IPY.pchange = metrics.USC.IPY.pchange.toPrecision(precision) + "%";
+    roundedMetrics.USC.MGPD.pchange = metrics.USC.MGPD.pchange.toPrecision(precision) + "%";
+    roundedMetrics.USC.area = metrics.USC.area.toPrecision(precision);
+
+    roundedMetrics.Metric.IPY.original = metrics.Metric.IPY.original.toPrecision(precision);
+    roundedMetrics.Metric.IPY.current = metrics.Metric.IPY.current.toPrecision(precision);
+    roundedMetrics.Metric.MGPD.original = metrics.Metric.MGPD.original.toPrecision(precision);
+    roundedMetrics.Metric.MGPD.current = metrics.Metric.MGPD.current.toPrecision(precision);
+    roundedMetrics.Metric.IPY.diff = metrics.Metric.IPY.diff.toPrecision(precision);
+    roundedMetrics.Metric.MGPD.diff = metrics.Metric.MGPD.diff.toPrecision(precision);
+    roundedMetrics.Metric.IPY.pchange = metrics.Metric.IPY.pchange.toPrecision(precision) + "%";
+    roundedMetrics.Metric.MGPD.pchange = metrics.Metric.MGPD.pchange.toPrecision(precision) + "%";
+    roundedMetrics.Metric.area = metrics.Metric.area.toPrecision(precision);
 
 
     return roundedMetrics;
@@ -2024,7 +2068,7 @@ export class MapComponent implements OnInit {
                   xIndex: xs.indexOf(xCellVal),
                   yIndex: ys.indexOf(yCellVal)
                 };
-              }
+              };
 
 
               
@@ -2070,55 +2114,9 @@ export class MapComponent implements OnInit {
               }
           
               let getLocalIndex = (x, y) => {
-                //grid goes from lower left (left to right bottom to top)
-                //global indices are offset from min value, these are raw so need to offset from bottom on y axis
-                return (y - minCentroid.yIndex) * ncols + (x - minCentroid.xIndex);
+                return y * ncols + x;
               }
 
-              //if proper resolution just fill in grid sequentially
-              if(cellSize == 75) {
-
-                //if standard cell size only need to add indexes, since will align to grid once shifted
-                let maxXIndex = minCentroid.xIndex + ncols;
-                let maxYIndex = minCentroid.yIndex - nrows;
-                //reject if grid goes out of range
-                if(maxXIndex > this.gridWidthCells || maxYIndex > this.gridHeightCells) {
-                  console.log(maxXIndex);
-                  console.log(maxYIndex);
-                  console.log(this.gridWidthCells);
-                  console.log(this.gridHeightCells);
-                  reject();
-                }
-            
-                //grid exact size, just accept with provided value grid
-                if(ncols == this.gridWidthCells && nrows == this.gridHeightCells) {
-                  parsedData = {
-                    nodata: noData,
-                    //initialize to full grid size array with all noData values
-                    values: vals
-                  };
-                }
-                //otherwise need to insert values into full grid
-                else {
-                  parsedData = {
-                    nodata: noData,
-                    //initialize to full grid size array with all noData values
-                    values: new Array(this.gridWidthCells * this.gridHeightCells).fill(noData)
-                  };
-
-                  for(let localX = 0; localX < ncols; localX++) {
-                    for(let localY = 0; localY < nrows; localY++) {
-                      let globalIndex = this.getIndex(minCentroid.xIndex + localX, minCentroid.yIndex - localY);
-                      let localIndex = getLocalIndex(localX, localY);
-                      parsedData.values[globalIndex] = vals[localIndex];
-                    }
-                  }
-                }
-
-                
-              }
-              
-              else {
                 //get range of grid, ensure in bounds
                 let maxXOffset = ncols * cellSize;
                 let maxYOffset = nrows * cellSize;
@@ -2131,98 +2129,78 @@ export class MapComponent implements OnInit {
                   reject();
                 }
 
+          
+              //grid exact size, just accept with provided value grid
+              if(cellSize == 75 && ncols == this.gridWidthCells && nrows == this.gridHeightCells) {
+                parsedData = {
+                  nodata: noData,
+                  //initialize to full grid size array with all noData values
+                  values: vals
+                };
+              }
+              //otherwise need to insert values into full grid
+              else { 
+
+                let getLocalComponentIndicesFromGlobalOffset = (globalXOffset, globalYOffset, scale) => {
+                  
+                  let globalOffsetsFromLocalGrid = {
+                    x: globalXOffset - minCentroid.xIndex,
+                    //subtract on y axis since bottom to top (minCentroid's y index will be maximum value)
+                    y: minCentroid.yIndex - globalYOffset
+                  };
+
+                  let localXOffset;
+                  let localYOffset;
+                  //if scale greater than 1 (local grid smaller cells/higher resolution) take ceiling so use first cell not in last cell
+                  if(scale > 1) {
+                    localXOffset = Math.ceil(scale * globalOffsetsFromLocalGrid.x);
+                    localYOffset = Math.ceil(scale * globalOffsetsFromLocalGrid.y);
+                  }
+                  //if less than 1 (local grid larger cells/ lower resolution) take floor to ensure uses containing cell (otherwise might round out of containing cell)
+                  else {
+                    localXOffset = Math.floor(scale * globalOffsetsFromLocalGrid.x);
+                    localYOffset = Math.floor(scale * globalOffsetsFromLocalGrid.y);
+                  }
+                  
+
+                  //offset from local grid bounds, so compute global indices from this
+                  let globalXIndex = minCentroid.xIndex + globalXOffset;
+                  //subtract on y axis because bottom to top
+                  let globalYIndex = minCentroid.yIndex - globalYOffset;
+
+                  let localXIndex = localXOffset;
+                  //y offset from bottom so need to subtract from total number of rows
+                  let localYIndex = nrows - localYOffset
+
+                  return {
+                    xIndex: localXIndex,
+                    yIndex: localYIndex
+                  };
+                };
+
                 parsedData = {
                   nodata: noData,
                   //initialize to full grid size array with all noData values
                   values: new Array(this.gridWidthCells * this.gridHeightCells).fill(noData)
                 };
 
-                //DO OTHER THINGS
+                let scale = 75 / cellSize;
 
-                //need to get cells of all values since won't align even after shifted
-                //higher resolution, overlap and overwrite
-                if(cellSize < 75) {
-                  for(let i = 0; i < ncols; i++) {
-                    for(let j = 0; j < nrows; j++) {
-                      //get containing cell
-                      let xOffset = cellSize * i;
-                      let yOffset = cellSize * j;
-                      let x = xCorner + xOffset;
-                      let y = yCorner + yOffset;
-                      //find centroid coordinates
-                      let centroid = getCentroidComponentIndices(x, y);
-                      //put values in grid
-                      let globalIndex = this.getIndex(centroid.xIndex, centroid.yIndex);
-                      let localIndex = getLocalIndex(centroid.xIndex, centroid.yIndex);
-                      parsedData.values[globalIndex] = vals[localIndex];
-                    }
+                for(let xOffset = minCentroid.xIndex; xOffset < maxCentroid.xIndex; xOffset++) {
+                  //bottom to top, so max centroid's y axis should be smaller
+                  for(let yOffset = maxCentroid.yIndex; yOffset < minCentroid.yIndex; yOffset++) {
+                    //grid goes from lower left (left to right bottom to top)
+                    //subtract yOffset since going up
+                    let globalIndex = this.getIndex(xOffset, yOffset);
+
+                    let localComponents = getLocalComponentIndicesFromGlobalOffset(xOffset, yOffset, scale)
+
+                    //y offset from bottom so need to subtract from total number of rows
+                    let localIndex = getLocalIndex(localComponents.xIndex, localComponents.yIndex);
+                    parsedData.values[globalIndex] = vals[localIndex];
                   }
-                  
-                }
-                //lower resolution, will have cells no covered, need to go back over and blend values
-                else {
-                  let lastCentroid: {xIndex: number, yIndex: number};
-                  //put in all specified grid values
-                  for(let i = 0; i < ncols; i++) {
-                    for(let j = 0; j < nrows; j++) {
-                      //get containing cell
-                      let xOffset = cellSize * i;
-                      let yOffset = cellSize * j;
-                      let x = xCorner + xOffset;
-                      let y = yCorner + yOffset;
-                      //find centroid coordinates
-                      let centroid = getCentroidComponentIndices(x, y);
-                      //put values in grid
-                      let globalIndex = this.getIndex(centroid.xIndex, centroid.yIndex);
-                      let localIndex = getLocalIndex(centroid.xIndex, centroid.yIndex);
-                      parsedData.values[globalIndex] = vals[localIndex];
-
-                      if(centroid.xIndex == lastCentroid.xIndex) {
-                        for(let betweenX = lastCentroid.xIndex + 1; betweenX < centroid.xIndex; betweenX++) {
-                          globalIndex = this.getIndex(betweenX, centroid.yIndex);
-                          localIndex = getLocalIndex(lastCentroid.xIndex, lastCentroid.yIndex);
-                          parsedData.values[globalIndex] = vals[localIndex];
-                        }
-                      }
-                      else {
-                        for(let betweenX = lastCentroid.xIndex + 1; betweenX <= maxX; betweenX++) {
-                          globalIndex = this.getIndex(betweenX, lastCentroid.yIndex);
-                          localIndex = getLocalIndex(lastCentroid.xIndex, lastCentroid.yIndex);
-                          parsedData.values[globalIndex] = vals[localIndex];
-                        }
-                        for(let betweenX = xCorner; betweenX < centroid.xIndex; betweenX++) {
-                          globalIndex = this.getIndex(betweenX, centroid.yIndex);
-                          localIndex = getLocalIndex(lastCentroid.xIndex, lastCentroid.yIndex);
-                          parsedData.values[globalIndex] = vals[localIndex];
-                        }
-                      }
-                      lastCentroid = centroid;
-                    }
-                  }
-
-                  //go back over and fill in gaps
-                  //can't do this... might have nodata values in provided grid, don't want to shove junk values in these
-
-                  // let lastValue = 
-                  // for(let localX = 0; localX < ncols; localX++) {
-                  //   for(let localY = 0; localY < nrows; localY++) {
-                  //     let globalIndex = this.getIndex(minCentroid.xIndex + localX, minCentroid.yIndex - localY);
-                  //     if(parsedData.values[globalIndex] == noData) {
-                  //       parsedData.values[globalIndex] = lastValue;
-                  //     }
-                  //     else {
-                  //       lastValue = parsedData.values[globalIndex];
-                  //     }
-                  //   }
-                  // }
-
-                  //for now just leave like this (same as higher resolution), probably want to figure out a good way to fill out gaps
                 }
               }
-              
-
-
-
 
               
               //if everything looks good accept, passing back the value array

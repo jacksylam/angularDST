@@ -40,6 +40,8 @@ export class SidebarControlsComponent implements OnInit {
 
   id: number;
 
+  units = "usc";
+
   constructor(private mapService: MapService, private dialog: MatDialog) {
   }
 
@@ -138,6 +140,10 @@ export class SidebarControlsComponent implements OnInit {
 
   changeLayer(type: string) {
     this.baselayer = type;
+  }
+
+  changeUnits(e) {
+    console.log(e)
   }
 
 

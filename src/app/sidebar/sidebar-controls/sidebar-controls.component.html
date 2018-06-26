@@ -52,6 +52,11 @@
 
       <div class="outline btn-group-vertical internal-menu">
         <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
+        <mat-select [(value)]="units" (change)="changeUnits($event)">
+          <mat-option value="usc">United States Customary</mat-option>
+          <mat-option value="metric">Metric</mat-option>
+        </mat-select>
+        <br>
         <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('MGPD')"><div class="shift">Mgal/d</div></button>
         <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="setUnits('IPY')"><div class="shift">in/yr</div></button>
       </div>
