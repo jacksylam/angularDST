@@ -44,6 +44,8 @@ export class MapComponent implements OnInit {
   static aquiferIndices: any;
   static aquiferIndexingComplete = false;
   static readonly METER_TO_MILE_FACTOR = 0.000621371;
+  static readonly INCH_TO_CENTIMETER_FACTOR = 2.54;
+  static readonly GALLON_TO_LITER_FACTOR = 3.78541;
 
   mymap: any;
   popup: any;
@@ -208,19 +210,36 @@ export class MapComponent implements OnInit {
     };
 
     this.defaultMetrics = {
-      IPY: {
-        original: "0",
-        current: "0",
-        diff: "0",
-        pchange: "0"
+      USC: {
+        average: {
+          original: "0",
+          current: "0",
+          diff: "0",
+          pchange: "0"
+        },
+        volumetric: {
+          original: "0",
+          current: "0",
+          diff: "0",
+          pchange: "0"
+        },
+        area: "0"
       },
-      MGPD: {
-        original: "0",
-        current: "0",
-        diff: "0",
-        pchange: "0"
-      },
-      cells: "0"
+      Metric: {
+        average: {
+          original: "0",
+          current: "0",
+          diff: "0",
+          pchange: "0"
+        },
+        volumetric: {
+          original: "0",
+          current: "0",
+          diff: "0",
+          pchange: "0"
+        },
+        area: "0"
+      }
     };
 
     //think there's a value in the middle that's invalid, may need to give valid values if issue, probably ok and more efficient like this though
@@ -1109,9 +1128,33 @@ export class MapComponent implements OnInit {
 
 
 
-  generateReport() {
-    let data = this.metrics;
-    console.log(data);
+  generateReport(unitSystem: string) {
+    let data : any = {
+      metrics: this.metrics
+    }
+    switch(unitSystem) {
+      case "USC": {
+        data.unitSystem = {
+          system: "USC",
+          units: {
+            area: "Square Miles",
+            volumetric: "Mega-Gallons Per Day",
+            average: "Inches Per Year"
+          }
+        }
+        break;
+      }
+      case "Metric": {
+        data.unitSystem = {
+          system: "Metric",
+          units: {
+            area: "Square Kilometers",
+            volumetric: "Megaliters Per Day",
+            average: "Centimeters Per Year"
+          }
+        }
+      }
+    }
     let reportWindow = new WindowPanel("Report", "report", data);
     this.windowService.addWindow(reportWindow, this.windowId);
   }
@@ -1509,13 +1552,13 @@ export class MapComponent implements OnInit {
   getMetricsSuite(indexes: number[]) {
     let metrics = {
       USC: {
-        IPY: {
+        average: {
           original: 0,
           current: 0,
           diff: 0,
           pchange: 0
         },
-        MGPD: {
+        volumetric: {
           original: 0,
           current: 0,
           diff: 0,
@@ -1524,13 +1567,13 @@ export class MapComponent implements OnInit {
         area: 0
       },
       Metric: {
-        IPY: {
+        average: {
           original: 0,
           current: 0,
           diff: 0,
           pchange: 0
         },
-        MGPD: {
+        volumetric: {
           original: 0,
           current: 0,
           diff: 0,
@@ -1551,44 +1594,62 @@ export class MapComponent implements OnInit {
         //if background value don't count
         if(lcVals[i] != 0) {
           cells++;
-          metrics.USC.IPY.current += rechargeVals[i];
-          metrics.USC.IPY.original += this.types.recharge.baseData[i];   
+          metrics.USC.average.current += rechargeVals[i];
+          metrics.USC.average.original += this.types.recharge.baseData[i];
+          
+          metrics.Metric.average.current += rechargeVals[i] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[i] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
         }
       }
 
       cells = rechargeVals.length;
     }
     else {
-      //get total IPY over cells
+      //get total average over cells
       indexes.forEach((index) => {
-        if(lcVals[index]) {
+        if(lcVals[index] != 0) {
           cells++;
-          metrics.USC.IPY.current += rechargeVals[index];
-          metrics.USC.IPY.original += this.types.recharge.baseData[index];
+          metrics.USC.average.current += rechargeVals[index];
+          metrics.USC.average.original += this.types.recharge.baseData[index];
+
+          metrics.Metric.average.current += rechargeVals[index] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[index] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
         }
       });
     
     }
     
-    //compute metrics in MGPD
-    metrics.USC.MGPD.original = (metrics.USC.IPY.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
-    metrics.USC.MGPD.current = (metrics.USC.IPY.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    //compute metrics in volumetric
+    metrics.USC.volumetric.original = (metrics.USC.average.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    metrics.USC.volumetric.current = (metrics.USC.average.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+    //instead of trying to figure out whole conversion, just convert Mgal to ML
+    metrics.Metric.volumetric.original = metrics.USC.volumetric.original * MapComponent.GALLON_TO_LITER_FACTOR;
+    metrics.Metric.volumetric.current = metrics.USC.volumetric.current * MapComponent.GALLON_TO_LITER_FACTOR;
 
     //get square miles
     metrics.USC.area = Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2) * cells;
+    //square kilometers
+    metrics.Metric.area = Math.pow(75 / 1000, 2) * cells;
 
     //if no cells leave at default value of 0 to avoid dividing by 0
     if (cells > 0) {
-      //average IPY summation over cells
-      metrics.USC.IPY.original /= cells;
-      metrics.USC.IPY.current /= cells;
+      //average average summation over cells
+      metrics.USC.average.original /= cells;
+      metrics.USC.average.current /= cells;
+
+      metrics.Metric.average.original /= cells;
+      metrics.Metric.average.current /= cells;
 
       //get difference and percent change
-      metrics.USC.MGPD.diff = metrics.USC.MGPD.current - metrics.USC.MGPD.original;
-      metrics.USC.IPY.diff = metrics.USC.IPY.current - metrics.USC.IPY.original;
+      metrics.USC.volumetric.diff = metrics.USC.volumetric.current - metrics.USC.volumetric.original;
+      metrics.USC.average.diff = metrics.USC.average.current - metrics.USC.average.original;
+      metrics.Metric.volumetric.diff = metrics.Metric.volumetric.current - metrics.Metric.volumetric.original;
+      metrics.Metric.average.diff = metrics.Metric.average.current - metrics.Metric.average.original;
       //make sure not dividing by 0 if no recharge in selected cells
-      metrics.USC.MGPD.pchange = metrics.USC.MGPD.original == 0 ? 0 : metrics.USC.MGPD.diff / metrics.USC.MGPD.original * 100;
-      metrics.USC.IPY.pchange = metrics.USC.IPY.original == 0 ? 0 : metrics.USC.IPY.diff / metrics.USC.IPY.original * 100;
+      metrics.USC.volumetric.pchange = metrics.USC.volumetric.original == 0 ? 0 : metrics.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
+      metrics.USC.average.pchange = metrics.USC.average.original == 0 ? 0 : metrics.USC.average.diff / metrics.USC.average.original * 100;
+      metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.original == 0 ? 0 : metrics.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
+      metrics.Metric.average.pchange = metrics.Metric.average.original == 0 ? 0 : metrics.Metric.average.diff / metrics.Metric.average.original * 100;
     }
 
     return metrics;
@@ -1599,13 +1660,13 @@ export class MapComponent implements OnInit {
   private roundMetrics(metrics: any) {
     let roundedMetrics = {
       USC: {
-        IPY: {
+        average: {
           original: "",
           current: "",
           diff: "",
           pchange: ""
         },
-        MGPD: {
+        volumetric: {
           original: "",
           current: "",
           diff: "",
@@ -1614,13 +1675,13 @@ export class MapComponent implements OnInit {
         area: ""
       },
       Metric: {
-        IPY: {
+        average: {
           original: "",
           current: "",
           diff: "",
           pchange: ""
         },
-        MGPD: {
+        volumetric: {
           original: "",
           current: "",
           diff: "",
@@ -1632,24 +1693,24 @@ export class MapComponent implements OnInit {
 
     let precision = 3;
 
-    roundedMetrics.USC.IPY.original = metrics.USC.IPY.original.toPrecision(precision);
-    roundedMetrics.USC.IPY.current = metrics.USC.IPY.current.toPrecision(precision);
-    roundedMetrics.USC.MGPD.original = metrics.USC.MGPD.original.toPrecision(precision);
-    roundedMetrics.USC.MGPD.current = metrics.USC.MGPD.current.toPrecision(precision);
-    roundedMetrics.USC.IPY.diff = metrics.USC.IPY.diff.toPrecision(precision);
-    roundedMetrics.USC.MGPD.diff = metrics.USC.MGPD.diff.toPrecision(precision);
-    roundedMetrics.USC.IPY.pchange = metrics.USC.IPY.pchange.toPrecision(precision) + "%";
-    roundedMetrics.USC.MGPD.pchange = metrics.USC.MGPD.pchange.toPrecision(precision) + "%";
+    roundedMetrics.USC.average.original = metrics.USC.average.original.toPrecision(precision);
+    roundedMetrics.USC.average.current = metrics.USC.average.current.toPrecision(precision);
+    roundedMetrics.USC.volumetric.original = metrics.USC.volumetric.original.toPrecision(precision);
+    roundedMetrics.USC.volumetric.current = metrics.USC.volumetric.current.toPrecision(precision);
+    roundedMetrics.USC.average.diff = metrics.USC.average.diff.toPrecision(precision);
+    roundedMetrics.USC.volumetric.diff = metrics.USC.volumetric.diff.toPrecision(precision);
+    roundedMetrics.USC.average.pchange = metrics.USC.average.pchange.toPrecision(precision) + "%";
+    roundedMetrics.USC.volumetric.pchange = metrics.USC.volumetric.pchange.toPrecision(precision) + "%";
     roundedMetrics.USC.area = metrics.USC.area.toPrecision(precision);
 
-    roundedMetrics.Metric.IPY.original = metrics.Metric.IPY.original.toPrecision(precision);
-    roundedMetrics.Metric.IPY.current = metrics.Metric.IPY.current.toPrecision(precision);
-    roundedMetrics.Metric.MGPD.original = metrics.Metric.MGPD.original.toPrecision(precision);
-    roundedMetrics.Metric.MGPD.current = metrics.Metric.MGPD.current.toPrecision(precision);
-    roundedMetrics.Metric.IPY.diff = metrics.Metric.IPY.diff.toPrecision(precision);
-    roundedMetrics.Metric.MGPD.diff = metrics.Metric.MGPD.diff.toPrecision(precision);
-    roundedMetrics.Metric.IPY.pchange = metrics.Metric.IPY.pchange.toPrecision(precision) + "%";
-    roundedMetrics.Metric.MGPD.pchange = metrics.Metric.MGPD.pchange.toPrecision(precision) + "%";
+    roundedMetrics.Metric.average.original = metrics.Metric.average.original.toPrecision(precision);
+    roundedMetrics.Metric.average.current = metrics.Metric.average.current.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.original = metrics.Metric.volumetric.original.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.current = metrics.Metric.volumetric.current.toPrecision(precision);
+    roundedMetrics.Metric.average.diff = metrics.Metric.average.diff.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.diff = metrics.Metric.volumetric.diff.toPrecision(precision);
+    roundedMetrics.Metric.average.pchange = metrics.Metric.average.pchange.toPrecision(precision) + "%";
+    roundedMetrics.Metric.volumetric.pchange = metrics.Metric.volumetric.pchange.toPrecision(precision) + "%";
     roundedMetrics.Metric.area = metrics.Metric.area.toPrecision(precision);
 
 
@@ -1819,12 +1880,17 @@ export class MapComponent implements OnInit {
           let base = this.types.landCover.data._covjson.ranges.cover.values;
 
           
-
+          let changedIndexComponents = []
           
           for(let i = 0; i < base.length; i++) {
-            //don't replace if nodata value
-            if(data.cover.values[i] != data.cover.nodata) {
+
+            //NEED TO ASK ABOUT SCENARIOS, ARE YOU GOING TO HAVE TWO BASE RECHARGE GRIDS FOR THE TWO SCENARIOS?
+
+            //don't replace if nodata value, also check if value the same since don't need to get recharge from db for correct values
+            if(data.cover.values[i] != data.cover.nodata && base[i] != data.cover.values[i]) {
               base[i] = data.cover.values[i];
+
+              changedIndexComponents.push(this.getComponents(i));
 
               //if overwriting base values, set value in baseData array
               if(info.overwrite) {
@@ -1834,6 +1900,13 @@ export class MapComponent implements OnInit {
 
             
           }
+
+          //need to slice up array since can only handle certain length, use forkjoin
+          //might also make faster, maybe break into smaller pieces, 100 takes a long time
+          this.DBService.indexSearch(changedIndexComponents.slice(0, 100))
+          .subscribe((data) => {
+            console.log(data);
+          });
 
           this.loadCover(this.types.landCover, false);
 
@@ -3447,6 +3520,15 @@ export class MapComponent implements OnInit {
   private getIndex(x: number, y: number, __this = this): number {
     return y * __this.gridWidthCells + x;
   }
+
+  private getComponents(index: number) {
+    return {
+      x: index % this.gridWidthCells,
+      y: Math.floor(index / this.gridWidthCells)
+    };
+  }
 }
+
+
 
 

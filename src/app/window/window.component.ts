@@ -399,12 +399,12 @@ export class WindowComponent implements AfterViewInit {
   download(type: string) {
     let columnsName = [
       {title: "Name", dataKey: "name"},
-      {title: "Area (Square Miles)", dataKey: "area"}, 
+      {title: "Area (" + this.windowPanel.data.unitSystem.units.area + ")", dataKey: "area"}, 
       {title: "Baseline", dataKey: "oriny"}, 
       {title: "This Analysis", dataKey: "criny"}, 
       {title: "Baseline", dataKey: "ormgd"}, 
       {title: "This Analysis", dataKey: "crmgd"},
-      {title: "Million Gallons Per Day", dataKey: "diff"},
+      {title: this.windowPanel.data.unitSystem.units.volumetric, dataKey: "diff"},
       {title: "Percent Change", dataKey: "pchange"}
     ];
     let columnsSummary = [
@@ -414,8 +414,8 @@ export class WindowComponent implements AfterViewInit {
     ];
     let infoHeaders = [
       {title: "", dataKey: "blank"},
-      {title: "Total Recharge\n(Million Gallons Per Day)", dataKey: "cat1"},
-      {title: "Average Recharge\n(Inches Per Year)", dataKey: "cat2"},
+      {title: "Total Recharge\n(" + this.windowPanel.data.unitSystem.units.volumetric + ")", dataKey: "cat1"},
+      {title: "Average Recharge\n(" + this.windowPanel.data.unitSystem.units.average + ")", dataKey: "cat2"},
       {title: "Volumetric Difference", dataKey: "cat3"}
     ];
 
@@ -455,16 +455,16 @@ export class WindowComponent implements AfterViewInit {
 
     //rows = [];
 
-    this.windowPanel.data.aquifers.forEach((aquifer) => {
+    this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
-        area: aquifer.roundedMetrics.area,
-        oriny: aquifer.roundedMetrics.IPY.original,
-        criny: aquifer.roundedMetrics.IPY.current,
-        ormgd: aquifer.roundedMetrics.MGPD.original,
-        crmgd: aquifer.roundedMetrics.MGPD.current,
-        diff: aquifer.roundedMetrics.MGPD.diff,
-        pchange: aquifer.roundedMetrics.MGPD.pchange,
+        area: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
+        oriny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
+        criny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
+        ormgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
+        crmgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
+        diff: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
+        pchange: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
       })
     })
 
@@ -517,16 +517,16 @@ export class WindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
-    this.windowPanel.data.customAreas.forEach((customArea) => {
+    this.windowPanel.data.metrics.customAreas.forEach((customArea) => {
       rows.push({
         name: customArea.name,
-        area: customArea.roundedMetrics.area,
-        oriny: customArea.roundedMetrics.IPY.original,
-        criny: customArea.roundedMetrics.IPY.current,
-        ormgd: customArea.roundedMetrics.MGPD.original,
-        crmgd: customArea.roundedMetrics.MGPD.current,
-        diff: customArea.roundedMetrics.MGPD.diff,
-        pchange: customArea.roundedMetrics.MGPD.pchange,
+        area: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
+        oriny: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
+        criny: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
+        ormgd: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
+        crmgd: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
+        diff: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
+        pchange: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
       });
     });
 
@@ -559,43 +559,43 @@ export class WindowComponent implements AfterViewInit {
     this.pdf.text(50, y, "Summary");
 
     rows = [];
-    let total = this.windowPanel.data.total
-    let customAreasTotal = this.windowPanel.data.customAreasTotal;
+    let total = this.windowPanel.data.metrics.total
+    let customAreasTotal = this.windowPanel.data.metrics.customAreasTotal;
 
     rows.push({
-      type: "Area Total (Square Miles)",
-      uda: customAreasTotal.roundedMetrics.area,
-      total: total.roundedMetrics.area
+      type: "Area Total (" + this.windowPanel.data.unitSystem.units.area + ")",
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].area
     });
     rows.push({
-      type: "Total Recharge, Baseline (Million Gallons Per Day)",
-      uda: customAreasTotal.roundedMetrics.MGPD.original,
-      total: total.roundedMetrics.MGPD.original
+      type: "Total Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original
     });
     rows.push({
-      type: "Total Recharge, This Analysis (Million Gallons Per Day)",
-      uda: customAreasTotal.roundedMetrics.MGPD.current,
-      total: total.roundedMetrics.MGPD.current
+      type: "Total Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current
     });
     rows.push({
-      type: "Average Recharge, Baseline (Inches Per Year)",
-      uda: customAreasTotal.roundedMetrics.IPY.original,
-      total: total.roundedMetrics.IPY.original
+      type: "Average Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.average + ")",
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original
     });
     rows.push({
-      type: "Average Recharge, This Analysis (Inches Per Year)",
-      uda: customAreasTotal.roundedMetrics.IPY.current,
-      total: total.roundedMetrics.IPY.current
+      type: "Average Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.average + ")",
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current
     });
     rows.push({
-      type: "Volumetric Difference (Million Gallons Per Day)",
-      uda: customAreasTotal.roundedMetrics.MGPD.diff,
-      total: total.roundedMetrics.MGPD.diff
+      type: "Volumetric Difference (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff
     });
     rows.push({
       type: "Volumetric Percent Change",
-      uda: customAreasTotal.roundedMetrics.MGPD.pchange,
-      total: total.roundedMetrics.MGPD.pchange
+      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
@@ -625,13 +625,13 @@ export class WindowComponent implements AfterViewInit {
 
     
   //   rows.push({
-  //     oriny: total.roundedMetrics.IPY.original,
-  //     criny: total.roundedMetrics.IPY.current,
-  //     ormgd: total.roundedMetrics.MGPD.original,
-  //     crmgd: total.roundedMetrics.MGPD.current,
-  //     numcells: total.roundedMetrics.area,
-  //     diff: total.roundedMetrics.MGPD.diff,
-  //     pchange: total.roundedMetrics.MGPD.pchange,
+  //     oriny: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
+  //     criny: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
+  //     ormgd: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
+  //     crmgd: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
+  //     numcells: total.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
+  //     diff: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
+  //     pchange: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
   //   })
     
 
@@ -813,12 +813,12 @@ export class WindowComponent implements AfterViewInit {
     }
 
     
-    this.windowPanel.data.aquifers.forEach((aquifer) => {
+    this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
       graphData.aquifers.data[0].x.push(aquifer.name);
       graphData.aquifers.data[1].x.push(aquifer.name);
 
-      graphData.aquifers.data[0].y.push(aquifer.roundedMetrics.MGPD.original);
-      graphData.aquifers.data[1].y.push(aquifer.roundedMetrics.MGPD.current);
+      graphData.aquifers.data[0].y.push(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
+      graphData.aquifers.data[1].y.push(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
     })
     graphData.aquifers.layout = {
       barmode: 'group',
@@ -831,8 +831,10 @@ export class WindowComponent implements AfterViewInit {
     graphData.full.data[0].x.push("Map Total");
     graphData.full.data[1].x.push("Map Total");
 
-    graphData.full.data[0].y.push(this.windowPanel.data.total.roundedMetrics.MGPD.original);
-    graphData.full.data[1].y.push(this.windowPanel.data.total.roundedMetrics.MGPD.current);
+console.log(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system]);
+
+    graphData.full.data[0].y.push(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
+    graphData.full.data[1].y.push(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
 
     graphData.full.layout = {
       barmode: 'group',
@@ -860,13 +862,13 @@ export class WindowComponent implements AfterViewInit {
 
 
     //only plot custom area graphs if user had defined areas
-    if(this.windowPanel.data.customAreas.length > 0) {
-      this.windowPanel.data.customAreas.forEach((area) => {
+    if(this.windowPanel.data.metrics.customAreas.length > 0) {
+      this.windowPanel.data.metrics.customAreas.forEach((area) => {
         graphData.custom.data[0].x.push(area.name);
         graphData.custom.data[1].x.push(area.name);
   
-        graphData.custom.data[0].y.push(area.roundedMetrics.MGPD.original);
-        graphData.custom.data[1].y.push(area.roundedMetrics.MGPD.current);
+        graphData.custom.data[0].y.push(area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
+        graphData.custom.data[1].y.push(area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
       })
       graphData.custom.layout = {
         barmode: 'group',
@@ -879,8 +881,8 @@ export class WindowComponent implements AfterViewInit {
       graphData.customTotal.data[0].x.push("Custom Area Total");
       graphData.customTotal.data[1].x.push("Custom Area Total");
   
-      graphData.customTotal.data[0].y.push(this.windowPanel.data.customAreasTotal.roundedMetrics.MGPD.original)
-      graphData.customTotal.data[1].y.push(this.windowPanel.data.customAreasTotal.roundedMetrics.MGPD.current);
+      graphData.customTotal.data[0].y.push(this.windowPanel.data.metrics.customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original)
+      graphData.customTotal.data[1].y.push(this.windowPanel.data.metrics.customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
   
       graphData.customTotal.layout = {
         barmode: 'group',

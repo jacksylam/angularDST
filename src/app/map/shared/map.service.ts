@@ -169,10 +169,10 @@ export class MapService {
   }
 
 
-  generateReport(controlPanel: any) {
+  generateReport(controlPanel: any, unitSystem: string) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     //probably need to get details from this function, then generate new window with info, placeholder for now
-    this.mapHash[index].generateReport();
+    this.mapHash[index].generateReport(unitSystem);
   }
 
 }

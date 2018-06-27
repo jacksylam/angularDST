@@ -8,42 +8,64 @@ import { Cover } from './cover';
 export class DBConnectService {
 
 
+  oAuthAccessToken = "fbb71f198b9913c564762c87ab7917";
 
   constructor(private http: HttpClient) { }
 
-  generateCover(cover: string, data) {
-    //modify cover file
-    //might want to create multiples to have variable color hues
-    //have empty space by only including coordinates containing data for that landcover, then load multiple layers with different hues
-    //that is, return collection of files from this method
-    data.forEach(element => {
-      
-    });
-  }
-
-  
-
-
-  spatialSearch(geometry): Observable<Cover[]> {
-    var oAuthAccessToken = "token";
+  spatialSearch(geometry: any): Observable<Cover[]> {
     //this will use the 0 indexed feature from the leaflet map, which should be a GeoJSON polygon, for the spatial search boundry
     //for(let i = 0; i < size; i++) {
-      //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
-      var query = "{'$and':[{'name':'Landuse'},{'value.name':'testunit3'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+    //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
+    var query = "{'$and':[{'name':'Landuse'},{'value.name':'testunit3'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
 
-      var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
-      var head = new HttpHeaders()
-      .set("Authorization", "Bearer " + oAuthAccessToken)
-      .set("Content-Type", "application/x-www-form-urlencoded");
-      var options = {
-        headers: head
-      };
+    var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    var head = new HttpHeaders()
+    .set("Authorization", "Bearer " + this.oAuthAccessToken)
+    .set("Content-Type", "application/x-www-form-urlencoded");
+    var options = {
+      headers: head
+    };
 
-      var response = this.http.get<ResponseResults>(url, options)
-      .map((data) => {
-        return data.result as Cover[]
-      });
-      return response;
+    var response = this.http.get<ResponseResults>(url, options)
+    .map((data) => {
+      return data.result as Cover[]
+    });
+    return response;
+    // }
+
+    interface ResponseResults {
+      result: any
+    }
+  }
+
+
+  indexSearch(indexes: {x: number, y: number}[]): Observable<Cover[]> {
+    //this will use the 0 indexed feature from the leaflet map, which should be a GeoJSON polygon, for the spatial search boundry
+    //for(let i = 0; i < size; i++) {
+    //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
+
+    //build query
+    var query = "{'name':'Landuse','value.name':'testunit3','$or':[";
+    indexes.forEach((index) => {
+      query += "{'value.x':" + index.x + ", 'value.y':" + index.y + "},";
+    });
+    //remove last comma
+    query = query.slice(0, -1);
+    query += "]}";
+
+    var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    var head = new HttpHeaders()
+    .set("Authorization", "Bearer " + this.oAuthAccessToken)
+    .set("Content-Type", "application/x-www-form-urlencoded");
+    var options = {
+      headers: head
+    };
+
+    var response = this.http.get<ResponseResults>(url, options)
+    .map((data) => {
+      return data.result as Cover[]
+    });
+    return response;
    // }
 
     interface ResponseResults {
