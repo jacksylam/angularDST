@@ -10,20 +10,37 @@
 
             <div class="metrics-container">
                 <div class="width-ctrl">
-                    <br>
+                    <div style="height:10px;"></div>
                     Metric Mode: {{mode}}
+
                     <br>
+                    <div style="height:10px;"></div>
 
                     <!-- add something to check scenario for specific areas rather than currently selected one -->
                     <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 
-                    Original Recharge: {{displayMetrics.values.original}} {{displayMetrics.units}}
+                    Total Recharge, Baseline: {{displayMetrics.values.volumetric.original}} {{displayMetrics.units.volumetric}}
                     <br>
-                    Current Recharge: {{displayMetrics.values.current}} {{displayMetrics.units}}
+                    Total Recharge, This Analysis: {{displayMetrics.values.volumetric.current}} {{displayMetrics.units.volumetric}}
+
                     <br>
-                    Area (Square Miles): {{displayMetrics.area}}
+                    <div style="height:10px;"></div>
+
+                    Average Recharge, Baseline: {{displayMetrics.values.average.original}} {{displayMetrics.units.average}}
                     <br>
-                    Difference: {{displayMetrics.values.diff}}, Percent Change: {{displayMetrics.values.pchange}}
+                    Average Recharge, This Analysis: {{displayMetrics.values.average.current}} {{displayMetrics.units.average}}
+
+                    <br>
+                    <div style="height:10px;"></div>
+
+                    Area: {{displayMetrics.values.area}} {{displayMetrics.units.area}}
+
+                    <br>
+                    <div style="height:10px;"></div>
+
+                    Volumetric Difference: {{displayMetrics.values.average.diff}}
+                    <br>
+                    Volumetric Percent Change: {{displayMetrics.values.average.pchange}}
                 </div>
                 <div #chart> </div>
             </div>

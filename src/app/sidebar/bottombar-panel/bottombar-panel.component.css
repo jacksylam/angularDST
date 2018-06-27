@@ -56,16 +56,15 @@
     position: absolute;
     width: 100%;
     display: inline-flex;
-    height: 100%;
     padding-left: 20px;
   }
 
   .width-ctrl {
-    min-width: 400px;
-    width: 50%;
+    min-width: 425px;
+    width: 55%;
     color: rgb(56, 117, 194);
     font-weight: bold;
-    font-size: 16pt;
+    font-size: 12pt;
   }
 
   

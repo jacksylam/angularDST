@@ -40,7 +40,7 @@ export class SidebarControlsComponent implements OnInit {
 
   id: number;
 
-  units = "usc";
+  units = "USC";
 
   constructor(private mapService: MapService, private dialog: MatDialog) {
   }
@@ -104,13 +104,13 @@ export class SidebarControlsComponent implements OnInit {
   //   this.mapService.downloadRaster(this, type, format);
   // }
 
-  setUnits(unitType: string) {
+  setUnits(e) {
     //should switch mapService coordination to window service
-    this.mapService.setUnits(this, unitType);
+    this.mapService.setUnits(this, e.value);
   }
 
   generateReport() {
-    this.mapService.generateReport(this);
+    this.mapService.generateReport(this, this.units);
   }
 
   menuScroll(e) {
@@ -140,10 +140,6 @@ export class SidebarControlsComponent implements OnInit {
 
   changeLayer(type: string) {
     this.baselayer = type;
-  }
-
-  changeUnits(e) {
-    console.log(e)
   }
 
 

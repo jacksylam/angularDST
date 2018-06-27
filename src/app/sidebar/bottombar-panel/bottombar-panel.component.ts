@@ -28,49 +28,86 @@ export class BottombarPanelComponent implements OnInit {
   state = 'inactive';
 
   metrics = {
-    IPY: {
-      original: "",
-      current: "",
-      diff: "",
-      pchange: ""
+    USC: {
+      average: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      volumetric: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      area: ""
     },
-    MGPD: {
-      original: "",
-      current: "",
-      diff: "",
-      pchange: ""
-    },
-    area: ""
-  }
+    Metric: {
+      average: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      volumetric: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      area: ""
+    }
+  };
 
   displayMetrics = {
     values: {
-      original: "",
-      current: "",
-      difference: "",
-      pchange: ""
-    },   
-    area: "",
-    units: ""
-  }
+      average: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      volumetric: {
+        original: "",
+        current: "",
+        diff: "",
+        pchange: ""
+      },
+      area: ""
+    },
+    units: {
+      area: "",
+      volumetric: "",
+      average: ""
+    }
+  };
 
-  units: string;
+  unitSystem: string;
+
+  units = {
+    USC: {
+      area: "Square Miles",
+      volumetric: "Mega-Gallons Per Day",
+      average: "Inches Per Year"
+    },
+    Metric: {
+      area: "Square Kilometers",
+      volumetric: "Megaliters Per Day",
+      average: "Centimeters Per Year"
+    }
+  }
+  
 
   mode: string;
-
-  //store ipy values passed for recalculation on unit change (don't want to use stored values to prevent compounded precision loss due to rounding)
-  ipyVals = {
-    current: 0,
-    original: 0
-  }
 
   constructor(private mapService: MapService) { }
 
   ngOnInit() {
     this.mapService.setDetailsPanel(this);
-    this.units = "MGPD";
+    this.unitSystem = "USC";
     this.mode = "none";
-    this.displayMetrics.units = "Mgal/day"
+    this.displayMetrics.units = this.units.USC;
   }
 
   ngAfterViewInit() {
@@ -79,23 +116,21 @@ export class BottombarPanelComponent implements OnInit {
 
 
   updateMetrics(mode: string, metrics: any) {
-    
-    
-
     this.metrics = metrics;
 
     //console.log(this.metrics);
     
-    this.displayMetrics.values = metrics[this.units];
-    this.displayMetrics.area = metrics.area;
+    this.displayMetrics.values = metrics[this.unitSystem];
+    //this.displayMetrics.area = metrics.area;
 
-    this.mode = mode;
+    //capitalize first letter since didn't do this originally
+    this.mode = mode.charAt(0).toUpperCase() + mode.slice(1);
     
     //bargraph can only be rendered if element exists
     //delay so transition has time to process (might want to switch how checking for mode)
     setTimeout(() => {
       if(this.chart) {
-        this.generateBargraph(parseFloat(metrics[this.units].original), parseFloat(metrics[this.units].current));
+        this.generateBargraph(parseFloat(metrics[this.unitSystem].volumetric.original), parseFloat(metrics[this.unitSystem].volumetric.current));
       }
     }, 200);
     
@@ -104,24 +139,15 @@ export class BottombarPanelComponent implements OnInit {
 
   setUnits(type: string) {
 
-    this.units = type;
+    this.unitSystem = type;
 
-    switch(type) {
-      case "IPY": {
-        this.displayMetrics.units = "in/y";
-        break;
-      }
-      case "MGPD": {
-        this.displayMetrics.units = "Mgal/day";
-        break;
-      }
-    }
-    //update with stored ipy vals
     this.displayMetrics.values = this.metrics[type];
+
+    this.displayMetrics.units = this.units[type];
 
     //regenerate bargraph with new units if in a recharge vis mode
     if(this.mode != "none") {
-      this.generateBargraph(parseFloat(this.metrics[this.units].original), parseFloat(this.metrics[this.units].current));
+      this.generateBargraph(parseFloat(this.metrics[this.unitSystem].volumetric.original), parseFloat(this.metrics[this.unitSystem].volumetric.current));
     }
   }
 
@@ -143,16 +169,16 @@ export class BottombarPanelComponent implements OnInit {
   generateBargraph(originalRecharge: number, currentRecharge: number) {
   
     let original = {
-      x: ['Recharge'],
+      x: ["Total Recharge <br>(" + this.displayMetrics.units.volumetric + ")"],
       y: [originalRecharge],
-      name: 'Original',
+      name: 'Baseline',
       type: 'bar'
     };
     
     let current = {
-      x: ['Recharge'],
+      x: ["Total Recharge <br>(" + this.displayMetrics.units.volumetric + ")"],
       y: [currentRecharge],
-      name: 'Current',
+      name: 'This Analysis',
       type: 'bar'
     };
     
@@ -170,7 +196,7 @@ export class BottombarPanelComponent implements OnInit {
 
     let layout = {
       barmode: 'group',
-      height: 275,
+      height: 265,
       width: 350,
       plot_bgcolor: 'ivory',
       paper_bgcolor: 'ivory',
