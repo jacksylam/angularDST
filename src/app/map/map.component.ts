@@ -1879,8 +1879,9 @@ export class MapComponent implements OnInit {
           
           let base = this.types.landCover.data._covjson.ranges.cover.values;
 
-          
-          let changedIndexComponents = []
+          let dbQueryChunkSize = 50;
+          let subarrayCounter = 0;
+          let changedIndexComponents = [[]];
           
           for(let i = 0; i < base.length; i++) {
 
@@ -1890,7 +1891,16 @@ export class MapComponent implements OnInit {
             if(data.cover.values[i] != data.cover.nodata && base[i] != data.cover.values[i]) {
               base[i] = data.cover.values[i];
 
-              changedIndexComponents.push(this.getComponents(i));
+              //add index to query array chunk
+              if(subarrayCounter <= dbQueryChunkSize) {
+                changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
+                subarrayCounter++;
+              }
+              else {
+                changedIndexComponents.push([this.getComponents(i)])
+                subarrayCounter = 1;
+              }
+              
 
               //if overwriting base values, set value in baseData array
               if(info.overwrite) {
@@ -1902,10 +1912,21 @@ export class MapComponent implements OnInit {
           }
 
           //need to slice up array since can only handle certain length, use forkjoin
-          //might also make faster, maybe break into smaller pieces, 100 takes a long time
-          this.DBService.indexSearch(changedIndexComponents.slice(0, 100))
-          .subscribe((data) => {
-            console.log(data);
+          //also probably faster since queries slow with many indices
+          // Observable.forkJoin(changedIndexComponents.map(indexGroup => {
+          //   return this.DBService.indexSearch(indexGroup)
+          // }))
+          // .subscribe((data) => {
+          //   console.log(data);
+          // });
+
+          console.log(changedIndexComponents.length);
+
+          changedIndexComponents.forEach((indexGroup) => {
+            this.DBService.indexSearch(indexGroup)
+            .subscribe((data) => {
+              console.log(data);
+            });
           });
 
           this.loadCover(this.types.landCover, false);
