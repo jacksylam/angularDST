@@ -94,7 +94,7 @@ export class BottombarPanelComponent implements OnInit {
     Metric: {
       area: "Square Kilometers",
       volumetric: "Megaliters Per Day",
-      average: "Centimeters Per Year"
+      average: "Milimeters Per Year"
     }
   }
   
@@ -185,10 +185,11 @@ export class BottombarPanelComponent implements OnInit {
     let data = [original, current];
 
     //start display 10 units below min value, but not less than 0
-    let minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
+    let minScale = 0;
     //max recharge 75% of graph height
     let maxRecharge = Math.max(originalRecharge, currentRecharge);
-    let maxScale = maxRecharge + .75 * (maxRecharge - minScale);
+    //let minRecharge = Math.min(originalRecharge, currentRecharge);
+    let maxScale = maxRecharge * 2;
     //if both values are 0 just set it to 1
     if(maxScale == 0) {
       maxScale = 1;

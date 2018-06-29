@@ -44,7 +44,7 @@ export class MapComponent implements OnInit {
   static aquiferIndices: any;
   static aquiferIndexingComplete = false;
   static readonly METER_TO_MILE_FACTOR = 0.000621371;
-  static readonly INCH_TO_CENTIMETER_FACTOR = 2.54;
+  static readonly INCH_TO_MILIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
 
   mymap: any;
@@ -1150,7 +1150,7 @@ export class MapComponent implements OnInit {
           units: {
             area: "Square Kilometers",
             volumetric: "Megaliters Per Day",
-            average: "Centimeters Per Year"
+            average: "Milimeters Per Year"
           }
         }
       }
@@ -1597,8 +1597,8 @@ export class MapComponent implements OnInit {
           metrics.USC.average.current += rechargeVals[i];
           metrics.USC.average.original += this.types.recharge.baseData[i];
           
-          metrics.Metric.average.current += rechargeVals[i] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
-          metrics.Metric.average.original += this.types.recharge.baseData[i] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
+          metrics.Metric.average.current += rechargeVals[i] * MapComponent.INCH_TO_MILIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[i] * MapComponent.INCH_TO_MILIMETER_FACTOR;
         }
       }
 
@@ -1612,8 +1612,8 @@ export class MapComponent implements OnInit {
           metrics.USC.average.current += rechargeVals[index];
           metrics.USC.average.original += this.types.recharge.baseData[index];
 
-          metrics.Metric.average.current += rechargeVals[index] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
-          metrics.Metric.average.original += this.types.recharge.baseData[index] * MapComponent.INCH_TO_CENTIMETER_FACTOR;
+          metrics.Metric.average.current += rechargeVals[index] * MapComponent.INCH_TO_MILIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[index] * MapComponent.INCH_TO_MILIMETER_FACTOR;
         }
       });
     
@@ -1982,6 +1982,26 @@ export class MapComponent implements OnInit {
         rowMap[point.y] = [point.x];
       }
     });
+
+    let xdivisions = [];
+    let ydivisions = [];
+
+    let chunkSize = Math.floor((xrange.max - xrange.min) / divisions.x);
+    for(let i = 0; i < divisions.x - 1; i++) {
+      xdivisions.push({
+        min: xrange.min + i * chunkSize,
+        max: xrange.min + (i + 1) * chunkSize - 1
+      });
+    }
+
+    xdivisions.push({
+      min: xrange + 
+    });
+    chunkSize = yrange.max - yrange.min;
+    for(let i = 0; i < divisions.y; i++) {
+
+    }
+
   }
 
 
