@@ -86,8 +86,10 @@ export class MapComponent implements OnInit {
   metrics: {
     customAreas: any[],
     aquifers: any[],
+    aquifersNoCaprock: any[],
     customAreasTotal: any,
-    total: any
+    total: any,
+    totalNoCaprock: any
   }
 
   defaultMetrics: any;
@@ -135,6 +137,7 @@ export class MapComponent implements OnInit {
   //change once get actual data, just use first test file for now
   static readonly rechargeFile = "../assets/covjson/testfiles_sc0_0-fin.covjson"
   static readonly aquifersFile = "../assets/dlnr_aquifers.zip";
+  static readonly caprockFile = "../assets/Oahu__75m__caprock.asc";
 
   types = {
     landCover: {
@@ -159,6 +162,11 @@ export class MapComponent implements OnInit {
       layer: null
     }
   };
+
+  caprock = [];
+  includeCaprock = true;
+
+  highlightedAquiferIndices = [];
 
   //???, can probably just remove
   readonly layerOrdering = [this.types.landCover, this.types.recharge, this.types.aquifers];
@@ -283,10 +291,12 @@ export class MapComponent implements OnInit {
           this.mapService.baseDetails(this);
           break;
         case "Recharge Rate":
+          //default caprock to true
+          //this.includeCaprock = true;
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
-          console.log(this.metrics.total);
-          this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics);
+          //console.log(this.metrics.total);
+          this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
           this.disableShapeInteraction();
           //throws an error for some reason if run immediately (though it still works...)
           //possible that event goes through before layer fully swapped, so run on a delay
@@ -636,12 +646,14 @@ export class MapComponent implements OnInit {
           indexes = indexes.concat(MapComponent.aquiferIndices[name]);
           //console.log(MapComponent.aquiferIndices[name])
         });
+        
+        this.highlightedAquiferIndices = indexes;
 
 
         //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
 
         //get rounded metrics from indexes and send to bottom panel
-        let metrics = this.roundMetrics(this.getMetricsSuite(indexes));
+        let metrics = this.roundMetrics(this.getMetricsSuite(indexes, this.includeCaprock));
         //console.log(indexes);
         this.mapService.updateMetrics(this, "aquifer", metrics);
       });
@@ -668,7 +680,8 @@ export class MapComponent implements OnInit {
         color: 'black',
         fillOpacity: 0
       });
-    })
+    });
+    this.highlightedAquiferIndices = [];
     //remove again if was hidden
     if (hidden) {
       this.mymap.removeLayer(this.types.aquifers.layer);
@@ -748,7 +761,7 @@ export class MapComponent implements OnInit {
         let index = this.getIndex(xIndex, yIndex);
 
         //send get rounded metrics and send to bottom panel
-        let metrics = this.roundMetrics(this.getMetricsSuite([index]));
+        let metrics = this.roundMetrics(this.getMetricsSuite([index], true));
         this.mapService.updateMetrics(this, "cell", metrics);
       }
     });
@@ -804,7 +817,7 @@ export class MapComponent implements OnInit {
     //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
 
     //get rounded metrics for highlighted sshapes and send to bottom panel
-    let metrics = this.roundMetrics(this.getMetricsSuite(indexes))
+    let metrics = this.roundMetrics(this.getMetricsSuite(indexes, true));
     this.mapService.updateMetrics(this, "custom", metrics);
   }
 
@@ -822,9 +835,21 @@ export class MapComponent implements OnInit {
 
     this.interactionType = "full";
 
-    this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics);
+    this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
   }
 
+
+  toggleCaprock(mode: string) {
+    this.includeCaprock = !this.includeCaprock
+    if(mode == "Full") {
+      this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
+    }
+    else if(mode == "Aquifer") {
+      //get rounded metrics from indexes and send to bottom panel
+      let metrics = this.roundMetrics(this.getMetricsSuite(this.highlightedAquiferIndices, this.includeCaprock));
+      this.mapService.updateMetrics(this, "aquifer", metrics);
+    }
+  }
 
 
 
@@ -842,13 +867,16 @@ export class MapComponent implements OnInit {
     this.metrics = {
       customAreas: [],
       aquifers: [],
+      aquifersNoCaprock: [],
       customAreasTotal: {},
-      total: {}
+      total: {},
+      totalNoCaprock: {}
     }
 
     let metricCoordination = {
       rechargeVals: false,
-      aquifers: false
+      aquifers: false,
+      caprock: false
     };
 
     
@@ -896,7 +924,7 @@ export class MapComponent implements OnInit {
         __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
         
         //can't compute metrics until recharge vals and aquifers are set
-        if(metricCoordination.rechargeVals) {
+        if(metricCoordination.rechargeVals && metricCoordination.caprock) {
           //document.body.style.cursor='wait';
           __this.metrics = __this.createMetrics();
           //document.body.style.cursor='default';
@@ -945,7 +973,7 @@ export class MapComponent implements OnInit {
 
       //Race conditions? Don't think js can have race conditions since single threaded, should complete conditional before allowing other things to run
       //can't set metrics until aquifers in place and recharge values set
-      if(metricCoordination.aquifers) {
+      if(metricCoordination.aquifers && metricCoordination.caprock) {
         //document.body.style.cursor='wait';
         __this.metrics = __this.createMetrics();
       }
@@ -954,6 +982,34 @@ export class MapComponent implements OnInit {
         metricCoordination.rechargeVals = true;
       }
       
+    });
+
+
+
+
+    this.http.get(MapComponent.caprockFile).subscribe(data => {
+      let details = data.text().split('\n');
+      //console.log(details.length);
+      for(let i = 6; i < details.length; i++) {
+        //get data values after first six detail lines
+        //split on spaces, tabs, or commas for values
+        this.caprock = this.caprock.concat(details[i].split(/[ \t,]+/));
+        //console.log(details[i].length)
+        
+        //if whitespace at the end might reult in whitespace only element, remove these
+        if(this.caprock[this.caprock.length - 1].trim() == "") {
+          this.caprock.splice(this.caprock.length - 1, 1);
+        }
+      }
+
+      if(metricCoordination.aquifers && metricCoordination.rechargeVals) {
+        //document.body.style.cursor='wait';
+        __this.metrics = __this.createMetrics();
+      }
+      else {
+        //indicate recharge vals are set
+        metricCoordination.caprock = true;
+      }
     });
 
 
@@ -1182,11 +1238,16 @@ export class MapComponent implements OnInit {
     let data = {
       customAreas: [],
       aquifers: [],
+      aquifersNoCaprock: [],
       customAreasTotal: {
         metrics: {},
         roundedMetrics: {}
       },
       total: {
+        metrics: {},
+        roundedMetrics: {}
+      },
+      totalNoCaprock: {
         metrics: {},
         roundedMetrics: {}
       }
@@ -1204,18 +1265,29 @@ export class MapComponent implements OnInit {
           roundedMetrics: {}
         };
 
+        let infoNoCaprock = {
+          name: "",
+          metrics: {},
+          roundedMetrics: {}
+        };
+
         let capName = layer.feature.properties.SYSTEM;
         //switch from all upper case to capitalize first letter
         capName.split(/([\s \-])/).forEach((substr) => {
           info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
         });
+        infoNoCaprock.name = info.name;
 
-        let aquiferMetrics = this.getMetricsSuite(MapComponent.aquiferIndices[capName]);
+        let aquiferMetrics = this.getMetricsSuite(MapComponent.aquiferIndices[capName], true);
+        let aquiferMetricsNoCaprock = this.getMetricsSuite(MapComponent.aquiferIndices[capName], false);
         
          info.metrics = aquiferMetrics;
+         infoNoCaprock.metrics = aquiferMetricsNoCaprock;
          info.roundedMetrics = this.roundMetrics(aquiferMetrics);
+         infoNoCaprock.roundedMetrics = this.roundMetrics(aquiferMetricsNoCaprock);
         
          data.aquifers.push(info);
+         data.aquifersNoCaprock.push(infoNoCaprock);
       });
     }
 
@@ -1246,9 +1318,13 @@ export class MapComponent implements OnInit {
     }
 
 
-    let total = this.getMetricsSuite(null);
+    let total = this.getMetricsSuite(null, true);
     data.total.metrics = total;
     data.total.roundedMetrics = this.roundMetrics(total);
+
+    let totalNoCaprock = this.getMetricsSuite(null, false);
+    data.totalNoCaprock.metrics = totalNoCaprock;
+    data.totalNoCaprock.roundedMetrics = this.roundMetrics(totalNoCaprock);
     
 
     let items = new L.featureGroup();
@@ -1261,7 +1337,7 @@ export class MapComponent implements OnInit {
       //add custom naming options later, for now just name by number
       info.name = "Custom Area " + (__this.customAreasCount++).toString();
       //console.log(layer.toGeoJSON())
-      let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()));
+      let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
       info.metrics = itemMetrics;
       info.roundedMetrics = this.roundMetrics(itemMetrics);
 
@@ -1271,7 +1347,7 @@ export class MapComponent implements OnInit {
 
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()));
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     data.customAreasTotal.metrics = customTotal;
     data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
@@ -1549,7 +1625,7 @@ export class MapComponent implements OnInit {
   //maybe have subfunctions in generate report for different parts
 
   //also need to update all full map computations to disclude background cells
-  getMetricsSuite(indexes: number[]) {
+  getMetricsSuite(indexes: number[], caprock: boolean) {
     let metrics = {
       USC: {
         average: {
@@ -1588,11 +1664,27 @@ export class MapComponent implements OnInit {
 
     let cells = 0
 
+    let checkInclude = (i: number) => {
+      if(lcVals[i] == 0) {
+        return false;
+      }
+      
+      if(caprock) {
+        return true;
+      }
+      else {
+        if(this.caprock[i] == 0) {
+          return false;
+        }
+        return true;
+      }
+    };
+
     //pass in null if want whole map
     if (indexes == null) {
       for (let i = 0; i < rechargeVals.length; i++) {
         //if background value don't count
-        if(lcVals[i] != 0) {
+        if(checkInclude(i)) {
           cells++;
           metrics.USC.average.current += rechargeVals[i];
           metrics.USC.average.original += this.types.recharge.baseData[i];
@@ -1607,7 +1699,7 @@ export class MapComponent implements OnInit {
     else {
       //get total average over cells
       indexes.forEach((index) => {
-        if(lcVals[index] != 0) {
+        if(checkInclude(index)) {
           cells++;
           metrics.USC.average.current += rechargeVals[index];
           metrics.USC.average.original += this.types.recharge.baseData[index];
@@ -1879,9 +1971,9 @@ export class MapComponent implements OnInit {
           
           let base = this.types.landCover.data._covjson.ranges.cover.values;
 
-          let dbQueryChunkSize = 50;
-          let subarrayCounter = 0;
-          let changedIndexComponents = [[]];
+          // let dbQueryChunkSize = 50;
+          // let subarrayCounter = 0;
+          let changedIndexComponents = [];
           
           for(let i = 0; i < base.length; i++) {
 
@@ -1891,15 +1983,14 @@ export class MapComponent implements OnInit {
             if(data.cover.values[i] != data.cover.nodata && base[i] != data.cover.values[i]) {
               base[i] = data.cover.values[i];
 
-              //add index to query array chunk
-              if(subarrayCounter <= dbQueryChunkSize) {
-                changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
-                subarrayCounter++;
-              }
-              else {
-                changedIndexComponents.push([this.getComponents(i)])
-                subarrayCounter = 1;
-              }
+
+              changedIndexComponents.push(this.getComponents(i));
+              //   subarrayCounter++;
+              // }
+              // else {
+              //   changedIndexComponents.push([this.getComponents(i)])
+              //   subarrayCounter = 1;
+              // }
               
 
               //if overwriting base values, set value in baseData array
@@ -1920,14 +2011,24 @@ export class MapComponent implements OnInit {
           //   console.log(data);
           // });
 
-          console.log(changedIndexComponents.length);
+          let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 2, y: 4});
 
-          changedIndexComponents.forEach((indexGroup) => {
-            this.DBService.indexSearch(indexGroup)
-            .subscribe((data) => {
-              console.log(data);
-            });
+          console.log(geometries);
+
+          Observable.forkJoin(geometries.map(element => {
+            return this.DBService.spatialSearch(element);
+          }))
+          //this.DBService.spatialSearch(element);
+          .subscribe((data) => {
+            console.log(data);
           });
+
+          // changedIndexComponents.forEach((indexGroup) => {
+          //   this.DBService.indexSearch(indexGroup)
+          //   .subscribe((data) => {
+          //     console.log(data);
+          //   });
+          // });
 
           this.loadCover(this.types.landCover, false);
 
@@ -1957,7 +2058,7 @@ export class MapComponent implements OnInit {
       max: Number.NEGATIVE_INFINITY
     }
 
-    let rowMap: any = {}
+    //let rowMap: any = {}
     //get max and min values and repackage values to be mapped by row
     points.forEach((point) => {
       if(point.x > xrange.max) {
@@ -1974,13 +2075,13 @@ export class MapComponent implements OnInit {
       }
 
       //if row already in mapping add x value to mapped array of values
-      if(rowMap[point.y]) {
-        rowMap[point.y].push(point.x);
-      }
-      //otherwise add mapping
-      else {
-        rowMap[point.y] = [point.x];
-      }
+      // if(rowMap[point.y]) {
+      //   rowMap[point.y].push(point.x);
+      // }
+      // //otherwise add mapping
+      // else {
+      //   rowMap[point.y] = [point.x];
+      // }
     });
 
     let xdivisions = [];
@@ -1990,17 +2091,200 @@ export class MapComponent implements OnInit {
     for(let i = 0; i < divisions.x - 1; i++) {
       xdivisions.push({
         min: xrange.min + i * chunkSize,
+        //subtract 1 so upper bound centroid not in bounds (boundary centroids get placed in latter section)
         max: xrange.min + (i + 1) * chunkSize - 1
       });
     }
-
+    //add last chunk separately so all included if not evenly divisible
     xdivisions.push({
-      min: xrange + 
+      min: xrange.min + (divisions.x - 1) * chunkSize,
+      max: xrange.max
     });
-    chunkSize = yrange.max - yrange.min;
-    for(let i = 0; i < divisions.y; i++) {
 
+    chunkSize = Math.floor((yrange.max - yrange.min) / divisions.y);
+    for(let i = 0; i < divisions.y - 1; i++) {
+      ydivisions.push({
+        //subtract 1 so centroid within bounds
+        min: yrange.min + i * chunkSize - 1,
+        //subtract 1 so upper bound centroid not in bounds (boundary centroids get placed in latter section)
+        max: yrange.min + (i + 1) * chunkSize - 1
+      });
     }
+    //add last chunk separately so all included if not evenly divisible
+    ydivisions.push({
+      min: yrange.min + (divisions.y - 1) * chunkSize - 1,
+      max: yrange.max + 1
+    });
+
+
+    // ydivisions.forEach((ygroup) => {
+    //   for(let i = ygroup.min) {
+
+    //   }
+    // });
+
+    let yMapping = [];
+    //let xMapping = [];
+
+    for(let i = 0; i < xdivisions.length; i++) {
+      yMapping.push([]);
+      for(let j = 0; j < ydivisions.length; j++) {
+        yMapping[i].push({});
+      }
+    }
+
+    // for(let i = 0; i < xdivisions.length; i++) {
+    //   xMapping.push([]);
+    //   for(let j = 0; j < ydivisions.length; j++) {
+    //     xMapping[i].push({});
+    //   }
+    // }
+
+
+    //find which division point falls in and create mapping
+    points.forEach((point) => {
+      let broken = false;
+      for(let i = 0; i < xdivisions.length; i++) {
+        for(let j = 0; j < ydivisions.length; j++) {
+          if((point.x >= xdivisions[i].min && point.x <= xdivisions[i].max) && (point.y >= ydivisions[j].min && point.y <= ydivisions[j].max)) {
+            if(yMapping[i][j][point.y]) {
+              if(point.x < yMapping[i][j][point.y].min) {
+                yMapping[i][j][point.y].min = point.x;
+              }
+              else if(point.x > yMapping[i][j][point.y].max) {
+                yMapping[i][j][point.y].max = point.x;
+              }
+            }
+            else {
+              yMapping[i][j][point.y] = {
+                min: point.x,
+                max: point.x
+              }
+            }
+
+            // if(xMapping[i][j][point.x]) {
+            //   if(point.y < xMapping[i][j][point.x].min) {
+            //     xMapping[i][j][point.x].min = point.y;
+            //   }
+            //   else if(point.y > xMapping[i][j][point.x].max) {
+            //     xMapping[i][j][point.x].max = point.y;
+            //   }
+            // }
+            // else {
+            //   xMapping[i][j][point.x] = {
+            //     min: point.y,
+            //     max: point.y
+            //   }
+            // }
+            broken = true;
+            break;
+          }
+        }
+        //if inner loop broke already found division the point belongs in, break out of outer loop as well
+        if(broken) {
+          break;
+        }
+      }
+    });
+
+    console.log(yMapping);
+    //console.log(xMapping);
+
+    let geometries = [];
+
+    let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+    let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+    //CAN ALSO MIRROR ON X SIDES (FOLLOW Y CONTOURS ON TOP AND BOTTOM) FOR TIGHTER BOUND
+    //only want to cutout in gaps between bottom two points and top two points rather than whole range
+    //can fix this later, just comment out x cutouts for now, bit more complicated
+
+    for(let i = 0; i < xdivisions.length; i++) {
+      for(let j = 0; j < ydivisions.length; j++) {
+        let rightPoints = [];
+        let leftPoints = [];
+        // let topPoints = [];
+        // let bottomPoints = [];
+
+        let first = true;
+        for(let y = ydivisions[j].min; y <= ydivisions[j].max; y++) {
+          if(yMapping[i][j][y]) {
+            let yUTM = ys[y];
+            //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
+            let xMinUTM = xs[yMapping[i][j][y].min] - 1;
+            //add 1 to max side so inside bounds
+            let xMaxUTM = xs[yMapping[i][j][y].max] + 1;
+
+            //is x, y the right order?
+            let coordLeft =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
+            let coordRight =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMaxUTM, yUTM]);
+            
+            //console.log(coordLeft);
+
+            leftPoints.push(coordLeft);
+            rightPoints.push(coordRight);
+          }
+        }
+
+        //only want to cutout in gaps between bottom two points and top two points rather than whole range
+        //can fix this later, just comment out x cutouts for now, bit more complicated
+
+        // for(let x = xdivisions[i].min; x <= xdivisions[i].max; x++) {
+        //   if(xMapping[i][j][x]) {
+        //     let xUTM = xs[x];
+        //     //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
+        //     let yMinUTM = ys[xMapping[i][j][x].min] - 1;
+        //     //add 1 to max side so inside bounds
+        //     let yMaxUTM = ys[xMapping[i][j][x].max] + 1;
+
+        //     //is x, y the right order?
+        //     //top has minimum y values since grid upside down
+        //     let coordTop =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xUTM, yMinUTM]);
+        //     let coordBottom =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xUTM, yMaxUTM]);
+
+        //     //console.log(coordTop);
+        //     topPoints.push(coordTop);
+        //     bottomPoints.push(coordBottom);
+        //   }
+        // }
+        //reverse right side points since want from top to bottom which is min to max (put in array max to min)
+        //rightPoints = rightPoints.reverse();
+        //reverse bottom points so right to left
+        leftPoints = leftPoints.reverse();
+        //console.log(leftPoints);
+        let shape = rightPoints.concat(leftPoints);
+        //shape = shape.concat(rightPoints);
+        // shape = shape.concat(leftPoints);
+        //add first point to end of array to close shape
+        if(shape[0]) {
+          shape.push(shape[0]);
+
+          geometries.push({
+            "type": "Polygon",
+            "coordinates": [shape]
+          });
+        }
+        
+
+        console.log(shape);
+
+        
+      }
+    }
+
+    geometries.forEach((geometry) => {
+      let geojsonBounds = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": geometry
+      };
+      L.geoJSON(geojsonBounds).addTo(this.mymap);
+    });
+    
+    console.log(geometries);
+
+    return geometries
+
 
   }
 
@@ -3104,7 +3388,7 @@ export class MapComponent implements OnInit {
     let items = new L.featureGroup();
     //add custom naming options later, for now just name by number
     info.name = "Custom Area " + (__this.customAreasCount++).toString();
-    let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()));
+    let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
 
     info.metrics = itemMetrics;
     info.roundedMetrics = this.roundMetrics(itemMetrics);
@@ -3113,7 +3397,7 @@ export class MapComponent implements OnInit {
 
     //update custom areas total
     //can definately improve upon this
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()));
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     this.metrics.customAreasTotal.metrics = customTotal;
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
@@ -3175,13 +3459,13 @@ export class MapComponent implements OnInit {
       //deal with errors too
 
       Observable.forkJoin(geojsonObjects.features.map(element => {
-        return this.DBService.spatialSearch(element.geometry)
+        return this.DBService.spatialSearch(element.geometry);
       }))
-        .subscribe((data) => {
-          //console.log(typeof data);
-          //use file(s) generated as cover
-          handler(data);
-        });
+      .subscribe((data) => {
+        //console.log(typeof data);
+        //use file(s) generated as cover
+        handler(data);
+      });
 
     }
   }

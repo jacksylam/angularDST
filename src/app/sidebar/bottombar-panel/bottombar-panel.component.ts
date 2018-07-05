@@ -26,6 +26,7 @@ export class BottombarPanelComponent implements OnInit {
   @ViewChild('chart') chart;
 
   state = 'inactive';
+  includeCaprock = true;
 
   metrics = {
     USC: {
@@ -133,8 +134,11 @@ export class BottombarPanelComponent implements OnInit {
         this.generateBargraph(parseFloat(metrics[this.unitSystem].volumetric.original), parseFloat(metrics[this.unitSystem].volumetric.current));
       }
     }, 200);
-    
-    
+  }
+
+  toggleCaprock(e) {
+    this.includeCaprock = !this.includeCaprock;
+    this.mapService.toggleCaprock(this, this.mode);
   }
 
   setUnits(type: string) {
@@ -154,6 +158,7 @@ export class BottombarPanelComponent implements OnInit {
 
   backToBase() {
     this.mode = "none";
+    this.state = 'inactive';
   }
   
 
@@ -171,6 +176,8 @@ export class BottombarPanelComponent implements OnInit {
     let original = {
       x: ["Total Recharge <br>(" + this.displayMetrics.units.volumetric + ")"],
       y: [originalRecharge],
+      // text: 'Text A',
+      // textposition: 'auto',
       name: 'Baseline',
       type: 'bar'
     };
@@ -210,7 +217,25 @@ export class BottombarPanelComponent implements OnInit {
       },
       yaxis: {
         range: [minScale, maxScale]
-      }
+      },
+      annotations: [
+        {
+          x: -0.2,
+          y: originalRecharge,
+          xanchor: 'auto',
+          yanchor: 'bottom',
+          text: originalRecharge.toString(),
+          showarrow: false
+        },
+        {
+          x: 0.2,
+          y: currentRecharge,
+          xanchor: 'auto',
+          yanchor: 'bottom',
+          text: currentRecharge.toString(),
+          showarrow: false
+        },
+      ]
     };
     
     Plotly.newPlot(this.chart.nativeElement, data, layout);

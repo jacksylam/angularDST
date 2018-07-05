@@ -137,6 +137,83 @@
 
       <div #aquiferGraph></div>
 
+
+      <table border="0" class="no-border header-table">
+        <tr class="no-border">
+          <td class="no-border-cell-title"><h2>Aquifer Systems<br>Discluding Caprock</h2></td>
+          <td class="no-border-cell-description">Description of caprock</td>
+        </tr>
+      </table>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Area <br> ({{this.windowPanel.data.unitSystem.units.area}})</th>
+          <th>
+            <div style="text-align: center;">Total Recharge <br> ({{this.windowPanel.data.unitSystem.units.volumetric}})</div>
+            <hr>
+            <table border="0" class="no-border nested-table">
+              <tr class="no-border">
+                <td class="no-border-cell-internal">Baseline</td>
+                <td class="no-border-cell-internal">This Analysis</td>
+              </tr>
+            </table>
+          </th>
+          <th>
+            <div style="text-align: center;">Average Recharge <br> ({{this.windowPanel.data.unitSystem.units.average}})</div>
+            <hr>
+            <table border="0" class="no-border nested-table">
+              <tr class="no-border">
+                <td class="no-border-cell-internal">Baseline</td>
+                <td class="no-border-cell-internal">This Analysis</td>
+              </tr>
+            </table>
+          </th>
+          <th>
+            <div style="text-align: center;">Volumetric Difference</div>
+            <hr>
+            <table border="0" class="no-border nested-table">
+              <tr class="no-border">
+                <td class="no-border-cell-internal">{{this.windowPanel.data.unitSystem.units.volumetric}}</td>
+                <td class="no-border-cell-internal">Percent Change</td>
+              </tr>
+            </table>
+          </th>
+        </tr>
+
+        <tr *ngFor="let aquifer of windowPanel.data.metrics.aquifersNoCaprock">
+          <td>{{aquifer.name}}</td>
+          <td>{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].area}}</td>
+          <td>
+            <table border="0" class="no-border nested-table">
+              <tr class="no-border">
+                <td class="no-border-cell-internal">{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.original}}</td>
+                <td class="no-border-cell-internal">{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.current}}</td>
+              </tr>
+            </table>
+          </td>
+          <td>
+            <table border="0" class="no-border nested-table">
+              <tr class="no-border">
+                <td class="no-border-cell-internal">{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].average.original}}</td>
+                <td class="no-border-cell-internal">{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].average.current}}</td>
+              </tr>
+            </table>
+          </td>
+          <td>
+            <table border="0" class="no-border nested-table">
+              <tr class="no-border">
+                <td class="no-border-cell-internal">{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.diff}}</td>
+                <td class="no-border-cell-internal">{{aquifer.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.pchange}}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <br>
+
+      <div #aquiferGraphNoCaprock></div>
+
       <br>
       <table border="0" class="no-border">
         <tr class="no-border">
@@ -223,41 +300,49 @@
           <th></th>
           <th>User Defined Areas</th>
           <th>Island</th>
+          <th>Island Discluding Caprock</th>
         </tr>
         <tr>
           <th>Area Total ({{this.windowPanel.data.unitSystem.units.area}})</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].area}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].area}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].area}}</td>
         </tr>
         <tr>
           <th>Total Recharge, Baseline ({{this.windowPanel.data.unitSystem.units.volumetric}})</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.original}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.original}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.original}}</td>
         </tr>
         <tr>
           <th>Total Recharge, This Analysis ({{this.windowPanel.data.unitSystem.units.volumetric}})</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.current}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.current}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.current}}</td>
         </tr>
         <tr>
           <th>Average Recharge, Baseline ({{this.windowPanel.data.unitSystem.units.average}})</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].average.original}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].average.original}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].average.original}}</td>
         </tr>
         <tr>
           <th>Average Recharge, This Analysis ({{this.windowPanel.data.unitSystem.units.average}})</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].average.current}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].average.current}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].average.current}}</td>
         </tr>
         <tr>
           <th>Volumetric Difference ({{this.windowPanel.data.unitSystem.units.volumetric}})</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.diff}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.diff}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.diff}}</td>
         </tr>
         <tr>
           <th>Volumetric Percent Change</th>
           <td>{{windowPanel.data.metrics.customAreasTotal.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.pchange}}</td>
           <td>{{windowPanel.data.metrics.total.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.pchange}}</td>
+          <td>{{windowPanel.data.metrics.totalNoCaprock.roundedMetrics[windowPanel.data.unitSystem.system].volumetric.pchange}}</td>
         </tr>
 
         <!-- <tr>
@@ -311,6 +396,8 @@
       <br>
 
       <div #fullGraph></div>
+
+      <div #fullGraphNoCaprock></div>
 
       <br>
 

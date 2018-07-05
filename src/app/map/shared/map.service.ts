@@ -74,6 +74,11 @@ export class MapService {
     this.mapHash[index].setMode(mode);
   }
 
+  toggleCaprock(detailPanel: any, mode: string) {
+    let index = this.detailPanelHash.indexOf(detailPanel);
+    this.mapHash[index].toggleCaprock(mode);
+  }
+
   changeScenario(buttonPanel: any, scenario: string) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
     this.mapHash[index].changeScenario(scenario);

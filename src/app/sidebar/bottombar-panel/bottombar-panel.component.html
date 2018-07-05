@@ -16,6 +16,13 @@
                     <br>
                     <div style="height:10px;"></div>
 
+                    <div *ngIf="mode=='Full' || mode=='Aquifer'">
+                        <mat-checkbox [checked]="includeCaprock" (change)="toggleCaprock()">Include Caprock</mat-checkbox>
+
+                        <br>
+                        <div style="height:10px;"></div>
+                    </div>
+
                     <!-- add something to check scenario for specific areas rather than currently selected one -->
                     <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 

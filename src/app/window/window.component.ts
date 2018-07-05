@@ -27,9 +27,12 @@ export class WindowComponent implements AfterViewInit {
   @ViewChild('resizeRight') resizeRight;
 
   @ViewChild('aquiferGraph') aquiferGraph;
+  @ViewChild('aquiferGraphNoCaprock') aquiferGraphNoCaprock;
   @ViewChild('customGraph') customGraph;
   @ViewChild('customTotalGraph') customTotalGraph;
   @ViewChild('fullGraph') fullGraph;
+  @ViewChild('fullGraphNoCaprock') fullGraphNoCaprock;
+
   @ViewChild('phantomScrollLock') phantomScrollLock;
   @ViewChild('phantomScrollSmooth') phantomScrollSmooth;
 
@@ -54,11 +57,13 @@ export class WindowComponent implements AfterViewInit {
   pdf: any;
   graphImageData = {
     aquifers: null,
+    aquifersNoCaprock: null,
     custom: null,
     customTotal: null,
-    total: null
+    total: null,
+    totalNoCaprock: null
   };
-  graphOrder = ["aquifers", "custom", "customTotal", "total"];
+  graphOrder = ["aquifers", "aquifersNoCaprock", "custom", "customTotal", "total", "totalNoCaprock"];
 
   mouseCornerOffset: {
     left: number,
@@ -410,7 +415,8 @@ export class WindowComponent implements AfterViewInit {
     let columnsSummary = [
       {title: "", dataKey: "type"}, 
       {title: "User Defined Areas", dataKey: "uda"}, 
-      {title: "Island", dataKey: "total"}
+      {title: "Island", dataKey: "total"},
+      {title: "Island Discluding Caprock", dataKey: "totalNoCaprock"}
     ];
     let infoHeaders = [
       {title: "", dataKey: "blank"},
@@ -473,6 +479,62 @@ export class WindowComponent implements AfterViewInit {
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y - 5, "Hydrological units established by the Hawaii State Comission on Water Resource");
     this.pdf.text(220, y + 5, "Management to manage groundwater resources");
+    this.pdf.autoTable(columnsName, rows, {
+      startY: y + 50,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
+      columnStyles: {
+        name: {columnWidth: nameWidth},
+        area: {columnWidth: normalWidth},
+        oriny: {columnWidth: normalWidth},
+        criny: {columnWidth: normalWidth},
+        ormgd: {columnWidth: normalWidth},
+        crmgd: {columnWidth: normalWidth},
+        diff: {columnWidth: normalWidth},
+        pchange: {columnWidth: normalWidth}
+      },
+      margin: {top: 60}
+    });
+
+    y = this.pdf.autoTable.previous.finalY + 50;
+
+    if(y + 50 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
+    rows = [];
+
+    this.pdf.autoTable(infoHeaders, rows, {
+      startY: y + 20,
+      styles: {
+        overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4, halign: "center"},
+      columnStyles: {
+        blank: {columnWidth: blankWidth},
+        cat1: {columnWidth: normalWidth * 2},
+        cat2: {columnWidth: normalWidth * 2},
+        cat3: {columnWidth: normalWidth * 2}
+      },
+      margin: {top: 60}
+    });
+
+    this.windowPanel.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
+      rows.push({
+        name: aquifer.name,
+        area: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
+        oriny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
+        criny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
+        ormgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
+        crmgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
+        diff: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
+        pchange: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+      })
+    })
+
+    this.pdf.setFontSize(titleSize);
+    this.pdf.text(50, y - 10, "Aquifer Systems\nDiscluding Caprock");
+    this.pdf.setFontSize(descriptionSize);
+    this.pdf.text(220, y, "Description of caprock");
     this.pdf.autoTable(columnsName, rows, {
       startY: y + 50,
       styles: {
@@ -560,42 +622,50 @@ export class WindowComponent implements AfterViewInit {
 
     rows = [];
     let total = this.windowPanel.data.metrics.total
+    let totalNoCaprock = this.windowPanel.data.metrics.totalNoCaprock
     let customAreasTotal = this.windowPanel.data.metrics.customAreasTotal;
 
     rows.push({
       type: "Area Total (" + this.windowPanel.data.unitSystem.units.area + ")",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].area
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].area
     });
     rows.push({
       type: "Total Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original
     });
     rows.push({
       type: "Total Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current
     });
     rows.push({
       type: "Average Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.average + ")",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original
     });
     rows.push({
       type: "Average Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.average + ")",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current
     });
     rows.push({
       type: "Volumetric Difference (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff
     });
     rows.push({
       type: "Volumetric Percent Change",
       uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange
+      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
@@ -699,6 +769,11 @@ export class WindowComponent implements AfterViewInit {
     //get the rest of the lines of text, split at page width
     let restLinesText2 = this.pdf.splitTextToSize(remainingText2, pwidth);
 
+    if(y + 50 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
     this.pdf.setFontSize(disclaimerSize);
     
     this.pdf.setFontType("bold");
@@ -710,7 +785,7 @@ export class WindowComponent implements AfterViewInit {
     //add 10 space for each line plus 10 for buffer
     y += (restLinesText1.length + 1) * 10 + 10
     
-    if(y >= height) {
+    if(y + 50 >= height) {
       this.pdf.addPage();
       y = 50;
     }
@@ -754,13 +829,28 @@ export class WindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Original',
+          name: 'Baseline',
           type: 'bar'
         },
         {
           x: [],
           y: [],
-          name: 'Current',
+          name: 'This Analysis',
+          type: 'bar'
+        }],
+        layout: {}
+      },
+      aquifersNoCaprock: {
+        data: [{
+          x: [],
+          y: [],
+          name: 'Baseline<br>(No Caprock)',
+          type: 'bar'
+        },
+        {
+          x: [],
+          y: [],
+          name: 'This Analysis<br>(No Caprock)',
           type: 'bar'
         }],
         layout: {}
@@ -769,13 +859,13 @@ export class WindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Original',
+          name: 'Baseline',
           type: 'bar'
         },
         {
           x: [],
           y: [],
-          name: 'Current',
+          name: 'This Analysis',
           type: 'bar'
         }],
         layout: {}
@@ -784,13 +874,13 @@ export class WindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Original',
+          name: 'Baseline',
           type: 'bar'
         },
         {
           x: [],
           y: [],
-          name: 'Current',
+          name: 'This Analysis',
           type: 'bar'
         }],
         layout: {}
@@ -799,39 +889,105 @@ export class WindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Original',
+          name: 'Baseline',
           type: 'bar'
         },
         {
           x: [],
           y: [],
-          name: 'Current',
+          name: 'This Analysis',
+          type: 'bar'
+        }],
+        layout: {}
+      },
+      fullNoCaprock: {
+        data: [{
+          x: [],
+          y: [],
+          name: 'Baseline<br>(No Caprock)',
+          type: 'bar'
+        },
+        {
+          x: [],
+          y: [],
+          name: 'This Analysis<br>(No Caprock)',
           type: 'bar'
         }],
         layout: {}
       }
     }
 
-    
+    let aquiferAnnotations = []
+    let x = 0
     this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
       graphData.aquifers.data[0].x.push(aquifer.name);
       graphData.aquifers.data[1].x.push(aquifer.name);
 
-      graphData.aquifers.data[0].y.push(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
-      graphData.aquifers.data[1].y.push(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
-    })
+      let original = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
+      let current = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+      
+      graphData.aquifers.data[0].y.push(original);
+      graphData.aquifers.data[1].y.push(current);
+      aquiferAnnotations.push({
+        x: x,
+        y: current,
+        xanchor: 'auto',
+        yanchor: 'bottom',
+        text: original + " " + current,
+        font: {
+          size: 8
+        },
+        showarrow: false
+      });
+      x++;
+    });
     graphData.aquifers.layout = {
       barmode: 'group',
       margin: {
         b: 125,
         t: 20
-      }
+      },
+      annotations: aquiferAnnotations
+    }
+
+    let aquiferNoCaprockAnnotations = [];
+    x = 0
+    this.windowPanel.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
+      graphData.aquifersNoCaprock.data[0].x.push(aquifer.name);
+      graphData.aquifersNoCaprock.data[1].x.push(aquifer.name);
+
+      let original = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
+      let current = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+
+      graphData.aquifersNoCaprock.data[0].y.push(original);
+      graphData.aquifersNoCaprock.data[1].y.push(current);
+
+      aquiferNoCaprockAnnotations.push({
+        x: x,
+        y: current,
+        xanchor: 'auto',
+        yanchor: 'bottom',
+        text: original + " " + current,
+        font: {
+          size: 8
+        },
+        showarrow: false
+      });
+      x++;
+    })
+    graphData.aquifersNoCaprock.layout = {
+      barmode: 'group',
+      margin: {
+        b: 125,
+        t: 20
+      },
+      annotations: aquiferNoCaprockAnnotations
     }
 
     graphData.full.data[0].x.push("Map Total");
     graphData.full.data[1].x.push("Map Total");
 
-console.log(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system]);
+    //console.log(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system]);
 
     graphData.full.data[0].y.push(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
     graphData.full.data[1].y.push(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
@@ -843,12 +999,34 @@ console.log(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.
       }
     }
 
-    
+    graphData.fullNoCaprock.data[0].x.push("Map Total Discluding Caprock");
+    graphData.fullNoCaprock.data[1].x.push("Map Total Discluding Caprock");
+
+    graphData.fullNoCaprock.data[0].y.push(this.windowPanel.data.metrics.totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
+    graphData.fullNoCaprock.data[1].y.push(this.windowPanel.data.metrics.totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
+
+    graphData.fullNoCaprock.layout = {
+      barmode: 'group',
+      margin: {
+        t: 20
+      }
+    }
+
+
+
     Plotly.plot(this.aquiferGraph.nativeElement, graphData.aquifers.data, graphData.aquifers.layout)
     .then((graph) => {
       Plotly.toImage(graph, {format: "png", height: 450, width: 900})
       .then((image) => {   
         this.graphImageData.aquifers = image;
+      });
+    });
+
+    Plotly.plot(this.aquiferGraphNoCaprock.nativeElement, graphData.aquifersNoCaprock.data, graphData.aquifersNoCaprock.layout)
+    .then((graph) => {
+      Plotly.toImage(graph, {format: "png", height: 450, width: 900})
+      .then((image) => {   
+        this.graphImageData.aquifersNoCaprock = image;
       });
     });
 
@@ -860,15 +1038,38 @@ console.log(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.
       });
     });
 
+    Plotly.plot(this.fullGraphNoCaprock.nativeElement, graphData.fullNoCaprock.data, graphData.fullNoCaprock.layout)
+    .then((graph) => {
+      Plotly.toImage(graph, {format: "png", height: 450, width: 900})
+      .then((image) => {   
+        this.graphImageData.totalNoCaprock = image;
+      });
+    });
+
 
     //only plot custom area graphs if user had defined areas
     if(this.windowPanel.data.metrics.customAreas.length > 0) {
+      let customAnnotations = []
+      x = 0
       this.windowPanel.data.metrics.customAreas.forEach((area) => {
         graphData.custom.data[0].x.push(area.name);
         graphData.custom.data[1].x.push(area.name);
   
         graphData.custom.data[0].y.push(area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
         graphData.custom.data[1].y.push(area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
+
+        aquiferNoCaprockAnnotations.push({
+          x: x,
+          y: current,
+          xanchor: 'auto',
+          yanchor: 'bottom',
+          text: original + " " + current,
+          font: {
+            size: 8
+          },
+          showarrow: false
+        });
+        x++;
       })
       graphData.custom.layout = {
         barmode: 'group',

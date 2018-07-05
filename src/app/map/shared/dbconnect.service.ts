@@ -16,7 +16,7 @@ export class DBConnectService {
     //this will use the 0 indexed feature from the leaflet map, which should be a GeoJSON polygon, for the spatial search boundry
     //for(let i = 0; i < size; i++) {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
-    console.log(geometry)
+    //console.log(geometry)
     var query = "{'$and':[{'name':'Landuse'},{'value.name':'testunit3'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
 
     var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
