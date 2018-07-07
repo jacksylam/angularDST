@@ -1058,18 +1058,18 @@ export class WindowComponent implements AfterViewInit {
         graphData.custom.data[0].y.push(area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
         graphData.custom.data[1].y.push(area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
 
-        aquiferNoCaprockAnnotations.push({
-          x: x,
-          y: current,
-          xanchor: 'auto',
-          yanchor: 'bottom',
-          text: original + " " + current,
-          font: {
-            size: 8
-          },
-          showarrow: false
-        });
-        x++;
+        // aquiferNoCaprockAnnotations.push({
+        //   x: x,
+        //   y: current,
+        //   xanchor: 'auto',
+        //   yanchor: 'bottom',
+        //   text: original + " " + current,
+        //   font: {
+        //     size: 8
+        //   },
+        //   showarrow: false
+        // });
+        // x++;
       })
       graphData.custom.layout = {
         barmode: 'group',

@@ -89,7 +89,7 @@ export class BottombarPanelComponent implements OnInit {
   units = {
     USC: {
       area: "Square Miles",
-      volumetric: "Mega-Gallons Per Day",
+      volumetric: "Million Gallons Per Day",
       average: "Inches Per Year"
     },
     Metric: {

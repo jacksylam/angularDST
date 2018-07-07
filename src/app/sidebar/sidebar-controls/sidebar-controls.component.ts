@@ -42,6 +42,8 @@ export class SidebarControlsComponent implements OnInit {
 
   units = "USC";
 
+  precision = 3;
+
   constructor(private mapService: MapService, private dialog: MatDialog) {
   }
 

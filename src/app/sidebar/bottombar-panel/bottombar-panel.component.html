@@ -10,45 +10,74 @@
 
             <div class="metrics-container">
                 <div class="width-ctrl">
-                    <div style="height:10px;"></div>
+                    <div style="height:5px;"></div>
                     Metric Mode: {{mode}}
 
                     <br>
-                    <div style="height:10px;"></div>
+                    <div style="height:5px;"></div>
 
                     <div *ngIf="mode=='Full' || mode=='Aquifer'">
-                        <mat-checkbox [checked]="includeCaprock" (change)="toggleCaprock()">Include Caprock</mat-checkbox>
+                        <mat-checkbox [checked]="includeCaprock" (change)="toggleCaprock()"><div class="checkbox-text">Include Caprock</div></mat-checkbox>
 
                         <br>
-                        <div style="height:10px;"></div>
+                        <div style="height:5px;"></div>
                     </div>
 
                     <!-- add something to check scenario for specific areas rather than currently selected one -->
                     <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 
-                    Total Recharge, Baseline: {{displayMetrics.values.volumetric.original}} {{displayMetrics.units.volumetric}}
-                    <br>
-                    Total Recharge, This Analysis: {{displayMetrics.values.volumetric.current}} {{displayMetrics.units.volumetric}}
+                    <table border="0" class="no-border">
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Total Recharge, Baseline:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.volumetric.original}} {{displayMetrics.units.volumetric}}</td>
+                        </tr>
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Total Recharge, This Analysis:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.volumetric.current}} {{displayMetrics.units.volumetric}}</td>
+                        </tr>
+                    </table>
 
-                    <br>
+                    <div style="height:5px;"></div>
+
+                    <table border="0" class="no-border">
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Average Recharge, Baseline:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.average.original}} {{displayMetrics.units.average}}</td>
+                        </tr>
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Average Recharge, This Analysis:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.average.current}} {{displayMetrics.units.average}}</td>
+                        </tr>
+                    </table>
+
+                    <div style="height:5px;"></div>
+
+                    <table border="0" class="no-border">
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Area:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.area}} {{displayMetrics.units.area}}</td>
+                        </tr>
+                    </table>
+
+                    <div style="height:5px;"></div>
+
+                    <table border="0" class="no-border">
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Volumetric Difference:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.volumetric.diff}} {{displayMetrics.units.volumetric}}</td>
+                        </tr>
+                        <tr class="no-border">
+                            <td class="no-border-cell-title">Volumetric Percent Change:</td>
+                            <td class="no-border-cell-description">{{displayMetrics.values.volumetric.pchange}}</td>
+                        </tr>
+                    </table>
+
                     <div style="height:10px;"></div>
 
-                    Average Recharge, Baseline: {{displayMetrics.values.average.original}} {{displayMetrics.units.average}}
-                    <br>
-                    Average Recharge, This Analysis: {{displayMetrics.values.average.current}} {{displayMetrics.units.average}}
-
-                    <br>
-                    <div style="height:10px;"></div>
-
-                    Area: {{displayMetrics.values.area}} {{displayMetrics.units.area}}
-
-                    <br>
-                    <div style="height:10px;"></div>
-
-                    Volumetric Difference: {{displayMetrics.values.average.diff}}
-                    <br>
-                    Volumetric Percent Change: {{displayMetrics.values.average.pchange}}
+                    <div style="font-size: 8pt; color: black">Values are rounded to 3 significant figures</div>
+                    
                 </div>
+                
                 <div #chart> </div>
             </div>
             

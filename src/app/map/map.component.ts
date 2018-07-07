@@ -143,7 +143,7 @@ export class MapComponent implements OnInit {
     landCover: {
       parameter: 'cover',
       label: 'Land Cover',
-      palette: C.directPalette(this.colorPalette()),
+      palette: C.directPalette(this.landCoverPalette()),
       data: null,
       baseData: null,
       layer: null
@@ -152,7 +152,7 @@ export class MapComponent implements OnInit {
       parameter: 'recharge',
       label: 'Recharge Rate',
       //update with scheme sent by Kolja
-      palette: C.linearPalette(["#ffffbf", "#a6d96a", "#92c5de", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#4393c3", "#2166ac", "#2166ac", "#2166ac", "#2166ac", "#2166ac"]),
+      palette: C.linearPalette(this.rechargePalette()),
       data: null,
       baseData: null,
       layer: null
@@ -1194,7 +1194,7 @@ export class MapComponent implements OnInit {
           system: "USC",
           units: {
             area: "Square Miles",
-            volumetric: "Mega-Gallons Per Day",
+            volumetric: "Million Gallons Per Day",
             average: "Inches Per Year"
           }
         }
@@ -1785,25 +1785,26 @@ export class MapComponent implements OnInit {
 
     let precision = 3;
 
-    roundedMetrics.USC.average.original = metrics.USC.average.original.toPrecision(precision);
-    roundedMetrics.USC.average.current = metrics.USC.average.current.toPrecision(precision);
-    roundedMetrics.USC.volumetric.original = metrics.USC.volumetric.original.toPrecision(precision);
-    roundedMetrics.USC.volumetric.current = metrics.USC.volumetric.current.toPrecision(precision);
-    roundedMetrics.USC.average.diff = metrics.USC.average.diff.toPrecision(precision);
-    roundedMetrics.USC.volumetric.diff = metrics.USC.volumetric.diff.toPrecision(precision);
-    roundedMetrics.USC.average.pchange = metrics.USC.average.pchange.toPrecision(precision) + "%";
-    roundedMetrics.USC.volumetric.pchange = metrics.USC.volumetric.pchange.toPrecision(precision) + "%";
-    roundedMetrics.USC.area = metrics.USC.area.toPrecision(precision);
+    //convert rounded number string to number then back to string so scientific notation is removed
+    roundedMetrics.USC.average.original = Number(metrics.USC.average.original.toPrecision(precision)).toString();
+    roundedMetrics.USC.average.current = Number(metrics.USC.average.current.toPrecision(precision)).toString();
+    roundedMetrics.USC.volumetric.original = Number(metrics.USC.volumetric.original.toPrecision(precision)).toString();
+    roundedMetrics.USC.volumetric.current = Number(metrics.USC.volumetric.current.toPrecision(precision)).toString();
+    roundedMetrics.USC.average.diff = Number(metrics.USC.average.diff.toPrecision(precision)).toString();
+    roundedMetrics.USC.volumetric.diff = Number(metrics.USC.volumetric.diff.toPrecision(precision)).toString();
+    roundedMetrics.USC.average.pchange = Number(metrics.USC.average.pchange.toPrecision(precision)).toString() + "%";
+    roundedMetrics.USC.volumetric.pchange = Number(metrics.USC.volumetric.pchange.toPrecision(precision)).toString() + "%";
+    roundedMetrics.USC.area = Number(metrics.USC.area.toPrecision(precision)).toString();
 
-    roundedMetrics.Metric.average.original = metrics.Metric.average.original.toPrecision(precision);
-    roundedMetrics.Metric.average.current = metrics.Metric.average.current.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.original = metrics.Metric.volumetric.original.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.current = metrics.Metric.volumetric.current.toPrecision(precision);
-    roundedMetrics.Metric.average.diff = metrics.Metric.average.diff.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.diff = metrics.Metric.volumetric.diff.toPrecision(precision);
-    roundedMetrics.Metric.average.pchange = metrics.Metric.average.pchange.toPrecision(precision) + "%";
-    roundedMetrics.Metric.volumetric.pchange = metrics.Metric.volumetric.pchange.toPrecision(precision) + "%";
-    roundedMetrics.Metric.area = metrics.Metric.area.toPrecision(precision);
+    roundedMetrics.Metric.average.original = Number(metrics.Metric.average.original.toPrecision(precision)).toString();
+    roundedMetrics.Metric.average.current = Number(metrics.Metric.average.current.toPrecision(precision)).toString();
+    roundedMetrics.Metric.volumetric.original = Number(metrics.Metric.volumetric.original.toPrecision(precision)).toString();
+    roundedMetrics.Metric.volumetric.current = Number(metrics.Metric.volumetric.current.toPrecision(precision)).toString();
+    roundedMetrics.Metric.average.diff = Number(metrics.Metric.average.diff.toPrecision(precision)).toString();
+    roundedMetrics.Metric.volumetric.diff = Number(metrics.Metric.volumetric.diff.toPrecision(precision)).toString();
+    roundedMetrics.Metric.average.pchange = Number(metrics.Metric.average.pchange.toPrecision(precision)).toString() + "%";
+    roundedMetrics.Metric.volumetric.pchange = Number(metrics.Metric.volumetric.pchange.toPrecision(precision)).toString() + "%";
+    roundedMetrics.Metric.area = Number(metrics.Metric.area.toPrecision(precision)).toString();
 
 
     return roundedMetrics;
@@ -3803,7 +3804,8 @@ export class MapComponent implements OnInit {
     // work with Coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
-      if (legend) {
+      if(legend) {
+        console.log(C.legend(layer));
         C.legend(layer).addTo(this.mymap);
       }
     })
@@ -3839,7 +3841,7 @@ export class MapComponent implements OnInit {
   }
 
   //generate 31 colors
-  private colorPalette(): string[] {
+  private landCoverPalette(): string[] {
     let palette = [];
     let range = 255;
     let color;
@@ -3879,6 +3881,20 @@ export class MapComponent implements OnInit {
     //palette = this.agitate(palette);
     return palette;
   }
+
+
+  private rechargePalette(): string[] {
+    let palette = [];
+    let colorScale = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
+    for(let i = 0; i < colorScale.length; i++) {
+      for(let j = 0; j < Math.pow(2, i); j++) {
+        palette.push(colorScale[i]);
+      }
+    }
+    return palette;
+  }
+
+
 
   private getIndex(x: number, y: number, __this = this): number {
     return y * __this.gridWidthCells + x;

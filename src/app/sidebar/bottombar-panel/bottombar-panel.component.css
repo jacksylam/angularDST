@@ -63,8 +63,28 @@
     min-width: 450px;
     width: 55%;
     color: rgb(56, 117, 194);
-    font-weight: bold;
     font-size: 11pt;
+  }
+
+  .checkbox-text {
+    font-weight: normal !important;
+    color: rgb(56, 117, 194);
+    font-size: 11pt;
+  }
+
+  .no-border {
+    border: none;
+    width: 100%;
+  }
+  
+  .no-border-cell-title {
+    border: none;
+    width: 50%;
+  }
+  
+  .no-border-cell-description {
+    border: none;
+    width: 50%;
   }
 
   
