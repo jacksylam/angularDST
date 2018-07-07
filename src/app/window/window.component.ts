@@ -416,7 +416,7 @@ export class WindowComponent implements AfterViewInit {
       {title: "", dataKey: "type"}, 
       {title: "User Defined Areas", dataKey: "uda"}, 
       {title: "Island", dataKey: "total"},
-      {title: "Island Discluding Caprock", dataKey: "totalNoCaprock"}
+      {title: "Island Excluding Caprock", dataKey: "totalNoCaprock"}
     ];
     let infoHeaders = [
       {title: "", dataKey: "blank"},
@@ -475,7 +475,7 @@ export class WindowComponent implements AfterViewInit {
     })
 
     this.pdf.setFontSize(titleSize);
-    this.pdf.text(50, y, "Aquifer Systems");
+    this.pdf.text(50, y, "Aquifer Systems*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y - 5, "Hydrological units established by the Hawaii State Comission on Water Resource");
     this.pdf.text(220, y + 5, "Management to manage groundwater resources");
@@ -532,7 +532,7 @@ export class WindowComponent implements AfterViewInit {
     })
 
     this.pdf.setFontSize(titleSize);
-    this.pdf.text(50, y - 10, "Aquifer Systems\nDiscluding Caprock");
+    this.pdf.text(50, y - 10, "Aquifer Systems\nExcluding Caprock*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y, "Description of caprock");
     this.pdf.autoTable(columnsName, rows, {
@@ -560,7 +560,7 @@ export class WindowComponent implements AfterViewInit {
     }
     
     this.pdf.setFontSize(titleSize);
-    this.pdf.text(50, y, "User Defined Areas");
+    this.pdf.text(50, y, "User Defined Areas*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y, "Areas of land cover change designated by the user for this analysis");
 
@@ -618,7 +618,7 @@ export class WindowComponent implements AfterViewInit {
 
 
     this.pdf.setFontSize(titleSize);
-    this.pdf.text(50, y, "Summary");
+    this.pdf.text(50, y, "Summary*");
 
     rows = [];
     let total = this.windowPanel.data.metrics.total
@@ -722,7 +722,7 @@ export class WindowComponent implements AfterViewInit {
       y = 50;
     }
 
-    this.pdf.text(50, y, "Graphs");
+    this.pdf.text(50, y, "Graphs*");
 
     y += 10;
 
@@ -800,6 +800,18 @@ export class WindowComponent implements AfterViewInit {
     //this.pdf.text(50, y, );
 
     //Limitations (DRAFT)—
+
+    //for some reason this has one empty element at the beginning, so subtract one to get number of pages in the document
+    let numberOfPages = this.pdf.internal.pages.length - 1;
+    let linePos = height - 30;
+    let footerPos = height - 15;
+    this.pdf.setFontSize(descriptionSize);
+    for(let i = 0; i < numberOfPages; i++) {
+      this.pdf.setPage(i);
+      this.pdf.line(50, linePos, width - 50, linePos);
+      this.pdf.text(50, footerPos, "*Values rounded to 3 significant figures")
+    }
+    
     
 
     this.pdf.save("Report.pdf");
@@ -999,8 +1011,8 @@ export class WindowComponent implements AfterViewInit {
       }
     }
 
-    graphData.fullNoCaprock.data[0].x.push("Map Total Discluding Caprock");
-    graphData.fullNoCaprock.data[1].x.push("Map Total Discluding Caprock");
+    graphData.fullNoCaprock.data[0].x.push("Map Total Excluding Caprock");
+    graphData.fullNoCaprock.data[1].x.push("Map Total Excluding Caprock");
 
     graphData.fullNoCaprock.data[0].y.push(this.windowPanel.data.metrics.totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original);
     graphData.fullNoCaprock.data[1].y.push(this.windowPanel.data.metrics.totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current);
