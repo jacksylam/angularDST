@@ -20,10 +20,5 @@ export class MessageDialogComponent implements OnInit {
   ngOnInit() {
 
   }
-  
-  
-  public close() {
-    this.dialogRef.close();
-  }
 
 }

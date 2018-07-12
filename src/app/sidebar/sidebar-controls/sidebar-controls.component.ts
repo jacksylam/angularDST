@@ -44,6 +44,11 @@ export class SidebarControlsComponent implements OnInit {
 
   precision = 3;
 
+  mode = "normal";
+  areaSelected = false;
+
+  name;
+
   constructor(private mapService: MapService, private dialog: MatDialog) {
   }
 
@@ -93,8 +98,27 @@ export class SidebarControlsComponent implements OnInit {
     this.displayType = this.displayType == "Show" ? "Hide" : "Show";
   }
 
+  toggleNameMode() {
+    this.mode = this.mode == "normal" ? "name" : "normal";
+    this.mapService.toggleNameMode(this);
+    this.areaSelected = false;
+  }
+
+  setNameOnSelect(name: string) {
+    this.name = name;
+    this.areaSelected = true;
+  }
+
+  setName(e) {
+    console.log(e);
+    this.name = e.value;
+  }
+
+  registerNameToShape() {
+    this.mapService.registerNameToShape(this, name);
+  }
+
   upload(e: any, type: string) {
-    console.log(e.target.files);
     this.mapService.uploadShapefile(this, type, e.target.files);
   }
 

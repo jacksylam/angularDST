@@ -176,8 +176,23 @@ export class MapService {
 
   generateReport(controlPanel: any, unitSystem: string) {
     let index = this.controlPanelHash.indexOf(controlPanel);
-    //probably need to get details from this function, then generate new window with info, placeholder for now
     this.mapHash[index].generateReport(unitSystem);
+  }
+
+
+  toggleNameMode(controlPanel: any) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.mapHash[index].toggleNameMode();
+  }
+
+  registerNameToShape(controlPanel: any, name: string) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.mapHash[index].registerNameToShape(name);
+  }
+
+  setNameOnSelect(map: any, name: string) {
+    let index = this.mapHash.indexOf(map);
+    this.controlPanelHash[index].setNameOnSelect(name);
   }
 
 }

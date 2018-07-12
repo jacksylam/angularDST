@@ -75,6 +75,12 @@ export class MapComponent implements OnInit {
   opacity = 1;
 
   interactionType: string;
+
+  nameModeDetails: {
+    oldInteractionType: string,
+    selectedShape: any
+  }
+
   shapeMetricsEnabled: boolean;
 
   windowId: number;
@@ -285,7 +291,13 @@ export class MapComponent implements OnInit {
       switch (e.name) {
         case "Land Cover":
           this.mapService.changeLayer(this, "landcover");
-          this.enableShapeInteraction(false);
+          //if swapping to land cover mode while in naming mode indicate want shape interaction when break out, otherwise just enable
+          if(this.interactionType != "name") {
+            this.setMode("custom");
+          }
+          else {
+            this.nameModeDetails.oldInteractionType = "custom"
+          }
           this.drawControl.addTo(this.map);
           this.mapService.baseDetails(this);
           //throws an error for some reason if run immediately (though it still works...)
@@ -298,7 +310,13 @@ export class MapComponent implements OnInit {
         //need to figure out how you want to handle this, should modifications be disabled?
         case "Base Map":
           this.mapService.changeLayer(this, "base");
-          this.enableShapeInteraction(false);
+          //if swapping to base map while in naming mode indicate want shape interaction when break out, otherwise just enable
+          if(this.interactionType != "name") {
+            this.setMode("custom");
+          }
+          else {
+            this.nameModeDetails.oldInteractionType = "custom"
+          }
           this.drawControl.remove();
           this.mapService.baseDetails(this);
           break;
@@ -308,8 +326,15 @@ export class MapComponent implements OnInit {
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
           //console.log(this.metrics.total);
-          this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
-          this.disableShapeInteraction();
+          // this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
+          //if swapping to recharge mode while in naming mode indicate want full map metrics (default recharge mode) when break out, otherwise just switch
+          if(this.interactionType != "name") {
+            this.setMode("full");
+          }
+          else {
+            this.nameModeDetails.oldInteractionType = "full";
+          }
+          
           //throws an error for some reason if run immediately (though it still works...)
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
@@ -527,6 +552,8 @@ export class MapComponent implements OnInit {
     shapes.features.forEach(shape => {
       let coordsBase = shape.geometry.coordinates;
 
+      let name = shape.properties.name;
+
       //swap coordinates, who wants consistent standards anyway?
       //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
       this.swapCoordinates(coordsBase);
@@ -535,11 +562,11 @@ export class MapComponent implements OnInit {
       //also appears to be a bug where sometimes it packs multiple shapes as just a polygon, might need to chack where bottom level shape is and separate next level up
       if (shape.geometry.type == "MultiPolygon") {
         for (let i = 0; i < coordsBase.length; i++) {
-          this.addDrawnItem(L.polygon(coordsBase[i], {}));
+          this.addDrawnItem(L.polygon(coordsBase[i], {}), true, name);
         }
       }
       else {
-        this.addDrawnItem(L.polygon(coordsBase, {}));
+        this.addDrawnItem(L.polygon(coordsBase, {}), true, name);
       }
     });
   }
@@ -567,9 +594,14 @@ export class MapComponent implements OnInit {
         this.addCellInteraction();
         break;
       case "custom":
-        this.enableShapeInteraction(true);
-        //get initial metrics for already selected shapes
-        this.getSelectedShapeMetrics();
+        if(this.baseLayer.name == "Recharge Rate") {
+          this.enableShapeInteraction(true);
+          //get initial metrics for already selected shapes
+          this.getSelectedShapeMetrics();
+        }
+        else {
+          this.enableShapeInteraction(false);
+        }
         break;
       case "aquifer":
         this.addAquiferInteractions();
@@ -579,6 +611,64 @@ export class MapComponent implements OnInit {
         this.getWholeMapMetrics();
         break;
     }
+  }
+
+  toggleNameMode() {
+    let highlight = {
+      fillColor: 'black',
+      weight: 5,
+      opacity: 1,
+      color: 'black',  //Outline color
+      fillOpacity: 0.2
+    };
+    let unhighlight = {
+      weight: 5,
+      opacity: 0.5,
+      color: 'black',  //Outline color
+      fillOpacity: 0
+    }
+
+    if(this.interactionType == "name") {
+      this.drawnItems.eachLayer((layer) => {
+        layer.off('click');
+        layer.setStyle(unhighlight);
+      });
+      this.highlightedItems.eachLayer((layer) => {
+        layer.setStyle(highlight);
+      });
+      if(this.baseLayer.name == "Land Cover") {
+        this.drawControl.addTo(this.map);
+      }
+      this.setMode(this.nameModeDetails.oldInteractionType);
+      
+    }
+    else {
+      this.drawControl.remove();
+      this.disableInteraction(this.interactionType);
+      this.nameModeDetails = {
+        oldInteractionType: this.interactionType,
+        selectedShape: null
+      }
+      this.interactionType = "name";
+  
+      this.drawnItems.eachLayer((layer) => {
+        layer.setStyle(unhighlight);
+        layer.on('click', (e) => {
+          if(this.nameModeDetails.selectedShape) {
+            this.nameModeDetails.selectedShape.setStyle(unhighlight);
+          }
+          layer.setStyle(highlight);
+          this.nameModeDetails.selectedShape = layer;
+          console.log(this.customAreaNames);
+          this.mapService.setNameOnSelect(this, this.customAreaNames[layer._leaflet_id]);
+        });
+      });
+    }
+    
+  }
+
+  registerNameToShape(name: string) {
+    this.customAreaNames[this.nameModeDetails.selectedShape._leaflet_id] = name;
   }
 
 
@@ -594,6 +684,7 @@ export class MapComponent implements OnInit {
         this.disableAquiferInteraction();
         break;
       //no whole map interaction to disable
+      //name interaction handled on toggle off, so no need do anything
     }
   }
 
@@ -680,7 +771,7 @@ export class MapComponent implements OnInit {
     let hidden = false;
     L.DomUtil.addClass(this.map._container, 'crosshair-cursor-enabled');
     //if hidden add to map to remove event listeners
-    if (!this.map.hasLayer(this.types.aquifers.layer)) {
+    if(!this.map.hasLayer(this.types.aquifers.layer)) {
       this.types.aquifers.layer.addTo(this.map);
       hidden = true;
     }
@@ -795,7 +886,7 @@ export class MapComponent implements OnInit {
   private enableShapeInteraction(metrics: boolean) {
 
     if (this.interactionType == "custom" && metrics == this.shapeMetricsEnabled) {
-      //already in cell mode and same metric type
+      //already in custom mode and same metric type
       return;
     }
     else {
@@ -1998,20 +2089,25 @@ export class MapComponent implements OnInit {
           
           let base = this.types.landCover.data._covjson.ranges.cover.values;
 
-          // let dbQueryChunkSize = 50;
-          // let subarrayCounter = 0;
-          let changedIndexComponents = [];
+          let dbQueryChunkSize = 50;
+          let subarrayCounter = 0;
+          let changedIndexComponents = [[]];
           
           for(let i = 0; i < base.length; i++) {
-
-            //NEED TO ASK ABOUT SCENARIOS, ARE YOU GOING TO HAVE TWO BASE RECHARGE GRIDS FOR THE TWO SCENARIOS?
 
             //don't replace if nodata value, also check if value the same since don't need to get recharge from db for correct values
             if(data.cover.values[i] != data.cover.nodata && base[i] != data.cover.values[i]) {
               base[i] = data.cover.values[i];
 
-
-              changedIndexComponents.push(this.getComponents(i));
+              //add index to query array chunk
+              if(subarrayCounter <= dbQueryChunkSize) {
+                changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
+                subarrayCounter++;
+              }
+              else {
+                changedIndexComponents.push([this.getComponents(i)]);
+                subarrayCounter = 1;
+              }
               //   subarrayCounter++;
               // }
               // else {
@@ -2038,15 +2134,18 @@ export class MapComponent implements OnInit {
           //   console.log(data);
           // });
 
-          let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 2, y: 4});
+          //let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 4, y: 4});
 
-          console.log(geometries);
-
-          Observable.forkJoin(geometries.map(element => {
-            return this.DBService.spatialSearch(element);
+          //console.log(geometries);
+          console.log("Sending " + changedIndexComponents.length.toString() + " queries of " + dbQueryChunkSize.toString() + " points.");
+          let start = new Date().getTime();
+          Observable.forkJoin(changedIndexComponents.slice(0, 1).map(indexGroup => {
+            return this.DBService.spatialSearch(indexGroup);
           }))
+          //this.DBService.indexSearch(changedIndexComponents[0])
           //this.DBService.spatialSearch(element);
           .subscribe((data) => {
+            console.log("Operation took " + (new Date().getTime() - start).toString() + "ms");
             console.log(data);
           });
 
@@ -3109,9 +3208,8 @@ export class MapComponent implements OnInit {
       //toGeoJSON seems to use eachLayer function, so should be same order, having a hard time finding full source code in readable format, so hopefully won't cause problems
       let i = 0;
       this.drawnItems.eachLayer((layer) => {
-        shapes.features[i++].properties.name = this.customAreaNames[layer];
+        shapes.features[i++].properties.name = this.customAreaNames[layer._leaflet_id];
       });
-      console.log(shapes);
       //shapes.features[0].properties = {name: "test"};
       // let name = "DefinedAreas";
   
@@ -3379,7 +3477,7 @@ export class MapComponent implements OnInit {
   //might want to do something about overlapping layers
   //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
   //maybe check if one is contained in another
-  private addDrawnItem(layer, editable: boolean = true, name: string = null) {
+  private addDrawnItem(layer, editable: boolean = true, name: string = undefined) {
     // console.log(this.types.aquifers.layer);
 
     //this.downloadShapefile(this.drawnItems)
@@ -3418,9 +3516,9 @@ export class MapComponent implements OnInit {
       roundedMetrics: {}
     };
     let items = new L.featureGroup();
-    //add custom naming options later, for now just name by number
-    info.name = name == null ? "Custom Area " + (__this.customAreasCount++).toString() : name;
-    this.customAreaNames[layer] = info.name;
+
+    info.name = name == undefined ? "Custom Area " + (__this.customAreasCount++).toString() : name;
+    this.customAreaNames[layer._leaflet_id] = info.name;
 
     let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
 
@@ -3455,7 +3553,7 @@ export class MapComponent implements OnInit {
     }
 
     layer.on('click', function () {
-      if (this.highlighted) {
+      if(this.highlighted) {
         this.setStyle(unhighlight);
         this.highlighted = false;
         __this.highlightedItems.removeLayer(this);
@@ -3503,6 +3601,8 @@ export class MapComponent implements OnInit {
     }
   }
 
+
+  
 
   private updateCover(type: string) {
 
@@ -3841,7 +3941,6 @@ export class MapComponent implements OnInit {
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
       if(legend) {
-        console.log(C.legend(layer));
         C.legend(layer).addTo(this.map);
       }
     })

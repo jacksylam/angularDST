@@ -151,3 +151,8 @@
   .slider-background {
     background: ivory;
   }
+
+  .disable {
+    pointer-events: none;
+    opacity: 0.4;
+  }

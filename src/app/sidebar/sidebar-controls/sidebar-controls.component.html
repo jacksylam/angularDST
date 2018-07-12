@@ -38,79 +38,87 @@
 
     <div class="menu" #menu  (scroll)="menuScroll($event)">
       
-    
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
-
-      <p></p>
-
-      <div class="outline slider-background">
-        <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">Layer Opacity</button>
-        <br><mat-slider class="slider-shift" [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
+      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
+      <div *ngIf="mode=='name'">Select an Area to Name</div>
+      <div *ngIf="areaSelected">
+        <input matInput [value]="name" (change)="setName($event)">
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="registerNameToShape()"><div class="shift">Submit</div></button>
       </div>
 
-      <p></p>
+      <div [ngClass]="{'disable': mode=='name'}">
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
 
-      <div class="outline btn-group-vertical internal-menu">
-        <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
-        <mat-select [(value)]="units" (change)="setUnits($event)">
-          <mat-option value="USC">United States Customary</mat-option>
-          <mat-option value="Metric">Metric</mat-option>
-        </mat-select>
-      </div>
+        <p></p>
 
-      <!-- <p></p> -->
-
-      <!-- did we decide we want this? -->
-      <!-- <input matInput [value]="precision" type="number" min="1" max="6"> -->
-
-      <p></p>
-      <!-- <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
-      <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
-
-      <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'reference')" #fileSelectReference />
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectReference.click()"><div class="shift">Upload Shapefile<br>as Reference Layer</div></button>
-
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button> -->
-
-      <div class="outline btn-group-vertical internal-menu">
-        <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Save/Apply Changes</div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('download')"><div class="shift">Download</div></button>
-        <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('upload')"><div class="shift">Upload</div></button>
-      </div>
-
-      <!-- <div class="outline btn-group-vertical internal-menu">
-      <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
-      <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload</div></button> -->
-
-      <!-- <br> -->
-      <!-- 
-      <form class="example-container" [formGroup]="options">
-        <mat-checkbox FormControlName='shapes'>Custom Areas<br>(as Shapefile)</mat-checkbox>
-        <mat-checkbox FormControlName='cover'>Land Cover</mat-checkbox>
-        <mat-checkbox FormControlName='recharge'>Recharge</mat-checkbox>
-        <div>
-          <label>Recharge/Land Cover File Format: </label>
-          <mat-radio-group FormControlName='format'>
-            <mat-radio-button value="covjson">covjson</mat-radio-button>
-            <mat-radio-button value="asc">asc</mat-radio-button>
-          </mat-radio-group>
+        <div class="outline slider-background">
+          <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">Layer Opacity</button>
+          <br><mat-slider class="slider-shift" [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
         </div>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download</div></button>
-      </form>
-    </div> -->
 
-      
+        <p></p>
+
+        <div class="outline btn-group-vertical internal-menu">
+          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
+          <mat-select [(value)]="units" (change)="setUnits($event)">
+            <mat-option value="USC">United States Customary</mat-option>
+            <mat-option value="Metric">Metric</mat-option>
+          </mat-select>
+        </div>
+
+        <!-- <p></p> -->
+
+        <!-- did we decide we want this? -->
+        <!-- <input matInput [value]="precision" type="number" min="1" max="6"> -->
+
+        <p></p>
+        <!-- <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
+        <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload Shapefile<br>as Custom Areas</div></button>
+
+        <input type="file" accept=".zip" style="display: none;" (change)="upload($event, 'reference')" #fileSelectReference />
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectReference.click()"><div class="shift">Upload Shapefile<br>as Reference Layer</div></button>
+
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="download()"><div class="shift">Download Custom<br>Areas as Shapefile</div></button> -->
+
+        <div class="outline btn-group-vertical internal-menu">
+          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Save/Apply Changes</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('download')"><div class="shift">Download</div></button>
+          <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('upload')"><div class="shift">Upload</div></button>
+        </div>
+
+        <!-- <div class="outline btn-group-vertical internal-menu">
+        <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="upload($event, 'custom')" #fileSelectCustom />
+        <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="fileSelectCustom.click()"><div class="shift">Upload</div></button> -->
+
+        <!-- <br> -->
+        <!-- 
+        <form class="example-container" [formGroup]="options">
+          <mat-checkbox FormControlName='shapes'>Custom Areas<br>(as Shapefile)</mat-checkbox>
+          <mat-checkbox FormControlName='cover'>Land Cover</mat-checkbox>
+          <mat-checkbox FormControlName='recharge'>Recharge</mat-checkbox>
+          <div>
+            <label>Recharge/Land Cover File Format: </label>
+            <mat-radio-group FormControlName='format'>
+              <mat-radio-button value="covjson">covjson</mat-radio-button>
+              <mat-radio-button value="asc">asc</mat-radio-button>
+            </mat-radio-group>
+          </div>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download</div></button>
+        </form>
+      </div> -->
+
+        
 
 
-      
-      <!-- <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download Recharge<br>as ASCII Grid</div></button>
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'asc')"><div class="shift">Download Land<br>Cover as ASCII Grid</div></button>
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'covjson')"><div class="shift">Download Recharge<br>as covjson</div></button>
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'covjson')"><div class="shift">Download Land<br>Cover as covjson</div></button> -->
-      
-      <p></p>
-      
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()"><div class="shift">Generate Report</div></button>
+        
+        <!-- <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'asc')"><div class="shift">Download Recharge<br>as ASCII Grid</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'asc')"><div class="shift">Download Land<br>Cover as ASCII Grid</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('recharge', 'covjson')"><div class="shift">Download Recharge<br>as covjson</div></button>
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="downloadRaster('landCover', 'covjson')"><div class="shift">Download Land<br>Cover as covjson</div></button> -->
+        
+        <p></p>
+        
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()"><div class="shift">Generate Report</div></button>
+      </div>
 
     </div>
 
