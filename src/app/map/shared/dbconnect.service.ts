@@ -46,13 +46,13 @@ export class DBConnectService {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
 
     //build query
-    var query = "{'name':'Landuse','value.name':'testunit3','$or':[";
+    var query = "{$and:[{'name':'Landuse','value.name':'testunit3','$or':[";
     indexes.forEach((index) => {
       query += "{'value.x':" + index.x + ", 'value.y':" + index.y + "},";
     });
     //remove last comma
     query = query.slice(0, -1);
-    query += "]}";
+    query += "]}]}";
 
     var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
     var head = new HttpHeaders()

@@ -2139,8 +2139,8 @@ export class MapComponent implements OnInit {
           //console.log(geometries);
           console.log("Sending " + changedIndexComponents.length.toString() + " queries of " + dbQueryChunkSize.toString() + " points.");
           let start = new Date().getTime();
-          Observable.forkJoin(changedIndexComponents.slice(0, 1).map(indexGroup => {
-            return this.DBService.spatialSearch(indexGroup);
+          Observable.forkJoin(changedIndexComponents.slice(0,1).map(indexGroup => {
+            return this.DBService.indexSearch(indexGroup);
           }))
           //this.DBService.indexSearch(changedIndexComponents[0])
           //this.DBService.spatialSearch(element);
