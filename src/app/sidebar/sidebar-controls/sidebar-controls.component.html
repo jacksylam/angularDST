@@ -41,7 +41,7 @@
       <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
       <div *ngIf="mode=='name'">Select an Area to Name</div>
       <div *ngIf="areaSelected">
-        <input matInput [value]="name" (change)="setName($event)">
+        <input mat-input #nameInput type="text" [value]="test">
         <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="registerNameToShape()"><div class="shift">Submit</div></button>
       </div>
 
@@ -59,7 +59,7 @@
 
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
-          <mat-select [(value)]="units" (change)="setUnits($event)">
+          <mat-select [value]="units" (change)="setUnits($event)">
             <mat-option value="USC">United States Customary</mat-option>
             <mat-option value="Metric">Metric</mat-option>
           </mat-select>

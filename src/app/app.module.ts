@@ -53,6 +53,7 @@ import { DisclaimerComponent } from './disclaimer/disclaimer.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
 import { ShapeNameComponent } from './shape-name/shape-name.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -68,7 +69,7 @@ import { ShapeNameComponent } from './shape-name/shape-name.component';
     DisclaimerComponent,
     FeedbackComponent,
     HowToCiteComponent,
-    ShapeNameComponent
+    ShapeNameComponent,
   ],
   imports: [
     HttpModule,
@@ -85,7 +86,8 @@ import { ShapeNameComponent } from './shape-name/shape-name.component';
     MatDialogModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    FormsModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],

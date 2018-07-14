@@ -659,7 +659,6 @@ export class MapComponent implements OnInit {
           }
           layer.setStyle(highlight);
           this.nameModeDetails.selectedShape = layer;
-          console.log(this.customAreaNames);
           this.mapService.setNameOnSelect(this, this.customAreaNames[layer._leaflet_id]);
         });
       });

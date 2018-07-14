@@ -27,6 +27,7 @@ export class SidebarControlsComponent implements OnInit {
   
   @ViewChild("menu") menuDiv;
   @ViewChild("leftScrollbar") leftScrollbarDiv;
+  @ViewChild("nameInput") nameInput;
 
   baselayer = "landcover";
 
@@ -47,10 +48,14 @@ export class SidebarControlsComponent implements OnInit {
   mode = "normal";
   areaSelected = false;
 
-  name;
+  name: string;
 
   constructor(private mapService: MapService, private dialog: MatDialog) {
   }
+
+  // changeValueFunctionToReplaceAngularsDumbEventSystem(e) {
+  //   console.log(this.nameInput);
+  // }
 
   openDialog(type: string) {
     switch(type) {
@@ -105,17 +110,19 @@ export class SidebarControlsComponent implements OnInit {
   }
 
   setNameOnSelect(name: string) {
+    console.log(name);
     this.name = name;
     this.areaSelected = true;
   }
 
-  setName(e) {
-    console.log(e);
-    this.name = e.value;
-  }
+  // setName(e) {
+  //   console.log(e);
+  //   this.name = e.value;
+  // }
 
   registerNameToShape() {
-    this.mapService.registerNameToShape(this, name);
+    console.log(this.nameInput.value);
+    //this.mapService.registerNameToShape(this, this.name);
   }
 
   upload(e: any, type: string) {
