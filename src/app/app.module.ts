@@ -19,10 +19,11 @@ import { GraphsComponent } from './graphs/graphs.component';
 
 //Service
 import { WindowService } from './window/shared/window.service';
-import {MapService} from './map/shared/map.service'
-import {MapFirestoreService} from './map/shared/map-firestore.service'
+import { MapService } from './map/shared/map.service'
+import { MapFirestoreService } from './map/shared/map-firestore.service'
 import { DBConnectService } from './map/shared/dbconnect.service';
 import { CovDetailsService } from './map/shared/cov-details.service';
+import { ModifiedShpwriteService } from './map/shared/modified-shpwrite.service';
 
 //firebase
 import { AngularFireModule } from 'angularfire2';
@@ -41,9 +42,9 @@ import { HttpClientModule } from '@angular/common/http';
 import { FileUploadModule } from 'ng2-file-upload';
 import { NgUploaderModule } from 'ngx-uploader';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
-import {MatDialogModule} from "@angular/material";
+import { MatDialogModule } from "@angular/material";
 import { AdvancedMappingDialogComponent } from './advanced-mapping-dialog/advanced-mapping-dialog.component';
-import {MatSelectModule} from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { WorkspaceComponent } from './workspace/workspace.component';
@@ -91,7 +92,7 @@ import { FormsModule } from '@angular/forms';
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
-  providers: [WindowService, MapService, MapFirestoreService, DBConnectService, CovDetailsService],
+  providers: [WindowService, MapService, MapFirestoreService, DBConnectService, CovDetailsService, ModifiedShpwriteService],
   bootstrap: [AppComponent],
   entryComponents: [
     MessageDialogComponent,

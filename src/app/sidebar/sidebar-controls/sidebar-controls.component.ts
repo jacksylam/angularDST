@@ -110,7 +110,6 @@ export class SidebarControlsComponent implements OnInit {
   }
 
   setNameOnSelect(name: string) {
-    console.log(name);
     this.name = name;
     this.areaSelected = true;
   }
@@ -121,8 +120,7 @@ export class SidebarControlsComponent implements OnInit {
   // }
 
   registerNameToShape() {
-    console.log(this.nameInput.value);
-    //this.mapService.registerNameToShape(this, this.name);
+    this.mapService.registerNameToShape(this, this.nameInput.nativeElement.value);
   }
 
   upload(e: any, type: string) {

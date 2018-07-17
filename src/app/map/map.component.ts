@@ -12,7 +12,7 @@ import { Observable } from 'rxjs';
 import { COVER_ENUM, COVER_INDEX_DETAILS, LC_TO_BUTTON_INDEX } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
-import * as shpwrite from 'shp-write';
+//import * as shpwrite from 'shp-write';
 import * as JSZip from 'jszip'
 import * as shpWriteGeojson from '../../../node_modules/shp-write/src/geojson'
 import * as shpWritePrj from '../../../node_modules/shp-write/src/prj';
@@ -23,6 +23,7 @@ import { isGeoJSONObject } from 'geojson-validation'
 import { MessageDialogComponent } from "../message-dialog/message-dialog.component"
 import {MatDialog} from "@angular/material";
 import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advanced-mapping-dialog.component';
+import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
 
 
 
@@ -200,7 +201,7 @@ export class MapComponent implements OnInit {
   };
 
 
-  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog) {
+  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog, private modShpWrite: ModifiedShpwriteService) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
   }
@@ -216,8 +217,6 @@ export class MapComponent implements OnInit {
     let mapLayer = L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
     let empty = L.featureGroup();
-
-    this.loadDrawControls();
 
     this.popup = L.popup();
 
@@ -294,11 +293,11 @@ export class MapComponent implements OnInit {
           //if swapping to land cover mode while in naming mode indicate want shape interaction when break out, otherwise just enable
           if(this.interactionType != "name") {
             this.setMode("custom");
+            this.drawControl.addTo(this.map);
           }
           else {
             this.nameModeDetails.oldInteractionType = "custom"
           }
-          this.drawControl.addTo(this.map);
           this.mapService.baseDetails(this);
           //throws an error for some reason if run immediately (though it still works...)
           //possible that event goes through before layer fully swapped, so run on a delay
@@ -659,7 +658,7 @@ export class MapComponent implements OnInit {
           }
           layer.setStyle(highlight);
           this.nameModeDetails.selectedShape = layer;
-          this.mapService.setNameOnSelect(this, this.customAreaNames[layer._leaflet_id]);
+          this.mapService.setNameOnSelect(this, this.customAreaNames[layer._leaflet_id].name);
         });
       });
     }
@@ -667,7 +666,7 @@ export class MapComponent implements OnInit {
   }
 
   registerNameToShape(name: string) {
-    this.customAreaNames[this.nameModeDetails.selectedShape._leaflet_id] = name;
+    this.customAreaNames[this.nameModeDetails.selectedShape._leaflet_id].name = name;
   }
 
 
@@ -1017,7 +1016,7 @@ export class MapComponent implements OnInit {
           }
 
 
-        })
+        });
         aquifers.setStyle({
           weight: 5,
           opacity: 1,
@@ -1031,6 +1030,8 @@ export class MapComponent implements OnInit {
         //can't compute metrics until recharge vals and aquifers are set
         if(metricCoordination.rechargeVals && metricCoordination.caprock) {
           //document.body.style.cursor='wait';
+          //draw control usage requires ability to create metrics
+          this.loadDrawControls();
           __this.metrics = __this.createMetrics();
           //document.body.style.cursor='default';
         }
@@ -1061,7 +1062,6 @@ export class MapComponent implements OnInit {
       __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
       //console.log(__this.currentCover._covjson.domain.axes);
       __this.loadCover(__this.types.landCover, false);
-
     });
 
 
@@ -1085,6 +1085,8 @@ export class MapComponent implements OnInit {
           //can't set metrics until aquifers in place and recharge values set
           if(metricCoordination.aquifers && metricCoordination.caprock) {
             //document.body.style.cursor='wait';
+            //draw control usage requires ability to create metrics
+            __this.loadDrawControls();
             __this.metrics = __this.createMetrics();
           }
           else {
@@ -1120,6 +1122,8 @@ export class MapComponent implements OnInit {
 
       if(metricCoordination.aquifers && metricCoordination.rechargeVals) {
         //document.body.style.cursor='wait';
+        //draw control usage requires ability to create metrics
+        this.loadDrawControls();
         __this.metrics = __this.createMetrics();
       }
       else {
@@ -1444,13 +1448,8 @@ export class MapComponent implements OnInit {
 
     let items = new L.featureGroup();
     this.drawnItems.eachLayer((layer) => {
-      let info = {
-        name: "",
-        metrics: {},
-        roundedMetrics: {}
-      };
-
-      info.name = this.customAreaNames[layer];
+      //any custom layers should have metrics object registered with customAreaNames, use this as a base since same name
+      let info = this.customAreaNames[layer._leaflet_id];
       //console.log(layer.toGeoJSON())
       let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
       info.metrics = itemMetrics;
@@ -2021,7 +2020,7 @@ export class MapComponent implements OnInit {
   upload(info: any) {
     this.verifyFilesAndGetData(info).then((data) => {
 
-      console.log(data);
+      //console.log(data);
       if(data.notFound.length != 0) {
         let message = ""
         if(data.notFound.includes("shapes")) {
@@ -2075,7 +2074,6 @@ export class MapComponent implements OnInit {
               fillOpacity: 0
             });
             refLayer.addTo(this.map);
-
             let overlayName = "Custom Overlay " + (++this.numCustomOverlays).toString();
 
             this.layers.addOverlay(refLayer, overlayName);
@@ -2450,7 +2448,9 @@ export class MapComponent implements OnInit {
           if(format == "zip") {
 
             let test = (data) => {
+              //console.log(data);
               shp(data).then((geojson) => {
+                console.log(geojson);
                 //if array validate each element as geojson object, return valid ones if exist, reject if all invalid
                 if(Array.isArray(geojson)) {
                   let validGeojson = []
@@ -3119,7 +3119,7 @@ export class MapComponent implements OnInit {
   //default download drawn items
   download(info: any) {
 
-    console.log(info)
+    //console.log(info)
     let ready = [];
     let index = 0;
 
@@ -3207,34 +3207,36 @@ export class MapComponent implements OnInit {
       //toGeoJSON seems to use eachLayer function, so should be same order, having a hard time finding full source code in readable format, so hopefully won't cause problems
       let i = 0;
       this.drawnItems.eachLayer((layer) => {
-        shapes.features[i++].properties.name = this.customAreaNames[layer._leaflet_id];
+        shapes.features[i++].properties.name = this.customAreaNames[layer._leaflet_id].name;
       });
       //shapes.features[0].properties = {name: "test"};
       // let name = "DefinedAreas";
   
       
-      
+      //redo this so it only packages one shape at a time
       //redefine shp-write zip feature with desired file hierarchy
       //do you want to include lines or points? Don't actually do anything, maybe just remove these
-      [shpWriteGeojson.point(shapes), shpWriteGeojson.line(shapes), shpWriteGeojson.polygon(shapes)].forEach(function (l) {
-        if (l.geometries.length && l.geometries[0].length) {
-          shpwrite.write(
-            // field definitions
-            l.properties,
-            // geometry type
-            l.type,
-            // geometries
-            l.geometries,
-            function (err, files) {
-              let fileName = "DefinedAreas";
-              zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-              zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-              zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-              zip.file(fileName + '.prj', shpWritePrj);
-            }
-          );
-        }
-      });
+      let polygons = shpWriteGeojson.polygon(shapes);
+      console.log(shapes);
+      console.log(polygons.geometries);
+      polygons.geometries = polygons.geometries[0];
+      if (polygons.geometries.length && polygons.geometries[0].length) {
+        this.modShpWrite.write(
+          // field definitions
+          polygons.properties,
+          // geometry type
+          polygons.type,
+          // geometries
+          polygons.geometries,
+          function (err, files) {
+            let fileName = "DefinedAreas";
+            zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+            zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+            zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+            zip.file(fileName + '.prj', shpWritePrj);
+          }
+        );
+      }
 
       //CHANGE
       zip.generateAsync({ type: "base64" }).then((file) => {
@@ -3517,7 +3519,8 @@ export class MapComponent implements OnInit {
     let items = new L.featureGroup();
 
     info.name = name == undefined ? "Custom Area " + (__this.customAreasCount++).toString() : name;
-    this.customAreaNames[layer._leaflet_id] = info.name;
+    //set to whole metric object so when change name will change in metrics
+    this.customAreaNames[layer._leaflet_id] = info;
 
     let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
 

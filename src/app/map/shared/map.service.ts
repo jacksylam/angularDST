@@ -183,6 +183,7 @@ export class MapService {
   toggleNameMode(controlPanel: any) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     this.mapHash[index].toggleNameMode();
+    this.panelButtonHash[index].toggleDisable();
   }
 
   registerNameToShape(controlPanel: any, name: string) {

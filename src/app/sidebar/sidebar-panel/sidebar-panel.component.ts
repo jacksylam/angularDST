@@ -28,6 +28,8 @@ export class SidebarPanelComponent implements OnInit {
 
   selected="Baseline Rainfall 1978-2007";
 
+  disabled = false;
+
   constructor(private mapService: MapService) { }
 
   ngOnInit() {
@@ -72,5 +74,9 @@ export class SidebarPanelComponent implements OnInit {
 
   changeLayer(type: string) {
     this.layer = type;
+  }
+
+  toggleDisable() {
+    this.disabled = !this.disabled;
   }
 }

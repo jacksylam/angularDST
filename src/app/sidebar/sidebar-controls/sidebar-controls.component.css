@@ -101,16 +101,13 @@
 
 
 
-.btn-custom {
+  .btn-custom {
     border: 1px solid rgb(125, 0, 0);
   }
 
   .btn-custom-half {
     border: 1px solid rgb(125, 0, 0);
     width: 50% !important;
-    margin-left: 0px;
-    margin-right: 0px;
-    float: right !important;
     border-radius: 0px !important;
   }
 
@@ -121,6 +118,10 @@
   
   
   .btn-custom:hover {
+    color: rgb(125, 0, 0);
+  }
+
+  .btn-custom-half:hover {
     color: rgb(125, 0, 0);
   }
   
@@ -155,4 +156,14 @@
   .disable {
     pointer-events: none;
     opacity: 0.4;
+  }
+
+  .input-field {
+    width: 100%;
+  }
+  
+  .select-text {
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
   }

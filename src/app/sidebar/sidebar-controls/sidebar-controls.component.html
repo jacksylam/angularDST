@@ -38,12 +38,25 @@
 
     <div class="menu" #menu  (scroll)="menuScroll($event)">
       
-      <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
-      <div *ngIf="mode=='name'">Select an Area to Name</div>
-      <div *ngIf="areaSelected">
-        <input mat-input #nameInput type="text" [value]="test">
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="registerNameToShape()"><div class="shift">Submit</div></button>
+      <button *ngIf="mode!='name'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
+      <div *ngIf="mode=='name'" class="outline">
+        <div class="select-text">
+          Select an Area to Name
+        </div>
+        <br>
+        <div *ngIf="areaSelected; else cancel">
+          <input class="input-field" #nameInput type="text" [value]="name">
+          <br>
+          <br>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="registerNameToShape()">Set Name</button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half" (click)="toggleNameMode()">Cancel</button>
+        </div>
+        <ng-template #cancel>
+            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Cancel</div></button>
+        </ng-template>
       </div>
+
+      <p></p>
 
       <div [ngClass]="{'disable': mode=='name'}">
         <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
