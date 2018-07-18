@@ -503,7 +503,7 @@ export class MapComponent implements OnInit {
   //         }
 
   //         refLayer.setStyle({
-  //           weight: 5,
+  //           weight: 3,
   //           opacity: 1,
   //           color: 'black',
   //           fillOpacity: 0
@@ -615,13 +615,13 @@ export class MapComponent implements OnInit {
   toggleNameMode() {
     let highlight = {
       fillColor: 'black',
-      weight: 5,
+      weight: 3,
       opacity: 1,
       color: 'black',  //Outline color
       fillOpacity: 0.2
     };
     let unhighlight = {
-      weight: 5,
+      weight: 3,
       opacity: 0.5,
       color: 'black',  //Outline color
       fillOpacity: 0
@@ -704,13 +704,13 @@ export class MapComponent implements OnInit {
 
     let highlight = {
       fillColor: 'black',
-      weight: 5,
+      weight: 3,
       opacity: 1,
       color: 'black',  //Outline color
       fillOpacity: 0.2
     };
     let unhighlight = {
-      weight: 5,
+      weight: 3,
       opacity: 1,
       color: 'black',  //Outline color
       fillOpacity: 0
@@ -777,7 +777,7 @@ export class MapComponent implements OnInit {
       layer.off('click')
       layer.bringToBack();
       layer.setStyle({
-        weight: 5,
+        weight: 3,
         opacity: 1,
         color: 'black',
         fillOpacity: 0
@@ -1018,7 +1018,7 @@ export class MapComponent implements OnInit {
 
         });
         aquifers.setStyle({
-          weight: 5,
+          weight: 3,
           opacity: 1,
           color: 'black',
           fillOpacity: 0
@@ -2068,7 +2068,7 @@ export class MapComponent implements OnInit {
             }
   
             refLayer.setStyle({
-              weight: 5,
+              weight: 3,
               opacity: 1,
               color: 'black',
               fillOpacity: 0
@@ -3487,7 +3487,7 @@ export class MapComponent implements OnInit {
 
     let highlight = {
       fillColor: 'black',
-      weight: 5,
+      weight: 3,
       opacity: 1,
       color: 'black',  //Outline color
       fillOpacity: 0.2
@@ -3542,13 +3542,13 @@ export class MapComponent implements OnInit {
   private addInteractionToLayer(layer: any, emitMetrics: boolean, __this) {
     let highlight = {
       fillColor: 'black',
-      weight: 5,
+      weight: 3,
       opacity: 1,
       color: 'black',  //Outline color
       fillOpacity: 0.2
     };
     let unhighlight = {
-      weight: 5,
+      weight: 3,
       opacity: 0.5,
       color: 'black',  //Outline color
       fillOpacity: 0
@@ -3688,9 +3688,13 @@ export class MapComponent implements OnInit {
                       let mappedType = covData[index];
 
                       Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-                        this.types.recharge.currentData[scenario] = recordBase[scenario][mappedType];
+                        //background is not included in the database so indexes shifted by 1
+                        //if background type set recharge rate to 0
+                        let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+
+                        this.types.recharge.currentData[scenario] = recordValue;
                         if(scenario == this.currentScenario) {
-                          rechargeData[index] = recordBase[scenario][mappedType];
+                          rechargeData[index] = recordValue;
                         }
                       });
 

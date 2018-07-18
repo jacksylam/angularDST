@@ -27,12 +27,19 @@ export class AdvancedMappingDialogComponent implements OnInit {
     this.cancel();
   }
 
-
-  //CHANGE "BACKGROUND" TO "NO RECHARGE" AND PUT AT END
-
   constructor(private dialogRef: MatDialogRef<AdvancedMappingDialogComponent>, @Inject(MAT_DIALOG_DATA) info) {
     this.sourceTypes = info.sourceTypes;
     this.allTypes = info.allTypes;
+
+    //put background type at end and rename
+    let backgroundIndex = this.allTypes.indexOf("Background");
+    //make sure exists
+    if(backgroundIndex >= 0) {
+      this.allTypes.splice(backgroundIndex, 1);
+      this.allTypes.push("Background (No Recharge)");
+    }
+
+
     this.formState = [];
     this.assigned = [];
     if(info.state) {
@@ -55,8 +62,13 @@ export class AdvancedMappingDialogComponent implements OnInit {
         
       // });
 
-      this.defaultType = info.state.default;
+      //CHANGE SO SWAPS BACK TO BACKGROUND LABEL TEXT
+
+      this.defaultType = info.state.default == "Background" ? "Background (No Recharge)" : info.state.default;
       info.state.formState.forEach((field) => {
+        if(field.target == "Background") {
+          field.target = "Background (No Recharge)";
+        }
         //if source is null (partially filled out) allow, but nothing added to assigned
         if(field.source == null) {
           this.formState.push(field);
@@ -202,7 +214,8 @@ export class AdvancedMappingDialogComponent implements OnInit {
       mapping: {},
       state: {
         formState: this.formState,
-        default: this.defaultType
+        //convert back to "Background" keyword if "Background (No Recharge)" selected
+        default: this.defaultType == "Background (No Recharge)" ? "Background" : this.defaultType
       }
     };
     
@@ -210,14 +223,15 @@ export class AdvancedMappingDialogComponent implements OnInit {
     this.formState.forEach((field) => {
       //only create mapping if field complete
       if(field.source != null && field.target != null) {
+        //convert back to "Background" keyword if "Background (No Recharge)" selected
+        let target = field.target == "Background (No Recharge)" ? "Background" : field.target;
         //map source to target
-        (data.mapping as any)[field.source] = field.target;
-        console.log(data.mapping[field.source])
+        (data.mapping as any)[field.source] = target;
       }
     });
 
     //set default value
-    (data.mapping as any).default = this.defaultType;
+    (data.mapping as any).default = data.state.default;
 
     //submit with mapping
     this.dialogRef.close(data);

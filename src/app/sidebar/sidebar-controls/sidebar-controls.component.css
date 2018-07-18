@@ -60,11 +60,12 @@
 .sidebar {
     position: absolute;
     left: 100%;
-    top: 5%;
+    top: 30px;
     z-index: -1000;
     background-color: rgba(255, 255, 255, 0.9);
     width: 180px;
-    height: 250px;
+    height: calc(100% - 35px);
+    max-height: 420px;
     border-radius: 0px 10px 10px 0px;
     padding: 8px;
     box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
@@ -94,21 +95,15 @@
     font-style: bold;
     transform: translate(-50%, -50%) rotate(90deg);
   }
-.menuButton:hover
-{
-    cursor: pointer;
-}
 
+  .menuButton:hover
+  {
+      cursor: pointer;
+  }
 
 
   .btn-custom {
     border: 1px solid rgb(125, 0, 0);
-  }
-
-  .btn-custom-half {
-    border: 1px solid rgb(125, 0, 0);
-    width: 50% !important;
-    border-radius: 0px !important;
   }
 
   .outline {
@@ -121,7 +116,7 @@
     color: rgb(125, 0, 0);
   }
 
-  .btn-custom-half:hover {
+  .btn-custom-half-left:hover {
     color: rgb(125, 0, 0);
   }
   
@@ -166,4 +161,43 @@
     font-weight: bold;
     font-size: 18px;
     text-align: center;
+  }
+
+  .name-button-container {
+    height: 50px;
+  }
+
+  .btn-custom-half-left {
+    background: ivory;
+    color: black;
+    border: 1px solid rgb(125, 0, 0);
+    float: left;
+    width: 50% !important;
+    border-radius: 0px;
+    border-bottom-left-radius: 5px !important;
+    top: 0px;
+    height: 25px;
+  }
+
+  .btn-custom-half-right {
+    float: left;
+    width: 50% !important;
+    border-radius: 0px;
+    border-bottom-right-radius: 5px !important;
+    top: 0px;
+    height: 25px;
+  }
+
+  .set-name-shift {
+    margin-left: -8px;
+    margin-top: -2px;
+  }
+
+  .cancel-shift {
+    margin-left: -5px;
+    margin-top: -2px;
+  }
+
+  .save-apply-shift {
+    margin-left: -10px;
   }
