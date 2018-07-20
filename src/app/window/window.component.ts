@@ -456,6 +456,11 @@ export class WindowComponent implements AfterViewInit {
         cat2: {columnWidth: normalWidth * 2},
         cat3: {columnWidth: normalWidth * 2}
       },
+      drawHeaderRow: (row, data) => {
+        row.cells.cat1.styles.textColor = [0, 42, 0];
+        row.cells.cat2.styles.textColor = [85, 0, 0];
+        row.cells.cat3.styles.textColor = [0, 0, 54];
+      },
       margin: {top: 60}
     });
 
@@ -493,6 +498,23 @@ export class WindowComponent implements AfterViewInit {
         diff: {columnWidth: normalWidth},
         pchange: {columnWidth: normalWidth}
       },
+      drawHeaderRow: (row, data) => {
+        console.log(row);
+        row.cells.oriny.styles.textColor = [0, 42, 0];
+        row.cells.criny.styles.textColor = [0, 42, 0];
+        row.cells.ormgd.styles.textColor = [85, 0, 0];
+        row.cells.crmgd.styles.textColor = [85, 0, 0];
+        row.cells.diff.styles.textColor = [0, 0, 54];
+        row.cells.pchange.styles.textColor = [0, 0, 54];
+      },
+      drawRow: (row, data) => {
+        row.cells.oriny.styles.textColor = [0, 42, 0];
+        row.cells.criny.styles.textColor = [0, 42, 0];
+        row.cells.ormgd.styles.textColor = [85, 0, 0];
+        row.cells.crmgd.styles.textColor = [85, 0, 0];
+        row.cells.diff.styles.textColor = [0, 0, 54];
+        row.cells.pchange.styles.textColor = [0, 0, 54];
+      },
       margin: {top: 60}
     });
 
@@ -514,6 +536,11 @@ export class WindowComponent implements AfterViewInit {
         cat1: {columnWidth: normalWidth * 2},
         cat2: {columnWidth: normalWidth * 2},
         cat3: {columnWidth: normalWidth * 2}
+      },
+      drawHeaderRow: (row, data) => {
+        row.cells.cat1.styles.textColor = [0, 42, 0];
+        row.cells.cat2.styles.textColor = [85, 0, 0];
+        row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -550,6 +577,22 @@ export class WindowComponent implements AfterViewInit {
         diff: {columnWidth: normalWidth},
         pchange: {columnWidth: normalWidth}
       },
+      drawHeaderRow: (row, data) => {
+        row.cells.oriny.styles.textColor = [0, 42, 0];
+        row.cells.criny.styles.textColor = [0, 42, 0];
+        row.cells.ormgd.styles.textColor = [85, 0, 0];
+        row.cells.crmgd.styles.textColor = [85, 0, 0];
+        row.cells.diff.styles.textColor = [0, 0, 54];
+        row.cells.pchange.styles.textColor = [0, 0, 54];
+      },
+      drawRow: (row, data) => {
+        row.cells.oriny.styles.textColor = [0, 42, 0];
+        row.cells.criny.styles.textColor = [0, 42, 0];
+        row.cells.ormgd.styles.textColor = [85, 0, 0];
+        row.cells.crmgd.styles.textColor = [85, 0, 0];
+        row.cells.diff.styles.textColor = [0, 0, 54];
+        row.cells.pchange.styles.textColor = [0, 0, 54];
+      },
       margin: {top: 60}
     });
 
@@ -576,6 +619,11 @@ export class WindowComponent implements AfterViewInit {
         cat1: {columnWidth: normalWidth * 2},
         cat2: {columnWidth: normalWidth * 2},
         cat3: {columnWidth: normalWidth * 2}
+      },
+      drawHeaderRow: (row, data) => {
+        row.cells.cat1.styles.textColor = [0, 42, 0];
+        row.cells.cat2.styles.textColor = [85, 0, 0];
+        row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -606,6 +654,22 @@ export class WindowComponent implements AfterViewInit {
         crmgd: {columnWidth: normalWidth},
         diff: {columnWidth: normalWidth},
         pchange: {columnWidth: normalWidth}
+      },
+      drawHeaderRow: (row, data) => {
+        row.cells.oriny.styles.textColor = [0, 42, 0];
+        row.cells.criny.styles.textColor = [0, 42, 0];
+        row.cells.ormgd.styles.textColor = [85, 0, 0];
+        row.cells.crmgd.styles.textColor = [85, 0, 0];
+        row.cells.diff.styles.textColor = [0, 0, 54];
+        row.cells.pchange.styles.textColor = [0, 0, 54];
+      },
+      drawRow: (row, data) => {
+        row.cells.oriny.styles.textColor = [0, 42, 0];
+        row.cells.criny.styles.textColor = [0, 42, 0];
+        row.cells.ormgd.styles.textColor = [85, 0, 0];
+        row.cells.crmgd.styles.textColor = [85, 0, 0];
+        row.cells.diff.styles.textColor = [0, 0, 54];
+        row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -676,6 +740,11 @@ export class WindowComponent implements AfterViewInit {
       columnStyles: {
         name: {columnWidth: 90},
       },
+      // drawRow: (row, data) => {
+      //   row.cells.total.styles.textColor = [0, 42, 0];
+      //   row.cells.totalNoCaprock.styles.textColor = [85, 0, 0];
+      //   row.cells.uda.styles.textColor = [0, 0, 54];
+      // },
       margin: {top: 60}
     });
 

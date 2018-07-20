@@ -48,6 +48,10 @@ export class MapComponent implements OnInit {
   static readonly INCH_TO_MILIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
 
+  static readonly INTERACTIBLE_AREA_LIMITER = 50;
+
+
+
   map: any;
   popup: any;
   shpfile: any;
@@ -66,6 +70,8 @@ export class MapComponent implements OnInit {
   uneditableItems: any;
   highlightedItems: any;
   drawControl: any;
+
+  nonDisplayedCustomObjects: any;
 
   aquifers: any;
 
@@ -547,18 +553,40 @@ export class MapComponent implements OnInit {
     });
   }
 
+  private repackageShapes(shapes: any, divisions: {x: number, y: number}): any {
+    let componentIndices = []
+    let indices = this.getInternalIndexes(shapes.toGeoJSON());
+    indices.forEach((index) => {
+      componentIndices.push(this.getComponents(index));
+    });
+    return this.generateGeometriesFromPoints(componentIndices, divisions);
+  }
+
   private parseAndAddShapes(shapes: any) {
+    let lcShapes = [];
+
     shapes.features.forEach(shape => {
       let coordsBase = shape.geometry.coordinates;
 
       let name = shape.properties.name;
 
+      //use lcCode as land cover property name
+      let lc = shape.properties.lcCode;
+
+      if(lc) {
+        lcShapes.push(shape);
+      }
+
       //swap coordinates, who wants consistent standards anyway?
       //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
       this.swapCoordinates(coordsBase);
 
-      //multipolygons separated due to how shp-write package creates shapefiles, if problematic might have to heavily modify shp-write
-      //also appears to be a bug where sometimes it packs multiple shapes as just a polygon, might need to chack where bottom level shape is and separate next level up
+      //can we handle multiploygons now?
+      //there are 2 different types:
+      //1. multiple outer rings as one object, represented as multiple shapes inside coordinates array
+      //2. items in the coordinates array can be arrays where the fist is an outer ring and the rest are holes
+      //DEAL WITH ALL THIS LATER, FOR NOW LET'S JUST ASSUME SIMPLE SHAPES FOR PURPOSES OF USE AS LANDCOVER AREAS
+      //i think mongodb can handle rings and things
       if (shape.geometry.type == "MultiPolygon") {
         for (let i = 0; i < coordsBase.length; i++) {
           this.addDrawnItem(L.polygon(coordsBase[i], {}), true, name);
@@ -568,6 +596,8 @@ export class MapComponent implements OnInit {
         this.addDrawnItem(L.polygon(coordsBase, {}), true, name);
       }
     });
+
+
   }
 
   showHideObjects(showOrHide: string) {
@@ -2044,7 +2074,7 @@ export class MapComponent implements OnInit {
               });
             }
             else {
-              console.log(data.shapes)
+              //console.log(data.shapes)
               this.parseAndAddShapes(data.shapes);
             }
           }
@@ -3805,6 +3835,7 @@ export class MapComponent implements OnInit {
   private getInternalIndexes(geojsonFeatures: any): number[] {
     let indexes = [];
     geojsonFeatures.features.forEach(shape => {
+      console.log(shape);
       //array due to potential cutouts, shouldn't have any cutouts
       let pointsBase = shape.geometry.coordinates[0];
       let convertedPoints = [];
