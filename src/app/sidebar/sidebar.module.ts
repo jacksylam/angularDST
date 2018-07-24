@@ -15,7 +15,7 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UploadDialogComponent } from './upload-dialog/upload-dialog.component';
 import { DownloadDialogComponent } from './download-dialog/download-dialog.component';
-import {MatDialogModule} from "@angular/material";
+import { MatDialogModule, MatInputModule } from "@angular/material";
 import { MatButtonModule } from '@angular/material/button';
 
 @NgModule({
@@ -31,7 +31,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatCheckboxModule,
     MatRadioModule,
     MatDialogModule,
-    MatButtonModule
+    MatButtonModule,
+    MatInputModule,
   ],
   declarations: [
     SidebarMenuComponent, 

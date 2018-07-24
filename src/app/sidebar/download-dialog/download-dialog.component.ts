@@ -19,7 +19,7 @@ export class DownloadDialogComponent implements OnInit {
       shapes: false,
       recharge: false,
       cover: false,
-      format: 'covjson'
+      format: 'asc'
     };
 
   }

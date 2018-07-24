@@ -48,8 +48,6 @@ export class MapComponent implements OnInit {
   static readonly INCH_TO_MILIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
 
-  static readonly INTERACTIBLE_AREA_LIMITER = 50;
-
 
 
   map: any;
@@ -96,7 +94,7 @@ export class MapComponent implements OnInit {
 
   customAreasCount = 1;
 
-  customAreaNames: any = {}
+  customAreaNames: any = {};
 
   metrics: {
     customAreas: any[],
@@ -562,20 +560,15 @@ export class MapComponent implements OnInit {
     return this.generateGeometriesFromPoints(componentIndices, divisions);
   }
 
-  private parseAndAddShapes(shapes: any) {
-    let lcShapes = [];
+  
+  private parseAndAddShapes(shapes: any, nameProperty: string) {
 
     shapes.features.forEach(shape => {
       let coordsBase = shape.geometry.coordinates;
 
-      let name = shape.properties.name;
-
-      //use lcCode as land cover property name
-      let lc = shape.properties.lcCode;
-
-      if(lc) {
-        lcShapes.push(shape);
-      }
+      //allow for custom property to be defined
+      //default is name
+      let name = shape.properties[nameProperty];
 
       //swap coordinates, who wants consistent standards anyway?
       //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
@@ -587,24 +580,102 @@ export class MapComponent implements OnInit {
       //2. items in the coordinates array can be arrays where the fist is an outer ring and the rest are holes
       //DEAL WITH ALL THIS LATER, FOR NOW LET'S JUST ASSUME SIMPLE SHAPES FOR PURPOSES OF USE AS LANDCOVER AREAS
       //i think mongodb can handle rings and things
-      if (shape.geometry.type == "MultiPolygon") {
-        for (let i = 0; i < coordsBase.length; i++) {
-          this.addDrawnItem(L.polygon(coordsBase[i], {}), true, name);
-        }
+      //just remove this part for now
+      // if (shape.geometry.type == "MultiPolygon") {
+      //   for (let i = 0; i < coordsBase.length; i++) {
+      //     this.addDrawnItem(L.polygon(coordsBase[i], {}), true, name);
+      //   }
+      // }
+      // else {
+      //this should handle multipolygons fine
+      this.addDrawnItem(L.polygon(coordsBase, {}), true, name);
+      // }
+    });
+    
+  }
+
+  //need to add overwriting if indicated
+  //need to check if shapes have valid property (moved so have to check here)
+  addUploadedLandcoverByShape(shapes: any, lcProperty: string, overwrite: boolean) {
+    let queryShapes = [];
+    let covData = this.types.landCover.data._covjson.ranges.cover.values;
+        let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+
+    let covRemap = new Promise((resolve) => {   
+
+      //might need to increase or decrease depending on how 20 queries works
+      if(shapes.length > 20) {
+        //repackage using 2x2 grid (may want to make smaller divisions)
+        queryShapes = this.repackageShapes(queryShapes, {x: 2, y: 2});
       }
-      else {
-        this.addDrawnItem(L.polygon(coordsBase, {}), true, name);
-      }
+
+      shapes.forEach((shape) => {
+
+        //default property is lcCode, add advanced option to upload where can specify
+        let lc = shape.properties[lcProperty];
+
+        let internal = this.getInternalIndexes(shape);
+
+        //here need to also check if overwrite base values
+        internal.forEach((index) => {
+          covData[index] = lc;
+        });
+
+      });
+      //reload layer from changes
+      this.loadCover(this.types.landCover, false);
+      resolve()
     });
 
+    this.updateRecharge(queryShapes, (update) => {
+      //ensure coverage remapping complete before processing recharge values
+      covRemap.then(() => {
+        update.forEach(area => {
+          //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+          area.forEach(record => {
+            let recordBase = record.value;
+            let x = recordBase.x;
+            let y = recordBase.y;
+            let index = this.getIndex(x, y);
+            //does the array include base? if not have to shift
 
+            //might contain points not changed, 
+            //coverage reassignment completed first, so use this value (covData[index]) to get index in db results
+            let mappedType = covData[index];
+
+            Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+              //background is not included in the database so indexes shifted by 1
+              //if background type set recharge rate to 0
+              let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+
+              this.types.recharge.currentData[scenario] = recordValue;
+              if(scenario == this.currentScenario) {
+                rechargeData[index] = recordValue;
+              }
+            });
+
+          });
+        });
+        //reload recharge cover
+        this.loadCover(this.types.recharge, true)
+
+        this.updateMetrics(shapes);
+        //reenable report generation
+      })
+      
+    });
+
+    
+    
   }
 
   showHideObjects(showOrHide: string) {
     if (showOrHide == "Show") {
       this.drawnItems.addTo(this.map);
+      this.drawControl.addTo(this.map);
     }
     else {
+      this.drawControl.remove();
       this.map.removeLayer(this.drawnItems);
     }
   }
@@ -1477,7 +1548,10 @@ export class MapComponent implements OnInit {
     
 
     let items = new L.featureGroup();
+    
     this.drawnItems.eachLayer((layer) => {
+      items = new L.featureGroup();
+      //let intervals = new Date().getTime();
       //any custom layers should have metrics object registered with customAreaNames, use this as a base since same name
       let info = this.customAreaNames[layer._leaflet_id];
       //console.log(layer.toGeoJSON())
@@ -2067,18 +2141,25 @@ export class MapComponent implements OnInit {
       
       if(info.shapes) {
         if(data.shapes != null) {
-          if(info.format == "custom") {
+          if(info.shapeDetails.format == "custom") {
+
+            //??????????????????????????
+            //is this right? looks wrong
+
+            //array if multiple shapefiles?
             if(Array.isArray(data.shapes)) {
               data.shapes.forEach(shpset => {
-                this.parseAndAddShapes(shpset);
+                this.parseAndAddShapes(shpset, info.shapeDetails.properties.name);
               });
             }
             else {
               //console.log(data.shapes)
-              this.parseAndAddShapes(data.shapes);
+              this.parseAndAddShapes(data.shapes, info.shapeDetails.properties.name);
             }
+
+            //????????????????????????????
           }
-          else {
+          else if(info.shapeDetails.format == "reference") {
             let refLayer = L.geoJSON();
 
             //array if multiple shpfiles
@@ -2108,6 +2189,20 @@ export class MapComponent implements OnInit {
 
             this.layers.addOverlay(refLayer, overlayName);
           }
+
+          if(info.shapeDetails.includeLC || info.shapeDetails.format=="lcOnly") {
+            if(Array.isArray(data.shapes)) {
+              data.shapes.forEach(shpset => {
+                this.addUploadedLandcoverByShape(shpset, info.shapeDetails.properties.lc, info.overwrite);
+              });
+            }
+            else {
+              //console.log(data.shapes)
+              this.addUploadedLandcoverByShape(data.shapes, info.shapeDetails.properties.lc, info.overwrite);
+            }
+            
+          }
+          
         }
       }
 
@@ -2118,7 +2213,8 @@ export class MapComponent implements OnInit {
 
           let dbQueryChunkSize = 50;
           let subarrayCounter = 0;
-          let changedIndexComponents = [[]];
+          //let changedIndexComponents = [[]];
+          let changedIndexComponents = [];
           
           for(let i = 0; i < base.length; i++) {
 
@@ -2126,15 +2222,17 @@ export class MapComponent implements OnInit {
             if(data.cover.values[i] != data.cover.nodata && base[i] != data.cover.values[i]) {
               base[i] = data.cover.values[i];
 
+              changedIndexComponents.push(this.getComponents(i));
+
               //add index to query array chunk
-              if(subarrayCounter <= dbQueryChunkSize) {
-                changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
-                subarrayCounter++;
-              }
-              else {
-                changedIndexComponents.push([this.getComponents(i)]);
-                subarrayCounter = 1;
-              }
+              // if(subarrayCounter <= dbQueryChunkSize) {
+              //   changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
+              //   subarrayCounter++;
+              // }
+              // else {
+              //   changedIndexComponents.push([this.getComponents(i)]);
+              //   subarrayCounter = 1;
+              // }
               //   subarrayCounter++;
               // }
               // else {
@@ -2161,20 +2259,29 @@ export class MapComponent implements OnInit {
           //   console.log(data);
           // });
 
-          //let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 4, y: 4});
-
-          //console.log(geometries);
-          console.log("Sending " + changedIndexComponents.length.toString() + " queries of " + dbQueryChunkSize.toString() + " points.");
+          let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 50, y: 50});
+          console.log(geometries);
           let start = new Date().getTime();
-          Observable.forkJoin(changedIndexComponents.map(indexGroup => {
-            return this.DBService.indexSearch(indexGroup);
+          Observable.forkJoin(geometries.map(geometry => {
+            return this.DBService.spatialSearch(geometry);
           }))
-          //this.DBService.indexSearch(changedIndexComponents[0])
-          //this.DBService.spatialSearch(element);
           .subscribe((data) => {
             console.log("Operation took " + (new Date().getTime() - start).toString() + "ms");
             console.log(data);
           });
+
+          //console.log(geometries);
+          // console.log("Sending " + changedIndexComponents.length.toString() + " queries of " + dbQueryChunkSize.toString() + " points.");
+          // let start = new Date().getTime();
+          // Observable.forkJoin(changedIndexComponents.map(indexGroup => {
+          //   return this.DBService.indexSearch(indexGroup);
+          // }))
+          // //this.DBService.indexSearch(changedIndexComponents[0])
+          // //this.DBService.spatialSearch(element);
+          // .subscribe((data) => {
+          //   console.log("Operation took " + (new Date().getTime() - start).toString() + "ms");
+          //   console.log(data);
+          // });
 
           // changedIndexComponents.forEach((indexGroup) => {
           //   this.DBService.indexSearch(indexGroup)
@@ -2201,6 +2308,7 @@ export class MapComponent implements OnInit {
   }
 
 
+  //for now just use squares until figure out other problems
   generateGeometriesFromPoints(points: {x: number, y: number}[], divisions: {x: number, y: number}) {
     let xrange = {
       min: Number.POSITIVE_INFINITY,
@@ -2240,7 +2348,7 @@ export class MapComponent implements OnInit {
     let xdivisions = [];
     let ydivisions = [];
 
-    let chunkSize = Math.floor((xrange.max - xrange.min) / divisions.x);
+    let chunkSize = Math.ceil((xrange.max - xrange.min) / divisions.x);
     for(let i = 0; i < divisions.x - 1; i++) {
       xdivisions.push({
         min: xrange.min + i * chunkSize,
@@ -2254,7 +2362,7 @@ export class MapComponent implements OnInit {
       max: xrange.max
     });
 
-    chunkSize = Math.floor((yrange.max - yrange.min) / divisions.y);
+    chunkSize = Math.ceil((yrange.max - yrange.min) / divisions.y);
     for(let i = 0; i < divisions.y - 1; i++) {
       ydivisions.push({
         //subtract 1 so centroid within bounds
@@ -2269,161 +2377,198 @@ export class MapComponent implements OnInit {
       max: yrange.max + 1
     });
 
-
-    // ydivisions.forEach((ygroup) => {
-    //   for(let i = ygroup.min) {
-
-    //   }
-    // });
-
-    let yMapping = [];
-    //let xMapping = [];
-
-    for(let i = 0; i < xdivisions.length; i++) {
-      yMapping.push([]);
-      for(let j = 0; j < ydivisions.length; j++) {
-        yMapping[i].push({});
-      }
-    }
-
-    // for(let i = 0; i < xdivisions.length; i++) {
-    //   xMapping.push([]);
-    //   for(let j = 0; j < ydivisions.length; j++) {
-    //     xMapping[i].push({});
-    //   }
-    // }
-
-
-    //find which division point falls in and create mapping
-    points.forEach((point) => {
-      let broken = false;
-      for(let i = 0; i < xdivisions.length; i++) {
-        for(let j = 0; j < ydivisions.length; j++) {
-          if((point.x >= xdivisions[i].min && point.x <= xdivisions[i].max) && (point.y >= ydivisions[j].min && point.y <= ydivisions[j].max)) {
-            if(yMapping[i][j][point.y]) {
-              if(point.x < yMapping[i][j][point.y].min) {
-                yMapping[i][j][point.y].min = point.x;
-              }
-              else if(point.x > yMapping[i][j][point.y].max) {
-                yMapping[i][j][point.y].max = point.x;
-              }
-            }
-            else {
-              yMapping[i][j][point.y] = {
-                min: point.x,
-                max: point.x
-              }
-            }
-
-            // if(xMapping[i][j][point.x]) {
-            //   if(point.y < xMapping[i][j][point.x].min) {
-            //     xMapping[i][j][point.x].min = point.y;
-            //   }
-            //   else if(point.y > xMapping[i][j][point.x].max) {
-            //     xMapping[i][j][point.x].max = point.y;
-            //   }
-            // }
-            // else {
-            //   xMapping[i][j][point.x] = {
-            //     min: point.y,
-            //     max: point.y
-            //   }
-            // }
-            broken = true;
-            break;
-          }
-        }
-        //if inner loop broke already found division the point belongs in, break out of outer loop as well
-        if(broken) {
-          break;
-        }
-      }
-    });
-
-    console.log(yMapping);
-    //console.log(xMapping);
-
-    let geometries = [];
-
     let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
     let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
 
-    //CAN ALSO MIRROR ON X SIDES (FOLLOW Y CONTOURS ON TOP AND BOTTOM) FOR TIGHTER BOUND
-    //only want to cutout in gaps between bottom two points and top two points rather than whole range
-    //can fix this later, just comment out x cutouts for now, bit more complicated
+    let geometries = [];
+
+    //squares
+    //-----------------------------------------------------------------------------------
+
+
 
     for(let i = 0; i < xdivisions.length; i++) {
       for(let j = 0; j < ydivisions.length; j++) {
-        let rightPoints = [];
-        let leftPoints = [];
-        // let topPoints = [];
-        // let bottomPoints = [];
 
-        let first = true;
-        for(let y = ydivisions[j].min; y <= ydivisions[j].max; y++) {
-          if(yMapping[i][j][y]) {
-            let yUTM = ys[y];
-            //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
-            let xMinUTM = xs[yMapping[i][j][y].min] - 1;
-            //add 1 to max side so inside bounds
-            let xMaxUTM = xs[yMapping[i][j][y].max] + 1;
+        let shape = [];
+        let p1 = [xs[xdivisions[i].min], ys[ydivisions[j].min]];
+        let p2 = [xs[xdivisions[i].min], ys[ydivisions[j].max]];
+        let p3 = [xs[xdivisions[i].max], ys[ydivisions[j].max]];
+        let p4 = [xs[xdivisions[i].max], ys[ydivisions[j].min]];
+        let p5 = [xs[xdivisions[i].min], ys[ydivisions[j].min]];
 
-            //is x, y the right order?
-            let coordLeft =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
-            let coordRight =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMaxUTM, yUTM]);
-            
-            //console.log(coordLeft);
+        //wrong order
+        // let p1 = [ydivisions[j].min, xdivisions[i].min];
+        // let p2 = [ydivisions[j].max, xdivisions[i].min];
+        // let p3 = [ydivisions[j].max, xdivisions[i].max];
+        // let p4 = [ydivisions[j].min, xdivisions[i].max];
+        // let p5 = [ydivisions[j].min, xdivisions[i].min];
 
-            leftPoints.push(coordLeft);
-            rightPoints.push(coordRight);
-          }
-        }
+        shape.push(MapComponent.proj4(MapComponent.utm, MapComponent.longlat, p1));
+        shape.push(MapComponent.proj4(MapComponent.utm, MapComponent.longlat, p2));
+        shape.push(MapComponent.proj4(MapComponent.utm, MapComponent.longlat, p3));
+        shape.push(MapComponent.proj4(MapComponent.utm, MapComponent.longlat, p4));
+        shape.push(MapComponent.proj4(MapComponent.utm, MapComponent.longlat, p5));
 
-        //only want to cutout in gaps between bottom two points and top two points rather than whole range
-        //can fix this later, just comment out x cutouts for now, bit more complicated
+        geometries.push({
+          "type": "Polygon",
+          "coordinates": [shape]
+        });
 
-        // for(let x = xdivisions[i].min; x <= xdivisions[i].max; x++) {
-        //   if(xMapping[i][j][x]) {
-        //     let xUTM = xs[x];
-        //     //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
-        //     let yMinUTM = ys[xMapping[i][j][x].min] - 1;
-        //     //add 1 to max side so inside bounds
-        //     let yMaxUTM = ys[xMapping[i][j][x].max] + 1;
-
-        //     //is x, y the right order?
-        //     //top has minimum y values since grid upside down
-        //     let coordTop =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xUTM, yMinUTM]);
-        //     let coordBottom =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xUTM, yMaxUTM]);
-
-        //     //console.log(coordTop);
-        //     topPoints.push(coordTop);
-        //     bottomPoints.push(coordBottom);
-        //   }
-        // }
-        //reverse right side points since want from top to bottom which is min to max (put in array max to min)
-        //rightPoints = rightPoints.reverse();
-        //reverse bottom points so right to left
-        leftPoints = leftPoints.reverse();
-        //console.log(leftPoints);
-        let shape = rightPoints.concat(leftPoints);
-        //shape = shape.concat(rightPoints);
-        // shape = shape.concat(leftPoints);
-        //add first point to end of array to close shape
-        if(shape[0]) {
-          shape.push(shape[0]);
-
-          geometries.push({
-            "type": "Polygon",
-            "coordinates": [shape]
-          });
-        }
-        
-
-        console.log(shape);
-
-        
       }
     }
+
+    
+
+
+    //not squares
+    //-----------------------------------------------------------------------------------------------------------------------
+
+    // let yMapping = [];
+    // //let xMapping = [];
+
+    // for(let i = 0; i < xdivisions.length; i++) {
+    //   yMapping.push([]);
+    //   for(let j = 0; j < ydivisions.length; j++) {
+    //     yMapping[i].push({});
+    //   }
+    // }
+
+    // // for(let i = 0; i < xdivisions.length; i++) {
+    // //   xMapping.push([]);
+    // //   for(let j = 0; j < ydivisions.length; j++) {
+    // //     xMapping[i].push({});
+    // //   }
+    // // }
+
+
+    // //find which division point falls in and create mapping
+    // points.forEach((point) => {
+    //   let broken = false;
+    //   for(let i = 0; i < xdivisions.length; i++) {
+    //     for(let j = 0; j < ydivisions.length; j++) {
+    //       if((point.x >= xdivisions[i].min && point.x <= xdivisions[i].max) && (point.y >= ydivisions[j].min && point.y <= ydivisions[j].max)) {
+    //         if(yMapping[i][j][point.y]) {
+    //           if(point.x < yMapping[i][j][point.y].min) {
+    //             yMapping[i][j][point.y].min = point.x;
+    //           }
+    //           else if(point.x > yMapping[i][j][point.y].max) {
+    //             yMapping[i][j][point.y].max = point.x;
+    //           }
+    //         }
+    //         else {
+    //           yMapping[i][j][point.y] = {
+    //             min: point.x,
+    //             max: point.x
+    //           }
+    //         }
+
+    //         // if(xMapping[i][j][point.x]) {
+    //         //   if(point.y < xMapping[i][j][point.x].min) {
+    //         //     xMapping[i][j][point.x].min = point.y;
+    //         //   }
+    //         //   else if(point.y > xMapping[i][j][point.x].max) {
+    //         //     xMapping[i][j][point.x].max = point.y;
+    //         //   }
+    //         // }
+    //         // else {
+    //         //   xMapping[i][j][point.x] = {
+    //         //     min: point.y,
+    //         //     max: point.y
+    //         //   }
+    //         // }
+    //         broken = true;
+    //         break;
+    //       }
+    //     }
+    //     //if inner loop broke already found division the point belongs in, break out of outer loop as well
+    //     if(broken) {
+    //       break;
+    //     }
+    //   }
+    // });
+
+    // console.log(yMapping);
+    // //console.log(xMapping);
+
+    
+
+    // //CAN ALSO MIRROR ON X SIDES (FOLLOW Y CONTOURS ON TOP AND BOTTOM) FOR TIGHTER BOUND
+    // //only want to cutout in gaps between bottom two points and top two points rather than whole range
+    // //can fix this later, just comment out x cutouts for now, bit more complicated
+
+    // for(let i = 0; i < xdivisions.length; i++) {
+    //   for(let j = 0; j < ydivisions.length; j++) {
+    //     let rightPoints = [];
+    //     let leftPoints = [];
+    //     // let topPoints = [];
+    //     // let bottomPoints = [];
+
+    //     let first = true;
+    //     for(let y = ydivisions[j].min; y <= ydivisions[j].max; y++) {
+    //       if(yMapping[i][j][y]) {
+    //         let yUTM = ys[y];
+    //         //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
+    //         let xMinUTM = xs[yMapping[i][j][y].min] - 100;
+    //         //add 1 to max side so inside bounds
+    //         let xMaxUTM = xs[yMapping[i][j][y].max] + 100;
+
+    //         //is x, y the right order?
+    //         let coordLeft =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
+    //         let coordRight =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMaxUTM, yUTM]);
+            
+    //         //console.log(coordLeft);
+
+    //         leftPoints.push(coordLeft);
+    //         rightPoints.push(coordRight);
+    //       }
+    //     }
+
+    //     //only want to cutout in gaps between bottom two points and top two points rather than whole range
+    //     //can fix this later, just comment out x cutouts for now, bit more complicated
+
+    //     // for(let x = xdivisions[i].min; x <= xdivisions[i].max; x++) {
+    //     //   if(xMapping[i][j][x]) {
+    //     //     let xUTM = xs[x];
+    //     //     //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
+    //     //     let yMinUTM = ys[xMapping[i][j][x].min] - 1;
+    //     //     //add 1 to max side so inside bounds
+    //     //     let yMaxUTM = ys[xMapping[i][j][x].max] + 1;
+
+    //     //     //is x, y the right order?
+    //     //     //top has minimum y values since grid upside down
+    //     //     let coordTop =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xUTM, yMinUTM]);
+    //     //     let coordBottom =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xUTM, yMaxUTM]);
+
+    //     //     //console.log(coordTop);
+    //     //     topPoints.push(coordTop);
+    //     //     bottomPoints.push(coordBottom);
+    //     //   }
+    //     // }
+    //     //reverse right side points since want from top to bottom which is min to max (put in array max to min)
+    //     //rightPoints = rightPoints.reverse();
+    //     //reverse bottom points so right to left
+    //     leftPoints = leftPoints.reverse();
+    //     //console.log(leftPoints);
+    //     let shape = rightPoints.concat(leftPoints);
+    //     //shape = shape.concat(rightPoints);
+    //     // shape = shape.concat(leftPoints);
+    //     //add first point to end of array to close shape
+    //     if(shape[0]) {
+    //       shape.push(shape[0]);
+
+    //       geometries.push({
+    //         "type": "Polygon",
+    //         "coordinates": [shape]
+    //       });
+    //     }
+        
+
+    //     console.log(shape);
+
+        
+    //   }
+    // }
 
     geometries.forEach((geometry) => {
       let geojsonBounds = {
@@ -2431,12 +2576,22 @@ export class MapComponent implements OnInit {
         "properties": {},
         "geometry": geometry
       };
-      L.geoJSON(geojsonBounds).addTo(this.map);
+      //console.log(geometry);
+      this.swapCoordinates(geometry.coordinates);
+      this.addDrawnItem(L.polygon(geometry.coordinates, {}));
+      
+      //L.geoJSON(geojsonBounds).addTo(this.map);
     });
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    this.metrics.customAreasTotal.metrics = customTotal;
+    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
     
-    console.log(geometries);
+    // // console.log(geometries);
 
-    return geometries
+
+    //-----------------------------------------------------------------------------
+
+    return geometries;
 
 
   }
@@ -2480,7 +2635,7 @@ export class MapComponent implements OnInit {
             let test = (data) => {
               //console.log(data);
               shp(data).then((geojson) => {
-                console.log(geojson);
+                //console.log(geojson);
                 //if array validate each element as geojson object, return valid ones if exist, reject if all invalid
                 if(Array.isArray(geojson)) {
                   let validGeojson = []
@@ -3559,11 +3714,12 @@ export class MapComponent implements OnInit {
 
     this.metrics.customAreas.push(info);
 
+    //ADD BATCH DEFERENCE, THEN CAN ALLOW MANY CUSTOM AREAS
     //update custom areas total
     //can definately improve upon this
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
-    this.metrics.customAreasTotal.metrics = customTotal;
-    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+    // let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    // this.metrics.customAreasTotal.metrics = customTotal;
+    // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
 
@@ -3676,7 +3832,6 @@ export class MapComponent implements OnInit {
             //check if a mapping was created or if operation canceled
             if(data.mapping) {
 
-
               let covRemap = new Promise((resolve) => {
                 indexes.forEach(index => {
                   //set to default type
@@ -3729,11 +3884,10 @@ export class MapComponent implements OnInit {
                       });
 
                     });
+                    this.updateMetrics(geojsonObjects);
                   });
                   //reload recharge cover
                   this.loadCover(this.types.recharge, true)
-          
-                  this.updateMetrics(geojsonObjects);
                   //reenable report generation
                 })
                 
@@ -3810,14 +3964,24 @@ export class MapComponent implements OnInit {
               let x = recordBase.x;
               let y = recordBase.y;
               let index = this.getIndex(x, y);
-              //does the array include base? if not have to shift
-              rechargeData[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
+              
+              let mappedType = COVER_ENUM[type];
+
+              Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+                //background is not included in the database so indexes shifted by 1
+                //if background type set recharge rate to 0
+                let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+
+                this.types.recharge.currentData[scenario] = recordValue;
+                if(scenario == this.currentScenario) {
+                  rechargeData[index] = recordValue;
+                }
+              });
             });
+            this.updateMetrics(geojsonObjects);
           });
           //reload recharge cover
           this.loadCover(this.types.recharge, true)
-
-          this.updateMetrics(geojsonObjects);
           //reenable report generation
         });
 
@@ -3835,97 +3999,141 @@ export class MapComponent implements OnInit {
   private getInternalIndexes(geojsonFeatures: any): number[] {
     let indexes = [];
     geojsonFeatures.features.forEach(shape => {
-      console.log(shape);
+      //console.log(shape);
+      //can handle multipolygons i think
       //array due to potential cutouts, shouldn't have any cutouts
-      let pointsBase = shape.geometry.coordinates[0];
-      let convertedPoints = [];
-      let a = [];
-      let b = [];
-      let xmax = Number.NEGATIVE_INFINITY;
-      let xmin = Number.POSITIVE_INFINITY;
-      let ymax = Number.NEGATIVE_INFINITY;
-      let ymin = Number.POSITIVE_INFINITY;
+      shape.geometry.coordinates.forEach((pointsBase) => {
 
-      for (let i = 0; i < pointsBase.length; i++) {
-        convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
-      }
+        //let pointsBase = shape.geometry.coordinates[0];
+        let convertedPoints = [];
+        let a = [];
+        let b = [];
+        let xmax = Number.NEGATIVE_INFINITY;
+        let xmin = Number.POSITIVE_INFINITY;
+        let ymax = Number.NEGATIVE_INFINITY;
+        let ymin = Number.POSITIVE_INFINITY;
 
-      for (let i = 0; i < convertedPoints.length - 1; i++) {
-        //coordinates are in long lat order (I think)
+        //if multiple rings add each ring
+        if(Array.isArray(pointsBase[0][0])) {
+          pointsBase.forEach((ring) => {
+            convertedPoints = [];
 
-        //get max and min vals to limit coordinates need to compare
-        if (convertedPoints[i][0] > xmax) {
-          xmax = convertedPoints[i][0];
+            for (let i = 0; i < ring.length; i++) {
+              convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, ring[i]));
+            }
+    
+            for (let i = 0; i < convertedPoints.length - 1; i++) {
+              //coordinates are in long lat order (I think)
+    
+              //get max and min vals to limit coordinates need to compare
+              if (convertedPoints[i][0] > xmax) {
+                xmax = convertedPoints[i][0];
+              }
+              if (convertedPoints[i][0] < xmin) {
+                xmin = convertedPoints[i][0];
+              }
+              if (convertedPoints[i][1] > ymax) {
+                ymax = convertedPoints[i][1];
+              }
+              if (convertedPoints[i][1] < ymin) {
+                ymin = convertedPoints[i][1];
+              }
+              //convert these points, less conversions than trying to convert grid points
+              a.push({
+                x: convertedPoints[i][0],
+                y: convertedPoints[i][1]
+              });
+              b.push({
+                x: convertedPoints[i + 1][0],
+                y: convertedPoints[i + 1][1]
+              });
+            }
+          });
         }
-        if (convertedPoints[i][0] < xmin) {
-          xmin = convertedPoints[i][0];
+        else {
+          for (let i = 0; i < pointsBase.length; i++) {
+            convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
+          }
+  
+          for (let i = 0; i < convertedPoints.length - 1; i++) {
+            //coordinates are in long lat order (I think)
+  
+            //get max and min vals to limit coordinates need to compare
+            if (convertedPoints[i][0] > xmax) {
+              xmax = convertedPoints[i][0];
+            }
+            if (convertedPoints[i][0] < xmin) {
+              xmin = convertedPoints[i][0];
+            }
+            if (convertedPoints[i][1] > ymax) {
+              ymax = convertedPoints[i][1];
+            }
+            if (convertedPoints[i][1] < ymin) {
+              ymin = convertedPoints[i][1];
+            }
+            //convert these points, less conversions than trying to convert grid points
+            a.push({
+              x: convertedPoints[i][0],
+              y: convertedPoints[i][1]
+            });
+            b.push({
+              x: convertedPoints[i + 1][0],
+              y: convertedPoints[i + 1][1]
+            });
+          }
         }
-        if (convertedPoints[i][1] > ymax) {
-          ymax = convertedPoints[i][1];
+        
+
+        //convert max min values and find range of cells
+        //no need to check every single one
+        //convert coordinate and get x value
+        // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
+        // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
+        // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
+        // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
+
+        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+        let minxIndex;
+        let maxxIndex;
+        let minyIndex;
+        let maxyIndex;
+
+        //again, assume values are in order
+        //find min and max indexes
+        //check if ascending or descending order, findIndex returns first occurance
+        if (xs[0] < xs[1]) {
+          minxIndex = xs.findIndex(function (val) { return val >= xmin });
+          //> not >= so returns index after last even if on edge 
+          maxxIndex = xs.findIndex(function (val) { return val > xmax });
         }
-        if (convertedPoints[i][1] < ymin) {
-          ymin = convertedPoints[i][1];
+        else {
+          maxxIndex = xs.findIndex(function (val) { return val < xmin });
+          minxIndex = xs.findIndex(function (val) { return val <= xmax });
         }
-        //convert these points, less conversions than trying to convert grid points
-        a.push({
-          x: convertedPoints[i][0],
-          y: convertedPoints[i][1]
-        });
-        b.push({
-          x: convertedPoints[i + 1][0],
-          y: convertedPoints[i + 1][1]
-        });
-      }
+        if (ys[0] < ys[1]) {
+          minyIndex = ys.findIndex(function (val) { return val >= ymin });
+          maxyIndex = ys.findIndex(function (val) { return val > ymax });
+        }
+        else {
+          maxyIndex = ys.findIndex(function (val) { return val < ymin });
+          minyIndex = ys.findIndex(function (val) { return val <= ymax });
+        }
 
-      //convert max min values and find range of cells
-      //no need to check every single one
-      //convert coordinate and get x value
-      // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
-      // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
-      // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
-      // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
-
-      let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-      let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-
-      let minxIndex;
-      let maxxIndex;
-      let minyIndex;
-      let maxyIndex;
-
-      //again, assume values are in order
-      //find min and max indexes
-      //check if ascending or descending order, findIndex returns first occurance
-      if (xs[0] < xs[1]) {
-        minxIndex = xs.findIndex(function (val) { return val >= xmin });
-        //> not >= so returns index after last even if on edge 
-        maxxIndex = xs.findIndex(function (val) { return val > xmax });
-      }
-      else {
-        maxxIndex = xs.findIndex(function (val) { return val < xmin });
-        minxIndex = xs.findIndex(function (val) { return val <= xmax });
-      }
-      if (ys[0] < ys[1]) {
-        minyIndex = ys.findIndex(function (val) { return val >= ymin });
-        maxyIndex = ys.findIndex(function (val) { return val > ymax });
-      }
-      else {
-        maxyIndex = ys.findIndex(function (val) { return val < ymin });
-        minyIndex = ys.findIndex(function (val) { return val <= ymax });
-      }
-
-      //check if shape boundaries out of coverage range
-      if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
-        //convert cell coords to long lat and raycast
-        //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-        for (let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-          for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-            if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-              indexes.push(this.getIndex(xIndex, yIndex))
+        //check if shape boundaries out of coverage range
+        if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
+          //convert cell coords to long lat and raycast
+          //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
+          for (let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+            for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+              if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                indexes.push(this.getIndex(xIndex, yIndex))
+              }
             }
           }
         }
-      }
+      });
     });
 
     return indexes;

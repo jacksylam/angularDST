@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild } from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material";
 
 @Component({
@@ -9,8 +9,14 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material";
 
 export class UploadDialogComponent implements OnInit {
 
+  @ViewChild("namePropertyInput") namePropertyInput;
+  @ViewChild("lcPropertyInput") lcPropertyInput;
+  @ViewChild("fileSelect") fileSelect;
+  
   info: any;
   id: number;
+
+  advanced = false;
 
   constructor(private dialogRef: MatDialogRef<UploadDialogComponent>, @Inject(MAT_DIALOG_DATA) data) {
     
@@ -20,7 +26,14 @@ export class UploadDialogComponent implements OnInit {
       shapes: false,
       cover: false,
       overwrite: false,
-      format: 'custom',
+      shapeDetails: {
+        format: 'custom',
+        includeLC: true,
+        properties: {
+          name: "name",
+          lc: "lcCode"
+        }
+      },    
       files: null
     };
 
@@ -33,15 +46,27 @@ export class UploadDialogComponent implements OnInit {
     this.info[field] = value;
   }
 
+  updateShapeDetails(field: string, value: any) {
+    this.info.shapeDetails[field] = value;
+  }
+
+  updatePropertiesName(property: string, value: string) {
+    this.info.shapeDetails.properties[property] = value;
+  }
+
   public close(upload: any = null) {
     console.log(this.info);
-    if(upload == null || (!(this.info.shapes || this.info.cover))) {
+    if(upload == null) {
       this.dialogRef.close()
     }
     else {
       this.info.files = upload.target.files;
       this.dialogRef.close(this.info);
     }
+  }
+
+  toggleAdvanced() {
+    this.advanced = !this.advanced;
   }
 
 }

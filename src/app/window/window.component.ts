@@ -114,7 +114,7 @@ export class WindowComponent implements AfterViewInit {
       this.controlPanel.setWindowId(this.windowPanel.tag);
     }
     else {
-      this.generateReportGraphs();
+      //this.generateReportGraphs();
     }
 
     
@@ -437,6 +437,7 @@ export class WindowComponent implements AfterViewInit {
     let titleSize = 18;
     let descriptionSize = 8;
     let disclaimerSize = 10;
+    let graphTitleSize = 12;
 
     let nameWidth = 90;
     //subtract 80 from width, 40 buffer on each side

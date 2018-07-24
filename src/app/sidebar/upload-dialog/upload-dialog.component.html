@@ -1,40 +1,76 @@
 <h2 mat-dialog-title>Upload Information to Map {{id}}</h2>
 
 <!-- reactive forms things not working properly, manually set with events -->
-<form>
-  <mat-checkbox (change)="updateValue('shapes', $event.checked)">Custom Areas (as Shapefile)</mat-checkbox>
+
+  <mat-checkbox (change)="updateValue('shapes', $event.checked)">Upload Shapefile</mat-checkbox>
   <br>
-  <mat-checkbox (change)="updateValue('cover', $event.checked)">Land Cover*</mat-checkbox>
+  <mat-checkbox (change)="updateValue('cover', $event.checked)">Upload Land Cover Raster*</mat-checkbox>
   <br>
-  <br>
-  <div *ngIf="info.cover">
-    <label>Overwritting default values will cause any modifications to be compared<br>
-      to these values instead of the pre-defined values for the island.</label>
-    <br>
-    <mat-checkbox (change)="updateValue('overwrite', $event.checked)">Overwrite default land cover values?</mat-checkbox>
-    <br>
-  </div>
   
   <div *ngIf="info.shapes">
     <br>
     <label>Upload shapefile as: </label>
     <br>
-    <mat-radio-group (change)="updateValue('format', $event.value)" [value]="'custom'">
-      <mat-radio-button value="custom">Custom Areas (Allows for these areas to be modified for analysis)</mat-radio-button>
+    <mat-radio-group (change)="updateShapeDetails('format', $event.value)" [value]="info.shapeDetails.format">
+      <mat-radio-button value="custom">Custom Areas (Allows for these areas to be modified for analysis)<sup>&dagger;</sup></mat-radio-button>
       <br>
-      <mat-radio-button value="reference">Reference Layer (Toggleable non-interactive overlay)</mat-radio-button>
+      <mat-radio-button value="reference">Reference Layer (Toggleable non-interactive overlay)<sup>&Dagger;</sup></mat-radio-button>
+      <br>
+      <mat-radio-button value="lcOnly">Land Cover Update Only (Individual shapes will not be displayed)</mat-radio-button>
     </mat-radio-group>
+    <div *ngIf="info.shapeDetails.format != 'lcOnly'">
+      <br>
+      <mat-checkbox [checked]="info.shapeDetails.includeLC" (change)="updateShapeDetails('includeLC', $event.checked)">Update land cover using shape properties (if available)*</mat-checkbox>
+    </div>
   </div>
-</form>
+  <br>
+  <button mat-raised-button [disabled]="!(info.shapes || info.cover)" (click)="toggleAdvanced()">Advanced Options</button>
+  <br>
+  <div *ngIf="advanced">
+    <div *ngIf="info.shapes">
+      <br>
+      <label>Enter the name of the property you would like to associate with the given data type.</label>
+      <br>
+      <!-- now $event has correct value but two way binding still not working? -->
+      <mat-form-field>
+        <input matInput #namePropertyInput placeholder="Name Property" [value]="info.shapeDetails.properties.name" [ngModel]="info.shapeDetails.properties.name" (ngModelChange)="updatePropertiesName('name', $event)">
+      </mat-form-field>
+      <br>
+      <mat-form-field>
+        <input matInput #lcPropertyInput placeholder="Land Cover Property" [value]="info.shapeDetails.properties.lc" [ngModel]="info.shapeDetails.properties.lc" (ngModelChange)="updatePropertiesName('lc', $event)">
+      </mat-form-field>
+    </div>
+    <div *ngIf="info.cover || (info.shapes && info.shapeDetails.includeLC)">
+      <br>
+      <label>Overwritting default values will cause any modifications to be compared to these values instead of the pre-defined values for the island.</label>
+      <br>
+      <mat-checkbox (change)="updateValue('overwrite', $event.checked)">Overwrite default land cover values?</mat-checkbox>
+    </div>
+  </div>
+
+
+
 
 <br>
 
-*Uploading a land cover file will overwite any modifications made to areas specified by the file.
+* Uploading land cover modifications will overwite any previous changes made to areas specified by the file.
+<br>
+<div *ngIf="info.shapes">
+  &dagger; These areas will have individual metrics in generated reports reflecting any land cover modifications made to the enclosed area.
+  <br>
+  &Dagger; These areas will not have individual metrics available in generated reports. Modifications within these areas will still be reflected in other metrics.
+</div>
 
 <br>
 
 <mat-dialog-actions>
   <button mat-raised-button (click)="close()">Cancel</button>
-  <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="close($event)" multiple #fileSelect/>
-  <button mat-raised-button class="mat-primary" (click)="fileSelect.click()">Select Files</button>
+  <div *ngIf="!info.cover; else all_types">
+    <input type="file" accept=".zip" style="display: none;" (change)="close($event)" multiple #fileSelect/>
+    <button mat-raised-button class="mat-primary" [disabled]="!(info.shapes || info.cover)" (click)="fileSelect.click()">Select Files</button>
+  </div>
+  <ng-template #all_types>
+    <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="close($event)" multiple #fileSelect/>
+    <button mat-raised-button class="mat-primary" [disabled]="!(info.shapes || info.cover)" (click)="fileSelect.click()">Select Files</button>
+  </ng-template>
 </mat-dialog-actions>

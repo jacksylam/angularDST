@@ -11,10 +11,12 @@
   <div *ngIf="options.recharge || options.cover">
     <label>Recharge/Land Cover File Format: </label>
     <br>
-    <mat-radio-group (change)="updateValue('format', $event.value)" [value]="'covjson'">
+    <mat-radio-group (change)="updateValue('format', $event.value)" [value]="this.options.format">
+      <mat-radio-button value="asc">asc</mat-radio-button>
+      <br>
       <mat-radio-button value="covjson">covjson</mat-radio-button>
       <br>
-      <mat-radio-button value="asc">asc</mat-radio-button>
+      <mat-radio-button value="Shapefile">Shapefile</mat-radio-button>
     </mat-radio-group>
   </div>
 </form>
