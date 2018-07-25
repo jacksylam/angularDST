@@ -24,6 +24,7 @@ import { MessageDialogComponent } from "../message-dialog/message-dialog.compone
 import {MatDialog} from "@angular/material";
 import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advanced-mapping-dialog.component';
 import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
+import { asTextData } from '@angular/core/src/view';
 
 
 
@@ -94,7 +95,7 @@ export class MapComponent implements OnInit {
 
   customAreasCount = 1;
 
-  customAreaNames: any = {};
+  customAreaMap: any = {};
 
   metrics: {
     customAreas: any[],
@@ -538,17 +539,21 @@ export class MapComponent implements OnInit {
   }
 
   //swap values in bottom level arrays
-  private swapCoordinates(arrLevel: any[]) {
+  private swapCoordinates(arrLevel: any[]): any[] {
+    //deep copy everything so not changing base array
+    let arrCopy = [];
     //base case, values are not arrays
     if (!Array.isArray(arrLevel[0])) {
-      let temp = arrLevel[0];
-      arrLevel[0] = arrLevel[1];
-      arrLevel[1] = temp;
-      return;
+      arrCopy = Array.from(arrLevel)
+      let temp = arrCopy[0];
+      arrCopy[0] = arrCopy[1];
+      arrCopy[1] = temp;
+      return arrCopy;
     }
     arrLevel.forEach(arr => {
-      this.swapCoordinates(arr);
+      arrCopy.push(this.swapCoordinates(arr));
     });
+    return arrCopy;
   }
 
   private repackageShapes(shapes: any, divisions: {x: number, y: number}): any {
@@ -564,6 +569,7 @@ export class MapComponent implements OnInit {
   private parseAndAddShapes(shapes: any, nameProperty: string) {
 
     shapes.features.forEach(shape => {
+      //deepcopy so don't mess up original object when swapping coordinates
       let coordsBase = shape.geometry.coordinates;
 
       //allow for custom property to be defined
@@ -572,7 +578,9 @@ export class MapComponent implements OnInit {
 
       //swap coordinates, who wants consistent standards anyway?
       //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
-      this.swapCoordinates(coordsBase);
+      let polyCoords = this.swapCoordinates(coordsBase);
+      console.log(coordsBase);
+      console.log(polyCoords);
 
       //can we handle multiploygons now?
       //there are 2 different types:
@@ -587,47 +595,65 @@ export class MapComponent implements OnInit {
       //   }
       // }
       // else {
-      //this should handle multipolygons fine
-      this.addDrawnItem(L.polygon(coordsBase, {}), true, name);
+
+      //this should handle multipolygons fine, actually
+      this.addDrawnItem(L.polygon(polyCoords, {}), true, name);
       // }
     });
     
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    this.metrics.customAreasTotal.metrics = customTotal;
+    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
   //need to add overwriting if indicated
   //need to check if shapes have valid property (moved so have to check here)
   addUploadedLandcoverByShape(shapes: any, lcProperty: string, overwrite: boolean) {
-    let queryShapes = [];
+    //create new geojson set with only items that have landcover property
+    let lcShapes = L.geoJSON(shapes.features.filter(shape => shape.properties[lcProperty])).toGeoJSON();
+    //shapes.features = shapes.features.filter(shape => shape.properties[lcProperty]);
+
+    if(lcShapes.features.length < 1) {
+      return;
+    }
+    let queryShapes = lcShapes;
     let covData = this.types.landCover.data._covjson.ranges.cover.values;
-        let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+    let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
 
     let covRemap = new Promise((resolve) => {   
 
-      //might need to increase or decrease depending on how 20 queries works
-      if(shapes.length > 20) {
-        //repackage using 2x2 grid (may want to make smaller divisions)
-        queryShapes = this.repackageShapes(queryShapes, {x: 2, y: 2});
-      }
+      //probably need to check size of shapes and repackage if too large or too many()
 
-      shapes.forEach((shape) => {
+      // if(shapes.length > ?) {
+      //   //repackage using 2x2 grid (may want to make smaller divisions)
+      //   //only returns geometries, need to put in a geojson set 
+      //   queryShapes = this.repackageShapes(queryShapes, {x: 2, y: 2});
+      // }
 
+      lcShapes.features.forEach((shape) => {
+        let geoJSONShape = L.geoJSON(shape).toGeoJSON();
         //default property is lcCode, add advanced option to upload where can specify
         let lc = shape.properties[lcProperty];
 
-        let internal = this.getInternalIndexes(shape);
+        let internal = this.getInternalIndexes(geoJSONShape);
 
         //here need to also check if overwrite base values
         internal.forEach((index) => {
           covData[index] = lc;
+          if(overwrite) {
+            this.types.landCover.baseData[index] = lc;
+          }
         });
 
       });
+      
       //reload layer from changes
       this.loadCover(this.types.landCover, false);
       resolve()
     });
 
     this.updateRecharge(queryShapes, (update) => {
+      console.log(update);
       //ensure coverage remapping complete before processing recharge values
       covRemap.then(() => {
         update.forEach(area => {
@@ -649,6 +675,9 @@ export class MapComponent implements OnInit {
               let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
               this.types.recharge.currentData[scenario] = recordValue;
+              if(overwrite) {
+                this.types.recharge.baseData[scenario] = recordValue;
+              }
               if(scenario == this.currentScenario) {
                 rechargeData[index] = recordValue;
               }
@@ -659,9 +688,9 @@ export class MapComponent implements OnInit {
         //reload recharge cover
         this.loadCover(this.types.recharge, true)
 
-        this.updateMetrics(shapes);
+        this.updateMetrics(lcShapes);
         //reenable report generation
-      })
+      });
       
     });
 
@@ -759,7 +788,7 @@ export class MapComponent implements OnInit {
           }
           layer.setStyle(highlight);
           this.nameModeDetails.selectedShape = layer;
-          this.mapService.setNameOnSelect(this, this.customAreaNames[layer._leaflet_id].name);
+          this.mapService.setNameOnSelect(this, this.customAreaMap[layer._leaflet_id].name);
         });
       });
     }
@@ -767,7 +796,7 @@ export class MapComponent implements OnInit {
   }
 
   registerNameToShape(name: string) {
-    this.customAreaNames[this.nameModeDetails.selectedShape._leaflet_id].name = name;
+    this.customAreaMap[this.nameModeDetails.selectedShape._leaflet_id].name = name;
   }
 
 
@@ -1552,8 +1581,8 @@ export class MapComponent implements OnInit {
     this.drawnItems.eachLayer((layer) => {
       items = new L.featureGroup();
       //let intervals = new Date().getTime();
-      //any custom layers should have metrics object registered with customAreaNames, use this as a base since same name
-      let info = this.customAreaNames[layer._leaflet_id];
+      //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
+      let info = this.customAreaMap[layer._leaflet_id];
       //console.log(layer.toGeoJSON())
       let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
       info.metrics = itemMetrics;
@@ -2143,9 +2172,6 @@ export class MapComponent implements OnInit {
         if(data.shapes != null) {
           if(info.shapeDetails.format == "custom") {
 
-            //??????????????????????????
-            //is this right? looks wrong
-
             //array if multiple shapefiles?
             if(Array.isArray(data.shapes)) {
               data.shapes.forEach(shpset => {
@@ -2156,8 +2182,6 @@ export class MapComponent implements OnInit {
               //console.log(data.shapes)
               this.parseAndAddShapes(data.shapes, info.shapeDetails.properties.name);
             }
-
-            //????????????????????????????
           }
           else if(info.shapeDetails.format == "reference") {
             let refLayer = L.geoJSON();
@@ -2259,7 +2283,7 @@ export class MapComponent implements OnInit {
           //   console.log(data);
           // });
 
-          let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 50, y: 50});
+          let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 16, y: 16});
           console.log(geometries);
           let start = new Date().getTime();
           Observable.forkJoin(geometries.map(geometry => {
@@ -2571,14 +2595,14 @@ export class MapComponent implements OnInit {
     // }
 
     geometries.forEach((geometry) => {
-      let geojsonBounds = {
-        "type": "Feature",
-        "properties": {},
-        "geometry": geometry
-      };
+      // let geojsonBounds = {
+      //   "type": "Feature",
+      //   "properties": {},
+      //   "geometry": geometry
+      // };
       //console.log(geometry);
-      this.swapCoordinates(geometry.coordinates);
-      this.addDrawnItem(L.polygon(geometry.coordinates, {}));
+      let polyCoords = this.swapCoordinates(geometry.coordinates);
+      this.addDrawnItem(L.polygon(polyCoords, {}));
       
       //L.geoJSON(geojsonBounds).addTo(this.map);
     });
@@ -3346,14 +3370,90 @@ export class MapComponent implements OnInit {
             fcontents += "\n";
             colCounter = 0;
           }
-        })
+        });
+        return {
+          data: fcontents,
+          name: type + "." + format,
+          type: 'text/plain;charset=utf-8'
+        }
+        
       }
       else if(format == "covjson") {
-        fcontents = JSON.stringify(data);
+        return {
+          data: JSON.stringify(data),
+          name: type + "." + format,
+          type: 'text/plain;charset=utf-8'
+        }
+        
       }
-  
-      return fcontents
-    }
+      //download as a shapefile
+      else {
+        let cells = [];
+
+        //need to change property label if recharge
+        let data = type == "landCover" ? this.types.landCover.data._covjson.ranges.cover.values : this.types.recharge.data._covjson.ranges.recharge.values;
+        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+        xs.forEach((x, i) => {
+          ys.forEach((y, j) => {
+            console.log("test");
+            let value = data[this.getIndex(i, j)];
+
+            let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y - 37.5]);
+            let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y + 37.5]);
+            let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y + 37.5]);
+            let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y - 37.5]);
+
+            let cellBounds = {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "Polygon",
+                coordinates: [[c1, c2, c3, c4, c1]]
+              }
+            };
+
+            cellBounds.properties = type == "landCover" ? { lcCode: value } : { recharge: value };
+
+            cells.push(cellBounds);
+          });
+        });
+        
+        let shapes = L.geoJSON(cells).toGeoJSON();
+
+        let zip = new JSZip();
+
+        //redefine shp-write zip feature with desired file hierarchy
+        let polygons = shpWriteGeojson.polygon(shapes);
+        polygons.geometries = polygons.geometries[0];
+        if (polygons.geometries.length && polygons.geometries[0].length) {
+          this.modShpWrite.write(
+            // field definitions
+            polygons.properties,
+            // geometry type
+            polygons.type,
+            // geometries
+            polygons.geometries,
+            function (err, files) {
+              let fileName = type;
+              zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+              zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+              zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+              zip.file(fileName + '.prj', shpWritePrj);
+            }
+          );
+        }
+        
+        zip.generateAsync({ type: "base64" }).then((file) => {
+          return {
+            data: this.base64ToArrayBuffer(file),
+            name: type + ".zip",
+            type: 'data:application/zip'
+          }
+        });
+      }
+    };
 
 
     let genAndDownloadPackage = () => {
@@ -3375,8 +3475,7 @@ export class MapComponent implements OnInit {
           saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name)
         })
       }
-    }
-
+    };
     
 
     let __this = this;
@@ -3392,18 +3491,14 @@ export class MapComponent implements OnInit {
       //toGeoJSON seems to use eachLayer function, so should be same order, having a hard time finding full source code in readable format, so hopefully won't cause problems
       let i = 0;
       this.drawnItems.eachLayer((layer) => {
-        shapes.features[i++].properties.name = this.customAreaNames[layer._leaflet_id].name;
+        shapes.features[i++].properties.name = this.customAreaMap[layer._leaflet_id].name;
       });
       //shapes.features[0].properties = {name: "test"};
       // let name = "DefinedAreas";
   
       
-      //redo this so it only packages one shape at a time
       //redefine shp-write zip feature with desired file hierarchy
-      //do you want to include lines or points? Don't actually do anything, maybe just remove these
       let polygons = shpWriteGeojson.polygon(shapes);
-      console.log(shapes);
-      console.log(polygons.geometries);
       polygons.geometries = polygons.geometries[0];
       if (polygons.geometries.length && polygons.geometries[0].length) {
         this.modShpWrite.write(
@@ -3423,7 +3518,6 @@ export class MapComponent implements OnInit {
         );
       }
 
-      //CHANGE
       zip.generateAsync({ type: "base64" }).then((file) => {
         //generate file details
         thisDetails.data = this.base64ToArrayBuffer(file);
@@ -3444,7 +3538,7 @@ export class MapComponent implements OnInit {
           genAndDownloadPackage();
         }
         // saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name + ".zip")
-      })
+      });
     }
 
     
@@ -3455,12 +3549,22 @@ export class MapComponent implements OnInit {
       let thisDetails = ready[index++];
 
       //generate file details
-      thisDetails.data = genDataFileContents("recharge", info.format);
-      thisDetails.fname = "recharge." + info.format;
-      thisDetails.type = 'text/plain;charset=utf-8';
+      let fdetails = genDataFileContents("recharge", info.format);
+      thisDetails.data = fdetails.data;
+      thisDetails.fname = fdetails.name;
+      thisDetails.type = fdetails.type;
 
       //signal ready
       thisDetails.ready = true;
+
+      //check if all items are ready, and download if they are
+      let allReady = true;
+      ready.forEach((item) => {
+        allReady = item.ready && allReady;
+      });
+      if(allReady) {
+        genAndDownloadPackage();
+      }
     }
 
     if(info.cover) {
@@ -3469,24 +3573,27 @@ export class MapComponent implements OnInit {
       let thisDetails = ready[index++];
 
       //generate file details
-      thisDetails.data = genDataFileContents("landCover", info.format);
-      thisDetails.fname = "cover." + info.format;
-      thisDetails.type = 'text/plain;charset=utf-8';
+      let fdetails = genDataFileContents("landCover", info.format);
+      thisDetails.data = fdetails.data;
+      thisDetails.fname = fdetails.name;
+      thisDetails.type = fdetails.type;
 
       //signal ready
       thisDetails.ready = true;
 
+      //check if all items are ready, and download if they are
+      let allReady = true;
+      ready.forEach((item) => {
+        allReady = item.ready && allReady;
+      });
+      if(allReady) {
+        genAndDownloadPackage();
+      }
+
     }
     
 
-    //check if all items are ready, and download if they are
-    let allReady = true;
-    ready.forEach((item) => {
-      allReady = item.ready && allReady;
-    });
-    if(allReady) {
-      genAndDownloadPackage();
-    }
+    
   
       // saveAs(new Blob([fcontents], {type: 'text/plain;charset=utf-8'}), type + "." + format);
 
@@ -3566,12 +3673,18 @@ export class MapComponent implements OnInit {
         this.drawnItems.removeLayer(layer)
         this.highlightedItems.removeLayer(layer)
         this.uneditableItems.removeLayer(layer)
+
+        //remove metrics from custom areas array
+        let objectMetrics = this.customAreaMap[layer._leaflet_id];
+        let index = this.metrics.customAreas.indexOf(objectMetrics);
+        this.metrics.customAreas.splice(index, 1);
       });
-      
+
+      //no need recompute customTotal if nothing removed
       if(Object.keys(event.layers._layers).length > 0) {
-        //NEED TO CHANGE THIS WHEN CREATE IMPROVED METRICS UPDATE
-        //RIGHT NOW RECOMPUTES EVERYTHING SO FINE, BUT NEED TO CREATE REFERENCE TO METRIC OBJECTS TO JUST REMOVE
-        this.updateMetrics(event.layers.toGeoJSON());
+        let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+        this.metrics.customAreasTotal.metrics = customTotal;
+        this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
       }
     });
 
@@ -3612,6 +3725,12 @@ export class MapComponent implements OnInit {
       else {
         this.addDrawnItem(event.layer);
       }
+
+      //can streamline computation by using set of added shapes' metrics and previous data as base
+
+      let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+      this.metrics.customAreasTotal.metrics = customTotal;
+      this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
     });
   }
@@ -3705,7 +3824,7 @@ export class MapComponent implements OnInit {
 
     info.name = name == undefined ? "Custom Area " + (__this.customAreasCount++).toString() : name;
     //set to whole metric object so when change name will change in metrics
-    this.customAreaNames[layer._leaflet_id] = info;
+    this.customAreaMap[layer._leaflet_id] = info;
 
     let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
 
