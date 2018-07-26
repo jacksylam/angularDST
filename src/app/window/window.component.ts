@@ -114,7 +114,7 @@ export class WindowComponent implements AfterViewInit {
       this.controlPanel.setWindowId(this.windowPanel.tag);
     }
     else {
-      //this.generateReportGraphs();
+      this.generateReportGraphs();
     }
 
     
@@ -404,17 +404,17 @@ export class WindowComponent implements AfterViewInit {
   download(type: string) {
     let columnsName = [
       {title: "Name", dataKey: "name"},
-      {title: "Area (" + this.windowPanel.data.unitSystem.units.area + ")", dataKey: "area"}, 
-      {title: "Baseline", dataKey: "oriny"}, 
-      {title: "This Analysis", dataKey: "criny"}, 
+      {title: "Area (" + this.windowPanel.data.unitSystem.units.area + ")", dataKey: "area"},  
       {title: "Baseline", dataKey: "ormgd"}, 
       {title: "This Analysis", dataKey: "crmgd"},
+      {title: "Baseline", dataKey: "oriny"}, 
+      {title: "This Analysis", dataKey: "criny"},
       {title: this.windowPanel.data.unitSystem.units.volumetric, dataKey: "diff"},
       {title: "Percent Change", dataKey: "pchange"}
     ];
     let columnsSummary = [
       {title: "", dataKey: "type"}, 
-      {title: "User Defined Areas", dataKey: "uda"}, 
+      {title: "User-Defined Areas", dataKey: "uda"}, 
       {title: "Island", dataKey: "total"},
       {title: "Island Excluding Caprock", dataKey: "totalNoCaprock"}
     ];
@@ -458,8 +458,8 @@ export class WindowComponent implements AfterViewInit {
         cat3: {columnWidth: normalWidth * 2}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.cat1.styles.textColor = [0, 42, 0];
-        row.cells.cat2.styles.textColor = [85, 0, 0];
+        row.cells.cat1.styles.textColor = [85, 0, 0];
+        row.cells.cat2.styles.textColor = [0, 42, 0];
         row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
@@ -500,7 +500,7 @@ export class WindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        console.log(row);
+        //console.log(row);
         row.cells.oriny.styles.textColor = [0, 42, 0];
         row.cells.criny.styles.textColor = [0, 42, 0];
         row.cells.ormgd.styles.textColor = [85, 0, 0];
@@ -539,8 +539,8 @@ export class WindowComponent implements AfterViewInit {
         cat3: {columnWidth: normalWidth * 2}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.cat1.styles.textColor = [0, 42, 0];
-        row.cells.cat2.styles.textColor = [85, 0, 0];
+        row.cells.cat1.styles.textColor = [85, 0, 0];
+        row.cells.cat2.styles.textColor = [0, 42, 0];
         row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
@@ -605,7 +605,7 @@ export class WindowComponent implements AfterViewInit {
     }
     
     this.pdf.setFontSize(titleSize);
-    this.pdf.text(50, y, "User Defined Areas*");
+    this.pdf.text(50, y, "User-Defined Areas*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y, "Areas of land cover change designated by the user for this analysis");
 
@@ -622,8 +622,8 @@ export class WindowComponent implements AfterViewInit {
         cat3: {columnWidth: normalWidth * 2}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.cat1.styles.textColor = [0, 42, 0];
-        row.cells.cat2.styles.textColor = [85, 0, 0];
+        row.cells.cat1.styles.textColor = [85, 0, 0];
+        row.cells.cat2.styles.textColor = [0, 42, 0];
         row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
@@ -1099,13 +1099,13 @@ export class WindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline<br>(No Caprock)',
+          name: 'Baseline',
           type: 'bar'
         },
         {
           x: [],
           y: [],
-          name: 'This Analysis<br>(No Caprock)',
+          name: 'This Analysis',
           type: 'bar'
         }],
         layout: {}
@@ -1159,13 +1159,13 @@ export class WindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline<br>(No Caprock)',
+          name: 'Baseline',
           type: 'bar'
         },
         {
           x: [],
           y: [],
-          name: 'This Analysis<br>(No Caprock)',
+          name: 'This Analysis',
           type: 'bar'
         }],
         layout: {}
@@ -1173,7 +1173,7 @@ export class WindowComponent implements AfterViewInit {
     }
 
     let aquiferAnnotations = []
-    let x = 0;
+    let xPos = 0;
     let original;
     let current;
     this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
@@ -1186,7 +1186,7 @@ export class WindowComponent implements AfterViewInit {
       graphData.aquifers.data[0].y.push(original);
       graphData.aquifers.data[1].y.push(current);
       aquiferAnnotations.push({
-        x: x - 0.2,
+        x: xPos - 0.2,
         y: original,
         xanchor: 'auto',
         yanchor: 'bottom',
@@ -1198,7 +1198,7 @@ export class WindowComponent implements AfterViewInit {
         showarrow: false
       });
       aquiferAnnotations.push({
-        x: x + 0.2,
+        x: xPos + 0.2,
         y: current,
         xanchor: 'auto',
         yanchor: 'bottom',
@@ -1209,13 +1209,17 @@ export class WindowComponent implements AfterViewInit {
         },
         showarrow: false
       });
-      x++;
+      xPos++;
     });
     graphData.aquifers.layout = {
+      title: "Aquifer Recharge",
+      yaxis: {
+        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+      },
       barmode: 'group',
       margin: {
         b: 125,
-        t: 20
+        t: 30
       },
       // font: {
       //   family: 'Times New Roman',
@@ -1224,7 +1228,7 @@ export class WindowComponent implements AfterViewInit {
     }
 
     let aquiferNoCaprockAnnotations = [];
-    x = 0;
+    xPos = 0;
     this.windowPanel.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
       graphData.aquifersNoCaprock.data[0].x.push(aquifer.name);
       graphData.aquifersNoCaprock.data[1].x.push(aquifer.name);
@@ -1236,7 +1240,7 @@ export class WindowComponent implements AfterViewInit {
       graphData.aquifersNoCaprock.data[1].y.push(current);
 
       aquiferNoCaprockAnnotations.push({
-        x: x - 0.2,
+        x: xPos - 0.2,
         y: original,
         xanchor: 'auto',
         yanchor: 'bottom',
@@ -1248,7 +1252,7 @@ export class WindowComponent implements AfterViewInit {
         showarrow: false
       });
       aquiferNoCaprockAnnotations.push({
-        x: x + 0.2,
+        x: xPos + 0.2,
         y: current,
         xanchor: 'auto',
         yanchor: 'bottom',
@@ -1259,13 +1263,17 @@ export class WindowComponent implements AfterViewInit {
         },
         showarrow: false
       });
-      x++;
+      xPos++;
     });
     graphData.aquifersNoCaprock.layout = {
+      title: "Aquifer Recharge Excluding Caprock",
+      yaxis: {
+        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+      },
       barmode: 'group',
       margin: {
         b: 125,
-        t: 20
+        t: 30
       },
       annotations: aquiferNoCaprockAnnotations
     }
@@ -1282,9 +1290,13 @@ export class WindowComponent implements AfterViewInit {
     graphData.full.data[1].y.push(current);
 
     graphData.full.layout = {
+      title: "Island Total Recharge",
+      yaxis: {
+        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+      },
       barmode: 'group',
       margin: {
-        t: 20
+        t: 30
       },
       annotations: [{
         x: -0.2,
@@ -1314,9 +1326,13 @@ export class WindowComponent implements AfterViewInit {
     graphData.fullNoCaprock.data[1].y.push(current);
 
     graphData.fullNoCaprock.layout = {
+      title: "Island Total Recharge Excluding Caprock",
+      yaxis: {
+        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+      },
       barmode: 'group',
       margin: {
-        t: 20
+        t: 30
       },
       annotations: [{
         x: -0.2,
@@ -1370,15 +1386,39 @@ export class WindowComponent implements AfterViewInit {
       });
     });
 
-
     //only plot custom area graphs if user had defined areas
     if(this.windowPanel.data.metrics.customAreas.length > 0) {
+      let customAreasToGraph = this.windowPanel.data.metrics.customAreas;
+      let graphTitle = "User-Defined Areas Recharge";
+      if(this.windowPanel.data.metrics.customAreas.length > 20) {
+        //comparison function for area sizes (largest area first)
+        let areaCompare = (areaA, areaB) => {
+          //console.log(areaA.metrics[this.windowPanel.data.unitSystem.system].area);
+          if(areaA.metrics[this.windowPanel.data.unitSystem.system].area > areaB.metrics[this.windowPanel.data.unitSystem.system].area) {
+            return -1;
+          }
+          else if(areaA.metrics[this.windowPanel.data.unitSystem.system].area < areaB.metrics[this.windowPanel.data.unitSystem.system].area) {
+            return 1;
+          }
+          else {
+            return 0;
+          }
+        };
+
+        customAreasToGraph.sort(areaCompare);
+        customAreasToGraph = customAreasToGraph.slice(0, 20);
+        graphTitle += " (20 Largest Areas)";
+      }
+
       let customAnnotations = []
-      x = 0;
+      xPos = 0;
       //might want to break into multiple charts if over a certain number of items
-      this.windowPanel.data.metrics.customAreas.forEach((area) => {
-        graphData.custom.data[0].x.push(area.name);
-        graphData.custom.data[1].x.push(area.name);
+      customAreasToGraph.forEach((area) => {
+        //if name is a number it uses this as the x position? If number add grave to deal with what appears to be a weird bug in plot.ly
+        let areaName = area.name;
+        if(!isNaN(areaName)) areaName += "`";
+        graphData.custom.data[0].x.push(areaName);
+        graphData.custom.data[1].x.push(areaName);
 
         original = area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
         current = area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
@@ -1388,34 +1428,40 @@ export class WindowComponent implements AfterViewInit {
 
         //probably need to check how many items there are in case you need to reduce text size or rotate
         customAnnotations.push({
-          x: x - 0.2,
+          x: xPos - 0.2,
           y: original,
+          textangle: customAreasToGraph.length < 5 ? 0: -90,
           xanchor: 'auto',
           yanchor: 'bottom',
           text: original,
           showarrow: false
         });
         customAnnotations.push({
-          x: x + 0.2,
+          x: xPos + 0.2,
           y: current,
+          textangle: customAreasToGraph.length < 5 ? 0: -90,
           xanchor: 'auto',
           yanchor: 'bottom',
           text: current,
           showarrow: false
         });
-        x++;
+        xPos++;
       });
       graphData.custom.layout = {
+        title: graphTitle,
+        yaxis: {
+          title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+        },
         barmode: 'group',
         margin: {
-          t: 20
+          t: 30
         },
         annotations: customAnnotations
       }
   
   
-      graphData.customTotal.data[0].x.push("Custom Area Total");
-      graphData.customTotal.data[1].x.push("Custom Area Total");
+      graphData.customTotal.data[0].x.push("User-Defined Total");
+      graphData.customTotal.data[1].x.push("User-Defined Total");
 
       original = this.windowPanel.data.metrics.customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
       current = this.windowPanel.data.metrics.customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
@@ -1424,9 +1470,13 @@ export class WindowComponent implements AfterViewInit {
       graphData.customTotal.data[1].y.push(current);
   
       graphData.customTotal.layout = {
+        title: "User-Defined Areas Total Recharge",
+        yaxis: {
+          title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+        },
         barmode: 'group',
         margin: {
-          t: 20
+          t: 30
         },
         annotations: [{
           x: -0.2,
