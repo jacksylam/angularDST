@@ -24,7 +24,6 @@ import { MessageDialogComponent } from "../message-dialog/message-dialog.compone
 import {MatDialog} from "@angular/material";
 import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advanced-mapping-dialog.component';
 import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
-import { asTextData } from '@angular/core/src/view';
 
 
 
@@ -579,8 +578,8 @@ export class MapComponent implements OnInit {
       //swap coordinates, who wants consistent standards anyway?
       //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
       let polyCoords = this.swapCoordinates(coordsBase);
-      console.log(coordsBase);
-      console.log(polyCoords);
+      // console.log(coordsBase);
+      // console.log(polyCoords);
 
       //can we handle multiploygons now?
       //there are 2 different types:
