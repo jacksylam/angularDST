@@ -8,7 +8,7 @@ import { Cover } from './cover';
 export class DBConnectService {
 
 
-  oAuthAccessToken = "fbb71f198b9913c564762c87ab7917";
+  oAuthAccessToken = "token";
 
   constructor(private http: HttpClient) { }
 
