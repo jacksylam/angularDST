@@ -50,6 +50,7 @@
     top: 0px;
     left: 0px;
     background-color: ivory;
+    color: rgb(56, 117, 194);
   }
 
   .metrics-container { 
@@ -62,7 +63,6 @@
   .width-ctrl {
     min-width: 450px;
     width: 55%;
-    color: rgb(56, 117, 194);
     font-size: 11pt;
   }
 
@@ -92,6 +92,44 @@
     margin: 5px;
   }
 
+  .disable {
+    pointer-events: none;
+    opacity: 0.2;
+  }
+
+  /* .loading {
+    -webkit-animation: ellipsis steps(4,end) 900ms infinite;
+    animation: ellipsis steps(4,end) 900ms infinite;
+  } */
+
+  .loading {
+    position: absolute;
+    top: calc(50% - 30px);
+    left: calc(50% - 175px);
+    font-size: 35px;
+  }
+  
+  .loading:after {
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: bottom;
+    -webkit-animation: ellipsis steps(4) 2s infinite;      
+    animation: ellipsis steps(4) 2s infinite;
+    content: "\2026";
+    width: 0px;
+  }
+  
+  @keyframes ellipsis {
+    to {
+      width: 1.25em;
+    }
+  }
+  
+  @-webkit-keyframes ellipsis {
+    to {
+      width: 1.25em;    
+    }
+  }
   
   
 

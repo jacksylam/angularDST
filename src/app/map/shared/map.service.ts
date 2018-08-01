@@ -196,4 +196,12 @@ export class MapService {
     this.controlPanelHash[index].setNameOnSelect(name);
   }
 
+
+  setLoading(map: any, isLoading: boolean) {
+    let loading = isLoading ? 1 : -1;
+    let index = this.mapHash.indexOf(map);
+    this.controlPanelHash[index].setLoading(loading);
+    this.detailPanelHash[index].setLoading(loading);
+  }
+  
 }

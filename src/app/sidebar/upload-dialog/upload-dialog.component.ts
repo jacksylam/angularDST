@@ -12,7 +12,7 @@ export class UploadDialogComponent implements OnInit {
   @ViewChild("namePropertyInput") namePropertyInput;
   @ViewChild("lcPropertyInput") lcPropertyInput;
   @ViewChild("fileSelect") fileSelect;
-  
+
   info: any;
   id: number;
 
@@ -55,7 +55,7 @@ export class UploadDialogComponent implements OnInit {
   }
 
   public close(upload: any = null) {
-    console.log(this.info);
+    //console.log(this.info);
     if(upload == null) {
       this.dialogRef.close()
     }

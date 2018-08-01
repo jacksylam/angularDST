@@ -28,6 +28,9 @@ export class BottombarPanelComponent implements OnInit {
   state = 'inactive';
   includeCaprock = true;
 
+  loading = 0;
+  debug = false;
+
   metrics = {
     USC: {
       average: {
@@ -112,7 +115,6 @@ export class BottombarPanelComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    
   }
 
 
@@ -239,5 +241,11 @@ export class BottombarPanelComponent implements OnInit {
     };
     
     Plotly.newPlot(this.chart.nativeElement, data, layout);
+  }
+
+  setLoading(isLoading: -1 | 1) {
+    if(!this.debug) {
+      this.loading += isLoading;
+    }
   }
 }

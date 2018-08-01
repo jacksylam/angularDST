@@ -149,8 +149,8 @@ export class MapComponent implements OnInit {
   static readonly landCoverFile = "../assets/covjson/landcover.covjson";
   //change once get actual data, just use first test file for now
   static readonly rechargeFiles = {
-    recharge_scenario0: "../assets/covjson/testfiles_sc0_0-fin.covjson",
-    recharge_scenario1: "../assets/covjson/testfiles_sc0_1-fin.covjson"
+    recharge_scenario0: "../assets/covjson/sc0.covjson",
+    recharge_scenario1: "../assets/covjson/sc1.covjson"
   }
   static readonly aquifersFile = "../assets/dlnr_aquifers.zip";
   static readonly caprockFile = "../assets/Oahu__75m__caprock.asc";
@@ -307,7 +307,7 @@ export class MapComponent implements OnInit {
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
             this.baseLayer.layer.setOpacity(this.opacity);
-          }, 400);
+          }, 0);
 
           break;
         //need to figure out how you want to handle this, should modifications be disabled?
@@ -342,7 +342,7 @@ export class MapComponent implements OnInit {
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
             this.baseLayer.layer.setOpacity(this.opacity);
-          }, 400);
+          }, 0);
           break;
       }
     });
@@ -619,6 +619,9 @@ export class MapComponent implements OnInit {
     let covData = this.types.landCover.data._covjson.ranges.cover.values;
     let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
 
+    //backup values to restore on data failure
+    let backupData = Array.from(covData);
+
     let covRemap = new Promise((resolve) => {   
 
       //probably need to check size of shapes and repackage if too large or too many()
@@ -652,7 +655,7 @@ export class MapComponent implements OnInit {
     });
 
     this.updateRecharge(queryShapes, (update) => {
-      console.log(update);
+      //console.log(update);
       //ensure coverage remapping complete before processing recharge values
       covRemap.then(() => {
         update.forEach(area => {
@@ -691,6 +694,11 @@ export class MapComponent implements OnInit {
         //reenable report generation
       });
       
+    }, (error) => {
+      //restore land cover on failure
+      backupData.forEach((value, i) => {
+        covData[i] = value;
+      });
     });
 
     
@@ -1093,6 +1101,10 @@ export class MapComponent implements OnInit {
 
 
   private initializeLayers() {
+    setTimeout(() => {
+      this.mapService.setLoading(this, true);
+    }, 0);
+    
     let __this = this;
 
     this.metrics = {
@@ -1116,6 +1128,7 @@ export class MapComponent implements OnInit {
     CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
       let xs = coverage._covjson.domain.axes.x.values;
       let ys = coverage._covjson.domain.axes.y.values;
+      //console.log(coverage)
 
       //find which value's the minimum, assumes oredered values
       //subtract 37.5 since centroid of 75m cell
@@ -1160,9 +1173,10 @@ export class MapComponent implements OnInit {
         if(metricCoordination.rechargeVals && metricCoordination.caprock) {
           //document.body.style.cursor='wait';
           //draw control usage requires ability to create metrics
-          this.loadDrawControls();
+          __this.loadDrawControls();
           __this.metrics = __this.createMetrics();
           //document.body.style.cursor='default';
+          __this.mapService.setLoading(__this, false);
         }
         else {
           //indicate aquifers are set
@@ -1217,6 +1231,7 @@ export class MapComponent implements OnInit {
             //draw control usage requires ability to create metrics
             __this.loadDrawControls();
             __this.metrics = __this.createMetrics();
+            __this.mapService.setLoading(__this, false);
           }
           else {
             //indicate recharge vals are set
@@ -1252,8 +1267,9 @@ export class MapComponent implements OnInit {
       if(metricCoordination.aquifers && metricCoordination.rechargeVals) {
         //document.body.style.cursor='wait';
         //draw control usage requires ability to create metrics
-        this.loadDrawControls();
+        __this.loadDrawControls();
         __this.metrics = __this.createMetrics();
+        __this.mapService.setLoading(__this, false);
       }
       else {
         //indicate recharge vals are set
@@ -1542,6 +1558,7 @@ export class MapComponent implements OnInit {
     //if already computed no need to recompute
     //static since aquifers are always the same
     if(!MapComponent.aquiferIndices) {
+      this.mapService.setLoading(this, true);
 
       MapComponent.aquiferIndices = {};
       //store promise so if method called again knows to wait for completion
@@ -1553,6 +1570,7 @@ export class MapComponent implements OnInit {
         MapComponent.aquiferIndexingComplete = true;
 
         getAquiferMetrics();
+        this.mapService.setLoading(this, false);
 
       }, () => {
         //should never reject, only if an aquifer is out of range, that would be strange
@@ -1854,6 +1872,7 @@ export class MapComponent implements OnInit {
         }
         else {
           reject();
+          return;
         }
       }
     });
@@ -2032,25 +2051,25 @@ export class MapComponent implements OnInit {
     let precision = 3;
 
     //convert rounded number string to number then back to string so scientific notation is removed
-    roundedMetrics.USC.average.original = Number(metrics.USC.average.original.toPrecision(precision)).toString();
-    roundedMetrics.USC.average.current = Number(metrics.USC.average.current.toPrecision(precision)).toString();
-    roundedMetrics.USC.volumetric.original = Number(metrics.USC.volumetric.original.toPrecision(precision)).toString();
-    roundedMetrics.USC.volumetric.current = Number(metrics.USC.volumetric.current.toPrecision(precision)).toString();
-    roundedMetrics.USC.average.diff = Number(metrics.USC.average.diff.toPrecision(precision)).toString();
-    roundedMetrics.USC.volumetric.diff = Number(metrics.USC.volumetric.diff.toPrecision(precision)).toString();
-    roundedMetrics.USC.average.pchange = Number(metrics.USC.average.pchange.toPrecision(precision)).toString() + "%";
-    roundedMetrics.USC.volumetric.pchange = Number(metrics.USC.volumetric.pchange.toPrecision(precision)).toString() + "%";
-    roundedMetrics.USC.area = Number(metrics.USC.area.toPrecision(precision)).toString();
+    roundedMetrics.USC.average.original = Number(metrics.USC.average.original) >= Math.pow(10, precision) ? Number(metrics.USC.average.original.toPrecision(precision)).toString() : metrics.USC.average.original.toPrecision(precision);
+    roundedMetrics.USC.average.current = Number(metrics.USC.average.current) >= Math.pow(10, precision) ? Number(metrics.USC.average.current.toPrecision(precision)).toString() : metrics.USC.average.current.toPrecision(precision);
+    roundedMetrics.USC.volumetric.original = Number(metrics.USC.volumetric.original) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.original.toPrecision(precision)).toString() : metrics.USC.volumetric.original.toPrecision(precision);
+    roundedMetrics.USC.volumetric.current = Number(metrics.USC.volumetric.current) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.current.toPrecision(precision)).toString() : metrics.USC.volumetric.current.toPrecision(precision);
+    roundedMetrics.USC.average.diff = Number(metrics.USC.average.diff) >= Math.pow(10, precision) ? Number(metrics.USC.average.diff.toPrecision(precision)).toString() : metrics.USC.average.diff.toPrecision(precision);
+    roundedMetrics.USC.volumetric.diff = Number(metrics.USC.volumetric.diff) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.diff.toPrecision(precision)).toString() : metrics.USC.volumetric.diff.toPrecision(precision);
+    roundedMetrics.USC.average.pchange = Number(metrics.USC.average.pchange) >= Math.pow(10, precision) ? Number(metrics.USC.average.pchange.toPrecision(precision)).toString() : metrics.USC.average.pchange.toPrecision(precision);
+    roundedMetrics.USC.volumetric.pchange = Number(metrics.USC.volumetric.pchange) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.pchange.toPrecision(precision)).toString() : metrics.USC.volumetric.pchange.toPrecision(precision);
+    roundedMetrics.USC.area = Number(metrics.USC.area) >= Math.pow(10, precision) ? Number(metrics.USC.area.toPrecision(precision)).toString() : metrics.USC.area.toPrecision(precision);
 
-    roundedMetrics.Metric.average.original = Number(metrics.Metric.average.original.toPrecision(precision)).toString();
-    roundedMetrics.Metric.average.current = Number(metrics.Metric.average.current.toPrecision(precision)).toString();
-    roundedMetrics.Metric.volumetric.original = Number(metrics.Metric.volumetric.original.toPrecision(precision)).toString();
-    roundedMetrics.Metric.volumetric.current = Number(metrics.Metric.volumetric.current.toPrecision(precision)).toString();
-    roundedMetrics.Metric.average.diff = Number(metrics.Metric.average.diff.toPrecision(precision)).toString();
-    roundedMetrics.Metric.volumetric.diff = Number(metrics.Metric.volumetric.diff.toPrecision(precision)).toString();
-    roundedMetrics.Metric.average.pchange = Number(metrics.Metric.average.pchange.toPrecision(precision)).toString() + "%";
-    roundedMetrics.Metric.volumetric.pchange = Number(metrics.Metric.volumetric.pchange.toPrecision(precision)).toString() + "%";
-    roundedMetrics.Metric.area = Number(metrics.Metric.area.toPrecision(precision)).toString();
+    roundedMetrics.Metric.average.original = Number(metrics.Metric.average.original) >= Math.pow(10, precision) ? Number(metrics.Metric.average.original.toPrecision(precision)).toString() : metrics.Metric.average.original.toPrecision(precision);
+    roundedMetrics.Metric.average.current = Number(metrics.Metric.average.current) >= Math.pow(10, precision) ? Number(metrics.Metric.average.current.toPrecision(precision)).toString() : metrics.Metric.average.current.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.original = Number(metrics.Metric.volumetric.original) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.original.toPrecision(precision)).toString() : metrics.Metric.volumetric.original.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.current = Number(metrics.Metric.volumetric.current) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.current.toPrecision(precision)).toString() : metrics.Metric.volumetric.current.toPrecision(precision);
+    roundedMetrics.Metric.average.diff = Number(metrics.Metric.average.diff) >= Math.pow(10, precision) ? Number(metrics.Metric.average.diff.toPrecision(precision)).toString() : metrics.Metric.average.diff.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.diff = Number(metrics.Metric.volumetric.diff) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.diff.toPrecision(precision)).toString() : metrics.Metric.volumetric.diff.toPrecision(precision);
+    roundedMetrics.Metric.average.pchange = Number(metrics.Metric.average.pchange) >= Math.pow(10, precision) ? Number(metrics.Metric.average.pchange.toPrecision(precision)).toString() : metrics.Metric.average.pchange.toPrecision(precision);
+    roundedMetrics.Metric.volumetric.pchange = Number(metrics.Metric.volumetric.pchange) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.pchange.toPrecision(precision)).toString() : metrics.Metric.volumetric.pchange.toPrecision(precision);
+    roundedMetrics.Metric.area = Number(metrics.Metric.area) >= Math.pow(10, precision) ? Number(metrics.Metric.area.toPrecision(precision)).toString() : metrics.Metric.area.toPrecision(precision);
 
 
     return roundedMetrics;
@@ -2159,9 +2178,10 @@ export class MapComponent implements OnInit {
           message += "Could not find valid shapefile:\n\t- Must contain all necessary data objects inside a zip folder.\n\n";
         }
         if(data.notFound.includes("cover")) {
-          message += "Could not find a valid land cover file:\n\t- Must be in a valid covjson or asc format.\n\t- Must contain "
-            + (this.gridWidthCells * this.gridHeightCells).toString()
-            + " whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "].\n\n";
+          message += "Could not find a valid land cover file:\n\t- Must be in a valid asc format."
+          + "\n\t- Must have a 6 line header with the values ncols, nrows, xllcorner, yllcorner, cellsize, and NODATA_value"
+          + "\n\t- Grid must be a subset of the provided map (e.g. fully contained within a " + this.gridWidthCells + " column by " + this.gridHeightCells + " row grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ")"
+          + "\n\t- Must contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "].\n\n";
         }
         message += "Files are accepted as uploaded or contained within a zip folder."
         this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Warning"}});
@@ -2234,6 +2254,9 @@ export class MapComponent implements OnInit {
           
           let covData = this.types.landCover.data._covjson.ranges.cover.values;
           let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+
+          //backup values to restore on data failure
+          let backupData = Array.from(covData);
 
           // let dbQueryChunkSize = 50;
           // let subarrayCounter = 0;
@@ -2323,6 +2346,11 @@ export class MapComponent implements OnInit {
             });
             //reload recharge cover
             this.loadCover(this.types.recharge, true)
+          }, (error) => {
+            //restore land cover on failure
+            backupData.forEach((value, i) => {
+              covData[i] = value;
+            });
           });
 
           //console.log(geometries);
@@ -2346,8 +2374,6 @@ export class MapComponent implements OnInit {
           // });
 
           this.loadCover(this.types.landCover, false);
-
-          //NEED TO UPDATE RECHARGE AS WELL, ASK SEAN ABOUT FORMAT OF QUERY
         }
       }
 
@@ -2563,9 +2589,8 @@ export class MapComponent implements OnInit {
         for(let y = ydivisions[j].min; y <= ydivisions[j].max; y++) {
           if(yMapping[i][j][y]) {
             let yUTM = ys[y];
-            //subtract 1 from utm coordinate on min side to make sure that point is actually inside shape rather than on line
+            //subtract/add 1 from min/max to make sure that rows with one point have a gap between sides
             let xMinUTM = xs[yMapping[i][j][y].min] - 1;
-            //add 1 to max side so inside bounds
             let xMaxUTM = xs[yMapping[i][j][y].max] + 1;
 
             //is x, y the right order?
@@ -2607,9 +2632,16 @@ export class MapComponent implements OnInit {
         //console.log(leftPoints);
         let shape = rightPoints.concat(leftPoints);
         //shape = shape.concat(rightPoints);
-        // shape = shape.concat(leftPoints);
-        //add first point to end of array to close shape
-        if(shape[0]) {
+        // shape = shape.concat(leftPoints);  
+
+        //points on line should be considered within the shape using mongodb's geowithin definition
+        if(shape.length > 0) {
+          //if only one set of points add a third point offset by 10 meters from the first point ot make a triangle (instead of a line)
+          if(shape.length < 3) {
+            //~1/111111 degrees of longtitude per meter
+            shape.push([shape[0][0], shape[0][1] + 10/111111])
+          }
+          //add first point to end of array to close shape
           shape.push(shape[0]);
 
           geometries.push({
@@ -2637,20 +2669,20 @@ export class MapComponent implements OnInit {
     // console.log(objects)
 
     let objects = L.geoJSON(geometries).toGeoJSON();
-    console.log(objects);
+    // console.log(objects);
 
-    geometries.forEach((geometry) => {
-      // let geojsonBounds = {
-      //   "type": "Feature",
-      //   "properties": {},
-      //   "geometry": geometry
-      // };
-      //console.log(geometry);
-      let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
-      this.addDrawnItem(L.polygon(polyCoords, {}));
+    // geometries.forEach((geometry) => {
+    //   // let geojsonBounds = {
+    //   //   "type": "Feature",
+    //   //   "properties": {},
+    //   //   "geometry": geometry
+    //   // };
+    //   //console.log(geometry);
+    //   let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
+    //   this.addDrawnItem(L.polygon(polyCoords, {}));
       
-      //L.geoJSON(geojsonBounds).addTo(this.map);
-    });
+    //   //L.geoJSON(geojsonBounds).addTo(this.map);
+    // });
     let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     this.metrics.customAreasTotal.metrics = customTotal;
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
@@ -2718,6 +2750,7 @@ export class MapComponent implements OnInit {
                   }
                   else {
                     reject();
+                    return;
                   }
                 }
                 //if single item just check if valid geojson object
@@ -2727,11 +2760,13 @@ export class MapComponent implements OnInit {
                   }
                   else {
                     reject()
+                    return;
                   }
                 }
               }, (e) => {
                 //shp couldn't parse at all, reject
                 reject();
+                return;
               });
             }
             //need to use jszip async method to read zip files
@@ -2748,9 +2783,11 @@ export class MapComponent implements OnInit {
 
                 this.fileHandler.reader.onerror = (e) => {
                   reject();
+                  return;
                 }
                 this.fileHandler.reader.onabort = (e) => {
                   reject();
+                  return;
                 }
 
                 this.fileHandler.reader.onload = (e) => {
@@ -2762,6 +2799,7 @@ export class MapComponent implements OnInit {
               else {
                 //if file reader not initilized just reject
                 reject()
+                return;
               }
             }
           }
@@ -2783,6 +2821,7 @@ export class MapComponent implements OnInit {
               //landcover formatting still messed up for some weird reason
               //just reject for now and implement later
               reject();
+              return;
             }
 
             if(zipped) {
@@ -2795,9 +2834,11 @@ export class MapComponent implements OnInit {
 
                 this.fileHandler.reader.onerror = (e) => {
                   reject();
+                  return;
                 }
                 this.fileHandler.reader.onabort = (e) => {
                   reject();
+                  return;
                 }
 
                 this.fileHandler.reader.onload = (e) => {
@@ -2807,6 +2848,7 @@ export class MapComponent implements OnInit {
               }
               else {
                 reject()
+                return;
               }
             }
 
@@ -2848,17 +2890,21 @@ export class MapComponent implements OnInit {
 
               //ensure noData value is not an otherwise valid value (whole number in value range)
               if(noData % 1 == 0 && noData >= this.validLandcoverRange.min && noData <= this.validLandcoverRange.max) {
+                //console.log("?");
                 reject();
+                return;
               }
 
               
-
+              //console.log("?");
 
               //all of these weird mapping things need to change when fix covjson
               let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
               let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
 
               let getCentroidComponentIndices = (x, y) => {
+                // console.log(this.xmin);
+                // console.log(x);
                 let diffx = x - this.xmin;
                 let diffy = y - this.ymin;
   
@@ -2876,6 +2922,8 @@ export class MapComponent implements OnInit {
                 let xCellVal = this.xmin + 37.5 + diffx;
                 let yCellVal = this.ymin + 37.5 + diffy;
   
+                // console.log(xs);
+                // console.log(xCellVal);
                 
                 //find index of cell with coordinates
                 return {
@@ -2887,12 +2935,14 @@ export class MapComponent implements OnInit {
 
               
               let minCentroid = getCentroidComponentIndices(xCorner, yCorner);
-
+              //console.log("?");
               //check if corner centroid valid, reject if it isn't
               if(minCentroid.xIndex < 0 || minCentroid.yIndex < 0) {
+                //console.log("test2");
                 reject();
+                return;
               }
-
+              //console.log("?");
               //values array might have newlines in it (especially between rows)
               let vals = [];
               //console.log(details.length);
@@ -2908,22 +2958,24 @@ export class MapComponent implements OnInit {
                 }
                 //console.log(vals[vals.length - 1]);
               }
-          
+              //console.log("?");
               //verify number of values
               if(vals.length != ncols * nrows) {
-                console.log(vals.length);
-                console.log(ncols * nrows)
+                //console.log(vals.length);
+                //console.log(ncols * nrows)
                 reject();
+                return;
               }
-          
+              //console.log("?");
               //convert values to numbers and ensure valid
               for(let i = 0; i < vals.length; i++) {
                 //values strings, convert to numbers
                 vals[i] = Number(vals[i]);
                 //whole number in valid range or no data value
                 if((vals[i] % 1 != 0 || vals[i] < this.validLandcoverRange.min || vals[i] > this.validLandcoverRange.max) && vals[i] != noData) {
-                  console.log("test2");
+                  //console.log("test2");
                   reject();
+                  return;
                 }
               }
           
@@ -2932,15 +2984,18 @@ export class MapComponent implements OnInit {
               }
 
                 //get range of grid, ensure in bounds
-                let maxXOffset = ncols * cellSize;
-                let maxYOffset = nrows * cellSize;
+                let maxXOffset = (ncols - 1) * cellSize;
+                let maxYOffset = (nrows - 1) * cellSize;
                 let maxX = xCorner + maxXOffset;
                 let maxY = yCorner + maxYOffset;
 
                 let maxCentroid = getCentroidComponentIndices(maxX, maxY);
+                //console.log(maxCentroid);
                 //check if max corner centroid valid, reject if it isn't
                 if(maxCentroid.xIndex < 0 || maxCentroid.yIndex < 0) {
+                  //console.log("fail");
                   reject();
+                  return;
                 }
 
           
@@ -3032,9 +3087,11 @@ export class MapComponent implements OnInit {
 
                 this.fileHandler.reader.onerror = (e) => {
                   reject();
+                  return;
                 }
                 this.fileHandler.reader.onabort = (e) => {
                   reject();
+                  return;
                 }
 
                 this.fileHandler.reader.onload = (e) => {
@@ -3044,6 +3101,7 @@ export class MapComponent implements OnInit {
               }
               else {
                 reject();
+                return;
               }
 
             }
@@ -3051,6 +3109,7 @@ export class MapComponent implements OnInit {
           //just reject if bad format, should never get here
           else {
             reject();
+            return;
           }
         });
         
@@ -3088,6 +3147,7 @@ export class MapComponent implements OnInit {
               //reject if all failed
               if(++numProcessed >= files.length) {
                 reject();
+                return;
               }
 
             });
@@ -3096,6 +3156,7 @@ export class MapComponent implements OnInit {
             else {
               if(++numProcessed >= files.length) {
                 reject();
+                return;
               }
             }
           }
@@ -3119,9 +3180,11 @@ export class MapComponent implements OnInit {
 
             this.fileHandler.reader.onerror = (e) => {
               reject();
+              return;
             }
             this.fileHandler.reader.onabort = (e) => {
               reject();
+              return;
             }
 
             this.fileHandler.reader.onload = (e) => {
@@ -3182,18 +3245,21 @@ export class MapComponent implements OnInit {
                   //reject if all failed
                   if(++numProcessed >= info.files.length) {
                     reject();
+                    return;
                   }
 
                 });
               }, (e) => {
                 if(++numProcessed >= info.files.length) {
                   reject();
+                  return;
                 }
               });
             }
             else {
               if(++numProcessed >= info.files.length) {
                 reject();
+                return;
               }
             }
           }
@@ -3328,6 +3394,7 @@ export class MapComponent implements OnInit {
         }, (e) => {
           //should never happen, none of these promises should reject
           reject("Upload failed. An unxpected error has occured");
+          return;
         });
       }
     });
@@ -3940,10 +4007,11 @@ export class MapComponent implements OnInit {
 
   
   
-  private updateRecharge(geojsonObjects: any, handler: any) {
+  private updateRecharge(geojsonObjects: any, dataHandler: any, errorHandler: any) {
     let numItems = geojsonObjects.features.length;
-console.log(geojsonObjects);
+    //console.log(geojsonObjects);
     if (numItems != 0) {
+      this.mapService.setLoading(this, true);
       //deal with errors too
       let start = new Date().getTime();
       Observable.forkJoin(geojsonObjects.features.map(element => {
@@ -3953,9 +4021,14 @@ console.log(geojsonObjects);
         console.log("Operation took " + (new Date().getTime() - start).toString() + "ms");
         //console.log(typeof data);
         //use file(s) generated as cover
-        handler(data);
+        dataHandler(data);
+        this.mapService.setLoading(this, false);
+      }, (error) => {
+        //console.log(error);
+        this.dialog.open(MessageDialogComponent, {data: {message: "An error has occurred while retrieving recharge data. Land cover changes have been reverted. Please try again:\n\n" + error.message, type: "Error"}});
+        errorHandler(error);
+        this.mapService.setLoading(this, false);
       });
-
     }
   }
 
@@ -3977,6 +4050,9 @@ console.log(geojsonObjects);
 
       let covData = this.types.landCover.data._covjson.ranges.cover.values;
       let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+
+      //backup values to restore on data failure
+      let backupData = Array.from(covData);
       
       if(type == "advanced") {
 
@@ -4059,8 +4135,13 @@ console.log(geojsonObjects);
                   //reload recharge cover
                   this.loadCover(this.types.recharge, true)
                   //reenable report generation
-                })
+                });
                 
+              }, (error) => {
+                //restore land cover on failure
+                backupData.forEach((value, i) => {
+                  covData[i] = value;
+                });
               });
               
             }
@@ -4153,6 +4234,11 @@ console.log(geojsonObjects);
           //reload recharge cover
           this.loadCover(this.types.recharge, true)
           //reenable report generation
+        }, (error) => {
+          //restore land cover on failure
+          backupData.forEach((value, i) => {
+            covData[i] = value;
+          });
         });
 
         indexes.forEach(index => {
@@ -4367,13 +4453,15 @@ console.log(geojsonObjects);
     // }
     //recharge disabled by default
 
-    //a bit sketchy, might want to change to keep current layer, though might not ever happen if can't update in recharge (should still change it)
-    if(coverage != this.types.recharge) {
+    if(this.baseLayer == undefined && coverage == this.types.landCover) {
       layer.addTo(this.map);
       this.baseLayer = {
         name: "Land Cover",
         layer: layer
       };
+    }
+    else if(coverage.label == this.baseLayer.name) {
+      layer.addTo(this.map);
     }
 
     this.layers.addBaseLayer(layer, coverage.label);

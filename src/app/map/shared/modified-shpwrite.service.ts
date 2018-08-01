@@ -16,7 +16,7 @@ export class ModifiedShpwriteService {
 
 
   write(rows, geometry_type, geometries, callback) {
-    console.log("start write");
+    //console.log("start write");
 
     let TYPE = types.geometries[geometry_type]
     let writer = polyWriter;
@@ -58,14 +58,14 @@ export class ModifiedShpwriteService {
     this.writeExtent(extent, shpView);
     this.writeExtent(extent, shxView);
 
-    console.log("finished header and extents");
+    //console.log("finished header and extents");
 
     this.writeRecords(geometries, extent,
         new DataView(shpBuffer, 100),
         new DataView(shxBuffer, 100),
         TYPE);
 
-    console.log("finished records");
+    //console.log("finished records");
 
     shpView.setInt32(24, shpLength / 2);
     shxView.setInt32(24, (50 + geometries.length * 4));
@@ -100,9 +100,9 @@ export class ModifiedShpwriteService {
     let shpI = 0;
     let shxI = 0;
     let shxOffset = 100;
-    console.log(geometries.length);
+    //console.log(geometries.length);
     geometries.forEach((coordinates, i) => {
-      console.log("test2");
+      //console.log("test2");
       let flattened = this.justCoords(coordinates, []);
       //never going to have multiple parts, so no need write code for that
       let noParts = 1;

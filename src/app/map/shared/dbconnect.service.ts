@@ -17,19 +17,22 @@ export class DBConnectService {
     //for(let i = 0; i < size; i++) {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
     //console.log(geometry)
-    var query = "{'$and':[{'name':'Landuse'},{'value.name':'testunit3'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset9'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
 
-    var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
-    var head = new HttpHeaders()
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
-    var options = {
+    let options = {
       headers: head
     };
 
-    var response = this.http.get<ResponseResults>(url, options)
+    let response = this.http.get<ResponseResults>(url, options)
+    .retry(3)
     .map((data) => {
       return data.result as Cover[]
+    }).catch((e) => {
+      return Observable.throw(new Error(e.message));
     });
     return response;
     // }
@@ -46,7 +49,7 @@ export class DBConnectService {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
 
     //build query
-    var query = "{$and:[{'name':'Landuse','value.name':'testunit3','$or':[";
+    let query = "{$and:[{'name':'Landuse','value.name':'testset9','$or':[";
     indexes.forEach((index) => {
       query += "{'value.x':" + index.x + ", 'value.y':" + index.y + "},";
     });
@@ -54,20 +57,23 @@ export class DBConnectService {
     query = query.slice(0, -1);
     query += "]}]}";
 
-    var url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
-    var head = new HttpHeaders()
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
-    var options = {
+    let options = {
       headers: head
     };
 
-    var response = this.http.get<ResponseResults>(url, options)
+    let response = this.http.get<ResponseResults>(url, options)
     .map((data) => {
       return data.result as Cover[]
+    }).catch((e) => {
+      return Observable.throw(new Error(e.message));
     });
+    
     return response;
-   // }
+    
 
     interface ResponseResults {
       result: any

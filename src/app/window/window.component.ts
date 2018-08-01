@@ -458,9 +458,9 @@ export class WindowComponent implements AfterViewInit {
         cat3: {columnWidth: normalWidth * 2}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.cat1.styles.textColor = [85, 0, 0];
-        row.cells.cat2.styles.textColor = [0, 42, 0];
-        row.cells.cat3.styles.textColor = [0, 0, 54];
+        // row.cells.cat1.styles.textColor = [85, 0, 0];
+        // row.cells.cat2.styles.textColor = [0, 42, 0];
+        // row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -501,20 +501,20 @@ export class WindowComponent implements AfterViewInit {
       },
       drawHeaderRow: (row, data) => {
         //console.log(row);
-        row.cells.oriny.styles.textColor = [0, 42, 0];
-        row.cells.criny.styles.textColor = [0, 42, 0];
-        row.cells.ormgd.styles.textColor = [85, 0, 0];
-        row.cells.crmgd.styles.textColor = [85, 0, 0];
-        row.cells.diff.styles.textColor = [0, 0, 54];
-        row.cells.pchange.styles.textColor = [0, 0, 54];
+        // row.cells.oriny.styles.textColor = [0, 42, 0];
+        // row.cells.criny.styles.textColor = [0, 42, 0];
+        // row.cells.ormgd.styles.textColor = [85, 0, 0];
+        // row.cells.crmgd.styles.textColor = [85, 0, 0];
+        // row.cells.diff.styles.textColor = [0, 0, 54];
+        // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       drawRow: (row, data) => {
-        row.cells.oriny.styles.textColor = [0, 42, 0];
-        row.cells.criny.styles.textColor = [0, 42, 0];
-        row.cells.ormgd.styles.textColor = [85, 0, 0];
-        row.cells.crmgd.styles.textColor = [85, 0, 0];
-        row.cells.diff.styles.textColor = [0, 0, 54];
-        row.cells.pchange.styles.textColor = [0, 0, 54];
+        // row.cells.oriny.styles.textColor = [0, 42, 0];
+        // row.cells.criny.styles.textColor = [0, 42, 0];
+        // row.cells.ormgd.styles.textColor = [85, 0, 0];
+        // row.cells.crmgd.styles.textColor = [85, 0, 0];
+        // row.cells.diff.styles.textColor = [0, 0, 54];
+        // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -539,9 +539,9 @@ export class WindowComponent implements AfterViewInit {
         cat3: {columnWidth: normalWidth * 2}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.cat1.styles.textColor = [85, 0, 0];
-        row.cells.cat2.styles.textColor = [0, 42, 0];
-        row.cells.cat3.styles.textColor = [0, 0, 54];
+        // row.cells.cat1.styles.textColor = [85, 0, 0];
+        // row.cells.cat2.styles.textColor = [0, 42, 0];
+        // row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -579,20 +579,20 @@ export class WindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.oriny.styles.textColor = [0, 42, 0];
-        row.cells.criny.styles.textColor = [0, 42, 0];
-        row.cells.ormgd.styles.textColor = [85, 0, 0];
-        row.cells.crmgd.styles.textColor = [85, 0, 0];
-        row.cells.diff.styles.textColor = [0, 0, 54];
-        row.cells.pchange.styles.textColor = [0, 0, 54];
+        // row.cells.oriny.styles.textColor = [0, 42, 0];
+        // row.cells.criny.styles.textColor = [0, 42, 0];
+        // row.cells.ormgd.styles.textColor = [85, 0, 0];
+        // row.cells.crmgd.styles.textColor = [85, 0, 0];
+        // row.cells.diff.styles.textColor = [0, 0, 54];
+        // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       drawRow: (row, data) => {
-        row.cells.oriny.styles.textColor = [0, 42, 0];
-        row.cells.criny.styles.textColor = [0, 42, 0];
-        row.cells.ormgd.styles.textColor = [85, 0, 0];
-        row.cells.crmgd.styles.textColor = [85, 0, 0];
-        row.cells.diff.styles.textColor = [0, 0, 54];
-        row.cells.pchange.styles.textColor = [0, 0, 54];
+        // row.cells.oriny.styles.textColor = [0, 42, 0];
+        // row.cells.criny.styles.textColor = [0, 42, 0];
+        // row.cells.ormgd.styles.textColor = [85, 0, 0];
+        // row.cells.crmgd.styles.textColor = [85, 0, 0];
+        // row.cells.diff.styles.textColor = [0, 0, 54];
+        // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -622,9 +622,9 @@ export class WindowComponent implements AfterViewInit {
         cat3: {columnWidth: normalWidth * 2}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.cat1.styles.textColor = [85, 0, 0];
-        row.cells.cat2.styles.textColor = [0, 42, 0];
-        row.cells.cat3.styles.textColor = [0, 0, 54];
+        // row.cells.cat1.styles.textColor = [85, 0, 0];
+        // row.cells.cat2.styles.textColor = [0, 42, 0];
+        // row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -657,20 +657,20 @@ export class WindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        row.cells.oriny.styles.textColor = [0, 42, 0];
-        row.cells.criny.styles.textColor = [0, 42, 0];
-        row.cells.ormgd.styles.textColor = [85, 0, 0];
-        row.cells.crmgd.styles.textColor = [85, 0, 0];
-        row.cells.diff.styles.textColor = [0, 0, 54];
-        row.cells.pchange.styles.textColor = [0, 0, 54];
+        // row.cells.oriny.styles.textColor = [0, 42, 0];
+        // row.cells.criny.styles.textColor = [0, 42, 0];
+        // row.cells.ormgd.styles.textColor = [85, 0, 0];
+        // row.cells.crmgd.styles.textColor = [85, 0, 0];
+        // row.cells.diff.styles.textColor = [0, 0, 54];
+        // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       drawRow: (row, data) => {
-        row.cells.oriny.styles.textColor = [0, 42, 0];
-        row.cells.criny.styles.textColor = [0, 42, 0];
-        row.cells.ormgd.styles.textColor = [85, 0, 0];
-        row.cells.crmgd.styles.textColor = [85, 0, 0];
-        row.cells.diff.styles.textColor = [0, 0, 54];
-        row.cells.pchange.styles.textColor = [0, 0, 54];
+        // row.cells.oriny.styles.textColor = [0, 42, 0];
+        // row.cells.criny.styles.textColor = [0, 42, 0];
+        // row.cells.ormgd.styles.textColor = [85, 0, 0];
+        // row.cells.crmgd.styles.textColor = [85, 0, 0];
+        // row.cells.diff.styles.textColor = [0, 0, 54];
+        // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });

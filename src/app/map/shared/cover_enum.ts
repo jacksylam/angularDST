@@ -2,9 +2,9 @@ export const COVER_ENUM =
 Object.freeze({
     "Background" : 0,
     "Native Forest" : 1,
-    "Native Forest in Fog Zone" : 2,
+    // "Native Forest in Fog Zone" : 2,
     "Alien Forest" : 3,
-    "Alien Forest in Fog Zone" : 4,
+    // "Alien Forest in Fog Zone" : 4,
     "Kiawe/Phreatophytes" : 5,
     "Shrubland" : 6,
     "Grassland" : 7,

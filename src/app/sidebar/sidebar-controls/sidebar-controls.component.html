@@ -6,32 +6,52 @@
 
   <div class="scrollbar-madness-parent">
     
-    <div class="left-scrollbar" #leftScrollbar (scroll)="scrollbarScroll($event)">
+    <div class="left-scrollbar" #leftScrollbar (scroll)="scrollbarScroll($event)"  [ngClass]="{'disable': mode=='name'}">
       <!-- fake buttons to size phony scrollbar div to same size as menu -->
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
+      <button *ngIf="mode!='name'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+      <div *ngIf="mode=='name'" class="outline">
+        <div class="select-text invisible">
+          Select an Area to Name
+        </div>
+        <br>
+        <div class="name-button-container" *ngIf="areaSelected; else cancel">
+          <input class="input-field" #nameInput type="text" [value]="name">
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-left invisible">a</button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-right invisible">a</button>
+        </div>
+        <ng-template #cancel>
+            <button type="button" class="btn btn-primary btn-responsive internal-menu invisible">a</button>
+        </ng-template>
+      </div>
 
-        <br><br>
+        <p></p>
+
+        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+
+        <p></p>
   
         <div class="outline slider-background invisible">
-          <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">a</button>
+          <button type="button" class="btn btn-primary btn-responsive btn-label internal-menu invisible">a</button>
           <br><mat-slider [max]="1" [min]="0" [step]="0.01"></mat-slider>
         </div>
   
-        <br>
+        <p></p>
+  
+        <div class="outline btn-group-vertical internal-menu">
+            <button type="button" class="btn btn-primary btn-responsive btn-label invisible"><div class="shift">a</div></button>
+            <mat-select>
+            </mat-select>
+          </div>
+  
+        <p></p>
   
         <div class="outline btn-group-vertical internal-menu invisible">
-          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">a</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half"><div class="shift">a</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom-half"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
         </div>
-  
-        <br><br>
-  
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift"> a <br> a </div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift"> a <br> a </div></button>
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift"> a <br> a </div></button>
-        
-        <br><br>
+
+        <p></p>
         
         <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
     </div>
@@ -91,7 +111,10 @@
         
         <p></p>
         
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()"><div class="shift">Generate Report</div></button>
+        <button [disabled]="loading > 0" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()">
+          <div *ngIf="loading > 0; else report" class="shift"><div class="loading">Loading Metrics</div></div>
+          <ng-template #report>Generate Report</ng-template>
+        </button>
       </div>
 
     </div>

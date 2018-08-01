@@ -29,6 +29,9 @@ export class SidebarControlsComponent implements OnInit {
   @ViewChild("leftScrollbar") leftScrollbarDiv;
   @ViewChild("nameInput") nameInput;
 
+  loading = 0;
+  debug = false;
+
   baselayer = "landcover";
 
   value = 1;
@@ -56,6 +59,9 @@ export class SidebarControlsComponent implements OnInit {
   // changeValueFunctionToReplaceAngularsDumbEventSystem(e) {
   //   console.log(this.nameInput);
   // }
+
+  ngAfterViewInit() {
+  }
 
   openDialog(type: string) {
     switch(type) {
@@ -171,6 +177,12 @@ export class SidebarControlsComponent implements OnInit {
 
   changeLayer(type: string) {
     this.baselayer = type;
+  }
+
+  setLoading(isLoading: -1 | 1) {
+    if(!this.debug) {
+      this.loading += isLoading;
+    }
   }
 
 

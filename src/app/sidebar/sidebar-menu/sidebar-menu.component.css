@@ -20,6 +20,7 @@
     color: white ;
     border-bottom-right-radius: 8pt;
     border-bottom-left-radius: 0pt !important;
+    z-index: -10;
   }
 
   .menuButton-text {

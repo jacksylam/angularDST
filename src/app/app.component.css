@@ -7,16 +7,15 @@
 
 .navbar-brand>img {
   height: 100%;
-  padding: 15px;
+  padding: 5px;
   width: auto;
 }
 
-.navbar-default{
-  background-color:rgb(56, 117, 194);
-  width: 100%;
+.navbar-inverted{
   z-index: 10000;
 }
 
+/* 
 .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:focus, .navbar-default .navbar-nav>.active>a:hover{
   background-color: rgb(58, 165, 236);
   color: white;
@@ -26,4 +25,4 @@
 
 .navbar-nav>li>a {
   color:white;
-}
+} */

@@ -21,7 +21,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    var __this = this;
+    let __this = this;
     document.addEventListener('scroll', (e) => {
       __this.nav.nativeElement.style.left = window.pageXOffset + 'px';
     });

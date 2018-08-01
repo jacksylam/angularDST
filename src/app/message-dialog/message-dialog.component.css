@@ -1,3 +1,11 @@
 .bold {
     font-weight: bold;
 }
+
+.mat-raised-button {
+    background-color: ivory;
+}
+
+.mat-primary {
+    background-color: rgb(56, 117, 194);
+}

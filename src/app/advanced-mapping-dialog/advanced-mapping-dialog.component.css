@@ -24,3 +24,13 @@
 .no-wrap {
   white-space: nowrap;
 }
+
+.mat-raised-button {
+  background-color: ivory;
+}
+
+.mat-primary-custom {
+  background-color: rgb(56, 117, 194);
+  color: white;
+}
+

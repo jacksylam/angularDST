@@ -7,9 +7,13 @@
 
 
         <div class="contents">
-
-            <div class="metrics-container">
+            <div *ngIf="loading > 0">
+                <div class="loading">Waiting for Changes</div>
+            </div>
+            <div class="metrics-container" [ngClass]="{'disable': loading > 0}">
+                
                 <div class="width-ctrl">
+
                     <div style="height:5px;"></div>
                     Metric Mode: {{mode}}
 
