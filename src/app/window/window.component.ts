@@ -425,7 +425,16 @@ export class WindowComponent implements AfterViewInit {
       {title: "Volumetric Difference", dataKey: "cat3"}
     ];
 
-    
+    let precision = 3;
+    let decimalAlign = (value: string): string => {
+      let wholeDigits = value.split(".")[0];
+      let digits = precision + 1;
+      let spacedValue = value;
+      for(let i = 0; i < digits - wholeDigits.length; i++) {
+        spacedValue = " " + spacedValue;
+      }
+      return spacedValue;
+    }
   
     let y = 50;
     
@@ -470,17 +479,18 @@ export class WindowComponent implements AfterViewInit {
     this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
-        area: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-        oriny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-        criny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-        ormgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-        crmgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-        diff: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-        pchange: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+        area: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
+        oriny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
+        criny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
       })
     })
 
     this.pdf.setFontSize(titleSize);
+    this.pdf.setFont('arial');
     this.pdf.text(50, y, "Aquifer Systems*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y - 5, "Hydrological units established by the Hawaii State Commission on Water Resource");
@@ -500,21 +510,23 @@ export class WindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        //console.log(row);
-        // row.cells.oriny.styles.textColor = [0, 42, 0];
-        // row.cells.criny.styles.textColor = [0, 42, 0];
-        // row.cells.ormgd.styles.textColor = [85, 0, 0];
-        // row.cells.crmgd.styles.textColor = [85, 0, 0];
-        // row.cells.diff.styles.textColor = [0, 0, 54];
-        // row.cells.pchange.styles.textColor = [0, 0, 54];
+        //row.styles.font = "arial";
+        // console.log(row);
+        // row.cells.oriny.styles.font = "courier";
+        // row.cells.criny.styles.font = "courier";
+        // row.cells.ormgd.styles.font = "courier";
+        // row.cells.crmgd.styles.font = "courier";
+        // row.cells.diff.styles.font = "courier";
+        // row.cells.pchange.styles.font = "courier";
       },
       drawRow: (row, data) => {
-        // row.cells.oriny.styles.textColor = [0, 42, 0];
-        // row.cells.criny.styles.textColor = [0, 42, 0];
-        // row.cells.ormgd.styles.textColor = [85, 0, 0];
-        // row.cells.crmgd.styles.textColor = [85, 0, 0];
-        // row.cells.diff.styles.textColor = [0, 0, 54];
-        // row.cells.pchange.styles.textColor = [0, 0, 54];
+        row.cells.area.styles.font = "courier"
+        row.cells.oriny.styles.font = "courier";
+        row.cells.criny.styles.font = "courier";
+        row.cells.ormgd.styles.font = "courier";
+        row.cells.crmgd.styles.font = "courier";
+        row.cells.diff.styles.font = "courier";
+        row.cells.pchange.styles.font = "courier";
       },
       margin: {top: 60}
     });
@@ -549,17 +561,18 @@ export class WindowComponent implements AfterViewInit {
     this.windowPanel.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
-        area: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-        oriny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-        criny: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-        ormgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-        crmgd: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-        diff: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-        pchange: aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+        area: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
+        oriny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
+        criny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
       })
     })
 
     this.pdf.setFontSize(titleSize);
+    this.pdf.setFont('arial');
     this.pdf.text(50, y - 10, "Aquifer Systems\nExcluding Caprock*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y - 5, "Aquifer systems minus the area covered by caprock (semi-confining, mostly sedimentary unit");
@@ -587,12 +600,13 @@ export class WindowComponent implements AfterViewInit {
         // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       drawRow: (row, data) => {
-        // row.cells.oriny.styles.textColor = [0, 42, 0];
-        // row.cells.criny.styles.textColor = [0, 42, 0];
-        // row.cells.ormgd.styles.textColor = [85, 0, 0];
-        // row.cells.crmgd.styles.textColor = [85, 0, 0];
-        // row.cells.diff.styles.textColor = [0, 0, 54];
-        // row.cells.pchange.styles.textColor = [0, 0, 54];
+        row.cells.area.styles.font = "courier"
+        row.cells.oriny.styles.font = "courier";
+        row.cells.criny.styles.font = "courier";
+        row.cells.ormgd.styles.font = "courier";
+        row.cells.crmgd.styles.font = "courier";
+        row.cells.diff.styles.font = "courier";
+        row.cells.pchange.styles.font = "courier";
       },
       margin: {top: 60}
     });
@@ -605,6 +619,7 @@ export class WindowComponent implements AfterViewInit {
     }
     
     this.pdf.setFontSize(titleSize);
+    this.pdf.setFont('arial');
     this.pdf.text(50, y, "User-Defined Areas*");
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y, "Areas of land cover change designated by the user for this analysis");
@@ -632,13 +647,13 @@ export class WindowComponent implements AfterViewInit {
     this.windowPanel.data.metrics.customAreas.forEach((customArea) => {
       rows.push({
         name: customArea.name,
-        area: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-        oriny: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-        criny: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-        ormgd: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-        crmgd: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-        diff: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-        pchange: customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+        area: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
+        oriny: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
+        criny: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
       });
     });
 
@@ -665,12 +680,13 @@ export class WindowComponent implements AfterViewInit {
         // row.cells.pchange.styles.textColor = [0, 0, 54];
       },
       drawRow: (row, data) => {
-        // row.cells.oriny.styles.textColor = [0, 42, 0];
-        // row.cells.criny.styles.textColor = [0, 42, 0];
-        // row.cells.ormgd.styles.textColor = [85, 0, 0];
-        // row.cells.crmgd.styles.textColor = [85, 0, 0];
-        // row.cells.diff.styles.textColor = [0, 0, 54];
-        // row.cells.pchange.styles.textColor = [0, 0, 54];
+        row.cells.area.styles.font = "courier"
+        row.cells.oriny.styles.font = "courier";
+        row.cells.criny.styles.font = "courier";
+        row.cells.ormgd.styles.font = "courier";
+        row.cells.crmgd.styles.font = "courier";
+        row.cells.diff.styles.font = "courier";
+        row.cells.pchange.styles.font = "courier";
       },
       margin: {top: 60}
     });
@@ -684,6 +700,7 @@ export class WindowComponent implements AfterViewInit {
 
 
     this.pdf.setFontSize(titleSize);
+    this.pdf.setFont('arial');
     this.pdf.text(50, y, "Summary*");
 
     rows = [];
@@ -693,45 +710,45 @@ export class WindowComponent implements AfterViewInit {
 
     rows.push({
       type: "Area Total (" + this.windowPanel.data.unitSystem.units.area + ")",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].area
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].area)
     });
     rows.push({
       type: "Total Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original)
     });
     rows.push({
       type: "Total Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current)
     });
     rows.push({
       type: "Average Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.average + ")",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original)
     });
     rows.push({
       type: "Average Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.average + ")",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current)
     });
     rows.push({
       type: "Volumetric Difference (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff)
     });
     rows.push({
       type: "Volumetric Percent Change",
-      uda: customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
-      total: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
-      totalNoCaprock: totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
+      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange)
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
@@ -739,13 +756,13 @@ export class WindowComponent implements AfterViewInit {
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
-        name: {columnWidth: 90},
+        total: {columnWidth: 50}
       },
-      // drawRow: (row, data) => {
-      //   row.cells.total.styles.textColor = [0, 42, 0];
-      //   row.cells.totalNoCaprock.styles.textColor = [85, 0, 0];
-      //   row.cells.uda.styles.textColor = [0, 0, 54];
-      // },
+      drawRow: (row, data) => {
+        row.cells.uda.styles.font = "courier"
+        row.cells.total.styles.font = "courier";
+        row.cells.totalNoCaprock.styles.font = "courier";
+      },
       margin: {top: 60}
     });
 
@@ -793,6 +810,7 @@ export class WindowComponent implements AfterViewInit {
       y = 50;
     }
 
+    this.pdf.setFont('arial');
     this.pdf.text(50, y, "Graphs*");
 
     y += 10;
@@ -851,6 +869,7 @@ export class WindowComponent implements AfterViewInit {
     
 
     this.pdf.setFontSize(titleSize);
+    this.pdf.setFont('arial');
     this.pdf.text(50, y, h1);
 
     y += titleSize;

@@ -67,7 +67,7 @@
         <div class="name-button-container" *ngIf="areaSelected; else cancel">
           <input class="input-field" #nameInput type="text" [value]="name">
           <button type="button" class="btn btn-primary btn-responsive btn-custom-half-left" (click)="registerNameToShape()"><div class="set-name-shift">Set Name</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-right" (click)="toggleNameMode()"><div class="cancel-shift">Cancel</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-right" (click)="toggleNameMode()"><div class="cancel-shift">Exit</div></button>
         </div>
         <ng-template #cancel>
             <button type="button" class="btn btn-primary btn-responsive internal-menu" (click)="toggleNameMode()"><div class="shift">Cancel</div></button>

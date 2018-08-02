@@ -699,6 +699,7 @@ export class MapComponent implements OnInit {
       backupData.forEach((value, i) => {
         covData[i] = value;
       });
+      this.loadCover(this.types.landCover, false);
     });
 
     
@@ -2351,6 +2352,7 @@ export class MapComponent implements OnInit {
             backupData.forEach((value, i) => {
               covData[i] = value;
             });
+            this.loadCover(this.types.landCover, false);
           });
 
           //console.log(geometries);
@@ -4142,6 +4144,7 @@ export class MapComponent implements OnInit {
                 backupData.forEach((value, i) => {
                   covData[i] = value;
                 });
+                this.loadCover(this.types.landCover, false);
               });
               
             }
@@ -4239,6 +4242,7 @@ export class MapComponent implements OnInit {
           backupData.forEach((value, i) => {
             covData[i] = value;
           });
+          this.loadCover(this.types.landCover, false);
         });
 
         indexes.forEach(index => {
