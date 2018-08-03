@@ -14,15 +14,16 @@ export class SidebarMenuComponent implements OnInit {
   constructor(private windowService: WindowService) { }
 
   ngOnInit() {
-    this.createNewMap()
+    this.createNewMap(true);
   }
 
   toggleMenu() {
     this.state = (this.state == 'inactive' ? 'active' : 'inactive');
   }
 
-  createNewMap() {
+  createNewMap(reset = false) {
+    //console.log(SidebarMenuComponent.isFirstVisit)
     let newWindow = new WindowPanel("Map", "map", {});
-    this.windowService.addWindow(newWindow);
+    this.windowService.addWindow(newWindow, -1, reset);
   }
 }

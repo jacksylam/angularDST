@@ -41,7 +41,7 @@ Object.freeze({
     // "Native": ["#5b0101", "#595000", "#595000"]
 });
 
-export var LC_TO_BUTTON_INDEX = {
+export let LC_TO_BUTTON_INDEX = {
     1: 7,
     2: 8,
     3: 0,
@@ -76,7 +76,7 @@ export var LC_TO_BUTTON_INDEX = {
 }
 
 //Need irrigated/non-irrigated separation?
-export var COVER_INDEX_DETAILS = {
+export let COVER_INDEX_DETAILS = {
     0: {
         "type": "Background",
         "color": "red"

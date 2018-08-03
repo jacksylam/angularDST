@@ -24,6 +24,7 @@ import { MapFirestoreService } from './map/shared/map-firestore.service'
 import { DBConnectService } from './map/shared/dbconnect.service';
 import { CovDetailsService } from './map/shared/cov-details.service';
 import { ModifiedShpwriteService } from './map/shared/modified-shpwrite.service';
+import { CovjsonTemplateService } from './map/shared/covjson-template.service';
 
 //firebase
 import { AngularFireModule } from 'angularfire2';
@@ -92,7 +93,15 @@ import { FormsModule } from '@angular/forms';
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
-  providers: [WindowService, MapService, MapFirestoreService, DBConnectService, CovDetailsService, ModifiedShpwriteService],
+  providers: [
+    WindowService,
+    MapService,
+    MapFirestoreService,
+    DBConnectService,
+    CovDetailsService,
+    ModifiedShpwriteService,
+    CovjsonTemplateService
+  ],
   bootstrap: [AppComponent],
   entryComponents: [
     MessageDialogComponent,

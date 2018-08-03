@@ -24,6 +24,7 @@ import { MessageDialogComponent } from "../message-dialog/message-dialog.compone
 import {MatDialog} from "@angular/material";
 import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advanced-mapping-dialog.component';
 import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
+import { CovjsonTemplateService } from './shared/covjson-template.service';
 
 
 
@@ -43,7 +44,7 @@ export class MapComponent implements OnInit {
   @ViewChild('mapid') mapid;
 
   static aquiferIndices: any;
-  static aquiferIndexingComplete = false;
+  static aquiferIndexing: Promise<any> = null;
   static readonly METER_TO_MILE_FACTOR = 0.000621371;
   static readonly INCH_TO_MILIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
@@ -205,7 +206,7 @@ export class MapComponent implements OnInit {
   };
 
 
-  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog, private modShpWrite: ModifiedShpwriteService) {
+  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog, private modShpWrite: ModifiedShpwriteService, private covjsonTemplate: CovjsonTemplateService) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
   }
@@ -1558,17 +1559,17 @@ export class MapComponent implements OnInit {
 
     //if already computed no need to recompute
     //static since aquifers are always the same
-    if(!MapComponent.aquiferIndices) {
+    if(MapComponent.aquiferIndexing == null) {
       this.mapService.setLoading(this, true);
 
       MapComponent.aquiferIndices = {};
       //store promise so if method called again knows to wait for completion
-      this.getAquiferIndices(this.types.aquifers).then(() => {
+      MapComponent.aquiferIndexing = this.getAquiferIndices(this.types.aquifers).then(() => {
 
         console.log("complete");
 
         //indicate indexing has been completed
-        MapComponent.aquiferIndexingComplete = true;
+        //MapComponent.aquiferIndexingComplete = true;
 
         getAquiferMetrics();
         this.mapService.setLoading(this, false);
@@ -1580,8 +1581,15 @@ export class MapComponent implements OnInit {
     }
     //if already triggered getAquiferIndices but not yet complete don't do anything, the metrics computed on completion will have current values
     //otherwise just compute aquifer metrics
-    else if(MapComponent.aquiferIndexingComplete) {
-      getAquiferMetrics();
+    // else if(MapComponent.aquiferIndexingComplete) {
+    //   getAquiferMetrics();
+    // }
+    else {
+      this.mapService.setLoading(this, true);
+      MapComponent.aquiferIndexing.then(() => {
+          getAquiferMetrics();
+          this.mapService.setLoading(this, false);
+      }, () => {});
     }
 
 
@@ -2179,10 +2187,14 @@ export class MapComponent implements OnInit {
           message += "Could not find valid shapefile:\n\t- Must contain all necessary data objects inside a zip folder.\n\n";
         }
         if(data.notFound.includes("cover")) {
-          message += "Could not find a valid land cover file:\n\t- Must be in a valid asc format."
-          + "\n\t- Must have a 6 line header with the values ncols, nrows, xllcorner, yllcorner, cellsize, and NODATA_value"
-          + "\n\t- Grid must be a subset of the provided map (e.g. fully contained within a " + this.gridWidthCells + " column by " + this.gridHeightCells + " row grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ")"
-          + "\n\t- Must contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "].\n\n";
+          message += "Could not find a valid land cover file:\n\t- Must be in a valid asc or covjson format."
+          + "\n\t\t- asc:"
+          + "\n\t\t\tMust have a 6 line header with the values ncols, nrows, xllcorner, yllcorner, cellsize, and NODATA_value"
+          + "\n\t\t\tGrid must be a subset of the provided map (e.g. fully contained within a " + this.gridWidthCells + " column by " + this.gridHeightCells + " row grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ")"
+          + "\n\t\t\tMust contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "]"
+          + "\n\t\t- covjson:"
+          + "\n\t\t\tGrid must be " + this.gridWidthCells + " columns by " + this.gridHeightCells + " rows grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ". Covjson subgrid support will be implemented at a later date"
+          + "\n\t\t\tMust contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "]\n\n";
         }
         message += "Files are accepted as uploaded or contained within a zip folder."
         this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Warning"}});
@@ -2820,10 +2832,29 @@ export class MapComponent implements OnInit {
           else if(format == "covjson") {
 
             test = (data) => {
-              //landcover formatting still messed up for some weird reason
-              //just reject for now and implement later
-              reject();
-              return;
+              let vals = this.covjsonTemplate.verifyCovjson(data);
+              if(vals == null || vals.length != this.gridHeightCells * this.gridWidthCells) {
+                reject();
+                return;
+              }
+              else {
+                for(let i = 0; i < vals.length; i++) {
+                  //values strings, convert to numbers
+                  vals[i] = Number(vals[i]);
+                  //whole number in valid range or no data value
+                  if((vals[i] % 1 != 0 || vals[i] < this.validLandcoverRange.min || vals[i] > this.validLandcoverRange.max)) {
+                    //console.log("test2");
+                    reject();
+                    return;
+                  }
+                }
+                
+                accept({
+                  //covjson has no nodata value
+                  nodata: null,
+                  values: vals
+                });
+              }
             }
 
             if(zipped) {
@@ -3462,10 +3493,13 @@ export class MapComponent implements OnInit {
     let genDataFileContents = (type: string, format: string) => {
 
       let data = this.types[type].data._covjson;
+      let xs = this.types.recharge.data._covjson.domain.axes.x.values;
+      let ys = this.types.recharge.data._covjson.domain.axes.y.values;
+      let vals = type == "recharge" ? data.ranges.recharge.values :  data.ranges.cover.values;
       let fcontents;
   
       if(format == "asc") {
-        let vals = type == "recharge" ? data.ranges.recharge.values :  data.ranges.cover.values;
+        
         
         //generate header lines
         fcontents = "ncols " + this.gridWidthCells + "\n";
@@ -3494,7 +3528,7 @@ export class MapComponent implements OnInit {
       }
       else if(format == "covjson") {
         return {
-          data: JSON.stringify(data),
+          data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover")),
           name: type + "." + format,
           type: 'text/plain;charset=utf-8'
         }
@@ -3505,13 +3539,10 @@ export class MapComponent implements OnInit {
         let cells = [];
 
         //need to change property label if recharge
-        let data = type == "landCover" ? this.types.landCover.data._covjson.ranges.cover.values : this.types.recharge.data._covjson.ranges.recharge.values;
-        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
 
         xs.forEach((x, i) => {
           ys.forEach((y, j) => {
-            let value = data[this.getIndex(i, j)];
+            let value = vals[this.getIndex(i, j)];
             if(value == 0) {
               return;
             }
@@ -4225,7 +4256,6 @@ export class MapComponent implements OnInit {
                 //background is not included in the database so indexes shifted by 1
                 //if background type set recharge rate to 0
                 let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
-
                 this.types.recharge.currentData[scenario] = recordValue;
                 if(scenario == this.currentScenario) {
                   rechargeData[index] = recordValue;

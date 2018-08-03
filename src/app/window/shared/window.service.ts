@@ -21,7 +21,12 @@ export class WindowService {
     }
   }
 
-  addWindow(win: WindowPanel, associateWindow = -1) {
+  addWindow(win: WindowPanel, associateWindow = -1, windowReset = false) {
+    if(windowReset) {
+      this.numberOfWindows = 0;
+      this.tag = 1;
+      WINDOWS.splice(0, WINDOWS.length);
+    }
     win.id = this.numberOfWindows++;
     if(associateWindow < 0) {
       win.tag = this.tag++;
@@ -29,7 +34,6 @@ export class WindowService {
     else {
       win.tag = associateWindow;
     }
-    
     WINDOWS.push(win);
   }
 
