@@ -4058,7 +4058,7 @@ export class MapComponent implements OnInit {
         this.mapService.setLoading(this, false);
       }, (error) => {
         //console.log(error);
-        this.dialog.open(MessageDialogComponent, {data: {message: "An error has occurred while retrieving recharge data. Land cover changes have been reverted. Please try again:\n\n" + error.message, type: "Error"}});
+        this.dialog.open(MessageDialogComponent, {data: {message: "An error has occurred while retrieving recharge data. Land cover changes have been reverted. Please try again.", type: "Error"}});
         errorHandler(error);
         this.mapService.setLoading(this, false);
       });

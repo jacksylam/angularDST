@@ -512,12 +512,13 @@ export class WindowComponent implements AfterViewInit {
       drawHeaderRow: (row, data) => {
         //row.styles.font = "arial";
         // console.log(row);
-        // row.cells.oriny.styles.font = "courier";
-        // row.cells.criny.styles.font = "courier";
-        // row.cells.ormgd.styles.font = "courier";
-        // row.cells.crmgd.styles.font = "courier";
-        // row.cells.diff.styles.font = "courier";
-        // row.cells.pchange.styles.font = "courier";
+        row.cells.area.styles.halign = "center";
+        row.cells.oriny.styles.halign = "center";
+        row.cells.criny.styles.halign = "center";
+        row.cells.ormgd.styles.halign = "center";
+        row.cells.crmgd.styles.halign = "center";
+        row.cells.diff.styles.halign = "center";
+        row.cells.pchange.styles.halign = "center";
       },
       drawRow: (row, data) => {
         row.cells.area.styles.font = "courier"
@@ -592,12 +593,13 @@ export class WindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        // row.cells.oriny.styles.textColor = [0, 42, 0];
-        // row.cells.criny.styles.textColor = [0, 42, 0];
-        // row.cells.ormgd.styles.textColor = [85, 0, 0];
-        // row.cells.crmgd.styles.textColor = [85, 0, 0];
-        // row.cells.diff.styles.textColor = [0, 0, 54];
-        // row.cells.pchange.styles.textColor = [0, 0, 54];
+        row.cells.area.styles.halign = "center";
+        row.cells.oriny.styles.halign = "center";
+        row.cells.criny.styles.halign = "center";
+        row.cells.ormgd.styles.halign = "center";
+        row.cells.crmgd.styles.halign = "center";
+        row.cells.diff.styles.halign = "center";
+        row.cells.pchange.styles.halign = "center";
       },
       drawRow: (row, data) => {
         row.cells.area.styles.font = "courier"
@@ -672,12 +674,13 @@ export class WindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        // row.cells.oriny.styles.textColor = [0, 42, 0];
-        // row.cells.criny.styles.textColor = [0, 42, 0];
-        // row.cells.ormgd.styles.textColor = [85, 0, 0];
-        // row.cells.crmgd.styles.textColor = [85, 0, 0];
-        // row.cells.diff.styles.textColor = [0, 0, 54];
-        // row.cells.pchange.styles.textColor = [0, 0, 54];
+        row.cells.area.styles.halign = "center";
+        row.cells.oriny.styles.halign = "center";
+        row.cells.criny.styles.halign = "center";
+        row.cells.ormgd.styles.halign = "center";
+        row.cells.crmgd.styles.halign = "center";
+        row.cells.diff.styles.halign = "center";
+        row.cells.pchange.styles.halign = "center";
       },
       drawRow: (row, data) => {
         row.cells.area.styles.font = "courier"
@@ -757,6 +760,11 @@ export class WindowComponent implements AfterViewInit {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
         total: {columnWidth: 50}
+      },
+      drawHeaderRow: (row, data) => {
+        // row.cells.uda.styles.halign = "center";
+        // row.cells.total.styles.halign = "center";
+        // row.cells.totalNoCaprock.styles.halign = "center";
       },
       drawRow: (row, data) => {
         row.cells.uda.styles.font = "courier"
