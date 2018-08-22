@@ -217,7 +217,10 @@ export class MapComponent implements OnInit {
 
   ngAfterViewInit() {
 
-    this.map = L.map(this.mapid.nativeElement).setView([21.512, -157.96664], 15);
+    this.map = L.map(this.mapid.nativeElement, {
+      zoomSnap: 0.01,
+      wheelPxPerZoomLevel: 200
+    }).setView([21.48, -157.9665], 10.6);
 
     let mapLayer = L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map

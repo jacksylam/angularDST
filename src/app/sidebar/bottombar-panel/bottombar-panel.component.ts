@@ -25,7 +25,7 @@ import {MapService} from '../../map/shared/map.service';
 export class BottombarPanelComponent implements OnInit {
   @ViewChild('chart') chart;
 
-  state = 'inactive';
+  state = 'active';
   includeCaprock = true;
 
   loading = 0;

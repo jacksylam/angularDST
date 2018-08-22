@@ -22,7 +22,7 @@ import {MapService} from '../../map/shared/map.service';
 
 
 export class SidebarPanelComponent implements OnInit {
-  state = 'inactive';
+  state = 'active';
 
   layer = "landcover";
 

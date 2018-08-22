@@ -36,7 +36,7 @@ export class SidebarControlsComponent implements OnInit {
 
   value = 1;
 
-  state = 'inactive';
+  state = 'active';
 
   displayType = "Hide";
 
