@@ -15,7 +15,7 @@ import {DownloadDialogComponent} from "../download-dialog/download-dialog.compon
         transform: 'translate(0px, 0px)',
       })),
       state('inactive', style({
-        transform: 'translate(-180px, 0px)',
+        transform: 'translate(-162px, 0px)',
       })),
       transition('active => inactive', animate('500ms ease-in-out')),
       transition('inactive => active', animate('500ms ease-in-out'))
@@ -144,6 +144,7 @@ export class SidebarControlsComponent implements OnInit {
   setUnits(e) {
     //should switch mapService coordination to window service
     this.mapService.setUnits(this, e.value);
+    this.units = e.value;
   }
 
   generateReport() {

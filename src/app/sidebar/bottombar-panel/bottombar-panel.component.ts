@@ -12,7 +12,7 @@ import {MapService} from '../../map/shared/map.service';
         transform: 'translate(0px, 0px)',
       })),
       state('inactive', style({
-        transform: 'translate( 0px, -275px)',
+        transform: 'translate( 0px, -245px)',
       })),
       transition('active => inactive', animate('500ms ease-in-out')),
       transition('inactive => active', animate('500ms ease-in-out'))
@@ -28,7 +28,7 @@ export class BottombarPanelComponent implements OnInit {
   state = 'active';
   includeCaprock = true;
 
-  loading = 0;
+  loading = -100;
   debug = false;
 
   metrics = {
@@ -98,7 +98,7 @@ export class BottombarPanelComponent implements OnInit {
     Metric: {
       area: "Square Kilometers",
       volumetric: "Megaliters Per Day",
-      average: "Milimeters Per Year"
+      average: "Millimeters Per Year"
     }
   }
   
@@ -206,14 +206,14 @@ export class BottombarPanelComponent implements OnInit {
 
     let layout = {
       barmode: 'group',
-      height: 265,
-      width: 350,
+      height: 240,
+      width: 315,
       plot_bgcolor: 'ivory',
       paper_bgcolor: 'ivory',
       margin: {
         l: 50,
         r: 20,
-        b: 50,
+        b: 60,
         t: 40,
         pad: 0
       },
@@ -227,7 +227,10 @@ export class BottombarPanelComponent implements OnInit {
           xanchor: 'auto',
           yanchor: 'bottom',
           text: originalRecharge.toString(),
-          showarrow: false
+          showarrow: false,
+          font: {
+            size: 10
+          }
         },
         {
           x: 0.2,
@@ -235,7 +238,10 @@ export class BottombarPanelComponent implements OnInit {
           xanchor: 'auto',
           yanchor: 'bottom',
           text: currentRecharge.toString(),
-          showarrow: false
+          showarrow: false,
+          font: {
+            size: 10
+          }
         },
       ]
     };

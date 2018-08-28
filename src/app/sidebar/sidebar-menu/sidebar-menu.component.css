@@ -15,10 +15,11 @@
     top: 50px;
     left: 0px;
     height: 50px;
+    width: 90px;
     background-color: rgb(56, 117, 194);
     font-style: bold;
-    color: white ;
-    border-bottom-right-radius: 8pt;
+    color: white;
+    border-bottom-right-radius: 7pt;
     border-bottom-left-radius: 0pt !important;
     z-index: -10;
   }

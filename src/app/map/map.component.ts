@@ -1475,7 +1475,7 @@ export class MapComponent implements OnInit {
           units: {
             area: "Square Kilometers",
             volumetric: "Megaliters Per Day",
-            average: "Milimeters Per Year"
+            average: "Millimeters Per Year"
           }
         }
       }
@@ -1569,7 +1569,7 @@ export class MapComponent implements OnInit {
       //store promise so if method called again knows to wait for completion
       MapComponent.aquiferIndexing = this.getAquiferIndices(this.types.aquifers).then(() => {
 
-        console.log("complete");
+        console.log("Aquifer processing complete");
 
         //indicate indexing has been completed
         //MapComponent.aquiferIndexingComplete = true;
@@ -2139,6 +2139,7 @@ export class MapComponent implements OnInit {
     // this.metrics.total = this.getMetricsSuite(null);
 
     this.metrics = this.createMetrics();
+    this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics)
 
   }
 
@@ -4286,6 +4287,19 @@ export class MapComponent implements OnInit {
         this.loadCover(this.types.landCover, false);
       }
 
+      let unhighlight = {
+        weight: 3,
+        opacity: 0.5,
+        color: 'black',  //Outline color
+        fillOpacity: 0
+      };
+  
+      this.highlightedItems.eachLayer((layer) => {
+        layer.setStyle(unhighlight);
+        layer.highlighted = false;
+        this.highlightedItems.removeLayer(layer);
+      });
+      
     }
   }
 
@@ -4499,6 +4513,7 @@ export class MapComponent implements OnInit {
     }
     else if(coverage.label == this.baseLayer.name) {
       layer.addTo(this.map);
+      this.baseLayer.layer = layer;
     }
 
     this.layers.addBaseLayer(layer, coverage.label);

@@ -103,13 +103,13 @@ export class WindowComponent implements AfterViewInit {
     this.panelDiv.nativeElement.style.zIndex = WindowComponent.zIndex;
     WindowComponent.zIndex++;
     //console.log(WindowComponent.windowDivs[this.divsIndex].style.zIndex);
-    this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
-    this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
-    this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
+    // this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
+    // this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
+    // this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
+    // this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     if(this.mapComponent) {
-      this.mapComponent.resize(this.windowPanel.width, this.windowPanel.height);
+      this.mapComponent.resize(parseInt(this.panelDiv.nativeElement.offsetWidth), parseInt(this.panelDiv.nativeElement.offsetHeight));
       this.mapComponent.setWindowId(this.windowPanel.tag);
       this.controlPanel.setWindowId(this.windowPanel.tag);
     }

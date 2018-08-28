@@ -15,11 +15,11 @@
         </div>
         <br>
         <div class="name-button-container" *ngIf="areaSelected; else cancel">
-          <input class="input-field" #nameInput type="text" [value]="name">
+          <input class="input-field" type="text">
           <button type="button" class="btn btn-primary btn-responsive btn-custom-half-left invisible">a</button>
           <button type="button" class="btn btn-primary btn-responsive btn-custom-half-right invisible">a</button>
         </div>
-        <ng-template #cancel>
+        <ng-template>
             <button type="button" class="btn btn-primary btn-responsive internal-menu invisible">a</button>
         </ng-template>
       </div>
@@ -83,7 +83,7 @@
 
         <div class="outline slider-background">
           <button type="button" class="btn btn-primary btn-responsive btn-label  internal-menu">Layer Opacity</button>
-          <br><mat-slider class="slider-shift" [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
+          <br><mat-slider [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
         </div> 
 
         <p></p>
