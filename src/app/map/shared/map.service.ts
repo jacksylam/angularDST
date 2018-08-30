@@ -202,6 +202,7 @@ export class MapService {
     let index = this.mapHash.indexOf(map);
     this.controlPanelHash[index].setLoading(loading);
     this.detailPanelHash[index].setLoading(loading);
+    this.panelButtonHash[index].setLoading(loading);
   }
   
 }

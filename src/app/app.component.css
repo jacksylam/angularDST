@@ -11,9 +11,10 @@
   width: auto;
 }
 
-.navbar-inverted{
-  z-index: 10000;
-}
+/* .navbar {
+  width: 1110vw !important;
+  overflow: hidden;
+} */
 
 /* 
 .navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:focus, .navbar-default .navbar-nav>.active>a:hover{

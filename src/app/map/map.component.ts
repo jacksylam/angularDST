@@ -2139,8 +2139,9 @@ export class MapComponent implements OnInit {
     // this.metrics.total = this.getMetricsSuite(null);
 
     this.metrics = this.createMetrics();
-    this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics)
-
+    if(this.baseLayer.name == "Recharge Rate") {
+      this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
+    }
   }
 
 

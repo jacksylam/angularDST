@@ -28,6 +28,9 @@ export class SidebarPanelComponent implements OnInit {
 
   selected="Baseline Rainfall 1978-2007";
 
+  loading = 0;
+  debug = false;
+
   disabled = false;
 
   constructor(private mapService: MapService) { }
@@ -78,5 +81,11 @@ export class SidebarPanelComponent implements OnInit {
 
   toggleDisable() {
     this.disabled = !this.disabled;
+  }
+
+  setLoading(isLoading: -1 | 1) {
+    if(!this.debug) {
+      this.loading += isLoading;
+    }
   }
 }

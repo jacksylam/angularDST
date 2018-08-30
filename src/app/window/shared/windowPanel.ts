@@ -10,12 +10,17 @@ export class WindowPanel {
   tag: number;
   bodyType: string;
   data: any;
+  // components: {
+  //   map: MapComponent,
+  //   controls: SidebarControlsComponent,
+  //   sidebar: SidebarPanelComponent
+  // };
 
   constructor(title: string, bodyType: string, data: any) {
     this.title = title;
     this.left = 300;
     // this.top = 200;
-    this.width = 720;
+    this.width = 750;
     this.height = 540;
     this.backgroundAlpha = 1.0;
     this.zindex = 0;

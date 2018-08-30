@@ -28,7 +28,7 @@ export class BottombarPanelComponent implements OnInit {
   state = 'active';
   includeCaprock = true;
 
-  loading = -100;
+  loading = 0;
   debug = false;
 
   metrics = {
@@ -126,9 +126,10 @@ export class BottombarPanelComponent implements OnInit {
     this.displayMetrics.values = metrics[this.unitSystem];
     //this.displayMetrics.area = metrics.area;
 
+
     //capitalize first letter since didn't do this originally
     this.mode = mode.charAt(0).toUpperCase() + mode.slice(1);
-    
+  
     //bargraph can only be rendered if element exists
     //delay so transition has time to process (might want to switch how checking for mode)
     setTimeout(() => {
@@ -160,7 +161,6 @@ export class BottombarPanelComponent implements OnInit {
 
   backToBase() {
     this.mode = "none";
-    this.state = 'inactive';
   }
   
 
