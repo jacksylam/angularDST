@@ -13,7 +13,8 @@ export class WindowPanel {
   // components: {
   //   map: MapComponent,
   //   controls: SidebarControlsComponent,
-  //   sidebar: SidebarPanelComponent
+  //   menu: SidebarPanelComponent,
+  //   details: BottombarPanelComponent,
   // };
 
   constructor(title: string, bodyType: string, data: any) {
