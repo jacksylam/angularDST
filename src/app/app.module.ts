@@ -54,8 +54,8 @@ import { BackgroundComponent } from './background/background.component';
 import { DisclaimerComponent } from './disclaimer/disclaimer.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
-import { ShapeNameComponent } from './shape-name/shape-name.component';
 import { FormsModule } from '@angular/forms';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 @NgModule({
   declarations: [
@@ -71,7 +71,7 @@ import { FormsModule } from '@angular/forms';
     DisclaimerComponent,
     FeedbackComponent,
     HowToCiteComponent,
-    ShapeNameComponent,
+    NotFoundComponent
   ],
   imports: [
     HttpModule,
@@ -97,10 +97,10 @@ import { FormsModule } from '@angular/forms';
     WindowService,
     MapService,
     MapFirestoreService,
-    DBConnectService,
     CovDetailsService,
     ModifiedShpwriteService,
-    CovjsonTemplateService
+    CovjsonTemplateService,
+    DBConnectService
   ],
   bootstrap: [AppComponent],
   entryComponents: [

@@ -38,6 +38,7 @@ declare let require: any;
   selector: 'app-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
+  providers: []
 })
 export class MapComponent implements OnInit {
 
@@ -229,7 +230,7 @@ export class MapComponent implements OnInit {
     this.popup = L.popup();
 
     //thinking I like the collapsed version with this stuff
-    this.layers = L.control.layers({ "Base Map": empty }, null/*, {collapsed: false}*/).addTo(this.map)
+    this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
 
     this.initializeLayers();
 
@@ -315,7 +316,7 @@ export class MapComponent implements OnInit {
 
           break;
         //need to figure out how you want to handle this, should modifications be disabled?
-        case "Base Map":
+        case "Satellite Image":
           this.mapService.changeLayer(this, "base");
           //if swapping to base map while in naming mode indicate want shape interaction when break out, otherwise just enable
           if(this.interactionType != "name") {
@@ -723,7 +724,7 @@ export class MapComponent implements OnInit {
 
   private changeLayerOpacity(opacity: number) {
     //shouldn't change base map opacity
-    if (this.baseLayer.name != "Base Map") {
+    if (this.baseLayer.name != "Satellite Image") {
       this.baseLayer.layer.setOpacity(opacity);
     }
     this.opacity = opacity;
@@ -1526,8 +1527,20 @@ export class MapComponent implements OnInit {
 
     //used twice, so set function
     let getAquiferMetrics = () => {
+      let aquiferProperties = [];
+      //reorganize into array so can sort on aquifer number
       this.types.aquifers.layer.eachLayer((layer) => {
-    
+        aquiferProperties.push(layer.feature.properties);
+      });
+
+      //sort geographically by aquifer number
+      //is this the correct property?
+      aquiferProperties.sort((a1, a2) => {
+        return a2.DLNR_AQUIF - a1.DLNR_AQUIF;
+      });
+      //console.log(aquiferProperties);
+
+      aquiferProperties.forEach((properties) => {
         let info = {
           name: "",
           metrics: {},
@@ -1540,7 +1553,7 @@ export class MapComponent implements OnInit {
           roundedMetrics: {}
         };
 
-        let capName = layer.feature.properties.SYSTEM;
+        let capName = properties.SYSTEM;
         //switch from all upper case to capitalize first letter
         capName.split(/([\s \-])/).forEach((substr) => {
           info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
@@ -2880,7 +2893,7 @@ export class MapComponent implements OnInit {
                 }
 
                 this.fileHandler.reader.onload = (e) => {
-                  test(JSON.parse(this.fileHandler.reader.result));
+                  test(JSON.parse(this.fileHandler.reader.result as string));
                 }
                 this.fileHandler.reader.readAsText(file);
               }

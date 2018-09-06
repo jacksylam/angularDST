@@ -20,8 +20,8 @@ export class WindowPanel {
   constructor(title: string, bodyType: string, data: any) {
     this.title = title;
     this.left = 300;
-    // this.top = 200;
-    this.width = 750;
+    this.top = 100;
+    this.width = 765;
     this.height = 540;
     this.backgroundAlpha = 1.0;
     this.zindex = 0;

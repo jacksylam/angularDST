@@ -1,13 +1,13 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import {MapComponent} from "./map/map.component";
-import {HomeComponent} from "./home/home.component"
-import {WorkspaceComponent} from "./workspace/workspace.component"
+import { HomeComponent } from "./home/home.component"
+import { WorkspaceComponent } from "./workspace/workspace.component"
 import { InstructionsComponent } from './instructions/instructions.component';
 import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
 import { BackgroundComponent } from './background/background.component';
 import { DisclaimerComponent } from './disclaimer/disclaimer.component';
 import { FeedbackComponent } from './feedback/feedback.component';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 const routes: Routes = [
   // {
@@ -21,7 +21,8 @@ const routes: Routes = [
   { path: 'how_to_cite', component: HowToCiteComponent},
   { path: 'background',  component: BackgroundComponent },
   { path: 'disclaimer', component: DisclaimerComponent},
-  { path: 'feedback', component: FeedbackComponent}
+  { path: 'feedback', component: FeedbackComponent},
+  { path: '**', component: NotFoundComponent}
 ];
 
 @NgModule({

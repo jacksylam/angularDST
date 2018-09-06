@@ -56,6 +56,7 @@ export class MapService {
   showHideObjects(showOrHide: string, controlPanel: any) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     this.mapHash[index].showHideObjects(showOrHide);
+    console.log(this.mapHash.length);
   }
 
   changeLayer(map: any, type: string) {

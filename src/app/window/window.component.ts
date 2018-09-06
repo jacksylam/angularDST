@@ -103,10 +103,10 @@ export class WindowComponent implements AfterViewInit {
     this.panelDiv.nativeElement.style.zIndex = WindowComponent.zIndex;
     WindowComponent.zIndex++;
     //console.log(WindowComponent.windowDivs[this.divsIndex].style.zIndex);
-    // this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
-    // this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    // this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
-    // this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
+    this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
+    this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
+    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
+    this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     if(this.mapComponent) {
       this.mapComponent.resize(parseInt(this.panelDiv.nativeElement.offsetWidth), parseInt(this.panelDiv.nativeElement.offsetHeight));
@@ -226,7 +226,6 @@ export class WindowComponent implements AfterViewInit {
   }
 
   startResizing(e, type, __this){
-
     if(type == "bot" || type == "both") {
       let mouseY = e.pageY;
       let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(__this.panelDiv.nativeElement.style.height);
