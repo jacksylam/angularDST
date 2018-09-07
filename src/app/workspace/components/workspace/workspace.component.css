@@ -1,0 +1,29 @@
+.menu-button {
+    position: absolute;
+    top: 50px;
+    left: 0px;
+    height: 50px;
+    width: 90px;
+    background-color: rgb(56, 117, 194);
+    font-style: bold;
+    color: white;
+    border-bottom-right-radius: 7pt;
+    border-bottom-left-radius: 0pt !important;
+    z-index: -10;
+  }
+
+.menuButton-text {
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    font-style: bold;
+    color: white;
+  }
+
+  .menu-button:hover {
+    border-bottom-style: double;
+    border-right-style: double;
+    border-top-style: none;
+    border-left-style: none;
+    border-width: 7px;
+  }

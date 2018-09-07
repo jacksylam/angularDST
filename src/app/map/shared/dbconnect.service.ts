@@ -7,10 +7,18 @@ import { Cover } from './cover';
 @Injectable()
 export class DBConnectService {
 
+  static readonly TOKEN_FILE = "../../assets/APIToken.txt"
+
+  tokenReader: FileReader;
 
   oAuthAccessToken = "token";
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    //not working
+    this.http.get(DBConnectService.TOKEN_FILE).subscribe(data => {
+      console.log(data);
+    })
+  }
 
   spatialSearch(geometry: any): Observable<Cover[]> {
     //this will use the 0 indexed feature from the leaflet map, which should be a GeoJSON polygon, for the spatial search boundry

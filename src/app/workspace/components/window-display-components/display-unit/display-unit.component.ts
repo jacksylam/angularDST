@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-display-unit',
@@ -7,9 +7,31 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DisplayUnitComponent implements OnInit {
 
-  constructor() { }
+  @ViewChild('window') window
+
+  private id: number = -1;
+
+  components: {
+    visWindow: boolean,
+    reportWindow: boolean
+  };
+
+  constructor() {
+    this.components = {
+      visWindow: true,
+      reportWindow: false
+    }
+  }
+
+  ngAterViewInit() {
+    
+  }
 
   ngOnInit() {
+  }
+
+  setID(id: number) {
+    this.id = id;
   }
 
 }

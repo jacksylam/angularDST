@@ -1,6 +1,8 @@
 import { animate, transition, state, trigger, style, Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
 import { WindowPanel } from './shared/windowPanel';
 import { WindowService } from './shared/window.service';
+import { WindowFactoryService } from '../workspace/services/window-factory.service'
+
 
 declare let jsPDF: any;
 
@@ -43,7 +45,7 @@ export class WindowComponent implements AfterViewInit {
 
   @Input() public title: string;
   @Input() public type: string;
-  @Input() windowPanel: WindowPanel;
+  @Input() windowPanel: WindowPanel = new WindowPanel("Map", "map", {});;
 
 
 
@@ -91,7 +93,7 @@ export class WindowComponent implements AfterViewInit {
 
   divsIndex: number;
 
-  constructor(private windowService: WindowService, private _renderer: Renderer) { }
+  constructor(private wfs: WindowFactoryService, private windowService: WindowService, private _renderer: Renderer) { }
 
   ngAfterViewInit() {
     let __this = this;
@@ -323,6 +325,10 @@ export class WindowComponent implements AfterViewInit {
   }
 
   removeWindow() {
+    console.log(this);
+    this.wfs.foreach((unit) => {
+      console.log(unit);
+    });
     this.windowService.removeWindow(this.windowPanel.id);
   }
 

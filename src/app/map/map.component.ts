@@ -1534,9 +1534,8 @@ export class MapComponent implements OnInit {
       });
 
       //sort geographically by aquifer number
-      //is this the correct property?
       aquiferProperties.sort((a1, a2) => {
-        return a2.DLNR_AQUIF - a1.DLNR_AQUIF;
+        return parseInt(a2.CODE) - parseInt(a1.CODE);
       });
       //console.log(aquiferProperties);
 

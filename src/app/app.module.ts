@@ -56,6 +56,13 @@ import { FeedbackComponent } from './feedback/feedback.component';
 import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
 import { FormsModule } from '@angular/forms';
 import { NotFoundComponent } from './not-found/not-found.component';
+//import { WorkspaceComponent } from './workspace/components/workspace/workspace.component';
+
+
+import { WindowFactoryService } from "./workspace/services/window-factory.service";
+import { DisplayWrapperComponent } from 'app/workspace/components/window-display-components/display-wrapper/display-wrapper.component';
+import { DisplayUnitComponent } from './workspace/components/window-display-components/display-unit/display-unit.component'
+
 
 @NgModule({
   declarations: [
@@ -71,7 +78,9 @@ import { NotFoundComponent } from './not-found/not-found.component';
     DisclaimerComponent,
     FeedbackComponent,
     HowToCiteComponent,
-    NotFoundComponent
+    NotFoundComponent,
+    DisplayWrapperComponent,
+    DisplayUnitComponent
   ],
   imports: [
     HttpModule,
@@ -100,12 +109,14 @@ import { NotFoundComponent } from './not-found/not-found.component';
     CovDetailsService,
     ModifiedShpwriteService,
     CovjsonTemplateService,
-    DBConnectService
+    DBConnectService,
+    WindowFactoryService
   ],
   bootstrap: [AppComponent],
   entryComponents: [
     MessageDialogComponent,
-    AdvancedMappingDialogComponent
+    AdvancedMappingDialogComponent,
+    DisplayWrapperComponent
   ]
 })
 

@@ -26,6 +26,9 @@ export class WindowFactoryService {
     WindowFactoryService.DISPLAY_UNITS.push(unit);
   }
 
+  isEmpty(): boolean {
+    return WindowFactoryService.DISPLAY_UNITS.length == 0;
+  }
   
 
 }
