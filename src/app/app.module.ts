@@ -48,7 +48,6 @@ import { AdvancedMappingDialogComponent } from './advanced-mapping-dialog/advanc
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { WorkspaceComponent } from './workspace/workspace.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { BackgroundComponent } from './background/background.component';
 import { DisclaimerComponent } from './disclaimer/disclaimer.component';
@@ -57,6 +56,7 @@ import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
 import { FormsModule } from '@angular/forms';
 import { NotFoundComponent } from './not-found/not-found.component';
 //import { WorkspaceComponent } from './workspace/components/workspace/workspace.component';
+import { WorkspaceComponent } from './workspace/workspace.component';
 
 
 import { WindowFactoryService } from "./workspace/services/window-factory.service";

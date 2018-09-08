@@ -13,23 +13,33 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
 
   @ViewChild("windowContainer", { read: ViewContainerRef }) container: ViewContainerRef;
 
-  
+  static test;
 
   constructor(private componentFactoryResolver: ComponentFactoryResolver, private windowFactoryService: WindowFactoryService) { }
 
-  ngAfterViewInit() {
-    console.log("?");
-    if(this.windowFactoryService.isEmpty()) {
-      this.addWindow();
+  ngOnInit() {
+    if(WorkspaceComponent.test == undefined) {
+      WorkspaceComponent.test = this.container;
     }
-    else{
-      this.windowFactoryService.foreach((unit) => {
-        this.loadDisplayUnit(unit);
-      });
+    else {
+      this.container = WorkspaceComponent.test;
     }
+    // if(this.windowFactoryService.isEmpty()) {
+    //   this.addWindow();
+    // }
+    // else{
+    //   this.windowFactoryService.foreach((unit) => {
+    //     let componentRef = this.loadDisplayUnit();
+    //     setTimeout(() => {
+    //       //componentRef.destroy();
+    //       componentRef.instance.displayUnit.window.mapComponent = unit.window.mapComponent;
+    //       console.log(componentRef.instance.displayUnit);
+    //     }, 10000);
+    //   });
+    // }
   }
 
-  ngOnInit() {
+  ngAfterViewInit() {
   }
 
   addWindow() {
@@ -46,7 +56,8 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
       //add the new window's display unit to the list of created display units
       this.windowFactoryService.addUnit(componentRef.instance.displayUnit);
     }
-    console.log(displayUnit);
+    //console.log(displayUnit);
+    return componentRef;
 
     // componentRef.instance.displayUnit.close.subscribe((closeEvent: any) => {
     //   componentRef.destroy();
