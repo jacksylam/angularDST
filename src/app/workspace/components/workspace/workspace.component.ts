@@ -13,30 +13,30 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
 
   @ViewChild("windowContainer", { read: ViewContainerRef }) container: ViewContainerRef;
 
-  static test;
+  //static test;
 
   constructor(private componentFactoryResolver: ComponentFactoryResolver, private windowFactoryService: WindowFactoryService) { }
 
   ngOnInit() {
-    if(WorkspaceComponent.test == undefined) {
-      WorkspaceComponent.test = this.container;
-    }
-    else {
-      this.container = WorkspaceComponent.test;
-    }
-    // if(this.windowFactoryService.isEmpty()) {
-    //   this.addWindow();
+    // if(WorkspaceComponent.test == undefined) {
+    //   WorkspaceComponent.test = this.container;
     // }
-    // else{
-    //   this.windowFactoryService.foreach((unit) => {
-    //     let componentRef = this.loadDisplayUnit();
-    //     setTimeout(() => {
-    //       //componentRef.destroy();
-    //       componentRef.instance.displayUnit.window.mapComponent = unit.window.mapComponent;
-    //       console.log(componentRef.instance.displayUnit);
-    //     }, 10000);
-    //   });
+    // else {
+    //   this.container = WorkspaceComponent.test;
     // }
+    if(this.windowFactoryService.isEmpty()) {
+      this.addWindow();
+    }
+    else{
+      this.windowFactoryService.foreach((unit) => {
+        let componentRef = this.loadDisplayUnit();
+        setTimeout(() => {
+          //componentRef.destroy();
+          componentRef.instance.displayUnit.window.mapComponent.map = unit.window.mapComponent.map;
+          console.log(componentRef.instance.displayUnit);
+        }, 10000);
+      });
+    }
   }
 
   ngAfterViewInit() {

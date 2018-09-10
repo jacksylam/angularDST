@@ -2616,13 +2616,12 @@ export class MapComponent implements OnInit {
         // let topPoints = [];
         // let bottomPoints = [];
 
-        let first = true;
         for(let y = ydivisions[j].min; y <= ydivisions[j].max; y++) {
           if(yMapping[i][j][y]) {
             let yUTM = ys[y];
             //subtract/add 1 from min/max to make sure that rows with one point have a gap between sides
-            let xMinUTM = xs[yMapping[i][j][y].min] - 1;
-            let xMaxUTM = xs[yMapping[i][j][y].max] + 1;
+            let xMinUTM = xs[yMapping[i][j][y].min] - 74;
+            let xMaxUTM = xs[yMapping[i][j][y].max] + 74;
 
             //is x, y the right order?
             let coordLeft =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
@@ -2712,7 +2711,7 @@ export class MapComponent implements OnInit {
     //   let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
     //   this.addDrawnItem(L.polygon(polyCoords, {}));
       
-    //   //L.geoJSON(geojsonBounds).addTo(this.map);
+      //L.geoJSON(geojsonBounds).addTo(this.map);
     // });
     let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     this.metrics.customAreasTotal.metrics = customTotal;
