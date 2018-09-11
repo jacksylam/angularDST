@@ -1,0 +1,25 @@
+<div #panelDiv class="panel panel-default allowPointerEvents">
+  <!-- <div class="scroll-better"></div> -->
+  <div #dragBar class="panel-heading panel-heading-custom">
+    <!-- {{ windowPanel.title }} - {{ windowPanel.tag }} -->
+    <button class="navbarButton" (click)="removeWindow()">
+      <span class="glyphicon glyphicon-remove"></span>
+    </button>
+  </div>
+
+  <div class="map-container">
+
+    <app-map #map></app-map>
+
+  </div>
+
+  <app-sidebar-panel></app-sidebar-panel>
+  <app-bottombar-panel></app-bottombar-panel>
+  <app-sidebar-controls #controls></app-sidebar-controls>
+  <div class="drag-bottom" #resizeBot></div>
+  <div class="drag-right" #resizeRight></div>
+  <div class="drag-corner" #resizeCorner></div>
+
+</div>
+<div #phantomScrollLock class="phantom-scroll-lock"></div>
+<div #phantomScrollSmooth class="phantom-scroll-smooth"></div>

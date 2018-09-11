@@ -29,7 +29,7 @@
                     <!-- add something to check scenario for specific areas rather than currently selected one -->
                     <!-- <h3>Selected Scenario: {{scenario}}</h3> -->
 
-                    <table border="0" class="no-border">
+                    <table *ngIf="mode!='Cell'" border="0" class="no-border">
                         <tr class="no-border">
                             <td class="no-border-cell-title">Total Recharge, Baseline:</td>
                             <td class="no-border-cell-description">{{displayMetrics.values.volumetric.original}} {{displayMetrics.units.volumetric}}</td>
@@ -78,7 +78,7 @@
                     
                    <div class="width-ctrl footer">
                         <hr width="100%">
-                        Values rounded to 3 significant figures
+                        Values rounded to two decimal places
                     </div> 
                 </div>
                 

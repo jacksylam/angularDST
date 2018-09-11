@@ -1,0 +1,181 @@
+
+.panel {
+
+    position: absolute;
+    z-index: 0;
+    border-radius: 1%;
+    transition: left .01s ease-in, top .01s ease-in;
+  }
+  
+  .map-container {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 1);
+    width: 100%;
+    height: calc(100% - 30px);
+    padding: 10px;
+    border-radius: 1%;
+  }
+  
+  .report-container {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 1);
+    width: 100%;
+    height: calc(100% - 30px);
+    padding: 10px;
+    border-radius: 1%;
+    overflow: scroll;
+    
+  }
+  
+  
+  
+  
+  .panel-default>.panel-heading-custom {
+    background-color: rgba(108, 138, 164, 1);
+    color: #fff;
+    height: 30px;
+    padding: 5px;
+  }
+  
+  .panel-default>.panel-heading-custom:hover {
+    cursor: pointer;
+  }
+  
+  .download-button {
+    position: absolute;
+    top: 35px;
+    right: 25px;
+    z-index: 100;
+  }
+  
+  .navbarButton {
+    height: 20px; 
+    width: 20px;
+    float: right;
+    margin-left: 3px;
+    border-radius: 10%;
+    border-color: transparent;
+  }
+  
+  .glyphicon {
+    font-size: 12px;
+    transform: translate(-30%, -25%);
+  }
+  
+  .glyphicon-remove {
+    color: #F37E7E;
+  }
+  
+  .glyphicon-plus {
+    color: rgba(97, 97, 97, 0.85);
+  }
+  
+  .glyphicon-minus {
+    color: rgba(97, 97, 97, 0.35);
+  }
+  
+  .allowPointerEvents{
+    pointer-events: all;
+  }
+  
+  .btn-resize{
+    position: absolute;
+    top: 65%;
+    left:85%;
+    z-index: 99999;
+  }
+  
+  .graphs {
+    top: 2000px;
+    width: 400px;
+  }
+  
+  .drag-bottom {
+    position: absolute;
+    width: calc(100% - 7px);
+    height: 10px;
+    top: calc(100% - 5px);
+  }
+  
+  .drag-bottom:hover {
+    cursor: ns-resize;
+  }
+  
+  .drag-right {
+    position: absolute;
+    width: 10px;
+    height: calc(100% - 45px);
+    left: calc(100% - 5px);
+  }
+  
+  .drag-right:hover {
+    cursor: ew-resize;
+  }
+  
+  .drag-corner {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    top: calc(100% - 7px);
+    left: calc(100% - 7px);
+  }
+  
+  .drag-corner:hover {
+    cursor: nwse-resize;
+  }
+  
+  table, th, td {
+    border: 1px solid black;
+  }
+  
+  th, td {
+    padding: 15px;
+  }
+  
+  
+  
+  .phantom-scroll-lock {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+  
+  .phantom-scroll-smooth {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    transition: left .5s ease-in, top .5s ease-in;
+    pointer-events: none;
+  }
+  
+  .no-border {
+    border: none;
+  }
+  
+  
+  .no-border-cell-title {
+    border: none;
+    width: 40%;
+  }
+  
+  .no-border-cell-description {
+    border: none;
+    width: 60%;
+    padding-top: 30px;
+  }
+  
+  .no-border-cell-internal {
+    border: none;
+    width: 50%;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  
+  .nested-table {
+    width: 200px;
+  }
+  
+  .header-table {
+    width: 850px;
+  }

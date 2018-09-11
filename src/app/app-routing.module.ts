@@ -1,7 +1,10 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { HomeComponent } from "./home/home.component"
+
 import { WorkspaceComponent } from "./workspace/workspace.component"
+//import { WorkspaceComponent } from "./workspace/components/workspace/workspace.component"
+
 import { InstructionsComponent } from './instructions/instructions.component';
 import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
 import { BackgroundComponent } from './background/background.component';

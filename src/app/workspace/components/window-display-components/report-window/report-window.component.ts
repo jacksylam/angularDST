@@ -1,29 +1,19 @@
 import { animate, transition, state, trigger, style, Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
-import { WindowPanel } from './shared/windowPanel';
-import { WindowService } from './shared/window.service';
-import { WindowFactoryService } from '../workspace/services/window-factory.service'
-
 
 declare let jsPDF: any;
 
 @Component({
-  selector: 'app-window',
-  templateUrl: './window.component.html',
-  styleUrls: ['./window.component.css'],
-  providers: []
+  selector: 'app-report-window',
+  templateUrl: './report-window.component.html',
+  styleUrls: ['./report-window.component.css']
 })
+export class ReportWindowComponent implements AfterViewInit {
 
-export class WindowComponent implements AfterViewInit {
-
-  static lastClickDiv: any;
-  static windowDivs = [];
   static zIndex = 0;
 
   @ViewChild('dragBar') dragBar;
   @ViewChild('panelDiv') panelDiv;
-  @ViewChild('map') mapComponent;
-  @ViewChild('controls') controlPanel;
-  @ViewChild('glyphSize') glyphSize;
+
   @ViewChild('resizeCorner') resizeCorner;
   @ViewChild('resizeBot') resizeBot;
   @ViewChild('resizeRight') resizeRight;
@@ -45,10 +35,8 @@ export class WindowComponent implements AfterViewInit {
 
   @Input() public title: string;
   @Input() public type: string;
-  @Input() windowPanel: WindowPanel = new WindowPanel("Map", "map", {});;
 
-
-
+  data: any;
 
   aquiferGraphImage: any;
   customGraphImage: any;
@@ -77,64 +65,24 @@ export class WindowComponent implements AfterViewInit {
   }
   maximized = false;
 
-  saveHeight: number;
-  saveWidth: number;
-  saveTop: number;
-  saveLeft: number;
+  lastMouseXPosition: number;
+  lastMouseYPosition: number;
 
-  static lastMouseXPosition: number;
-  static lastMouseYPosition:number;
-
-  resizeSelected = false;  
-  resizeStartLeft: number;
-  resizeStartTop: number;
-  resizeStartWidth: number;
-  resizeStartHeight: number;
-
-  divsIndex: number;
-
-  constructor(private wfs: WindowFactoryService, private windowService: WindowService, private _renderer: Renderer) { }
+  constructor() { }
 
   ngAfterViewInit() {
     let __this = this;
     let resizeFunct;
-    this.scrollLock = false;
+    let scrollDragFunct;
+    let dragFunct;
 
-    this.divsIndex = WindowComponent.windowDivs.length;
-    WindowComponent.windowDivs.push(this.panelDiv.nativeElement);
-    this.panelDiv.nativeElement.style.zIndex = WindowComponent.zIndex;
-    WindowComponent.zIndex++;
+
+    this.bringWindowForward();
     //console.log(WindowComponent.windowDivs[this.divsIndex].style.zIndex);
-    this.panelDiv.nativeElement.style.width = this.windowPanel.width + 'px';
-    this.panelDiv.nativeElement.style.height = this.windowPanel.height + 'px';
-    this.panelDiv.nativeElement.style.left = this.windowPanel.left + 'px';
-    this.panelDiv.nativeElement.style.top = this.windowPanel.top + 'px';
-
-    if(this.mapComponent) {
-      this.mapComponent.resize(parseInt(this.panelDiv.nativeElement.offsetWidth), parseInt(this.panelDiv.nativeElement.offsetHeight));
-      this.mapComponent.setWindowId(this.windowPanel.tag);
-      this.controlPanel.setWindowId(this.windowPanel.tag);
-    }
-    else {
-      this.generateReportGraphs();
-    }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+    this.panelDiv.nativeElement.style.width = 500 + 'px';
+    this.panelDiv.nativeElement.style.height = 500 + 'px';
+    this.panelDiv.nativeElement.style.left = 100 + 'px';
+    this.panelDiv.nativeElement.style.top = 100+ 'px';
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
       // const mouseX = e.pageX;
@@ -161,31 +109,24 @@ export class WindowComponent implements AfterViewInit {
 
       this.phantomScrollSmooth.nativeElement.style.top = this.phantomScrollLock.nativeElement.style.top;
       this.phantomScrollSmooth.nativeElement.style.left = this.phantomScrollLock.nativeElement.style.left;
-      
-      WindowComponent.lastClickDiv = this;
+
       //console.log(WindowComponent.lastClickDiv.scrollPos);
-      document.addEventListener('mousemove', this.startDragging);
-      document.addEventListener('scroll', this.scrollDrag);
+      document.addEventListener('mousemove', dragFunct = (e) => {
+        this.startDragging(e, __this);
+      });
+      document.addEventListener('scroll', scrollDragFunct = (e) => {
+        this.scrollDrag(e, __this);
+      });
       this.bringWindowForward();
-    })
+    });
 
-    document.addEventListener('mouseup', () => { this.stopDragging(); });
+
     this.panelDiv.nativeElement.addEventListener('mousedown', () => { this.bringWindowForward(); });
-
-    //PanelExtend
-    // this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 500 + 'px';
-    // this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height+ 350  + 'px';
-    // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
-    // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
-      const mouseX = e.pageX;
-      const mouseY = e.pageY;
-      WindowComponent.lastClickDiv = this;
-
-      WindowComponent.lastMouseXPosition = e.pageX;
-      WindowComponent.lastMouseYPosition = e.pageY;
+      this.lastMouseXPosition = e.pageX;
+      this.lastMouseYPosition = e.pageY;
       
       //need to pass __this in to function, so save anonymous function call for removal
       document.addEventListener('mousemove', resizeFunct = (e) => {
@@ -193,12 +134,10 @@ export class WindowComponent implements AfterViewInit {
         e.preventDefault();
         this.startResizing(e, "both", __this);
       });
-    })
+    });
 
     this.resizeRight.nativeElement.addEventListener('mousedown', (e) => {
-      const mouseX = e.pageX;
-      WindowComponent.lastClickDiv = this;
-      WindowComponent.lastMouseXPosition = e.pageX;
+      this.lastMouseXPosition = e.pageX;
       
       
       //need to pass __this in to function, so save anonymous function call for removal
@@ -211,8 +150,7 @@ export class WindowComponent implements AfterViewInit {
 
     this.resizeBot.nativeElement.addEventListener('mousedown', (e) => {
       const mouseY = e.pageY;
-      WindowComponent.lastClickDiv = this;
-      WindowComponent.lastMouseYPosition = e.pageY;
+      this.lastMouseYPosition = e.pageY;
       
       
       //need to pass __this in to function, so save anonymous function call for removal
@@ -223,50 +161,46 @@ export class WindowComponent implements AfterViewInit {
       });
     })
 
-    document.addEventListener('mouseup', () => {document.removeEventListener('mousemove', resizeFunct)});
+    document.addEventListener('mouseup', () => {
+      document.removeEventListener('mousemove', resizeFunct);
+      document.removeEventListener('mousemove', dragFunct);
+      document.removeEventListener('scroll', scrollDragFunct);
+    });
     
   }
+
 
   startResizing(e, type, __this){
     if(type == "bot" || type == "both") {
       let mouseY = e.pageY;
-      let newHeight = (mouseY - WindowComponent.lastMouseYPosition) + parseInt(__this.panelDiv.nativeElement.style.height);
+      let newHeight = (mouseY - __this.lastMouseYPosition) + parseInt(__this.panelDiv.nativeElement.style.height);
 
       //minimum size
       if(newHeight >= 400) {
-        WindowComponent.lastMouseYPosition = mouseY;
+        this.lastMouseYPosition = mouseY;
         __this.panelDiv.nativeElement.style.height =  (newHeight) + 'px';
-        if(this.mapComponent) {
-          //for some reason percent size allows map to change width but not height, so change manually
-          __this.mapComponent.resize(__this.mapComponent.width, newHeight);
-        }
       }
       
     }
     if(type == "right" || type == "both") {
       let mouseX = e.pageX;
-      let newWidth = (mouseX - WindowComponent.lastMouseXPosition) + parseInt(__this.panelDiv.nativeElement.style.width);
+      let newWidth = (mouseX - this.lastMouseXPosition) + parseInt(__this.panelDiv.nativeElement.style.width);
       //minimum size
       if(newWidth >= 400) {
-        WindowComponent.lastMouseXPosition = mouseX;
+        this.lastMouseXPosition = mouseX;
         __this.panelDiv.nativeElement.style.width =  (newWidth) + 'px';
-        if(this.mapComponent) {
-          //for some reason percent size allows map to change width but not height, so change manually
-          __this.mapComponent.resize(newWidth, __this.mapComponent.height);
-        }
       }
     }
 
   }
 
-  startDragging(e) {
-    const container = WindowComponent.lastClickDiv;
-    let left = e.pageX - container.mouseCornerOffset.left;
-    let top = e.pageY - container.mouseCornerOffset.top;
+  startDragging(e, __this) {
+    let left = e.pageX - __this.mouseCornerOffset.left;
+    let top = e.pageY - __this.mouseCornerOffset.top;
 
 
-    if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 20) {
-      left = -parseInt(container.panelDiv.nativeElement.style.width) + 20;
+    if(left < -parseInt(__this.panelDiv.nativeElement.style.width) + 20) {
+      left = -parseInt(__this.panelDiv.nativeElement.style.width) + 20;
       
     }
     
@@ -274,39 +208,28 @@ export class WindowComponent implements AfterViewInit {
       top = 50;
       
     }
-    
-    container.panelDiv.nativeElement.style.left = left + 'px';
-    container.panelDiv.nativeElement.style.top = top + 'px';
 
-      //PanelExtend
-      // container.panelExtendDiv.nativeElement.style.left = left  + 'px';
-      // container.panelExtendDiv.nativeElement.style.top = top + 'px'; 
-    //window.getSelection().removeAllRanges();
+    
+    
+    __this.panelDiv.nativeElement.style.left = left + 'px';
+    __this.panelDiv.nativeElement.style.top = top + 'px';
    }
 
-  stopDragging() {
-    //WindowComponent.lastClickDiv.phantomScrollLock.nativeElement.style.top = '0px';
-    //WindowComponent.lastClickDiv.phantomScrollLock.nativeElement.style.left =  '0px';
-    document.removeEventListener('mousemove', this.startDragging);
-    document.removeEventListener('scroll', this.scrollDrag);
-  }
-
-  scrollDrag(e) {
+  scrollDrag(e, __this) {
     e.stopPropagation();
     e.preventDefault();
-    const container = WindowComponent.lastClickDiv;
     //console.log(container)
-    let left = window.pageXOffset - container.scrollPos.left + container.panelDiv.nativeElement.offsetLeft;
-    let top = window.pageYOffset - container.scrollPos.top + container.panelDiv.nativeElement.offsetTop;
+    let left = window.pageXOffset - __this.scrollPos.left + __this.panelDiv.nativeElement.offsetLeft;
+    let top = window.pageYOffset - __this.scrollPos.top + __this.panelDiv.nativeElement.offsetTop;
 
     //console.log(e);
     //console.log(top);
 
-    container.scrollPos.left = window.pageXOffset;
-    container.scrollPos.top = window.pageYOffset;
+    __this.scrollPos.left = window.pageXOffset;
+    __this.scrollPos.top = window.pageYOffset;
 
-    if(left < -parseInt(container.panelDiv.nativeElement.style.width) + 20) {
-      left = -parseInt(container.panelDiv.nativeElement.style.width) + 20;
+    if(left < -parseInt(__this.panelDiv.nativeElement.style.width) + 20) {
+      left = -parseInt(__this.panelDiv.nativeElement.style.width) + 20;
       
     }
     
@@ -314,77 +237,18 @@ export class WindowComponent implements AfterViewInit {
       top = 50;
     }
     
-    container.panelDiv.nativeElement.style.left = left + 'px';
-    container.panelDiv.nativeElement.style.top = top + 'px';
+    __this.panelDiv.nativeElement.style.left = left + 'px';
+    __this.panelDiv.nativeElement.style.top = top + 'px';
   }
 
-  bringWindowForward() {
+  bringWindowForward(__this = this) {
     //place window at highest z index
     //may go over menu at very high values, unlikely to be problemactic though
-    WindowComponent.windowDivs[this.divsIndex].style.zIndex = WindowComponent.zIndex++;
+    __this.panelDiv.nativeElement.style.zIndex = ReportWindowComponent.zIndex++;
   }
 
   removeWindow() {
-    console.log(this);
-    this.wfs.foreach((unit) => {
-      console.log(unit);
-    });
-    this.windowService.removeWindow(this.windowPanel.id);
-  }
-
-  //still very broken, should remove event listeners for move and resize while active, lock in place
-  maximize() {
-    if (!this.maximized) {
-      this.saveLeft = this.windowPanel.left;
-      this.saveTop = this.windowPanel.top;
-      this.saveHeight = this.windowPanel.height;
-      this.saveWidth = this.windowPanel.width;
-
-      this.windowPanel.left = 0;
-      this.windowPanel.top = 50;
-
-      this.panelDiv.nativeElement.style.left = 100 + '%';
-      this.panelDiv.nativeElement.style.top = 50 + 'px';
-      this.panelDiv.nativeElement.style.width = window.innerWidth + 'px';
-      this.panelDiv.nativeElement.style.height = window.innerHeight - 60 + 'px';
-      this._renderer.setElementStyle(this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + 1.0 + ')');
-      this.maximized = true;
-      this.glyphSize.nativeElement.class = 'glyphicon glyphicon-resize-small';
-
-    } else {
-      this.panelDiv.nativeElement.style.left = this.saveLeft + 'px';
-      this.panelDiv.nativeElement.style.top = this.saveTop + 'px';
-      this.panelDiv.nativeElement.style.width = this.saveWidth + 'px';
-      this.panelDiv.nativeElement.style.height = this.saveHeight + 'px';
-
-      this.windowPanel.left = this.saveLeft;
-      this.windowPanel.top = this.saveTop;
-
-      this._renderer.setElementStyle(
-        this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
-      this.maximized = false;
-      this.glyphSize.nativeElement.class = 'glyphicon glyphicon-resize-full';
-    }
-  }
-
-
-  incAlpha() {
-    this.windowPanel.backgroundAlpha += 0.05;
-    this.windowPanel.backgroundAlpha = Math.min(this.windowPanel.backgroundAlpha, 1.0);
-    this._renderer.setElementStyle(this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
-    //this._renderer.setElementStyle(this.childComponent.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
-      
-  }
-
-  decAlpha() {
-    this.windowPanel.backgroundAlpha -= 0.05;
-    this.windowPanel.backgroundAlpha = Math.max(this.windowPanel.backgroundAlpha, 0.0);
-    this._renderer.setElementStyle(this.panelDiv.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
-    //this._renderer.setElementStyle(this.childComponent.nativeElement, 'background-color', 'rgba(255, 255, 255,' + this.windowPanel.backgroundAlpha + ')');
-  }
-
-  getView() {
-    return [this.windowPanel.width, this.windowPanel.height];
+    
   }
 
 
@@ -409,12 +273,12 @@ export class WindowComponent implements AfterViewInit {
   download(type: string) {
     let columnsName = [
       {title: "Name", dataKey: "name"},
-      {title: "Area (" + this.windowPanel.data.unitSystem.units.area + ")", dataKey: "area"},  
+      {title: "Area (" + this.data.unitSystem.units.area + ")", dataKey: "area"},  
       {title: "Baseline", dataKey: "ormgd"}, 
       {title: "This Analysis", dataKey: "crmgd"},
       {title: "Baseline", dataKey: "oriny"}, 
       {title: "This Analysis", dataKey: "criny"},
-      {title: this.windowPanel.data.unitSystem.units.volumetric, dataKey: "diff"},
+      {title: this.data.unitSystem.units.volumetric, dataKey: "diff"},
       {title: "Percent Change", dataKey: "pchange"}
     ];
     let columnsSummary = [
@@ -425,8 +289,8 @@ export class WindowComponent implements AfterViewInit {
     ];
     let infoHeaders = [
       {title: "", dataKey: "blank"},
-      {title: "Total Recharge\n(" + this.windowPanel.data.unitSystem.units.volumetric + ")", dataKey: "cat1"},
-      {title: "Average Recharge\n(" + this.windowPanel.data.unitSystem.units.average + ")", dataKey: "cat2"},
+      {title: "Total Recharge\n(" + this.data.unitSystem.units.volumetric + ")", dataKey: "cat1"},
+      {title: "Average Recharge\n(" + this.data.unitSystem.units.average + ")", dataKey: "cat2"},
       {title: "Volumetric Difference", dataKey: "cat3"}
     ];
 
@@ -481,16 +345,16 @@ export class WindowComponent implements AfterViewInit {
 
     //rows = [];
 
-    this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
+    this.data.metrics.aquifers.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
-        area: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
-        oriny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
-        criny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
-        ormgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
-        crmgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
-        diff: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
-        pchange: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
+        area: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].area),
+        oriny: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].average.original),
+        criny: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       })
     })
 
@@ -564,16 +428,16 @@ export class WindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
-    this.windowPanel.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
+    this.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
       rows.push({
         name: aquifer.name,
-        area: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
-        oriny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
-        criny: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
-        ormgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
-        crmgd: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
-        diff: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
-        pchange: decimalAlign(aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
+        area: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].area),
+        oriny: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].average.original),
+        criny: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       })
     })
 
@@ -651,16 +515,16 @@ export class WindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
-    this.windowPanel.data.metrics.customAreas.forEach((customArea) => {
+    this.data.metrics.customAreas.forEach((customArea) => {
       rows.push({
         name: customArea.name,
-        area: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
-        oriny: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
-        criny: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
-        ormgd: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
-        crmgd: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
-        diff: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
-        pchange: decimalAlign(customArea.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
+        area: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].area),
+        oriny: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].average.original),
+        criny: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(customArea.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       });
     });
 
@@ -712,51 +576,51 @@ export class WindowComponent implements AfterViewInit {
     this.pdf.text(50, y, "Summary*");
 
     rows = [];
-    let total = this.windowPanel.data.metrics.total
-    let totalNoCaprock = this.windowPanel.data.metrics.totalNoCaprock
-    let customAreasTotal = this.windowPanel.data.metrics.customAreasTotal;
+    let total = this.data.metrics.total
+    let totalNoCaprock = this.data.metrics.totalNoCaprock
+    let customAreasTotal = this.data.metrics.customAreasTotal;
 
     rows.push({
-      type: "Area Total (" + this.windowPanel.data.unitSystem.units.area + ")",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].area),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].area)
+      type: "Area Total (" + this.data.unitSystem.units.area + ")",
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].area),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].area),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].area)
     });
     rows.push({
-      type: "Total Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original)
+      type: "Total Recharge, Baseline (" + this.data.unitSystem.units.volumetric + ")",
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.original)
     });
     rows.push({
-      type: "Total Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current)
+      type: "Total Recharge, This Analysis (" + this.data.unitSystem.units.volumetric + ")",
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.current)
     });
     rows.push({
-      type: "Average Recharge, Baseline (" + this.windowPanel.data.unitSystem.units.average + ")",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original)
+      type: "Average Recharge, Baseline (" + this.data.unitSystem.units.average + ")",
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.original),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.original),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.original)
     });
     rows.push({
-      type: "Average Recharge, This Analysis (" + this.windowPanel.data.unitSystem.units.average + ")",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current)
+      type: "Average Recharge, This Analysis (" + this.data.unitSystem.units.average + ")",
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.current),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.current),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.current)
     });
     rows.push({
-      type: "Volumetric Difference (" + this.windowPanel.data.unitSystem.units.volumetric + ")",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff)
+      type: "Volumetric Difference (" + this.data.unitSystem.units.volumetric + ")",
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.diff)
     });
     rows.push({
       type: "Volumetric Percent Change",
-      uda: decimalAlign(customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
-      total: decimalAlign(total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange)
+      uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
+      total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.pchange)
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
@@ -796,13 +660,13 @@ export class WindowComponent implements AfterViewInit {
 
     
   //   rows.push({
-  //     oriny: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.original,
-  //     criny: total.roundedMetrics[this.windowPanel.data.unitSystem.system].average.current,
-  //     ormgd: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original,
-  //     crmgd: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current,
-  //     numcells: total.roundedMetrics[this.windowPanel.data.unitSystem.system].area,
-  //     diff: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.diff,
-  //     pchange: total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.pchange,
+  //     oriny: total.roundedMetrics[this.data.unitSystem.system].average.original,
+  //     criny: total.roundedMetrics[this.data.unitSystem.system].average.current,
+  //     ormgd: total.roundedMetrics[this.data.unitSystem.system].volumetric.original,
+  //     crmgd: total.roundedMetrics[this.data.unitSystem.system].volumetric.current,
+  //     numcells: total.roundedMetrics[this.data.unitSystem.system].area,
+  //     diff: total.roundedMetrics[this.data.unitSystem.system].volumetric.diff,
+  //     pchange: total.roundedMetrics[this.data.unitSystem.system].volumetric.pchange,
   //   })
     
 
@@ -1084,7 +948,7 @@ export class WindowComponent implements AfterViewInit {
     for(let i = 1; i < numberOfPages; i++) {
       this.pdf.setPage(i);
       this.pdf.line(50, linePos, width - 50, linePos);
-      this.pdf.text(50, footerPos, "*Values rounded to two decimal places")
+      this.pdf.text(50, footerPos, "*Values rounded to 3 significant figures")
     }
     
     
@@ -1208,12 +1072,12 @@ export class WindowComponent implements AfterViewInit {
     let xPos = 0;
     let original;
     let current;
-    this.windowPanel.data.metrics.aquifers.forEach((aquifer) => {
+    this.data.metrics.aquifers.forEach((aquifer) => {
       graphData.aquifers.data[0].x.push(aquifer.name);
       graphData.aquifers.data[1].x.push(aquifer.name);
 
-      original = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
-      current = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+      original = aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.original;
+      current = aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.current;
       
       graphData.aquifers.data[0].y.push(original);
       graphData.aquifers.data[1].y.push(current);
@@ -1246,7 +1110,7 @@ export class WindowComponent implements AfterViewInit {
     graphData.aquifers.layout = {
       title: "Aquifer Recharge",
       yaxis: {
-        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+        title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
       },
       barmode: 'group',
       margin: {
@@ -1261,12 +1125,12 @@ export class WindowComponent implements AfterViewInit {
 
     let aquiferNoCaprockAnnotations = [];
     xPos = 0;
-    this.windowPanel.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
+    this.data.metrics.aquifersNoCaprock.forEach((aquifer) => {
       graphData.aquifersNoCaprock.data[0].x.push(aquifer.name);
       graphData.aquifersNoCaprock.data[1].x.push(aquifer.name);
 
-      original = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
-      current = aquifer.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+      original = aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.original;
+      current = aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.current;
 
       graphData.aquifersNoCaprock.data[0].y.push(original);
       graphData.aquifersNoCaprock.data[1].y.push(current);
@@ -1300,7 +1164,7 @@ export class WindowComponent implements AfterViewInit {
     graphData.aquifersNoCaprock.layout = {
       title: "Aquifer Recharge Excluding Caprock",
       yaxis: {
-        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+        title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
       },
       barmode: 'group',
       margin: {
@@ -1313,10 +1177,10 @@ export class WindowComponent implements AfterViewInit {
     graphData.full.data[0].x.push("Map Total");
     graphData.full.data[1].x.push("Map Total");
 
-    //console.log(this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system]);
+    //console.log(this.data.metrics.total.roundedMetrics[this.data.unitSystem.system]);
 
-    original = this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
-    current = this.windowPanel.data.metrics.total.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+    original = this.data.metrics.total.roundedMetrics[this.data.unitSystem.system].volumetric.original;
+    current = this.data.metrics.total.roundedMetrics[this.data.unitSystem.system].volumetric.current;
 
     graphData.full.data[0].y.push(original);
     graphData.full.data[1].y.push(current);
@@ -1324,7 +1188,7 @@ export class WindowComponent implements AfterViewInit {
     graphData.full.layout = {
       title: "Island Total Recharge",
       yaxis: {
-        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+        title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
       },
       barmode: 'group',
       margin: {
@@ -1351,8 +1215,8 @@ export class WindowComponent implements AfterViewInit {
     graphData.fullNoCaprock.data[0].x.push("Map Total Excluding Caprock");
     graphData.fullNoCaprock.data[1].x.push("Map Total Excluding Caprock");
 
-    original = this.windowPanel.data.metrics.totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
-    current = this.windowPanel.data.metrics.totalNoCaprock.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+    original = this.data.metrics.totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.original;
+    current = this.data.metrics.totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.current;
 
     graphData.fullNoCaprock.data[0].y.push(original);
     graphData.fullNoCaprock.data[1].y.push(current);
@@ -1360,7 +1224,7 @@ export class WindowComponent implements AfterViewInit {
     graphData.fullNoCaprock.layout = {
       title: "Island Total Recharge Excluding Caprock",
       yaxis: {
-        title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+        title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
       },
       barmode: 'group',
       margin: {
@@ -1419,17 +1283,17 @@ export class WindowComponent implements AfterViewInit {
     });
 
     //only plot custom area graphs if user had defined areas
-    if(this.windowPanel.data.metrics.customAreas.length > 0) {
-      let customAreasToGraph = this.windowPanel.data.metrics.customAreas;
+    if(this.data.metrics.customAreas.length > 0) {
+      let customAreasToGraph = this.data.metrics.customAreas;
       let graphTitle = "User-Defined Areas Recharge";
-      if(this.windowPanel.data.metrics.customAreas.length > 20) {
+      if(this.data.metrics.customAreas.length > 20) {
         //comparison function for area sizes (largest area first)
         let areaCompare = (areaA, areaB) => {
-          //console.log(areaA.metrics[this.windowPanel.data.unitSystem.system].area);
-          if(areaA.metrics[this.windowPanel.data.unitSystem.system].area > areaB.metrics[this.windowPanel.data.unitSystem.system].area) {
+          //console.log(areaA.metrics[this.data.unitSystem.system].area);
+          if(areaA.metrics[this.data.unitSystem.system].area > areaB.metrics[this.data.unitSystem.system].area) {
             return -1;
           }
-          else if(areaA.metrics[this.windowPanel.data.unitSystem.system].area < areaB.metrics[this.windowPanel.data.unitSystem.system].area) {
+          else if(areaA.metrics[this.data.unitSystem.system].area < areaB.metrics[this.data.unitSystem.system].area) {
             return 1;
           }
           else {
@@ -1452,8 +1316,8 @@ export class WindowComponent implements AfterViewInit {
         graphData.custom.data[0].x.push(areaName);
         graphData.custom.data[1].x.push(areaName);
 
-        original = area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
-        current = area.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+        original = area.roundedMetrics[this.data.unitSystem.system].volumetric.original;
+        current = area.roundedMetrics[this.data.unitSystem.system].volumetric.current;
   
         graphData.custom.data[0].y.push(original);
         graphData.custom.data[1].y.push(current);
@@ -1482,7 +1346,7 @@ export class WindowComponent implements AfterViewInit {
       graphData.custom.layout = {
         title: graphTitle,
         yaxis: {
-          title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+          title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
         },
         barmode: 'group',
         margin: {
@@ -1495,8 +1359,8 @@ export class WindowComponent implements AfterViewInit {
       graphData.customTotal.data[0].x.push("User-Defined Total");
       graphData.customTotal.data[1].x.push("User-Defined Total");
 
-      original = this.windowPanel.data.metrics.customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.original;
-      current = this.windowPanel.data.metrics.customAreasTotal.roundedMetrics[this.windowPanel.data.unitSystem.system].volumetric.current;
+      original = this.data.metrics.customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.original;
+      current = this.data.metrics.customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.current;
   
       graphData.customTotal.data[0].y.push(original)
       graphData.customTotal.data[1].y.push(current);
@@ -1504,7 +1368,7 @@ export class WindowComponent implements AfterViewInit {
       graphData.customTotal.layout = {
         title: "User-Defined Areas Total Recharge",
         yaxis: {
-          title: "Total Recharge (" + this.windowPanel.data.unitSystem.units.volumetric + ")"
+          title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
         },
         barmode: 'group',
         margin: {

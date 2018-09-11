@@ -6,6 +6,8 @@ import { WorkspaceComponent } from './components/workspace/workspace.component';
 import { WindowFactoryService } from "./services/window-factory.service";
 import { DisplayWrapperComponent } from './components/window-display-components/display-wrapper/display-wrapper.component';
 import { DisplayUnitComponent } from './components/window-display-components/display-unit/display-unit.component';
+import { VisWindowComponent } from './components/window-display-components/vis-window/vis-window.component';
+import { ReportWindowComponent } from './components/window-display-components/report-window/report-window.component';
 
 @NgModule({
   imports: [
@@ -15,7 +17,9 @@ import { DisplayUnitComponent } from './components/window-display-components/dis
   declarations: [
     WorkspaceComponent,
     DisplayWrapperComponent,
-    DisplayUnitComponent
+    DisplayUnitComponent,
+    VisWindowComponent,
+    ReportWindowComponent
   ]
 })
 export class WorkspaceModule { }

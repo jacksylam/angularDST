@@ -62,7 +62,11 @@ import { WorkspaceComponent } from './workspace/workspace.component';
 import { WindowFactoryService } from "./workspace/services/window-factory.service";
 import { DisplayWrapperComponent } from 'app/workspace/components/window-display-components/display-wrapper/display-wrapper.component';
 import { DisplayUnitComponent } from './workspace/components/window-display-components/display-unit/display-unit.component'
+import { VisWindowComponent } from './workspace/components/window-display-components/vis-window/vis-window.component';
+import { ReportWindowComponent } from './workspace/components/window-display-components/report-window/report-window.component';
 
+import { RouteReuseStrategy } from '@angular/router';
+import { CustomReuseStrategy } from './reuse-strategy'
 
 @NgModule({
   declarations: [
@@ -80,7 +84,9 @@ import { DisplayUnitComponent } from './workspace/components/window-display-comp
     HowToCiteComponent,
     NotFoundComponent,
     DisplayWrapperComponent,
-    DisplayUnitComponent
+    DisplayUnitComponent,
+    VisWindowComponent,
+    ReportWindowComponent
   ],
   imports: [
     HttpModule,
@@ -110,13 +116,17 @@ import { DisplayUnitComponent } from './workspace/components/window-display-comp
     ModifiedShpwriteService,
     CovjsonTemplateService,
     DBConnectService,
-    WindowFactoryService
+    WindowFactoryService,
+    {
+      provide: RouteReuseStrategy,
+      useClass: CustomReuseStrategy
+    }
   ],
   bootstrap: [AppComponent],
   entryComponents: [
     MessageDialogComponent,
     AdvancedMappingDialogComponent,
-    DisplayWrapperComponent
+    DisplayUnitComponent
   ]
 })
 

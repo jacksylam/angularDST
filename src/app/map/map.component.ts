@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, EventEmitter, Input } from '@angular/core';
 import { MapService } from '../map/shared/map.service';
 import { Http } from '@angular/http';
 import 'rxjs/add/operator/map';
@@ -169,7 +169,6 @@ export class MapComponent implements OnInit {
     recharge: {
       parameter: 'recharge',
       label: 'Recharge Rate',
-      //update with scheme sent by Kolja
       palette: C.linearPalette(this.rechargePalette()),
       data: null,
       baseData: {
@@ -2072,31 +2071,41 @@ export class MapComponent implements OnInit {
       }
     };
 
-    let precision = 3;
+    let decimalPlaces = 2;
 
     //convert rounded number string to number then back to string so scientific notation is removed
-    roundedMetrics.USC.average.original = Number(metrics.USC.average.original) >= Math.pow(10, precision) ? Number(metrics.USC.average.original.toPrecision(precision)).toString() : metrics.USC.average.original.toPrecision(precision);
-    roundedMetrics.USC.average.current = Number(metrics.USC.average.current) >= Math.pow(10, precision) ? Number(metrics.USC.average.current.toPrecision(precision)).toString() : metrics.USC.average.current.toPrecision(precision);
-    roundedMetrics.USC.volumetric.original = Number(metrics.USC.volumetric.original) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.original.toPrecision(precision)).toString() : metrics.USC.volumetric.original.toPrecision(precision);
-    roundedMetrics.USC.volumetric.current = Number(metrics.USC.volumetric.current) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.current.toPrecision(precision)).toString() : metrics.USC.volumetric.current.toPrecision(precision);
-    roundedMetrics.USC.average.diff = Number(metrics.USC.average.diff) >= Math.pow(10, precision) ? Number(metrics.USC.average.diff.toPrecision(precision)).toString() : metrics.USC.average.diff.toPrecision(precision);
-    roundedMetrics.USC.volumetric.diff = Number(metrics.USC.volumetric.diff) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.diff.toPrecision(precision)).toString() : metrics.USC.volumetric.diff.toPrecision(precision);
-    roundedMetrics.USC.average.pchange = Number(metrics.USC.average.pchange) >= Math.pow(10, precision) ? Number(metrics.USC.average.pchange.toPrecision(precision)).toString() : metrics.USC.average.pchange.toPrecision(precision);
-    roundedMetrics.USC.volumetric.pchange = Number(metrics.USC.volumetric.pchange) >= Math.pow(10, precision) ? Number(metrics.USC.volumetric.pchange.toPrecision(precision)).toString() : metrics.USC.volumetric.pchange.toPrecision(precision);
-    roundedMetrics.USC.area = Number(metrics.USC.area) >= Math.pow(10, precision) ? Number(metrics.USC.area.toPrecision(precision)).toString() : metrics.USC.area.toPrecision(precision);
+    roundedMetrics.USC.average.original = this.roundToDecimalPlaces(metrics.USC.average.original, decimalPlaces);
+    roundedMetrics.USC.average.current = this.roundToDecimalPlaces(metrics.USC.average.current, decimalPlaces);
+    roundedMetrics.USC.volumetric.original = this.roundToDecimalPlaces(metrics.USC.volumetric.original, decimalPlaces);
+    roundedMetrics.USC.volumetric.current = this.roundToDecimalPlaces(metrics.USC.volumetric.current, decimalPlaces);
+    roundedMetrics.USC.average.diff = this.roundToDecimalPlaces(metrics.USC.average.diff, decimalPlaces);
+    roundedMetrics.USC.volumetric.diff = this.roundToDecimalPlaces(metrics.USC.volumetric.diff, decimalPlaces);
+    roundedMetrics.USC.average.pchange = this.roundToDecimalPlaces(metrics.USC.average.pchange, decimalPlaces);
+    roundedMetrics.USC.volumetric.pchange = this.roundToDecimalPlaces(metrics.USC.volumetric.pchange, decimalPlaces);
+    roundedMetrics.USC.area = this.roundToDecimalPlaces(metrics.USC.area, decimalPlaces);
 
-    roundedMetrics.Metric.average.original = Number(metrics.Metric.average.original) >= Math.pow(10, precision) ? Number(metrics.Metric.average.original.toPrecision(precision)).toString() : metrics.Metric.average.original.toPrecision(precision);
-    roundedMetrics.Metric.average.current = Number(metrics.Metric.average.current) >= Math.pow(10, precision) ? Number(metrics.Metric.average.current.toPrecision(precision)).toString() : metrics.Metric.average.current.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.original = Number(metrics.Metric.volumetric.original) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.original.toPrecision(precision)).toString() : metrics.Metric.volumetric.original.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.current = Number(metrics.Metric.volumetric.current) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.current.toPrecision(precision)).toString() : metrics.Metric.volumetric.current.toPrecision(precision);
-    roundedMetrics.Metric.average.diff = Number(metrics.Metric.average.diff) >= Math.pow(10, precision) ? Number(metrics.Metric.average.diff.toPrecision(precision)).toString() : metrics.Metric.average.diff.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.diff = Number(metrics.Metric.volumetric.diff) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.diff.toPrecision(precision)).toString() : metrics.Metric.volumetric.diff.toPrecision(precision);
-    roundedMetrics.Metric.average.pchange = Number(metrics.Metric.average.pchange) >= Math.pow(10, precision) ? Number(metrics.Metric.average.pchange.toPrecision(precision)).toString() : metrics.Metric.average.pchange.toPrecision(precision);
-    roundedMetrics.Metric.volumetric.pchange = Number(metrics.Metric.volumetric.pchange) >= Math.pow(10, precision) ? Number(metrics.Metric.volumetric.pchange.toPrecision(precision)).toString() : metrics.Metric.volumetric.pchange.toPrecision(precision);
-    roundedMetrics.Metric.area = Number(metrics.Metric.area) >= Math.pow(10, precision) ? Number(metrics.Metric.area.toPrecision(precision)).toString() : metrics.Metric.area.toPrecision(precision);
+    roundedMetrics.Metric.average.original = this.roundToDecimalPlaces(metrics.Metric.average.original, decimalPlaces);
+    roundedMetrics.Metric.average.current = this.roundToDecimalPlaces(metrics.Metric.average.current, decimalPlaces);
+    roundedMetrics.Metric.volumetric.original = this.roundToDecimalPlaces(metrics.Metric.volumetric.original, decimalPlaces);
+    roundedMetrics.Metric.volumetric.current = this.roundToDecimalPlaces(metrics.Metric.volumetric.current, decimalPlaces);
+    roundedMetrics.Metric.average.diff = this.roundToDecimalPlaces(metrics.Metric.average.diff, decimalPlaces);
+    roundedMetrics.Metric.volumetric.diff = this.roundToDecimalPlaces(metrics.Metric.volumetric.diff, decimalPlaces);
+    roundedMetrics.Metric.average.pchange = this.roundToDecimalPlaces(metrics.Metric.average.pchange, decimalPlaces);
+    roundedMetrics.Metric.volumetric.pchange = this.roundToDecimalPlaces(metrics.Metric.volumetric.pchange, decimalPlaces);
+    roundedMetrics.Metric.area = this.roundToDecimalPlaces(metrics.Metric.area, decimalPlaces);
 
 
     return roundedMetrics;
+  }
+
+  roundToDecimalPlaces(value: number, places: number): string {
+    let shift = Math.pow(10, places);
+    let digits = Math.round(value * shift).toString();
+    while(digits.length < 3) {
+      digits = "0" + digits;
+    }
+    let rounded = digits.slice(0, -2) + "." + digits.slice(-2);
+    return rounded;
   }
 
 
@@ -2623,7 +2632,6 @@ export class MapComponent implements OnInit {
             let xMinUTM = xs[yMapping[i][j][y].min] - 74;
             let xMaxUTM = xs[yMapping[i][j][y].max] + 74;
 
-            //is x, y the right order?
             let coordLeft =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
             let coordRight =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMaxUTM, yUTM]);
             
@@ -2701,18 +2709,18 @@ export class MapComponent implements OnInit {
     let objects = L.geoJSON(geometries).toGeoJSON();
     // console.log(objects);
 
-    // geometries.forEach((geometry) => {
-    //   // let geojsonBounds = {
-    //   //   "type": "Feature",
-    //   //   "properties": {},
-    //   //   "geometry": geometry
-    //   // };
-    //   //console.log(geometry);
-    //   let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
-    //   this.addDrawnItem(L.polygon(polyCoords, {}));
+    geometries.forEach((geometry) => {
+      // let geojsonBounds = {
+      //   "type": "Feature",
+      //   "properties": {},
+      //   "geometry": geometry
+      // };
+      //console.log(geometry);
+      let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
+      this.addDrawnItem(L.polygon(polyCoords, {}));
       
       //L.geoJSON(geojsonBounds).addTo(this.map);
-    // });
+    });
     let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     this.metrics.customAreasTotal.metrics = customTotal;
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
