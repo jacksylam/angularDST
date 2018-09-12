@@ -2099,10 +2099,15 @@ export class MapComponent implements OnInit {
   }
 
   roundToDecimalPlaces(value: number, places: number): string {
+    let isNegative = value < 0;
     let shift = Math.pow(10, places);
-    let digits = Math.round(value * shift).toString();
-    while(digits.length < 3) {
+    let abs = Math.abs(value);
+    let digits = Math.round(abs * shift).toString();
+    while(digits.length < places + 1) {
       digits = "0" + digits;
+    }
+    if(isNegative) {
+      digits = "-" + digits;
     }
     let rounded = digits.slice(0, -2) + "." + digits.slice(-2);
     return rounded;

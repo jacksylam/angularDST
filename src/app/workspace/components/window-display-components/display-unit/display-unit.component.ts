@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, Output } from '@angular/core';
 
 @Component({
   selector: 'app-display-unit',
@@ -8,6 +8,8 @@ import { Component, OnInit, Input, ViewChild } from '@angular/core';
 export class DisplayUnitComponent implements OnInit {
 
   @ViewChild('window') window
+
+  //@Output()
 
   private id: number = -1;
 
