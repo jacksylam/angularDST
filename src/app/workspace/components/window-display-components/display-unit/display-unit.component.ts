@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, Output } from '@angular/core';
+import { Component, OnInit, ViewChild, Output, Input, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-display-unit',
@@ -7,11 +7,20 @@ import { Component, OnInit, Input, ViewChild, Output } from '@angular/core';
 })
 export class DisplayUnitComponent implements OnInit {
 
-  @ViewChild('window') window
+  @ViewChild('window') window;
 
-  //@Output()
+  @Input("id") id;
 
-  private id: number = -1;
+  @Output("close") close = new EventEmitter();
+  
+  private position = {
+    top: 100,
+    left: 300,
+    width: 765,
+    height: 540
+  };
+
+  data = null;
 
   components: {
     visWindow: boolean,
@@ -27,6 +36,25 @@ export class DisplayUnitComponent implements OnInit {
 
   ngAterViewInit() {
     
+  }
+
+  windowClosed(e: any) {
+    if(e == "vis") {
+      this.components.visWindow = false;
+    }
+    else {
+      this.components.reportWindow = false;
+    }
+
+    if(!this.components.reportWindow && !this.components.visWindow) {
+      this.close.emit(null);
+    }
+  }
+
+  //for now pass data through open event (eventually should be pulled automatically from metric service)
+  showReport(data: any) {
+    this.data = data;
+    this.components.reportWindow = true;
   }
 
   ngOnInit() {

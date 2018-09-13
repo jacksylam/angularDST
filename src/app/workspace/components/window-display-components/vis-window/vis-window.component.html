@@ -1,7 +1,7 @@
 <div #panelDiv class="panel panel-default allowPointerEvents">
   <!-- <div class="scroll-better"></div> -->
   <div #dragBar class="panel-heading panel-heading-custom">
-    <!-- {{ windowPanel.title }} - {{ windowPanel.tag }} -->
+    Map - {{id}}
     <button class="navbarButton" (click)="removeWindow()">
       <span class="glyphicon glyphicon-remove"></span>
     </button>
@@ -9,7 +9,7 @@
 
   <div class="map-container">
 
-    <app-map #map></app-map>
+    <app-map #map (showReport)="showReport($event)"></app-map>
 
   </div>
 

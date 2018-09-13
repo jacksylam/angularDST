@@ -1,5 +1,5 @@
-import { animate, transition, state, trigger, style, Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
-
+import { Component, AfterViewInit, Input, ViewChild, EventEmitter, Output } from '@angular/core';
+import { WindowLayersService } from '../../../services/window-layers.service';
 
 declare let jsPDF: any;
 
@@ -11,7 +11,6 @@ declare let jsPDF: any;
 })
 
 export class VisWindowComponent implements AfterViewInit {
-  static zIndex = 0;
 
   @ViewChild('dragBar') dragBar;
   @ViewChild('panelDiv') panelDiv;
@@ -22,14 +21,19 @@ export class VisWindowComponent implements AfterViewInit {
   @ViewChild('resizeBot') resizeBot;
   @ViewChild('resizeRight') resizeRight;
 
-
-
   @ViewChild('phantomScrollLock') phantomScrollLock;
   @ViewChild('phantomScrollSmooth') phantomScrollSmooth;
 
+  @Input() public id: number;
+  @Input() public position: {
+    top: number,
+    left: number,
+    width: number,
+    height: number
+  };
 
-  scrollLock: boolean;
-
+  @Output("close") close = new EventEmitter();
+  @Output("showReport") report = new EventEmitter();
 
   mouseCornerOffset: {
     left: number,
@@ -41,39 +45,23 @@ export class VisWindowComponent implements AfterViewInit {
   }
   maximized = false;
 
-  saveHeight: number;
-  saveWidth: number;
-  saveTop: number;
-  saveLeft: number;
-
   lastMouseXPosition: number;
   lastMouseYPosition: number;
 
-  resizeSelected = false;  
-  resizeStartLeft: number;
-  resizeStartTop: number;
-  resizeStartWidth: number;
-  resizeStartHeight: number;
-
-  divsIndex: number;
-
-  constructor() { }
+  constructor(private windowLayers: WindowLayersService) { }
 
   ngAfterViewInit() {
     let __this = this;
     let resizeFunct;
     let scrollDragFunct;
     let dragFunct;
-    this.scrollLock = false;
 
+    this.panelDiv.nativeElement.style.width = this.position.width + 'px';
+    this.panelDiv.nativeElement.style.height = this.position.height + 'px';
+    this.panelDiv.nativeElement.style.left = this.position.left + 'px';
+    this.panelDiv.nativeElement.style.top = this.position.top + 'px';
 
     this.bringWindowForward();
-    //console.log(WindowComponent.windowDivs[this.divsIndex].style.zIndex);
-    this.panelDiv.nativeElement.style.width = 500 + 'px';
-    this.panelDiv.nativeElement.style.height = 500 + 'px';
-    this.panelDiv.nativeElement.style.left = 100 + 'px';
-    this.panelDiv.nativeElement.style.top = 100+ 'px';
-
 
     this.mapComponent.resize(parseInt(this.panelDiv.nativeElement.offsetWidth), parseInt(this.panelDiv.nativeElement.offsetHeight));
     this.mapComponent.setWindowId(1);
@@ -117,19 +105,6 @@ export class VisWindowComponent implements AfterViewInit {
 
 
     this.panelDiv.nativeElement.addEventListener('mousedown', () => { this.bringWindowForward(); });
-
-
-
-
-
-
-
-
-    //PanelExtend
-    // this.panelExtendDiv.nativeElement.style.width = this.windowPanel.width + 500 + 'px';
-    // this.panelExtendDiv.nativeElement.style.height = this.windowPanel.height+ 350  + 'px';
-    // this.panelExtendDiv.nativeElement.style.left = this.windowPanel.left + 'px';
-    // this.panelExtendDiv.nativeElement.style.top = this.windowPanel.top + 'px';
 
     
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
@@ -260,10 +235,14 @@ export class VisWindowComponent implements AfterViewInit {
   bringWindowForward(__this = this) {
     //place window at highest z index
     //may go over menu at very high values, unlikely to be problemactic though
-    __this.panelDiv.nativeElement.style.zIndex = VisWindowComponent.zIndex++;
+    __this.panelDiv.nativeElement.style.zIndex = this.windowLayers.getTopZIndex();
+  }
+
+  showReport(data: any) {
+    this.report.emit(data);
   }
 
   removeWindow() {
-    
+    this.close.emit("vis");
   }
 }

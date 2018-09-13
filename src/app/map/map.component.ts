@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, EventEmitter, Input, Output } from '@angular/core';
 import { MapService } from '../map/shared/map.service';
 import { Http } from '@angular/http';
 import 'rxjs/add/operator/map';
@@ -43,6 +43,8 @@ declare let require: any;
 export class MapComponent implements OnInit {
 
   @ViewChild('mapid') mapid;
+
+  @Output("showReport") report = new EventEmitter();
 
   static aquiferIndices: any;
   static aquiferIndexing: Promise<any> = null;
@@ -245,33 +247,33 @@ export class MapComponent implements OnInit {
     this.defaultMetrics = {
       USC: {
         average: {
-          original: "0",
-          current: "0",
-          diff: "0",
-          pchange: "0"
+          original: "0.00",
+          current: "0.00",
+          diff: "0.00",
+          pchange: "0.00"
         },
         volumetric: {
-          original: "0",
-          current: "0",
-          diff: "0",
-          pchange: "0"
+          original: "0.00",
+          current: "0.00",
+          diff: "0.00",
+          pchange: "0.00"
         },
-        area: "0"
+        area: "0.00"
       },
       Metric: {
         average: {
-          original: "0",
-          current: "0",
-          diff: "0",
-          pchange: "0"
+          original: "0.00",
+          current: "0.00",
+          diff: "0.00",
+          pchange: "0.00"
         },
         volumetric: {
-          original: "0",
-          current: "0",
-          diff: "0",
-          pchange: "0"
+          original: "0.00",
+          current: "0.00",
+          diff: "0.00",
+          pchange: "0.00"
         },
-        area: "0"
+        area: "0.00"
       }
     };
 
@@ -1480,8 +1482,8 @@ export class MapComponent implements OnInit {
         }
       }
     }
-    let reportWindow = new WindowPanel("Report", "report", data);
-    this.windowService.addWindow(reportWindow, this.windowId);
+    
+    this.report.emit(data);
   }
 
 
@@ -2714,18 +2716,18 @@ export class MapComponent implements OnInit {
     let objects = L.geoJSON(geometries).toGeoJSON();
     // console.log(objects);
 
-    geometries.forEach((geometry) => {
-      // let geojsonBounds = {
-      //   "type": "Feature",
-      //   "properties": {},
-      //   "geometry": geometry
-      // };
-      //console.log(geometry);
-      let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
-      this.addDrawnItem(L.polygon(polyCoords, {}));
+    // geometries.forEach((geometry) => {
+    //   // let geojsonBounds = {
+    //   //   "type": "Feature",
+    //   //   "properties": {},
+    //   //   "geometry": geometry
+    //   // };
+    //   //console.log(geometry);
+    //   let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
+    //   this.addDrawnItem(L.polygon(polyCoords, {}));
       
-      //L.geoJSON(geojsonBounds).addTo(this.map);
-    });
+    //   //L.geoJSON(geojsonBounds).addTo(this.map);
+    // });
     let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     this.metrics.customAreasTotal.metrics = customTotal;
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);

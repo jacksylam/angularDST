@@ -1,4 +1,5 @@
-import { animate, transition, state, trigger, style, Component, AfterViewInit, Input, ViewChild, Renderer } from '@angular/core';
+import { Component, AfterViewInit, Input, ViewChild, Output, EventEmitter } from '@angular/core';
+import { WindowLayersService } from '../../../services/window-layers.service';
 
 declare let jsPDF: any;
 
@@ -8,8 +9,6 @@ declare let jsPDF: any;
   styleUrls: ['./report-window.component.css']
 })
 export class ReportWindowComponent implements AfterViewInit {
-
-  static zIndex = 0;
 
   @ViewChild('dragBar') dragBar;
   @ViewChild('panelDiv') panelDiv;
@@ -28,15 +27,18 @@ export class ReportWindowComponent implements AfterViewInit {
   @ViewChild('phantomScrollLock') phantomScrollLock;
   @ViewChild('phantomScrollSmooth') phantomScrollSmooth;
 
-  // @ViewChild('aquiferTable') aquiferTable;
-  // @ViewChild('customTable') customTable;
-  // @ViewChild('customTotalTable') customTotalTable;
-  // @ViewChild('fullTable') fullTable;
+  @Input() public id: number;
+  @Input() public position: {
+    top: number,
+    left: number,
+    width: number,
+    height: number
+  };
+  @Input() data: any;
 
-  @Input() public title: string;
-  @Input() public type: string;
+  @Output("close") close = new EventEmitter();
 
-  data: any;
+  
 
   aquiferGraphImage: any;
   customGraphImage: any;
@@ -53,6 +55,7 @@ export class ReportWindowComponent implements AfterViewInit {
     total: null,
     totalNoCaprock: null
   };
+
   graphOrder = ["aquifers", "aquifersNoCaprock", "custom", "customTotal", "total", "totalNoCaprock"];
 
   mouseCornerOffset: {
@@ -68,7 +71,7 @@ export class ReportWindowComponent implements AfterViewInit {
   lastMouseXPosition: number;
   lastMouseYPosition: number;
 
-  constructor() { }
+  constructor(private windowLayers: WindowLayersService) { }
 
   ngAfterViewInit() {
     let __this = this;
@@ -76,21 +79,15 @@ export class ReportWindowComponent implements AfterViewInit {
     let scrollDragFunct;
     let dragFunct;
 
+    this.panelDiv.nativeElement.style.width = this.position.width + 'px';
+    this.panelDiv.nativeElement.style.height = this.position.height + 'px';
+    this.panelDiv.nativeElement.style.left = this.position.left + 'px';
+    this.panelDiv.nativeElement.style.top = this.position.top + 'px';
 
     this.bringWindowForward();
-    //console.log(WindowComponent.windowDivs[this.divsIndex].style.zIndex);
-    this.panelDiv.nativeElement.style.width = 500 + 'px';
-    this.panelDiv.nativeElement.style.height = 500 + 'px';
-    this.panelDiv.nativeElement.style.left = 100 + 'px';
-    this.panelDiv.nativeElement.style.top = 100+ 'px';
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
-      // const mouseX = e.pageX;
-      // const mouseY = e.pageY;
-      //transition = false;
-
-      // this.mouseWindowLeft = this.panelDiv.nativeElement.offsetLeft;
-      // this.mouseWindowTop = this.panelDiv.nativeElement.offsetTop;
+ 
       this.mouseCornerOffset = {
         left: e.pageX - this.panelDiv.nativeElement.offsetLeft,
         top: e.pageY - this.panelDiv.nativeElement.offsetTop
@@ -100,7 +97,6 @@ export class ReportWindowComponent implements AfterViewInit {
         left: window.pageXOffset,
         top: window.pageYOffset
       }
-      //console.log(this.scrollPos);
 
       e.stopPropagation();
       e.preventDefault();
@@ -218,12 +214,8 @@ export class ReportWindowComponent implements AfterViewInit {
   scrollDrag(e, __this) {
     e.stopPropagation();
     e.preventDefault();
-    //console.log(container)
     let left = window.pageXOffset - __this.scrollPos.left + __this.panelDiv.nativeElement.offsetLeft;
     let top = window.pageYOffset - __this.scrollPos.top + __this.panelDiv.nativeElement.offsetTop;
-
-    //console.log(e);
-    //console.log(top);
 
     __this.scrollPos.left = window.pageXOffset;
     __this.scrollPos.top = window.pageYOffset;
@@ -244,11 +236,11 @@ export class ReportWindowComponent implements AfterViewInit {
   bringWindowForward(__this = this) {
     //place window at highest z index
     //may go over menu at very high values, unlikely to be problemactic though
-    __this.panelDiv.nativeElement.style.zIndex = ReportWindowComponent.zIndex++;
+    __this.panelDiv.nativeElement.style.zIndex = this.windowLayers.getTopZIndex();
   }
 
   removeWindow() {
-    
+    this.close.emit("report");
   }
 
 
@@ -335,11 +327,6 @@ export class ReportWindowComponent implements AfterViewInit {
         cat2: {columnWidth: normalWidth * 2},
         cat3: {columnWidth: normalWidth * 2}
       },
-      drawHeaderRow: (row, data) => {
-        // row.cells.cat1.styles.textColor = [85, 0, 0];
-        // row.cells.cat2.styles.textColor = [0, 42, 0];
-        // row.cells.cat3.styles.textColor = [0, 0, 54];
-      },
       margin: {top: 60}
     });
 
@@ -379,8 +366,6 @@ export class ReportWindowComponent implements AfterViewInit {
         pchange: {columnWidth: normalWidth}
       },
       drawHeaderRow: (row, data) => {
-        //row.styles.font = "arial";
-        // console.log(row);
         row.cells.area.styles.halign = "center";
         row.cells.oriny.styles.halign = "center";
         row.cells.criny.styles.halign = "center";
@@ -419,11 +404,6 @@ export class ReportWindowComponent implements AfterViewInit {
         cat1: {columnWidth: normalWidth * 2},
         cat2: {columnWidth: normalWidth * 2},
         cat3: {columnWidth: normalWidth * 2}
-      },
-      drawHeaderRow: (row, data) => {
-        // row.cells.cat1.styles.textColor = [85, 0, 0];
-        // row.cells.cat2.styles.textColor = [0, 42, 0];
-        // row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -506,11 +486,6 @@ export class ReportWindowComponent implements AfterViewInit {
         cat1: {columnWidth: normalWidth * 2},
         cat2: {columnWidth: normalWidth * 2},
         cat3: {columnWidth: normalWidth * 2}
-      },
-      drawHeaderRow: (row, data) => {
-        // row.cells.cat1.styles.textColor = [85, 0, 0];
-        // row.cells.cat2.styles.textColor = [0, 42, 0];
-        // row.cells.cat3.styles.textColor = [0, 0, 54];
       },
       margin: {top: 60}
     });
@@ -630,11 +605,6 @@ export class ReportWindowComponent implements AfterViewInit {
       columnStyles: {
         total: {columnWidth: 50}
       },
-      drawHeaderRow: (row, data) => {
-        // row.cells.uda.styles.halign = "center";
-        // row.cells.total.styles.halign = "center";
-        // row.cells.totalNoCaprock.styles.halign = "center";
-      },
       drawRow: (row, data) => {
         row.cells.uda.styles.font = "courier"
         row.cells.total.styles.font = "courier";
@@ -643,42 +613,6 @@ export class ReportWindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
-
-  //   y = this.pdf.autoTable.previous.finalY + 50
-
-  //   if(y + 50 >= height) {
-  //     this.pdf.addPage();
-  //     y = 50;
-  //   }
-
-  //  // this.pdf.addImage(this.graphImageData[2], 'PNG', 15, y, 550, 250);
-
-
-  //   this.pdf.text(50, y, "Map Total");
-
-  //   rows = [];
-
-    
-  //   rows.push({
-  //     oriny: total.roundedMetrics[this.data.unitSystem.system].average.original,
-  //     criny: total.roundedMetrics[this.data.unitSystem.system].average.current,
-  //     ormgd: total.roundedMetrics[this.data.unitSystem.system].volumetric.original,
-  //     crmgd: total.roundedMetrics[this.data.unitSystem.system].volumetric.current,
-  //     numcells: total.roundedMetrics[this.data.unitSystem.system].area,
-  //     diff: total.roundedMetrics[this.data.unitSystem.system].volumetric.diff,
-  //     pchange: total.roundedMetrics[this.data.unitSystem.system].volumetric.pchange,
-  //   })
-    
-
-  //   this.pdf.autoTable(columnsNameless, rows, {
-  //     startY: y + 20,
-  //     styles: {
-  //       overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
-  //     columnStyles: {
-  //       name: {columnWidth: 90},
-  //     },
-  //     margin: {top: 60}
-  //   });
 
     y = this.pdf.autoTable.previous.finalY + 50;
 
@@ -703,9 +637,6 @@ export class ReportWindowComponent implements AfterViewInit {
       }
 
     }
-
-
-    //the joys of formatting
 
     //just put this on its own page
     this.pdf.addPage();
@@ -878,67 +809,6 @@ export class ReportWindowComponent implements AfterViewInit {
       y += disclaimerSize;
     });
 
-
-
-
-
-
-    //using new format as in example document, leave this for now in case want to revert to old style
-
-    // //first line offsets after header
-    // let offset1 = this.pdf.getStringUnitWidth(h1) * 9;
-    // let offset2 = this.pdf.getStringUnitWidth(h2) * 9;
-    // //width of page with 50 padding on either end
-    // let pwidth = this.pdf.internal.pageSize.width;
-    // //width of line after header
-    // let firstLineWidth1 = pwidth - offset1;
-    // //get first line (different from other lines since bolded header)
-    // let firstLineText1 = this.pdf.splitTextToSize(t1, firstLineWidth1)[0]
-    // //remaining text after first line (remove one extra character to get rid of space)
-    // let remainingText1 = t1.substring(firstLineText1.length + 1, t1.length);
-    // //get the rest of the lines of text, split at page width
-    // let restLinesText1 = this.pdf.splitTextToSize(remainingText1, pwidth);
-
-    // //width of line after header
-    // let firstLineWidth2 = pwidth - offset1;
-    // //get first line (different from other lines since bolded header)
-    // let firstLineText2 = this.pdf.splitTextToSize(t2, firstLineWidth2)[0]
-    // //remaining text after first line (remove one extra character to get rid of space)
-    // let remainingText2 = t1.substring(firstLineText2.length + 1, t2.length);
-    // //get the rest of the lines of text, split at page width
-    // let restLinesText2 = this.pdf.splitTextToSize(remainingText2, pwidth);
-
-    // // if(y + 50 >= height) {
-    // //   this.pdf.addPage();
-    // //   y = 50;
-    // // }
-
-    // this.pdf.setFontSize(disclaimerSize);
-    
-    // this.pdf.setFontType("bold");
-    // this.pdf.text(50, y, h1);
-    // this.pdf.setFontType("normal");
-    // this.pdf.text(50 + offset1, y, firstLineText1);
-    // this.pdf.text(50, y + 10, restLinesText1);
-
-    // //add 10 space for each line plus 10 for buffer
-    // y += (restLinesText1.length + 1) * 10 + 10
-    
-    // // if(y + 50 >= height) {
-    // //   this.pdf.addPage();
-    // //   y = 50;
-    // // }
-
-    // this.pdf.setFontType("bold");
-    // this.pdf.text(50, y, h2);
-    // this.pdf.setFontType("normal");
-    // this.pdf.text(50 + offset1, y, firstLineText2);
-    // this.pdf.text(50, y + 10, restLinesText2);
-
-    //default font size 16
-    //this.pdf.text(50, y, );
-
-    //Limitations (DRAFT)—
 
     //1 based indexing, array has an empty element at 0 so already handled, also subtract 1 so not printed on disclaimer page
     let numberOfPages = this.pdf.internal.pages.length - 1;
@@ -1408,21 +1278,6 @@ export class ReportWindowComponent implements AfterViewInit {
         });
       });
     }
-    
-
-
-    
-    
-
-    //start display 10 units below min value, but not less than 0
-    // let minScale = Math.max(Math.min(originalRecharge, currentRecharge) - 10, 0);
-    // //max recharge 75% of graph height
-    // let maxRecharge = Math.max(originalRecharge, currentRecharge);
-    // let maxScale = maxRecharge + .75 * (maxRecharge - minScale);
-    // //if both values are 0 just set it to 1
-    // if(maxScale == 0) {
-    //   maxScale = 1;
-    // }
   }
 
 }

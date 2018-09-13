@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
 import { WindowPanel } from '../window/shared/windowPanel';
-import { WindowService } from '../window/shared/window.service';
 
 
 //Commented out Agave module
@@ -22,28 +21,13 @@ export class WorkspaceComponent implements OnInit {
 
   //Commented out Agave module
   // constructor(private windowService: WindowService, private appsService:AppsService) { this.loaded = false; }
-  constructor(private windowService: WindowService) { this.loaded = false; }
+  constructor() { this.loaded = false; }
   ngOnInit() {
-
-    this.getWindows();
-
-    //Commented out Agave module
-    // this.appsService.searchApps('')
-    // .subscribe(
-    //     data => {console.log(data)},
-    //     err => console.log(err)
-    // );
 
     
   }
 
-  getWindows() {
-    this.windowService.getWindows().then(windows => {
-      this.windows = windows;
-      this.loaded = true;
-    });
-
-  }
+  
 
 
 

@@ -1,2 +1,2 @@
-<app-vis-window *ngIf="components.visWindow" [id]="id"></app-vis-window>
-<app-report-window *ngIf="components.reportWindow" [id]="id"></app-report-window>
+<app-vis-window *ngIf="components.visWindow" (close)="windowClosed($event)" (showReport)="showReport($event)" [id]="id" [position]="position"></app-vis-window>
+<app-report-window *ngIf="components.reportWindow" (close)="windowClosed($event)" [id]="id" [position]="position" [data]="data"></app-report-window>

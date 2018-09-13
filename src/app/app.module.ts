@@ -55,11 +55,11 @@ import { FeedbackComponent } from './feedback/feedback.component';
 import { HowToCiteComponent } from './how-to-cite/how-to-cite.component';
 import { FormsModule } from '@angular/forms';
 import { NotFoundComponent } from './not-found/not-found.component';
-//import { WorkspaceComponent } from './workspace/components/workspace/workspace.component';
-import { WorkspaceComponent } from './workspace/workspace.component';
+import { WorkspaceComponent } from './workspace/components/workspace/workspace.component';
+//import { WorkspaceComponent } from './workspace/workspace.component';
 
 
-import { WindowFactoryService } from "./workspace/services/window-factory.service";
+import { WindowLayersService } from "./workspace/services/window-layers.service";
 import { DisplayWrapperComponent } from 'app/workspace/components/window-display-components/display-wrapper/display-wrapper.component';
 import { DisplayUnitComponent } from './workspace/components/window-display-components/display-unit/display-unit.component'
 import { VisWindowComponent } from './workspace/components/window-display-components/vis-window/vis-window.component';
@@ -116,7 +116,7 @@ import { CustomReuseStrategy } from './reuse-strategy'
     ModifiedShpwriteService,
     CovjsonTemplateService,
     DBConnectService,
-    WindowFactoryService,
+    WindowLayersService,
     {
       provide: RouteReuseStrategy,
       useClass: CustomReuseStrategy

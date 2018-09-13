@@ -1,3 +1,341 @@
-<p>
-  report-window works!
-</p>
+
+
+
+<div #panelDiv class="panel panel-default allowPointerEvents">
+
+  <div #dragBar class="panel-heading panel-heading-custom">
+    Report - {{id}}
+    <button class="navbarButton" (click)="removeWindow()">
+      <span class="glyphicon glyphicon-remove"></span>
+    </button>
+    <!-- <button class="navbarButton" (click)="incAlpha()">
+      <span class="glyphicon glyphicon-plus"></span>
+    </button>
+    <button class="navbarButton" (click)="decAlpha()">
+      <span class="glyphicon glyphicon-minus"></span>
+    </button>
+    <button class="navbarButton" (click)="maximize()">
+      <span #glyphSize class="glyphicon" [ngClass]="{'glyphicon-resize-full': !maximized, 'glyphicon-resize-small': maximized }"></span>
+    </button> -->
+  </div>
+
+  <div class="download-button">
+    <button type="button" class="btn btn-primary btn-responsive" (click)="download('PDF')">Download as PDF</button>
+  </div>
+
+  <div class="report-container">
+    
+    <h1>Report for Map {{ tag }}</h1>
+    <table border="0" class="no-border header-table">
+      <tr class="no-border">
+        <td class="no-border-cell-title"><h2>Aquifer Systems*</h2></td>
+        <td class="no-border-cell-description">Hydrological units established by the Hawaii State Commission on Water Resource Management to manage groundwater resources</td>
+      </tr>
+    </table>
+    <table>
+      <tr>
+        <th>Name</th>
+        <th>Area <br> ({{data.unitSystem.units.area}})</th>
+        <th>
+          <div style="text-align: center;">Total Recharge <br> ({{data.unitSystem.units.volumetric}})</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">This Analysis</td>
+            </tr>
+          </table>
+        </th>
+        <th>
+          <div style="text-align: center;">Average Recharge <br> ({{data.unitSystem.units.average}})</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">This Analysis</td>
+            </tr>
+          </table>
+        </th>
+        <th>
+          <div style="text-align: center;">Volumetric Difference</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{data.unitSystem.units.volumetric}}</td>
+              <td class="no-border-cell-internal">Percent Change</td>
+            </tr>
+          </table>
+        </th>
+      </tr>
+
+      <tr *ngFor="let aquifer of data.metrics.aquifers">
+        <td>{{aquifer.name}}</td>
+        <td>{{aquifer.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].average.original}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].average.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <br>
+
+    <div #aquiferGraph></div>
+
+
+    <table border="0" class="no-border header-table">
+      <tr class="no-border">
+        <td class="no-border-cell-title"><h2>Aquifer Systems<br>Excluding Caprock*</h2></td>
+        <td class="no-border-cell-description">Aquifer systems minus the area covered by caprock (semi-confining, mostly sedimentary unit that partly overlies coastal areas of some aquifer systems)</td>
+      </tr>
+    </table>
+    <table>
+      <tr>
+        <th>Name</th>
+        <th>Area <br> ({{data.unitSystem.units.area}})</th>
+        <th>
+          <div style="text-align: center;">Total Recharge <br> ({{data.unitSystem.units.volumetric}})</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">This Analysis</td>
+            </tr>
+          </table>
+        </th>
+        <th>
+          <div style="text-align: center;">Average Recharge <br> ({{data.unitSystem.units.average}})</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">This Analysis</td>
+            </tr>
+          </table>
+        </th>
+        <th>
+          <div style="text-align: center;">Volumetric Difference</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{data.unitSystem.units.volumetric}}</td>
+              <td class="no-border-cell-internal">Percent Change</td>
+            </tr>
+          </table>
+        </th>
+      </tr>
+
+      <tr *ngFor="let aquifer of data.metrics.aquifersNoCaprock">
+        <td>{{aquifer.name}}</td>
+        <td>{{aquifer.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].average.original}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].average.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <br>
+
+    <div #aquiferGraphNoCaprock></div>
+
+    <br>
+    <table border="0" class="no-border">
+      <tr class="no-border">
+        <td class="no-border-cell-title"><h2>User-Defined Areas*</h2></td>
+        <td class="no-border-cell-description">Areas of land cover change designated by the user for this analysis</td>
+      </tr>
+    </table>
+    <table>
+      <tr>
+        <th>Name</th>
+        <th>Area <br> ({{data.unitSystem.units.area}})</th>
+        <th>
+          <div style="text-align: center;">Total Recharge <br> ({{data.unitSystem.units.volumetric}})</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">This Analysis</td>
+            </tr>
+          </table>
+        </th>
+        <th>
+          <div style="text-align: center;">Average Recharge <br> ({{data.unitSystem.units.average}})</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">This Analysis</td>
+            </tr>
+          </table>
+        </th>
+        <th>
+          <div style="text-align: center;">Volumetric Difference</div>
+          <hr>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{data.unitSystem.units.volumetric}}</td>
+              <td class="no-border-cell-internal">Percent Change</td>
+            </tr>
+          </table>
+        </th>
+      </tr>
+
+      <tr *ngFor="let area of data.metrics.customAreas">
+        <td>{{area.name}}</td>
+        <td>{{area.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{area.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+              <td class="no-border-cell-internal">{{area.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{area.roundedMetrics[data.unitSystem.system].average.original}}</td>
+              <td class="no-border-cell-internal">{{area.roundedMetrics[data.unitSystem.system].average.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{area.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+              <td class="no-border-cell-internal">{{area.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+      
+
+    <br>
+
+    <div #customGraph></div>
+
+    <br>
+
+    <h2>Summary*</h2>
+    <table>
+      <tr>
+        <th></th>
+        <th>User-Defined Areas</th>
+        <th>Island</th>
+        <th>Island Excluding Caprock</th>
+      </tr>
+      <tr>
+        <th>Area Total ({{data.unitSystem.units.area}})</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].area}}</td>
+      </tr>
+      <tr>
+        <th>Total Recharge, Baseline ({{data.unitSystem.units.volumetric}})</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+      </tr>
+      <tr>
+        <th>Total Recharge, This Analysis ({{data.unitSystem.units.volumetric}})</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+      </tr>
+      <tr>
+        <th>Average Recharge, Baseline ({{data.unitSystem.units.average}})</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].average.original}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].average.original}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].average.original}}</td>
+      </tr>
+      <tr>
+        <th>Average Recharge, This Analysis ({{data.unitSystem.units.average}})</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].average.current}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].average.current}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].average.current}}</td>
+      </tr>
+      <tr>
+        <th>Volumetric Difference ({{data.unitSystem.units.volumetric}})</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+      </tr>
+      <tr>
+        <th>Volumetric Percent Change</th>
+        <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+        <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+        <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+      </tr>
+
+    </table>
+
+    <br>
+
+    <div #customTotalGraph></div>
+    
+    <br>
+
+    <div #fullGraph></div>
+
+    <div #fullGraphNoCaprock></div>
+
+    <hr>
+
+    *Values rounded to two decimal places
+
+  </div>
+
+  
+  <div class="drag-bottom" #resizeBot></div>
+  <div class="drag-right" #resizeRight></div>
+  <div class="drag-corner" #resizeCorner></div>
+
+</div>
+
+<div #phantomScrollLock class="phantom-scroll-lock"></div>
+<div #phantomScrollSmooth class="phantom-scroll-smooth"></div>
+
+
