@@ -163,6 +163,7 @@ export class ReportWindowComponent implements AfterViewInit {
       document.removeEventListener('scroll', scrollDragFunct);
     });
     
+    this.generateReportGraphs();
   }
 
 
