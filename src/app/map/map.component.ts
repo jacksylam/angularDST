@@ -226,10 +226,12 @@ export class MapComponent implements OnInit {
       wheelPxPerZoomLevel: 200
     }).setView([21.48, -157.9665], 10.6);
 
-    let mapLayer = L.esri.basemapLayer('Imagery').addTo(this.map);
+    L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
     let empty = L.featureGroup();
+    L.control.scale().addTo(this.map);
 
+    this.map._controlContainer.removeChild(this.map._controlContainer.children[3]);
     this.popup = L.popup();
 
     //thinking I like the collapsed version with this stuff
@@ -3832,18 +3834,19 @@ export class MapComponent implements OnInit {
         return [
           {
             enabled: true,
-            handler: new L.Draw.Polygon(map, {}),
-            title: L.drawLocal.draw.toolbar.buttons.polygon,
+            handler: new L.Draw.Polygon(map, {repeatMode: true, allowIntersection: false}),
+            title: L.drawLocal.draw.toolbar.buttons.polygon
           },
 
           {
             enabled: true,
-            handler: new L.Draw.Rectangle(map, {}),
+            handler: new L.Draw.Rectangle(map, {repeatMode: true}),
             title: L.drawLocal.draw.toolbar.buttons.rectangle
           },
           {
             enabled: true,
             handler: new L.Draw.Marker(map, {
+              repeatMode: true,
               icon: new L.divIcon({
                 className: 'leaflet-mouse-marker',
                 iconAnchor: [0, 0],
