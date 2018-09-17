@@ -172,6 +172,7 @@ export class MapService {
   setUnits(controlPanel: any, unitType: string) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     this.detailPanelHash[index].setUnits(unitType);
+    this.mapHash[index].setUnits(unitType);
   }
 
 

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { MapComponent } from '../map.component';
 
 @Injectable()
 export class CovjsonTemplateService {
@@ -99,7 +100,7 @@ export class CovjsonTemplateService {
   constructor() { }
 
 
-  constructCovjson(xs: number[], ys: number[], values: number[], shape: number[], type: "cover" | "recharge"): any {
+  constructCovjson(xs: number[], ys: number[], values: number[], shape: number[], type: "cover" | "recharge", unitType): any {
     let covjsonBase = JSON.parse(JSON.stringify(CovjsonTemplateService.template));
     let varParts = CovjsonTemplateService.variableComponents[type];
     Object.keys(varParts).forEach((key) => {
@@ -109,7 +110,16 @@ export class CovjsonTemplateService {
     covjsonBase.domain.axes.x.values = xs;
     covjsonBase.domain.axes.y.values = ys;
     covjsonBase.ranges[type].shape = shape;
-    covjsonBase.ranges[type].values = values;
+    
+    let downloadVals = values;
+
+    if(unitType == "Metric") {
+      downloadVals = []
+      values.forEach((value) => {
+        downloadVals.push(value * MapComponent.INCH_TO_MILLIMETER_FACTOR);
+      });
+    }
+    covjsonBase.ranges[type].values = downloadVals;
 
     return covjsonBase;
   }

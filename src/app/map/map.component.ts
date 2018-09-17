@@ -49,7 +49,7 @@ export class MapComponent implements OnInit {
   static aquiferIndices: any;
   static aquiferIndexing: Promise<any> = null;
   static readonly METER_TO_MILE_FACTOR = 0.000621371;
-  static readonly INCH_TO_MILIMETER_FACTOR = 25.4;
+  static readonly INCH_TO_MILLIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
 
 
@@ -188,6 +188,8 @@ export class MapComponent implements OnInit {
       layer: null
     }
   };
+
+  unitType = "USC"
 
   caprock = [];
   includeCaprock = true;
@@ -533,6 +535,10 @@ export class MapComponent implements OnInit {
   // }
 
 
+  setUnits(type: string) {
+    this.unitType = type;
+  }
+
   //should anything be here?
   dragOverHandler(e) {
     e.preventDefault();
@@ -664,7 +670,7 @@ export class MapComponent implements OnInit {
       //console.log(update);
       //ensure coverage remapping complete before processing recharge values
       covRemap.then(() => {
-        update.forEach(area => {
+        update.forEach((area) => {
           //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
           area.forEach(record => {
             let recordBase = record.value;
@@ -692,12 +698,12 @@ export class MapComponent implements OnInit {
             });
 
           });
+          setTimeout(() => {}, 100);
         });
         //reload recharge cover
         this.loadCover(this.types.recharge, true)
 
         this.updateMetrics(lcShapes);
-        //reenable report generation
       });
       
     }, (error) => {
@@ -1979,8 +1985,8 @@ export class MapComponent implements OnInit {
           metrics.USC.average.current += rechargeVals[i];
           metrics.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
           
-          metrics.Metric.average.current += rechargeVals[i] * MapComponent.INCH_TO_MILIMETER_FACTOR;
-          metrics.Metric.average.original += this.types.recharge.baseData[this.currentScenario][i] * MapComponent.INCH_TO_MILIMETER_FACTOR;
+          metrics.Metric.average.current += rechargeVals[i] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[this.currentScenario][i] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
         }
       }
 
@@ -1994,8 +2000,8 @@ export class MapComponent implements OnInit {
           metrics.USC.average.current += rechargeVals[index];
           metrics.USC.average.original += this.types.recharge.baseData[this.currentScenario][index];
 
-          metrics.Metric.average.current += rechargeVals[index] * MapComponent.INCH_TO_MILIMETER_FACTOR;
-          metrics.Metric.average.original += this.types.recharge.baseData[this.currentScenario][index] * MapComponent.INCH_TO_MILIMETER_FACTOR;
+          metrics.Metric.average.current += rechargeVals[index] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[this.currentScenario][index] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
         }
       });
     
@@ -2364,9 +2370,9 @@ export class MapComponent implements OnInit {
           // });
           //console.log(geometries);
           this.updateRecharge(geometries, (update) => {
-            update.forEach(area => {
+            update.forEach((area) => {
               //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
-              area.forEach(record => {
+              area.forEach((record) => {
                 let recordBase = record.value;
                 let x = recordBase.x;
                 let y = recordBase.y;
@@ -2388,8 +2394,9 @@ export class MapComponent implements OnInit {
                 });
 
               });
-              this.updateMetrics(geometries);
+              setTimeout(() => {}, 100);
             });
+            this.updateMetrics(geometries);
             //reload recharge cover
             this.loadCover(this.types.recharge, true)
           }, (error) => {
@@ -3543,29 +3550,38 @@ export class MapComponent implements OnInit {
         let colCounter = 0;
         //add data
         vals.forEach((val) => {
-          fcontents += val + " "
+          let convertedVal = val;
+          if(this.unitType == "Metric" && type == "recharge") {
+            convertedVal *= MapComponent.INCH_TO_MILLIMETER_FACTOR
+          }
+          fcontents += convertedVal + " "
+          
           //should have newline at the end of every row
           if(++colCounter >= this.gridWidthCells) {
             fcontents += "\n";
             colCounter = 0;
           }
         });
+
+        let fname = type == "recharge" ? (this.unitType == "Metric" ? type + "_millimeters_per_year." + format : type + "_inches_per_year." + format) : type + "." + format;
         return {
           data: fcontents,
-          name: type + "." + format,
+          name: fname,
           type: 'text/plain;charset=utf-8'
         }
         
       }
       else if(format == "covjson") {
+        let fname = type == "recharge" ? (this.unitType == "Metric" ? type + "_millimeters_per_year." + format : type + "_inches_per_year." + format) : type + "." + format;
         return {
-          data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover")),
-          name: type + "." + format,
+          data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType)),
+          name: fname,
           type: 'text/plain;charset=utf-8'
         }
         
       }
       //download as a shapefile
+      //not currently available
       else {
         let cells = [];
 
@@ -4170,9 +4186,9 @@ export class MapComponent implements OnInit {
               this.updateRecharge(geojsonObjects, (update) => {
                 //ensure coverage remapping complete before processing recharge values
                 covRemap.then(() => {
-                  update.forEach(area => {
+                  update.forEach((area) => {
                     //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
-                    area.forEach(record => {
+                    area.forEach((record) => {
                       let recordBase = record.value;
                       let x = recordBase.x;
                       let y = recordBase.y;
@@ -4194,8 +4210,9 @@ export class MapComponent implements OnInit {
                       });
 
                     });
-                    this.updateMetrics(geojsonObjects);
+                    setTimeout(() => {}, 100);
                   });
+                  this.updateMetrics(geojsonObjects);
                   //reload recharge cover
                   this.loadCover(this.types.recharge, true)
                   //reenable report generation
@@ -4288,13 +4305,20 @@ export class MapComponent implements OnInit {
                 //if background type set recharge rate to 0
                 let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
                 this.types.recharge.currentData[scenario] = recordValue;
+                
+                // if(recordBase[scenario][mappedType - 1] == null) {
+                //   console.log(record);
+                // }
+                //console.log(record);
+
                 if(scenario == this.currentScenario) {
                   rechargeData[index] = recordValue;
                 }
               });
             });
-            this.updateMetrics(geojsonObjects);
+            setTimeout(() => {}, 100);
           });
+          this.updateMetrics(geojsonObjects);
           //reload recharge cover
           this.loadCover(this.types.recharge, true)
           //reenable report generation
