@@ -108,6 +108,8 @@ export class VisWindowComponent implements AfterViewInit {
 
     
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
       this.lastMouseXPosition = e.pageX;
       this.lastMouseYPosition = e.pageY;
       
@@ -120,6 +122,8 @@ export class VisWindowComponent implements AfterViewInit {
     });
 
     this.resizeRight.nativeElement.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
       this.lastMouseXPosition = e.pageX;
       
       
@@ -132,6 +136,8 @@ export class VisWindowComponent implements AfterViewInit {
     })
 
     this.resizeBot.nativeElement.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
       const mouseY = e.pageY;
       this.lastMouseYPosition = e.pageY;
       

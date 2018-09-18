@@ -67,10 +67,10 @@
   <button mat-raised-button (click)="close()">Cancel</button>
   <div *ngIf="!info.cover; else all_types">
     <input type="file" accept=".zip" style="display: none;" (change)="close($event)" multiple #fileSelect/>
-    <button mat-raised-button class="mat-primary" [disabled]="!(info.shapes || info.cover)" (click)="fileSelect.click()">Select Files</button>
+    <button mat-raised-button class="mat-primary mat-primary-blue" [disabled]="!(info.shapes || info.cover)" (click)="fileSelect.click()">Select Files</button>
   </div>
   <ng-template #all_types>
     <input type="file" accept=".zip, .covjson, .asc" style="display: none;" (change)="close($event)" multiple #fileSelect/>
-    <button mat-raised-button class="mat-primary" [disabled]="!(info.shapes || info.cover)" (click)="fileSelect.click()">Select Files</button>
+    <button mat-raised-button class="mat-primary mat-primary-blue" [disabled]="!(info.shapes || info.cover)" (click)="fileSelect.click()">Select Files</button>
   </ng-template>
 </mat-dialog-actions>
