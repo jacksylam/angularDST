@@ -48,11 +48,10 @@ export class MapComponent implements OnInit {
   @Output("showReport") report = new EventEmitter();
 
   static aquiferIndices: any;
-  static aquiferIndexing: Promise<any> = null;
   static readonly METER_TO_MILE_FACTOR = 0.000621371;
   static readonly INCH_TO_MILLIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
-  static readonly SPECIAL_AQUIFERS = [30701, 30702];
+  static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
 
 
 
@@ -1552,89 +1551,6 @@ export class MapComponent implements OnInit {
 
     let __this = this;
 
-    //used twice, so set function
-    let getAquiferMetrics = () => {
-      let aquiferProperties = [];
-      //reorganize into array so can sort on aquifer number
-      this.types.aquifers.layer.eachLayer((layer) => {
-        aquiferProperties.push(layer.feature.properties);
-      });
-
-      //sort geographically by aquifer number
-      aquiferProperties.sort((a1, a2) => {
-        return parseInt(a1.CODE) - parseInt(a2.CODE);
-      });
-      //console.log(aquiferProperties);
-
-      aquiferProperties.forEach((properties) => {
-        let info = {
-          name: "",
-          metrics: {},
-          roundedMetrics: {}
-        };
-
-        let infoNoCaprock = {
-          name: "",
-          metrics: {},
-          roundedMetrics: {}
-        };
-
-        let capName = properties.SYSTEM;
-        //switch from all upper case to capitalize first letter
-        capName.split(/([\s \-])/).forEach((substr) => {
-          info.name += (substr == "\s" || substr == "-") ? substr : substr.charAt(0).toUpperCase() + substr.substr(1).toLowerCase();
-        });
-        infoNoCaprock.name = info.name;
-
-        let aquiferMetrics = this.getMetricsSuite(MapComponent.aquiferIndices[capName], true);
-        let aquiferMetricsNoCaprock = this.getMetricsSuite(MapComponent.aquiferIndices[capName], false);
-        
-         info.metrics = aquiferMetrics;
-         infoNoCaprock.metrics = aquiferMetricsNoCaprock;
-         info.roundedMetrics = this.roundMetrics(aquiferMetrics);
-         infoNoCaprock.roundedMetrics = this.roundMetrics(aquiferMetricsNoCaprock);
-        
-         data.aquifers.push(info);
-         data.aquifersNoCaprock.push(infoNoCaprock);
-      });
-    }
-
-    //if already computed no need to recompute
-    //static since aquifers are always the same
-    if(MapComponent.aquiferIndexing == null) {
-      this.mapService.setLoading(this, true);
-
-      MapComponent.aquiferIndices = {};
-      //store promise so if method called again knows to wait for completion
-      MapComponent.aquiferIndexing = this.getAquiferIndices(this.types.aquifers).then(() => {
-
-        console.log("Aquifer processing complete");
-
-        //indicate indexing has been completed
-        //MapComponent.aquiferIndexingComplete = true;
-
-        getAquiferMetrics();
-        this.mapService.setLoading(this, false);
-
-      }, () => {
-        //should never reject, only if an aquifer is out of range, that would be strange
-        this.dialog.open(MessageDialogComponent, {data: {message: "An error has occured in aquifer resource. Please refresh the page or submit a bug report if this error persists", type: "Error"}});
-      });
-    }
-    //if already triggered getAquiferIndices but not yet complete don't do anything, the metrics computed on completion will have current values
-    //otherwise just compute aquifer metrics
-    // else if(MapComponent.aquiferIndexingComplete) {
-    //   getAquiferMetrics();
-    // }
-    else {
-      this.mapService.setLoading(this, true);
-      MapComponent.aquiferIndexing.then(() => {
-          getAquiferMetrics();
-          this.mapService.setLoading(this, false);
-      }, () => {});
-    }
-
-
     let total = this.getMetricsSuite(null, true);
     data.total.metrics = total;
     data.total.roundedMetrics = this.roundMetrics(total);
@@ -1670,276 +1586,11 @@ export class MapComponent implements OnInit {
   }
 
 
-
-
-
-
-  private getAquiferIndices(aquifers: any): any {
-    //let aquiferIndexes: any;
-
-    console.log(aquifers)
-    
-    //let layers = []
-    return new Promise((resolve, reject) => {
-
-      let complete = 0;
-      let numAquifers = Object.keys(aquifers.layer._layers).length;
-
-      for(let key in aquifers.layer._layers) {
-        let indexes = [];
-
-        //index aquifers by name
-        let aquiferCode = aquifers.layer._layers[key].feature.properties.SYSTEM;
-        
-        //aquiferIndexes.key = indexes;
-
-        // //console.log(aquifers.layer._layers[id])
-        // let items = new L.featureGroup();
-        // let test = this.getInternalIndexes(items.addLayer(aquifers.layer._layers[id]).toGeoJSON());
-        // console.log(test.length);
-
-        //let shape = aquifers;
-        //array due to potential cutouts, shouldn't have any cutouts
-        let pointsBase = aquifers.layer._layers[key].feature.geometry.coordinates[0];
-        let convertedPoints = [];
-        let a = [];
-        let b = [];
-        let xmax = Number.NEGATIVE_INFINITY;
-        let xmin = Number.POSITIVE_INFINITY;
-        let ymax = Number.NEGATIVE_INFINITY;
-        let ymin = Number.POSITIVE_INFINITY;
-
-        for (let i = 0; i < pointsBase.length; i++) {
-          convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
-        }
-
-        for (let i = 0; i < convertedPoints.length - 1; i++) {
-          //coordinates are in long lat order (I think)
-
-          //get max and min vals to limit coordinates need to compare
-          if (convertedPoints[i][0] > xmax) {
-            xmax = convertedPoints[i][0];
-          }
-          if (convertedPoints[i][0] < xmin) {
-            xmin = convertedPoints[i][0];
-          }
-          if (convertedPoints[i][1] > ymax) {
-            ymax = convertedPoints[i][1];
-          }
-          if (convertedPoints[i][1] < ymin) {
-            ymin = convertedPoints[i][1];
-          }
-          //convert these points, less conversions than trying to convert grid points
-          a.push({
-            x: convertedPoints[i][0],
-            y: convertedPoints[i][1]
-          });
-          b.push({
-            x: convertedPoints[i + 1][0],
-            y: convertedPoints[i + 1][1]
-          });
-        }
-
-        //convert max min values and find range of cells
-        //no need to check every single one
-        //convert coordinate and get x value
-        // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
-        // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
-        // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
-        // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
-
-        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-
-        let minxIndex: number;
-        let maxxIndex: number;
-        let minyIndex: number;
-        let maxyIndex: number;
-
-        //again, assume values are in order
-        //find min and max indexes
-        //check if ascending or descending order, findIndex returns first occurance
-        if (xs[0] < xs[1]) {
-          minxIndex = xs.findIndex(function (val) { return val >= xmin });
-          //> not >= so returns index after last even if on edge 
-          maxxIndex = xs.findIndex(function (val) { return val > xmax });
-        }
-        else {
-          maxxIndex = xs.findIndex(function (val) { return val < xmin });
-          minxIndex = xs.findIndex(function (val) { return val <= xmax });
-        }
-        if (ys[0] < ys[1]) {
-          minyIndex = ys.findIndex(function (val) { return val >= ymin });
-          maxyIndex = ys.findIndex(function (val) { return val > ymax });
-        }
-        else {
-          maxyIndex = ys.findIndex(function (val) { return val < ymin });
-          minyIndex = ys.findIndex(function (val) { return val <= ymax });
-        }
-
-
-
-        //let recursiveDepth = 10;
-
-        let checkIndices = []
-
-        //check if shape boundaries out of coverage range
-        if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
-          //convert cell coords to long lat and raycast
-          //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-          // for (let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-          //   for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-          //     // if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-          //     //   indexes.push(this.getIndex(xIndex, yIndex))
-          //     // }
-          //     checkIndices.push(this.getIndex(xIndex, yIndex));
-          //   }
-            
-          // }
-
-
-          //also recursive depth and should be approximate speedup factor for single action
-          //need to balance this with total time taken though, speed will be about numChunks * timeoutInterval (depending on how long chunk processing takes)
-          let numChunks = 100
-          let timeoutInterval = 100;
-
-          //compute chunk size
-          let xrange = maxxIndex - minxIndex;
-          let yrange = maxyIndex - minyIndex;
-          let totalSize = xrange * yrange
-          let chunkSize = Math.floor(totalSize / numChunks);
-          //final chunk size may need to be larger if not divisible
-          let finalChunkSize = chunkSize + (totalSize - chunkSize * numChunks)
-
-          // console.log(minyIndex)
-          // console.log(minxIndex)
-          // console.log(yrange)
-          // console.log(xrange)
-
-          let chunkIndices = (chunk: number) => {
-            let indices = {
-              minx: 0,
-              maxx: 0,
-              miny: 0,
-              maxy: 0
-            };
-
-            let thisChunkSize = chunk == numChunks - 1 ? finalChunkSize : chunkSize;
-            
-            let minOffset = chunk * chunkSize;
-            let maxOffset = minOffset + thisChunkSize;
-            indices.minx = minxIndex + Math.floor(minOffset / yrange);
-            indices.miny = minyIndex + minOffset % yrange;
-            indices.maxx = minxIndex + Math.floor(maxOffset / yrange);
-            indices.maxy = minyIndex + maxOffset % yrange;
-
-            return indices;
-          }
-
-          let task = (chunk: number) => {
-            if(chunk >= numChunks) {
-              //finished, map this aquifer's code to its internal indices
-              MapComponent.aquiferIndices[aquiferCode] = indexes;
-              //resolve promise if all complete
-              if(++complete >= numAquifers) {
-                resolve();
-              }
-              return;
-            }
-            else {
-              let range = chunkIndices(chunk);
-
-
-              /*
-              2 cases:
-              ranges minx == maxx, go from miny to maxy, end
-              ranges minx != maxx, go from miny to maxyindex, if theres more than 2 x indexes, center cases go full range, last x index go from minyindex to ranges miny
-              */
-
-              if(range.minx == range.maxx) {
-                let xIndex = range.minx;
-                for (let yIndex = range.miny; yIndex < range.maxy; yIndex++) {
-                  if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                    indexes.push(this.getIndex(xIndex, yIndex));
-                  }
-                }
-              }
-              
-
-              else {
-                let xIndex = range.minx;
-                //start point to end of range for first index
-                for (let yIndex = range.miny; yIndex < maxyIndex; yIndex++) {
-                  if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                    indexes.push(this.getIndex(xIndex, yIndex));
-                  }
-                }
-
-                //if center x indices go full y range
-                for (let xIndex = range.minx + 1; xIndex < range.maxx; xIndex++) {
-                  for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-                    if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                      indexes.push(this.getIndex(xIndex, yIndex));
-                      
-                    }
-                  }
-                }
-
-                xIndex = range.maxx;
-                //start of y range up to end point for final index
-                for (let yIndex = minyIndex; yIndex < range.maxy; yIndex++) {
-                  if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                    indexes.push(this.getIndex(xIndex, yIndex));
-                  }
-                }
-              }
-              
-              
-              setTimeout(() => {
-                return task(chunk + 1);
-              }, timeoutInterval);
-              
-            }
-          }
-
-          task(0);
-
-          // let task = setInterval(() => {
-            
-          //   if(chunk >= numChunks) {
-          //     clearInterval(task);
-          //     console.log(indexes);
-          //     return;
-          //   }
-
-            
-          //   if(this.isInternal(a, b, xs[xIndex], ys[yIndex])) {
-          //     indexes.push(this.getIndex(xIndex, yIndex));
-          //     console.log("?");
-          //   }
-            
-          // }, 100)
-
-        }
-        else {
-          reject();
-          return;
-        }
-      }
-    });
-
-    
-    //return indexes;
-  }
-
-
-  //if really want to speed up, can incorporate getinternalindexes function, create bounding box, check if points internal if in bounding box
   getAquiferAndTotalMetrics() {
-
-    //AQUIFER_NAME_MAP will be map of aquifer codes to names
 
     let data = {
       aquifers: [],
+      specialAquifers: [],
       aquifersNoCaprock: [],
       customAreasTotal: {
         metrics: {},
@@ -1953,18 +1604,6 @@ export class MapComponent implements OnInit {
         metrics: {},
         roundedMetrics: {}
       }
-    };
-
-    let info = {
-      name: "",
-      metrics: {},
-      roundedMetrics: {}
-    };
-
-    let infoNoCaprock = {
-      name: "",
-      metrics: {},
-      roundedMetrics: {}
     };
 
     let metrics: any = {};
@@ -2193,7 +1832,7 @@ export class MapComponent implements OnInit {
     }
 
     //compute remaining metrics
-    Object.keys(AQUIFER_NAME_MAP).forEach((code) => {
+    Object.keys(metrics).forEach((code) => {
       //currently just number of cells, no need conversion
       metrics[code].caprock.Metric.area = metrics.total.caprock.USC.area;
       //compute metric average recharges
@@ -2274,7 +1913,57 @@ export class MapComponent implements OnInit {
         metrics[code].nocaprock.Metric.area *= Math.pow(75 / 1000, 2);
       }
     });
+
     
+
+    
+
+    Object.keys(metrics).forEach((code) => {
+      
+      if(MapComponent.SPECIAL_AQUIFERS.includes(code)) {
+        let info = {
+          name: "",
+          metrics: {},
+          roundedMetrics: {}
+        };
+
+        info.metrics = metrics[code].caprock;
+        info.roundedMetrics = this.roundMetrics(metrics[code].caprock);
+        info.name = AQUIFER_NAME_MAP[code];
+        data.specialAquifers.push(info);
+      }
+      else if(code == "total") {
+        data.total.metrics = metrics[code].caprock;
+        data.total.roundedMetrics = this.roundMetrics(metrics[code].caprock);
+
+        data.totalNoCaprock.metrics = metrics[code].nocaprock;
+        data.totalNoCaprock.roundedMetrics = this.roundMetrics(metrics[code].nocaprock);
+      }
+      else {
+        let info = {
+          name: "",
+          metrics: {},
+          roundedMetrics: {}
+        };
+        let infoNoCaprock = {
+          name: "",
+          metrics: {},
+          roundedMetrics: {}
+        };
+
+        info.metrics = metrics[code].caprock;
+        info.roundedMetrics = this.roundMetrics(metrics[code].caprock);
+        info.name = AQUIFER_NAME_MAP[code];
+        data.aquifers.push(info);
+
+        infoNoCaprock.metrics = metrics[code].nocaprock;
+        infoNoCaprock.roundedMetrics = this.roundMetrics(metrics[code].nocaprock);
+        infoNoCaprock.name = AQUIFER_NAME_MAP[code];
+        data.aquifersNoCaprock.push(info);
+      }
+    });
+
+    return data;
   }
 
 

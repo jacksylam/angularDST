@@ -7,7 +7,8 @@ import { Component, OnInit, ViewChild, Output, Input, EventEmitter } from '@angu
 })
 export class DisplayUnitComponent implements OnInit {
 
-  @ViewChild('window') window;
+  @ViewChild('reportWindow') reportWindow;
+  @ViewChild('visWindow') visWindow;
 
   @Input("id") id;
 
@@ -54,6 +55,8 @@ export class DisplayUnitComponent implements OnInit {
   //for now pass data through open event (eventually should be pulled automatically from metric service)
   showReport(data: any) {
     this.data = data;
+    //set false before true so reloads and brings forward
+    this.components.reportWindow = false;
     this.components.reportWindow = true;
   }
 
