@@ -24,7 +24,7 @@ export class DBConnectService {
     //for(let i = 0; i < size; i++) {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
     //console.log(geometry)
-    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset14'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset09142018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
 
     let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
     let head = new HttpHeaders()
@@ -56,7 +56,7 @@ export class DBConnectService {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
 
     //build query
-    let query = "{$and:[{'name':'Landuse','value.name':'testset14','$or':[";
+    let query = "{$and:[{'name':'Landuse','value.name':'testset09142018','$or':[";
     indexes.forEach((index) => {
       query += "{'value.x':" + index.x + ", 'value.y':" + index.y + "},";
     });
