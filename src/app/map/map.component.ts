@@ -47,12 +47,10 @@ export class MapComponent implements OnInit {
 
   @Output("showReport") report = new EventEmitter();
 
-  static aquiferIndices: any;
   static readonly METER_TO_MILE_FACTOR = 0.000621371;
   static readonly INCH_TO_MILLIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
   static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
-
 
 
   map: any;
@@ -881,35 +879,21 @@ export class MapComponent implements OnInit {
       //clicks intercepted by drawn shapes if behind
       layer.bringToFront();
       layer.on('click', (e) => {
-        if (layer.highlighted) {
+        if(layer.highlighted) {
           layer.setStyle(unhighlight)
           layer.highlighted = false;
           //remove aquifer name from highlighted list
-          highlightedAquifers.splice(highlightedAquifers.indexOf(layer.feature.properties.SYSTEM), 1);
+          highlightedAquifers.splice(highlightedAquifers.indexOf(layer.feature.properties.CODE), 1);
         }
         else {
           layer.setStyle(highlight)
           layer.highlighted = true;
           //add highlighted aquifer name to list
-          highlightedAquifers.push(layer.feature.properties.SYSTEM);
+          highlightedAquifers.push(layer.feature.properties.CODE);
         }
-
-        //let originalRecharge = 0;
-        //let currentRecharge = 0;
-        //let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-        let indexes = [];
-        highlightedAquifers.forEach((name) => {
-          indexes = indexes.concat(MapComponent.aquiferIndices[name]);
-          //console.log(MapComponent.aquiferIndices[name])
-        });
         
-        this.highlightedAquiferIndices = indexes;
-
-
-        //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
-
         //get rounded metrics from indexes and send to bottom panel
-        let metrics = this.roundMetrics(this.getMetricsSuite(indexes, this.includeCaprock));
+        let metrics = this.roundMetrics(this.getSelectedAquiferMetrics(highlightedAquifers, this.includeCaprock));
         //console.log(indexes);
         this.mapService.updateMetrics(this, "aquifer", metrics);
       });
@@ -939,7 +923,7 @@ export class MapComponent implements OnInit {
     });
     this.highlightedAquiferIndices = [];
     //remove again if was hidden
-    if (hidden) {
+    if(hidden) {
       this.map.removeLayer(this.types.aquifers.layer);
     }
 
@@ -1225,9 +1209,8 @@ export class MapComponent implements OnInit {
           __this.types.recharge.data = coverage;
 
           __this.loadCover(__this.types.recharge, true);
-          let rechargeVals = __this.types.recharge.data._covjson.ranges.recharge.values;
     
-          //Race conditions? Don't think js can have race conditions since single threaded, should complete conditional before allowing other things to run
+          //Race conditions? Don't think js can have race conditions on value checks since single threaded, should complete conditional before allowing other things to run
           //can't set metrics until aquifers in place and recharge values set
           if(metricCoordination.aquifers && metricCoordination.caprock) {
             //document.body.style.cursor='wait';
@@ -1258,8 +1241,7 @@ export class MapComponent implements OnInit {
       for(let i = 6; i < details.length; i++) {
         //get data values after first six detail lines
         //split on spaces, tabs, or commas for values
-        this.caprock = this.caprock.concat(details[i].split(/[ \t,]+/));
-        //console.log(details[i].length)
+        this.caprock = this.caprock.concat(details[i].trim().split(/[ \t,]+/));
         
         //if whitespace at the end might reult in whitespace only element, remove these
         if(this.caprock[this.caprock.length - 1].trim() == "") {
@@ -1287,8 +1269,7 @@ export class MapComponent implements OnInit {
       for(let i = 6; i < details.length; i++) {
         //get data values after first six detail lines
         //split on spaces, tabs, or commas for values
-        this.aquifers = this.aquifers.concat(details[i].split(/[ \t,]+/));
-        //console.log(details[i].length)
+        this.aquifers = this.aquifers.concat(details[i].trim().split(/[ \t,]+/));
         
         //if whitespace at the end might reult in whitespace only element, remove these
         if(this.aquifers[this.aquifers.length - 1].trim() == "") {
@@ -1534,62 +1515,6 @@ export class MapComponent implements OnInit {
     let data = {
       customAreas: [],
       aquifers: [],
-      aquifersNoCaprock: [],
-      customAreasTotal: {
-        metrics: {},
-        roundedMetrics: {}
-      },
-      total: {
-        metrics: {},
-        roundedMetrics: {}
-      },
-      totalNoCaprock: {
-        metrics: {},
-        roundedMetrics: {}
-      }
-    };
-
-    let __this = this;
-
-    let total = this.getMetricsSuite(null, true);
-    data.total.metrics = total;
-    data.total.roundedMetrics = this.roundMetrics(total);
-
-    let totalNoCaprock = this.getMetricsSuite(null, false);
-    data.totalNoCaprock.metrics = totalNoCaprock;
-    data.totalNoCaprock.roundedMetrics = this.roundMetrics(totalNoCaprock);
-    
-
-    let items = new L.featureGroup();
-    
-    this.drawnItems.eachLayer((layer) => {
-      items = new L.featureGroup();
-      //let intervals = new Date().getTime();
-      //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
-      let info = this.customAreaMap[layer._leaflet_id];
-      //console.log(layer.toGeoJSON())
-      let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
-      info.metrics = itemMetrics;
-      info.roundedMetrics = this.roundMetrics(itemMetrics);
-
-
-      data.customAreas.push(info);
-    });
-
-    //can make more efficient by computing individual shape metrics and full metrics at the same time
-    //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
-    data.customAreasTotal.metrics = customTotal;
-    data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
-
-    return data;
-  }
-
-
-  getAquiferAndTotalMetrics() {
-
-    let data = {
-      aquifers: [],
       specialAquifers: [],
       aquifersNoCaprock: [],
       customAreasTotal: {
@@ -1605,9 +1530,37 @@ export class MapComponent implements OnInit {
         roundedMetrics: {}
       }
     };
-
-    let metrics: any = {};
     
+    this.getAquiferAndTotalMetrics(data);
+
+    let items = new L.featureGroup();
+    
+    this.drawnItems.eachLayer((layer) => {
+      items = new L.featureGroup();
+      //let intervals = new Date().getTime();
+      //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
+      let info = this.customAreaMap[layer._leaflet_id];
+      //console.log(layer.toGeoJSON())
+      let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
+      info.metrics = itemMetrics;
+      info.roundedMetrics = this.roundMetrics(itemMetrics);
+
+      data.customAreas.push(info);
+    });
+
+    //can make more efficient by computing individual shape metrics and full metrics at the same time
+    //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
+    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    data.customAreasTotal.metrics = customTotal;
+    data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+
+    return data;
+  }
+
+
+  getAquiferAndTotalMetrics(data: any) {
+
+    let metrics: any = {}; 
 
     //initialize metrics objects
     Object.keys(AQUIFER_NAME_MAP).forEach((code) => {
@@ -1769,7 +1722,7 @@ export class MapComponent implements OnInit {
       else if(MapComponent.SPECIAL_AQUIFERS.includes(this.aquifers[i])) {
         return 1;
       }
-      else if(this.caprock[i] == 1) {
+      else if(this.caprock[i] == 0) {
         return 2;
       }
 
@@ -1793,6 +1746,16 @@ export class MapComponent implements OnInit {
         }
         case 2: {
           let aquifer = this.aquifers[i];
+
+          if(metrics[aquifer] == undefined) {
+            // console.log(i);
+            // console.log(this.aquifers[i]);
+            //console.log(lcVals[i]);
+            // console.log(this.aquifers.length);
+            // console.log(lcVals.length);
+            //just ignore this area for now
+            break;
+          }
           
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
@@ -1806,6 +1769,16 @@ export class MapComponent implements OnInit {
         }
         case 3: {
           let aquifer = this.aquifers[i];
+
+          if(metrics[aquifer] == undefined) {
+            // console.log(i);
+            // console.log(this.aquifers[i]);
+            // console.log(lcVals[i]);
+            // console.log(this.aquifers.length);
+            // console.log(lcVals.length);
+            //just ignore this area for now
+            break;
+          }
 
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
@@ -1834,7 +1807,7 @@ export class MapComponent implements OnInit {
     //compute remaining metrics
     Object.keys(metrics).forEach((code) => {
       //currently just number of cells, no need conversion
-      metrics[code].caprock.Metric.area = metrics.total.caprock.USC.area;
+      metrics[code].caprock.Metric.area = metrics[code].caprock.USC.area;
       //compute metric average recharges
       metrics[code].caprock.Metric.average.current = metrics[code].caprock.USC.average.current * MapComponent.INCH_TO_MILLIMETER_FACTOR;
       metrics[code].caprock.Metric.average.original = metrics[code].caprock.USC.average.original * MapComponent.INCH_TO_MILLIMETER_FACTOR;
@@ -1846,27 +1819,24 @@ export class MapComponent implements OnInit {
       metrics[code].caprock.Metric.volumetric.original = metrics[code].caprock.USC.volumetric.original * MapComponent.GALLON_TO_LITER_FACTOR;
       metrics[code].caprock.Metric.volumetric.current = metrics[code].caprock.USC.volumetric.current * MapComponent.GALLON_TO_LITER_FACTOR;
 
-      //if no cells leave at default value of 0 to avoid dividing by 0
-      if (metrics[code].caprock.USC.area > 0) {
-        //average summation over cells
-        metrics[code].caprock.USC.average.original /= metrics[code].caprock.USC.area;
-        metrics[code].caprock.USC.average.current /= metrics[code].caprock.USC.area;
+      //average summation over cells
+      metrics[code].caprock.USC.average.original /= metrics[code].caprock.USC.area;
+      metrics[code].caprock.USC.average.current /= metrics[code].caprock.USC.area;
 
-        metrics[code].caprock.Metric.average.original /= metrics[code].caprock.Metric.area;
-        metrics[code].caprock.Metric.average.current /= metrics[code].caprock.Metric.area;
+      metrics[code].caprock.Metric.average.original /= metrics[code].caprock.Metric.area;
+      metrics[code].caprock.Metric.average.current /= metrics[code].caprock.Metric.area;
 
-        //get difference and percent change
-        metrics[code].caprock.USC.volumetric.diff = metrics[code].caprock.USC.volumetric.current - metrics[code].caprock.USC.volumetric.original;
-        metrics[code].caprock.USC.average.diff = metrics[code].caprock.USC.average.current - metrics[code].caprock.USC.average.original;
-        metrics[code].caprock.Metric.volumetric.diff = metrics[code].caprock.Metric.volumetric.current - metrics[code].caprock.Metric.volumetric.original;
-        metrics[code].caprock.Metric.average.diff = metrics[code].caprock.Metric.average.current - metrics[code].caprock.Metric.average.original;
-        //make sure not dividing by 0 if no recharge in selected cells
-        metrics[code].caprock.USC.volumetric.pchange = metrics[code].caprock.USC.volumetric.original == 0 ? 0 : metrics[code].caprock.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
-        metrics[code].caprock.USC.average.pchange = metrics[code].caprock.USC.average.original == 0 ? 0 : metrics[code].caprock.USC.average.diff / metrics[code].caprock.USC.average.original * 100;
-        metrics[code].caprock.Metric.volumetric.pchange = metrics[code].caprock.Metric.volumetric.original == 0 ? 0 : metrics[code].caprock.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
-        metrics[code].caprock.Metric.average.pchange = metrics[code].caprock.Metric.average.original == 0 ? 0 : metrics[code].caprock.Metric.average.diff / metrics.Metric.average.original * 100;
-      }
-
+      //get difference and percent change
+      metrics[code].caprock.USC.volumetric.diff = metrics[code].caprock.USC.volumetric.current - metrics[code].caprock.USC.volumetric.original;
+      metrics[code].caprock.USC.average.diff = metrics[code].caprock.USC.average.current - metrics[code].caprock.USC.average.original;
+      metrics[code].caprock.Metric.volumetric.diff = metrics[code].caprock.Metric.volumetric.current - metrics[code].caprock.Metric.volumetric.original;
+      metrics[code].caprock.Metric.average.diff = metrics[code].caprock.Metric.average.current - metrics[code].caprock.Metric.average.original;
+      //make sure not dividing by 0 if no recharge in selected cells
+      metrics[code].caprock.USC.volumetric.pchange = metrics[code].caprock.USC.volumetric.original == 0 ? 0 : metrics[code].caprock.USC.volumetric.diff / metrics[code].caprock.USC.volumetric.original * 100;
+      metrics[code].caprock.USC.average.pchange = metrics[code].caprock.USC.average.original == 0 ? 0 : metrics[code].caprock.USC.average.diff / metrics[code].caprock.USC.average.original * 100;
+      metrics[code].caprock.Metric.volumetric.pchange = metrics[code].caprock.Metric.volumetric.original == 0 ? 0 : metrics[code].caprock.Metric.volumetric.diff / metrics[code].caprock.Metric.volumetric.original * 100;
+      metrics[code].caprock.Metric.average.pchange = metrics[code].caprock.Metric.average.original == 0 ? 0 : metrics[code].caprock.Metric.average.diff / metrics[code].caprock.Metric.average.original * 100;
+      
       //get square miles
       metrics[code].caprock.USC.area *= Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2);
       //square kilometers
@@ -1875,7 +1845,7 @@ export class MapComponent implements OnInit {
       if(!MapComponent.SPECIAL_AQUIFERS.includes(code)) {
         //nocaprock only if not special aquifers
         //currently just number of cells, no need conversion
-        metrics[code].nocaprock.Metric.area = metrics.total.nocaprock.USC.area;
+        metrics[code].nocaprock.Metric.area = metrics[code].nocaprock.USC.area;
         //compute metric average recharges
         metrics[code].nocaprock.Metric.average.current = metrics[code].nocaprock.USC.average.current * MapComponent.INCH_TO_MILLIMETER_FACTOR;
         metrics[code].nocaprock.Metric.average.original = metrics[code].nocaprock.USC.average.original * MapComponent.INCH_TO_MILLIMETER_FACTOR;
@@ -1887,26 +1857,25 @@ export class MapComponent implements OnInit {
         metrics[code].nocaprock.Metric.volumetric.original = metrics[code].nocaprock.USC.volumetric.original * MapComponent.GALLON_TO_LITER_FACTOR;
         metrics[code].nocaprock.Metric.volumetric.current = metrics[code].nocaprock.USC.volumetric.current * MapComponent.GALLON_TO_LITER_FACTOR;
 
-        //if no cells leave at default value of 0 to avoid dividing by 0
-        if (metrics[code].nocaprock.USC.area > 0) {
-          //average summation over cells
-          metrics[code].nocaprock.USC.average.original /= metrics[code].nocaprock.USC.area;
-          metrics[code].nocaprock.USC.average.current /= metrics[code].nocaprock.USC.area;
 
-          metrics[code].nocaprock.Metric.average.original /= metrics[code].nocaprock.Metric.area;
-          metrics[code].nocaprock.Metric.average.current /= metrics[code].nocaprock.Metric.area;
+        //average summation over cells
+        metrics[code].nocaprock.USC.average.original /= metrics[code].nocaprock.USC.area;
+        metrics[code].nocaprock.USC.average.current /= metrics[code].nocaprock.USC.area;
 
-          //get difference and percent change
-          metrics[code].nocaprock.USC.volumetric.diff = metrics[code].nocaprock.USC.volumetric.current - metrics[code].nocaprock.USC.volumetric.original;
-          metrics[code].nocaprock.USC.average.diff = metrics[code].nocaprock.USC.average.current - metrics[code].nocaprock.USC.average.original;
-          metrics[code].nocaprock.Metric.volumetric.diff = metrics[code].nocaprock.Metric.volumetric.current - metrics[code].nocaprock.Metric.volumetric.original;
-          metrics[code].nocaprock.Metric.average.diff = metrics[code].nocaprock.Metric.average.current - metrics[code].nocaprock.Metric.average.original;
-          //make sure not dividing by 0 if no recharge in selected cells
-          metrics[code].nocaprock.USC.volumetric.pchange = metrics[code].nocaprock.USC.volumetric.original == 0 ? 0 : metrics[code].nocaprock.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
-          metrics[code].nocaprock.USC.average.pchange = metrics[code].nocaprock.USC.average.original == 0 ? 0 : metrics[code].nocaprock.USC.average.diff / metrics[code].caprock.USC.average.original * 100;
-          metrics[code].nocaprock.Metric.volumetric.pchange = metrics[code].nocaprock.Metric.volumetric.original == 0 ? 0 : metrics[code].nocaprock.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
-          metrics[code].nocaprock.Metric.average.pchange = metrics[code].nocaprock.Metric.average.original == 0 ? 0 : metrics[code].nocaprock.Metric.average.diff / metrics.Metric.average.original * 100;
-        }
+        metrics[code].nocaprock.Metric.average.original /= metrics[code].nocaprock.Metric.area;
+        metrics[code].nocaprock.Metric.average.current /= metrics[code].nocaprock.Metric.area;
+
+        //get difference and percent change
+        metrics[code].nocaprock.USC.volumetric.diff = metrics[code].nocaprock.USC.volumetric.current - metrics[code].nocaprock.USC.volumetric.original;
+        metrics[code].nocaprock.USC.average.diff = metrics[code].nocaprock.USC.average.current - metrics[code].nocaprock.USC.average.original;
+        metrics[code].nocaprock.Metric.volumetric.diff = metrics[code].nocaprock.Metric.volumetric.current - metrics[code].nocaprock.Metric.volumetric.original;
+        metrics[code].nocaprock.Metric.average.diff = metrics[code].nocaprock.Metric.average.current - metrics[code].nocaprock.Metric.average.original;
+        //make sure not dividing by 0 if no recharge in selected cells
+        metrics[code].nocaprock.USC.volumetric.pchange = metrics[code].nocaprock.USC.volumetric.original == 0 ? 0 : metrics[code].nocaprock.USC.volumetric.diff / metrics[code].nocaprock.USC.volumetric.original * 100;
+        metrics[code].nocaprock.USC.average.pchange = metrics[code].nocaprock.USC.average.original == 0 ? 0 : metrics[code].nocaprock.USC.average.diff / metrics[code].nocaprock.USC.average.original * 100;
+        metrics[code].nocaprock.Metric.volumetric.pchange = metrics[code].nocaprock.Metric.volumetric.original == 0 ? 0 : metrics[code].nocaprock.Metric.volumetric.diff / metrics[code].nocaprock.Metric.volumetric.original * 100;
+        metrics[code].nocaprock.Metric.average.pchange = metrics[code].nocaprock.Metric.average.original == 0 ? 0 : metrics[code].nocaprock.Metric.average.diff / metrics[code].nocaprock.Metric.average.original * 100;
+        
         //get square miles
         metrics[code].nocaprock.USC.area *= Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2);
         //square kilometers
@@ -1918,8 +1887,13 @@ export class MapComponent implements OnInit {
 
     
 
-    Object.keys(metrics).forEach((code) => {
-      
+    let codes = Object.keys(AQUIFER_NAME_MAP);
+    //sort geographically by aquifer code
+    codes.sort((c1, c2) => {
+      return parseInt(c2) - parseInt(c1);
+    });
+
+    codes.forEach((code) => {
       if(MapComponent.SPECIAL_AQUIFERS.includes(code)) {
         let info = {
           name: "",
@@ -1931,13 +1905,6 @@ export class MapComponent implements OnInit {
         info.roundedMetrics = this.roundMetrics(metrics[code].caprock);
         info.name = AQUIFER_NAME_MAP[code];
         data.specialAquifers.push(info);
-      }
-      else if(code == "total") {
-        data.total.metrics = metrics[code].caprock;
-        data.total.roundedMetrics = this.roundMetrics(metrics[code].caprock);
-
-        data.totalNoCaprock.metrics = metrics[code].nocaprock;
-        data.totalNoCaprock.roundedMetrics = this.roundMetrics(metrics[code].nocaprock);
       }
       else {
         let info = {
@@ -1962,6 +1929,14 @@ export class MapComponent implements OnInit {
         data.aquifersNoCaprock.push(info);
       }
     });
+
+    //process total metrics
+    data.total.metrics = metrics.total.caprock;
+    data.total.roundedMetrics = this.roundMetrics(metrics.total.caprock);
+
+    data.totalNoCaprock.metrics = metrics.total.nocaprock;
+    data.totalNoCaprock.roundedMetrics = this.roundMetrics(metrics.total.nocaprock);
+
 
     return data;
   }
@@ -2093,8 +2068,106 @@ export class MapComponent implements OnInit {
     }
 
     return metrics;
-      
   }
+
+
+  getSelectedAquiferMetrics(codes: string[], caprock: boolean) {
+    let metrics = {
+      USC: {
+        average: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        volumetric: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        area: 0
+      },
+      Metric: {
+        average: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        volumetric: {
+          original: 0,
+          current: 0,
+          diff: 0,
+          pchange: 0
+        },
+        area: 0
+      }
+    };
+
+    this.highlightedAquiferIndices = [];
+    
+    //if empty just return all 0 metrics
+    if(codes.length != 0) {
+      let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+
+      this.aquifers.forEach((aquifer, i) => {
+        //aquifer code 0 (no aquifer), no need to check through code array
+        if(aquifer == "0") {
+          return;
+        }
+        if(codes.includes(aquifer)) {
+          this.highlightedAquiferIndices.push(i);
+          if(caprock || this.caprock[i] == 1) {
+            metrics.USC.area++;
+            metrics.USC.average.current += rechargeVals[i];
+            metrics.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          }
+        }
+
+      });
+
+      //currently just number of cells, no need conversion
+      metrics.Metric.area = metrics.USC.area;
+      //compute metric average recharges
+      metrics.Metric.average.current = metrics.USC.average.current * MapComponent.INCH_TO_MILLIMETER_FACTOR;
+      metrics.Metric.average.original = metrics.USC.average.original * MapComponent.INCH_TO_MILLIMETER_FACTOR;
+
+      //compute metrics in volumetric
+      metrics.USC.volumetric.original = (metrics.USC.average.original * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+      metrics.USC.volumetric.current = (metrics.USC.average.current * 75 * 75 * 144) / (231 * 0.3048 * 0.3048 * 365 * 1000000);
+      //instead of trying to figure out whole conversion, just convert Mgal to ML
+      metrics.Metric.volumetric.original = metrics.USC.volumetric.original * MapComponent.GALLON_TO_LITER_FACTOR;
+      metrics.Metric.volumetric.current = metrics.USC.volumetric.current * MapComponent.GALLON_TO_LITER_FACTOR;
+
+
+      //average summation over cells
+      metrics.USC.average.original /= metrics.USC.area;
+      metrics.USC.average.current /= metrics.USC.area;
+
+      metrics.Metric.average.original /= metrics.Metric.area;
+      metrics.Metric.average.current /= metrics.Metric.area;
+
+      //get difference and percent change
+      metrics.USC.volumetric.diff = metrics.USC.volumetric.current - metrics.USC.volumetric.original;
+      metrics.USC.average.diff = metrics.USC.average.current - metrics.USC.average.original;
+      metrics.Metric.volumetric.diff = metrics.Metric.volumetric.current - metrics.Metric.volumetric.original;
+      metrics.Metric.average.diff = metrics.Metric.average.current - metrics.Metric.average.original;
+      //make sure not dividing by 0 if no recharge in selected cells
+      metrics.USC.volumetric.pchange = metrics.USC.volumetric.original == 0 ? 0 : metrics.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
+      metrics.USC.average.pchange = metrics.USC.average.original == 0 ? 0 : metrics.USC.average.diff / metrics.USC.average.original * 100;
+      metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.original == 0 ? 0 : metrics.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
+      metrics.Metric.average.pchange = metrics.Metric.average.original == 0 ? 0 : metrics.Metric.average.diff / metrics.Metric.average.original * 100;
+      
+      //get square miles
+      metrics.USC.area *= Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2);
+      //square kilometers
+      metrics.Metric.area *= Math.pow(75 / 1000, 2);
+    }
+
+    return metrics;
+  }
+
 
 
   private roundMetrics(metrics: any) {
@@ -4359,9 +4432,9 @@ export class MapComponent implements OnInit {
                 let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
                 this.types.recharge.currentData[scenario] = recordValue;
                 
-                if(recordBase[scenario][mappedType - 1] > 400) {
-                  console.log(record);
-                }
+                // if(recordBase[scenario][mappedType - 1] > 400) {
+                //   console.log(record);
+                // }
                 //console.log(record);
 
                 if(scenario == this.currentScenario) {
@@ -4631,15 +4704,14 @@ export class MapComponent implements OnInit {
 
   public changeScenario(type: string) {
     this.currentScenario = type;
-
-    let swapData = this.types.recharge.currentData[type]
+    let swapData = this.types.recharge.currentData[type];
     let data = this.types.recharge.data._covjson.ranges.recharge.values;
 
     for(let i = 0; i < swapData.length; i++) {
       data[i] = swapData[i];
     }
 
-    this.createMetrics();
+    this.metrics = this.createMetrics();
     this.loadCover(this.types.recharge, true);
   }
 

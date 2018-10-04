@@ -96,6 +96,34 @@
           </table>
         </td>
       </tr>
+      <tr *ngFor="let aquifer of data.metrics.specialAquifers">
+        <td>{{aquifer.name}}</td>
+        <td>{{aquifer.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].average.original}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].average.current}}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table border="0" class="no-border nested-table">
+            <tr class="no-border">
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+              <td class="no-border-cell-internal">{{aquifer.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
 
     <br>
@@ -266,48 +294,64 @@
         <th>User-Defined Areas</th>
         <th>Island</th>
         <th>Island Excluding Caprock</th>
+        <th>{{data.metrics.specialAquifers[0].name}}</th>
+        <th>{{data.metrics.specialAquifers[1].name}}</th>
       </tr>
       <tr>
         <th>Area Total ({{data.unitSystem.units.area}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].area}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].area}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].area}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].area}}</td>
       </tr>
       <tr>
         <th>Total Recharge, Baseline ({{data.unitSystem.units.volumetric}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
       </tr>
       <tr>
         <th>Total Recharge, This Analysis ({{data.unitSystem.units.volumetric}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
       </tr>
       <tr>
         <th>Average Recharge, Baseline ({{data.unitSystem.units.average}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].average.original}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].average.original}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].average.original}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].average.original}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].average.original}}</td>
       </tr>
       <tr>
         <th>Average Recharge, This Analysis ({{data.unitSystem.units.average}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].average.current}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].average.current}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].average.current}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].average.current}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].average.current}}</td>
       </tr>
       <tr>
         <th>Volumetric Difference ({{data.unitSystem.units.volumetric}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].volumetric.diff}}</td>
       </tr>
       <tr>
         <th>Volumetric Percent Change</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+        <td>{{data.metrics.specialAquifers[0].roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
+        <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].volumetric.pchange}}</td>
       </tr>
 
     </table>

@@ -57,7 +57,11 @@ export class DisplayUnitComponent implements OnInit {
     this.data = data;
     //set false before true so reloads and brings forward
     this.components.reportWindow = false;
-    this.components.reportWindow = true;
+    //ensure component has time to process change
+    setTimeout(() => {
+      this.components.reportWindow = true;
+    }, 0);
+    
   }
 
   ngOnInit() {

@@ -1,3 +1,6 @@
+import { MapComponent } from "../../map/map.component";
+import { SidebarControlsComponent } from "../../sidebar/sidebar-controls/sidebar-controls.component";
+
 export class WindowPanel {
   id: number;
   title: string;
@@ -10,18 +13,12 @@ export class WindowPanel {
   tag: number;
   bodyType: string;
   data: any;
-  // components: {
-  //   map: MapComponent,
-  //   controls: SidebarControlsComponent,
-  //   menu: SidebarPanelComponent,
-  //   details: BottombarPanelComponent,
-  // };
 
   constructor(title: string, bodyType: string, data: any) {
     this.title = title;
     this.left = 300;
-    this.top = 100;
-    this.width = 765;
+    // this.top = 200;
+    this.width = 720;
     this.height = 540;
     this.backgroundAlpha = 1.0;
     this.zindex = 0;

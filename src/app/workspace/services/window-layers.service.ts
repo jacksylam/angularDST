@@ -4,7 +4,6 @@ import { Injectable } from '@angular/core';
 export class WindowLayersService {
 
   constructor() {
-
   }
 
   private zIndex = 0;

@@ -284,7 +284,9 @@ export class ReportWindowComponent implements AfterViewInit {
       {title: "", dataKey: "type"}, 
       {title: "User-Defined Areas", dataKey: "uda"}, 
       {title: "Island", dataKey: "total"},
-      {title: "Island Excluding Caprock", dataKey: "totalNoCaprock"}
+      {title: "Island Excluding Caprock", dataKey: "totalNoCaprock"},
+      {title: this.data.metrics.specialAquifers[0].name, dataKey: "sp1"},
+      {title: this.data.metrics.specialAquifers[1].name, dataKey: "sp2"}
     ];
     let infoHeaders = [
       {title: "", dataKey: "blank"},
@@ -349,8 +351,20 @@ export class ReportWindowComponent implements AfterViewInit {
         crmgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.current),
         diff: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
         pchange: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
-      })
-    })
+      });
+    });
+    this.data.metrics.specialAquifers.forEach((aquifer) => {
+      rows.push({
+        name: aquifer.name,
+        area: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].area),
+        oriny: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].average.original),
+        criny: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].average.current),
+        ormgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+        crmgd: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+        diff: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+        pchange: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
+      });
+    });
 
     this.pdf.setFontSize(titleSize);
     this.pdf.setFont('arial');
@@ -561,48 +575,65 @@ export class ReportWindowComponent implements AfterViewInit {
     let total = this.data.metrics.total
     let totalNoCaprock = this.data.metrics.totalNoCaprock
     let customAreasTotal = this.data.metrics.customAreasTotal;
+    let sp1 = this.data.metrics.specialAquifers[0];
+    let sp2 = this.data.metrics.specialAquifers[1];
+
 
     rows.push({
       type: "Area Total (" + this.data.unitSystem.units.area + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].area),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].area),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].area)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].area),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].area,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].area
     });
     rows.push({
       type: "Total Recharge, Baseline (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.original),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.original),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.original)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.original,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.original
     });
     rows.push({
       type: "Total Recharge, This Analysis (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.current),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.current),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.current)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.current,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.current
     });
     rows.push({
       type: "Average Recharge, Baseline (" + this.data.unitSystem.units.average + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.original),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.original),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.original)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.original),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].average.original,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].average.original
     });
     rows.push({
       type: "Average Recharge, This Analysis (" + this.data.unitSystem.units.average + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.current),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.current),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.current)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.current),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].average.current,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].average.current
     });
     rows.push({
       type: "Volumetric Difference (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.diff)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.diff,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.diff
     });
     rows.push({
       type: "Volumetric Percent Change",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
-      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.pchange)
+      totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
+      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.pchange,
+      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.pchange
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
@@ -616,6 +647,8 @@ export class ReportWindowComponent implements AfterViewInit {
         row.cells.uda.styles.font = "courier"
         row.cells.total.styles.font = "courier";
         row.cells.totalNoCaprock.styles.font = "courier";
+        row.cells.sp1.styles.font = "courier";
+        row.cells.sp2.styles.font = "courier";
       },
       margin: {top: 60}
     });
