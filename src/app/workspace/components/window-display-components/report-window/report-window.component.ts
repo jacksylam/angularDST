@@ -584,56 +584,56 @@ export class ReportWindowComponent implements AfterViewInit {
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].area),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].area),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].area),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].area,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].area
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].area),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].area)
     });
     rows.push({
       type: "Total Recharge, Baseline (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.original),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.original),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.original),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.original,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.original
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].volumetric.original),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].volumetric.original)
     });
     rows.push({
       type: "Total Recharge, This Analysis (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.current),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.current),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.current),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.current,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.current
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].volumetric.current),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].volumetric.current)
     });
     rows.push({
       type: "Average Recharge, Baseline (" + this.data.unitSystem.units.average + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.original),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.original),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.original),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].average.original,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].average.original
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].average.original),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].average.original)
     });
     rows.push({
       type: "Average Recharge, This Analysis (" + this.data.unitSystem.units.average + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.current),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.current),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.current),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].average.current,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].average.current
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].average.current),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].average.current)
     });
     rows.push({
       type: "Volumetric Difference (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.diff,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.diff
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].volumetric.diff),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].volumetric.diff)
     });
     rows.push({
       type: "Volumetric Percent Change",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
-      sp1: sp1.roundedMetrics[this.data.unitSystem.system].volumetric.pchange,
-      sp2: sp2.roundedMetrics[this.data.unitSystem.system].volumetric.pchange
+      sp1: decimalAlign(sp1.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
+      sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].volumetric.pchange)
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
@@ -641,10 +641,25 @@ export class ReportWindowComponent implements AfterViewInit {
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
-        total: {columnWidth: 50}
+        total: {columnWidth: 50, halign: "center"},
+        uda: {halign: "center"},
+        totalNoCaprock: {halign: "center"},
+        sp1: {halign: "center"},
+        sp2: {halign: "center"},
+        type: {columnWidth: 202, overflow: "visible"}
+      },
+      drawHeaderRow: (row, data) => {
+        row.cells.type.styles.halign = "center";
+        row.cells.uda.styles.halign = "center";
+        row.cells.total.styles.halign = "center";
+        row.cells.totalNoCaprock.styles.halign = "center";
+        row.cells.sp1.styles.halign = "center";
+        row.cells.sp2.styles.halign = "center";
       },
       drawRow: (row, data) => {
-        row.cells.uda.styles.font = "courier"
+        console.log(row.cells.type.styles);
+        row.cells.type.styles.fontSize = 8;
+        row.cells.uda.styles.font = "courier";
         row.cells.total.styles.font = "courier";
         row.cells.totalNoCaprock.styles.font = "courier";
         row.cells.sp1.styles.font = "courier";
