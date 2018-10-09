@@ -570,13 +570,13 @@ export class MapComponent implements OnInit {
     return arrCopy;
   }
 
-  private repackageShapes(shapes: any, divisions: {x: number, y: number}): any {
+  private repackageShapes(shapes: any): any {
     let componentIndices = []
     let indices = this.getInternalIndexes(shapes.toGeoJSON());
     indices.forEach((index) => {
       componentIndices.push(this.getComponents(index));
     });
-    return this.generateGeometriesFromPoints(componentIndices, divisions);
+    return this.generateGeometriesFromPoints(componentIndices);
   }
 
   
@@ -891,7 +891,7 @@ export class MapComponent implements OnInit {
           //add highlighted aquifer name to list
           highlightedAquifers.push(layer.feature.properties.CODE);
         }
-        
+
         //get rounded metrics from indexes and send to bottom panel
         let metrics = this.roundMetrics(this.getSelectedAquiferMetrics(highlightedAquifers, this.includeCaprock));
         //console.log(indexes);
@@ -2484,7 +2484,7 @@ export class MapComponent implements OnInit {
           // });
 
           //this 4x4 with fancy shapes seems to work now, so does 8x8...
-          let geometries = this.generateGeometriesFromPoints(changedIndexComponents, {x: 8, y: 8});
+          let geometries = this.generateGeometriesFromPoints(changedIndexComponents);
           // let start = new Date().getTime();
           // Observable.forkJoin(geometries.map(geometry => {
           //   return this.DBService.spatialSearch(geometry);
@@ -2567,8 +2567,8 @@ export class MapComponent implements OnInit {
   }
 
 
-  //for now just use squares until figure out other problems
-  generateGeometriesFromPoints(points: {x: number, y: number}[], divisions: {x: number, y: number}) {
+  
+  generateGeometriesFromPoints(points: {x: number, y: number}[]) {
     let xrange = {
       min: Number.POSITIVE_INFINITY,
       max: Number.NEGATIVE_INFINITY
@@ -2603,6 +2603,34 @@ export class MapComponent implements OnInit {
       //   rowMap[point.y] = [point.x];
       // }
     });
+
+    //check to ensure the minimum distance between generated lines in geometry is sufficient, and that the constructed query will not be too long
+    //start at a base 8x8 subgrid
+    let divisions = {
+      x: 8,
+      y: 8
+    };
+    let maxURLLength = 2000;
+    
+    let divSizeGood = false;
+    //might want to convert meters to lat or long measurement for minDistanceParallelLines
+    // while(!divSizeGood) {
+    //   divSizeGood = true;
+
+    //   let ySubrange = Math.ceil((yrange.max - yrange.min) / divisions.y);
+    //   let xSubrange = Math.ceil((xrange.max - xrange.min) / divisions.x);
+    //   let numPoints = 5 + 2 * ySubrange;
+
+    //   if(this.minDistanceParallelLines(xSubrange) < 0.01) {
+    //     divSizeGood = false;
+    //     divisions.x += 1;
+    //   }
+    //   else if(this.DBService.maxSpatialQueryLength(numPoints) > maxURLLength) {
+    //     divSizeGood = false;
+    //     divisions.x += 1;
+    //     divisions.y += 1;
+    //   }
+    // }
 
     let xdivisions = [];
     let ydivisions = [];
@@ -2650,11 +2678,11 @@ export class MapComponent implements OnInit {
     //   for(let j = 0; j < ydivisions.length; j++) {
 
     //     let shape = [];
-    //     let p1 = [xs[xdivisions[i].min], ys[ydivisions[j].min]];
-    //     let p2 = [xs[xdivisions[i].min], ys[ydivisions[j].max]];
-    //     let p3 = [xs[xdivisions[i].max], ys[ydivisions[j].max]];
-    //     let p4 = [xs[xdivisions[i].max], ys[ydivisions[j].min]];
-    //     let p5 = [xs[xdivisions[i].min], ys[ydivisions[j].min]];
+    //     let p1 = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].min] + 74];
+    //     let p2 = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].max] - 74];
+    //     let p3 = [xs[xdivisions[i].max] + 74, ys[ydivisions[j].max] - 74];
+    //     let p4 = [xs[xdivisions[i].max] + 74, ys[ydivisions[j].min] + 74];
+    //     let p5 = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].min] + 74];
 
     //     //wrong order
     //     // let p1 = [ydivisions[j].min, xdivisions[i].min];
@@ -2760,18 +2788,29 @@ export class MapComponent implements OnInit {
       for(let j = 0; j < ydivisions.length; j++) {
         let rightPoints = [];
         let leftPoints = [];
+
+        //points on line should be considered within the shape using mongodb's geowithin definition
+        //but maybe they aren't, or it might be rounding errors, whatever the case, need to add buffer zone
+        //add top corners with offsets to create buffer zone
+        let topLeftUTM = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].min] + 74];
+        let topRightUTM = [xs[xdivisions[i].max] + 74, ys[ydivisions[j].min] + 74];
+        let topLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, topLeftUTM);
+        let topRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, topRightUTM);
+        leftPoints.push(topLeft);
+        rightPoints.push(topRight);
+
         // let topPoints = [];
         // let bottomPoints = [];
 
         for(let y = ydivisions[j].min; y <= ydivisions[j].max; y++) {
           if(yMapping[i][j][y]) {
             let yUTM = ys[y];
-            //subtract/add 1 from min/max to make sure that rows with one point have a gap between sides
+            //subtract/add 74 from min/max to create buffer zone
             let xMinUTM = xs[yMapping[i][j][y].min] - 74;
             let xMaxUTM = xs[yMapping[i][j][y].max] + 74;
 
-            let coordLeft =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
-            let coordRight =  MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMaxUTM, yUTM]);
+            let coordLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMinUTM, yUTM]);
+            let coordRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xMaxUTM, yUTM]);
             
             //console.log(coordLeft);
 
@@ -2779,6 +2818,14 @@ export class MapComponent implements OnInit {
             rightPoints.push(coordRight);
           }
         }
+
+        //add bottom corners with offsets to create buffer zone
+        let bottomLeftUTM = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].max] - 74];
+        let bottomRightUTM = [xs[xdivisions[i].max] + 74, ys[ydivisions[j].max] - 74];
+        let bottomLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, bottomLeftUTM);
+        let bottomRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, bottomRightUTM);
+        leftPoints.push(bottomLeft);
+        rightPoints.push(bottomRight);
 
         //only want to cutout in gaps between bottom two points and top two points rather than whole range
         //can fix this later, just comment out x cutouts for now, bit more complicated
@@ -2810,13 +2857,8 @@ export class MapComponent implements OnInit {
         //shape = shape.concat(rightPoints);
         // shape = shape.concat(leftPoints);  
 
-        //points on line should be considered within the shape using mongodb's geowithin definition
-        if(shape.length > 0) {
-          //if only one set of points add a third point offset by 10 meters from the first point ot make a triangle (instead of a line)
-          if(shape.length < 3) {
-            //~1/111111 degrees of longtitude per meter
-            shape.push([shape[0][0], shape[0][1] + 10/111111])
-          }
+        //if only 4 points then no internal points
+        if(shape.length > 4) {
           //add first point to end of array to close shape
           shape.push(shape[0]);
 
@@ -2844,8 +2886,12 @@ export class MapComponent implements OnInit {
     // };
     // console.log(objects)
 
+    //-----------------------------------------------------------------------------
+
     let objects = L.geoJSON(geometries).toGeoJSON();
-    // console.log(objects);
+
+    //debug-----------------------------------------------------------------------------
+    // // console.log(objects);
 
     // geometries.forEach((geometry) => {
     //   // let geojsonBounds = {
@@ -2859,18 +2905,33 @@ export class MapComponent implements OnInit {
       
     //   //L.geoJSON(geojsonBounds).addTo(this.map);
     // });
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
-    this.metrics.customAreasTotal.metrics = customTotal;
-    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+    // let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    // this.metrics.customAreasTotal.metrics = customTotal;
+    // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
     
     // // console.log(geometries);
 
-
-    //-----------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------
 
     return objects;
+  }
 
 
+  minDistanceParallelLines(maxCellSeparation: number, lineBaseSeparation: number = 74 * 2) {
+    //height equal to distance between centroids
+    let outerTriangleHeight = 75;
+    //get distance between opposing cells
+    let outerTriangleBase = maxCellSeparation * 75;
+    //subtract width of buffer zone (base separation on one side of the centroid, assuming base separation centered on centroid)
+    outerTriangleBase -= lineBaseSeparation / 2;
+    //angle of triangle formed on outer triangle (geometrically equivalent to inner angle for the parallelogram formed byt the parallel lines)
+    let theta = Math.atan(outerTriangleHeight / outerTriangleBase);
+
+    //lineBaseSeparation is hypotenuse inner triangle (triangle formed with perpendicular line between parallel lines to create triangle at parallelogram base)
+    //need to find length of theta opposite side (inner triangle height)
+    //this is the distance between the parallel lines
+    let innerTriangleHeight = lineBaseSeparation * Math.sin(theta);
+    return innerTriangleHeight;
   }
 
 
