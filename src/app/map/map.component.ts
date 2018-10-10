@@ -2526,15 +2526,18 @@ export class MapComponent implements OnInit {
 
             //debugging------------------------------------------------------------------------------------------------
 
+            let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+            let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
             changedIndexComponents.forEach((point) => {
               let includes = returnedIndices.some((rp) => {
                 return rp.x == point.x && rp.y == point.y;
               });
               if(!includes) {
-                let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + point.x, this.ymin + point.y]);
-                let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + point.x + 75, this.ymin + point.y]);
-                let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + point.x + 75, this.ymin + point.y + 75]);
-                let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + point.x, this.ymin + point.y + 75]);
+                let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
+                let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
+                let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
+                let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
                 let cellBounds = {
                   "type": "Feature",
                   "properties": {},
@@ -2928,25 +2931,25 @@ export class MapComponent implements OnInit {
     let objects = L.geoJSON(geometries).toGeoJSON();
 
     //debug-----------------------------------------------------------------------------
-    // // console.log(objects);
+    // console.log(objects);
 
-    // geometries.forEach((geometry) => {
-    //   // let geojsonBounds = {
-    //   //   "type": "Feature",
-    //   //   "properties": {},
-    //   //   "geometry": geometry
-    //   // };
-    //   //console.log(geometry);
-    //   let polyCoords = this.swapCoordinates(geometry.geometry.coordinates);
-    //   this.addDrawnItem(L.polygon(polyCoords, {}));
+    geometries.forEach((geometry) => {
+      // let geojsonBounds = {
+      //   "type": "Feature",
+      //   "properties": {},
+      //   "geometry": geometry
+      // };
+      console.log(geometry);
+      let polyCoords = this.swapCoordinates(geometry.coordinates);
+      this.addDrawnItem(L.polygon(polyCoords, {}));
       
-    //   //L.geoJSON(geojsonBounds).addTo(this.map);
-    // });
+      //L.geoJSON(geojsonBounds).addTo(this.map);
+    });
     // let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     // this.metrics.customAreasTotal.metrics = customTotal;
     // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
     
-    // // console.log(geometries);
+    // console.log(geometries);
 
     //-------------------------------------------------------------------------------
 
