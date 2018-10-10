@@ -657,7 +657,6 @@ export class ReportWindowComponent implements AfterViewInit {
         row.cells.sp2.styles.halign = "center";
       },
       drawRow: (row, data) => {
-        console.log(row.cells.type.styles);
         row.cells.type.styles.fontSize = 8;
         row.cells.uda.styles.font = "courier";
         row.cells.total.styles.font = "courier";
