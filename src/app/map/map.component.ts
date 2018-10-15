@@ -2534,6 +2534,7 @@ export class MapComponent implements OnInit {
                 return rp.x == point.x && rp.y == point.y;
               });
               if(!includes) {
+                console.log(point);
                 let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
                 let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
                 let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
@@ -2939,7 +2940,6 @@ export class MapComponent implements OnInit {
       //   "properties": {},
       //   "geometry": geometry
       // };
-      console.log(geometry);
       let polyCoords = this.swapCoordinates(geometry.coordinates);
       this.addDrawnItem(L.polygon(polyCoords, {}));
       
