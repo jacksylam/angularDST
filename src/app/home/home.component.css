@@ -1,7 +1,7 @@
 img {
   float: right;
-  padding: 50px;
-  max-width: 75%;
+  margin: 50px;
+  max-width: calc(75% - 100px);
   width: 760px;
   height: auto;
 }
@@ -27,6 +27,7 @@ p {
   position: absolute;
   width: 90%;
   left: 5%;
+  padding-bottom: 100px;
 }
 
 .pad {
