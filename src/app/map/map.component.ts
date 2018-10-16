@@ -1716,7 +1716,7 @@ export class MapComponent implements OnInit {
     3: normal (include always)
     */
     let checkInclude = (i: number): number => {
-      if(lcVals[i] == 0) {
+      if(this.aquifers[i] == "0") {
         return 0;
       }
       else if(MapComponent.SPECIAL_AQUIFERS.includes(this.aquifers[i])) {
@@ -1746,16 +1746,6 @@ export class MapComponent implements OnInit {
         }
         case 2: {
           let aquifer = this.aquifers[i];
-
-          if(metrics[aquifer] == undefined) {
-            // console.log(i);
-            // console.log(this.aquifers[i]);
-            //console.log(lcVals[i]);
-            // console.log(this.aquifers.length);
-            // console.log(lcVals.length);
-            //just ignore this area for now
-            break;
-          }
           
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
@@ -2488,7 +2478,7 @@ export class MapComponent implements OnInit {
           
           //debugging------------------------------------------------------------------------------------------------
 
-          let returnedIndices = [];            
+          // let returnedIndices = [];            
 
           //debugging------------------------------------------------------------------------------------------------
 
@@ -2503,7 +2493,7 @@ export class MapComponent implements OnInit {
                 
                 //debugging------------------------------------------------------------------------------------------------
 
-                returnedIndices.push({x: x, y: y});
+                // returnedIndices.push({x: x, y: y});
 
                 //debugging------------------------------------------------------------------------------------------------
 
@@ -2526,38 +2516,91 @@ export class MapComponent implements OnInit {
 
             //debugging------------------------------------------------------------------------------------------------
 
-            let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-            let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+            // console.log(update);
 
-            changedIndexComponents.forEach((point) => {
-              let includes = returnedIndices.some((rp) => {
-                return rp.x == point.x && rp.y == point.y;
-              });
-              if(!includes) {
-                console.log(point);
-                let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
-                let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
-                let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
-                let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
-                let cellBounds = {
-                  "type": "Feature",
-                  "properties": {},
-                  "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [[c1, c2, c3, c4, c1]]
-                  }
-                };
-                this.highlightedCell = L.geoJSON(cellBounds, { interactive: false })
-                .setStyle({
-                  fillColor: 'orange',
-                  weight: 3,
-                  opacity: 1,
-                  color: 'orange',
-                  fillOpacity: 0.2
-                })
-                .addTo(this.map);
-              }
-            });
+            // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+            // let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+            // let missingPoints: any = {};
+
+            // changedIndexComponents.forEach((point) => {
+            //   let includes = returnedIndices.some((rp) => {
+            //     return rp.x == point.x && rp.y == point.y;
+            //   });
+              
+            //   if(!includes) {
+            //     this.DBService.indexSearch([point])
+            //     .subscribe((data) => {
+            //       console.log(data);
+            //     });
+            //     // //test different point to ensure query properly constructed
+            //     // this.DBService.indexSearch([{x: point.x + 1, y: point.y}])
+            //     // .subscribe((data) => {
+            //     //   console.log(data);
+            //     // });
+                
+            //     if(missingPoints[point.x] == undefined) {
+            //       missingPoints[point.x] = {
+            //         min: point.y,
+            //         max: point.y
+            //       }
+            //     }
+            //     else {
+            //       if(point.y < missingPoints[point.x].min) {
+            //         missingPoints[point.x].min = point.y;
+            //       }
+            //       if(point.y > missingPoints[point.x].max) {
+            //         missingPoints[point.x].max = point.y;
+            //       }
+            //     }
+            //     let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
+            //     let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
+            //     let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
+            //     let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
+            //     let cellBounds = {
+            //       "type": "Feature",
+            //       "properties": {},
+            //       "geometry": {
+            //         "type": "Polygon",
+            //         "coordinates": [[c1, c2, c3, c4, c1]]
+            //       }
+            //     };
+            //     L.geoJSON(cellBounds, { interactive: false })
+            //     .setStyle({
+            //       fillColor: 'orange',
+            //       weight: 5,
+            //       opacity: 1,
+            //       color: 'orange',
+            //       fillOpacity: 0.2
+            //     })
+            //     .addTo(this.map);
+            //   }
+            //   else {
+            //     // let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
+            //     // let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
+            //     // let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
+            //     // let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
+            //     // let cellBounds = {
+            //     //   "type": "Feature",
+            //     //   "properties": {},
+            //     //   "geometry": {
+            //     //     "type": "Polygon",
+            //     //     "coordinates": [[c1, c2, c3, c4, c1]]
+            //     //   }
+            //     // };
+            //     // L.geoJSON(cellBounds, { interactive: false })
+            //     // .setStyle({
+            //     //   fillColor: 'green',
+            //     //   weight: 5,
+            //     //   opacity: 1,
+            //     //   color: 'green',
+            //     //   fillOpacity: 0.2
+            //     // })
+            //     // .addTo(this.map);
+            //   }
+            // });
+
+            // console.log(missingPoints);
 
             //debugging------------------------------------------------------------------------------------------------
 
@@ -2571,26 +2614,6 @@ export class MapComponent implements OnInit {
             });
             this.loadCover(this.types.landCover, false);
           });
-
-          //console.log(geometries);
-          // console.log("Sending " + changedIndexComponents.length.toString() + " queries of " + dbQueryChunkSize.toString() + " points.");
-          // let start = new Date().getTime();
-          // Observable.forkJoin(changedIndexComponents.map(indexGroup => {
-          //   return this.DBService.indexSearch(indexGroup);
-          // }))
-          // //this.DBService.indexSearch(changedIndexComponents[0])
-          // //this.DBService.spatialSearch(element);
-          // .subscribe((data) => {
-          //   console.log("Operation took " + (new Date().getTime() - start).toString() + "ms");
-          //   console.log(data);
-          // });
-
-          // changedIndexComponents.forEach((indexGroup) => {
-          //   this.DBService.indexSearch(indexGroup)
-          //   .subscribe((data) => {
-          //     console.log(data);
-          //   });
-          // });
 
           this.loadCover(this.types.landCover, false);
         }
@@ -2651,79 +2674,67 @@ export class MapComponent implements OnInit {
       x: 8,
       y: 8
     };
-    let maxURLLength = 2000;
-    
-    let divSizeGood = false;
-    //might want to convert meters to lat or long measurement for minDistanceParallelLines
-    // while(!divSizeGood) {
-    //   divSizeGood = true;
 
-    //   let ySubrange = Math.ceil((yrange.max - yrange.min) / divisions.y);
-    //   let xSubrange = Math.ceil((xrange.max - xrange.min) / divisions.x);
-    //   let numPoints = 5 + 2 * ySubrange;
-
-    //   if(this.minDistanceParallelLines(xSubrange) < 0.01) {
-    //     divSizeGood = false;
-    //     divisions.x += 1;
-    //   }
-    //   else if(this.DBService.maxSpatialQueryLength(numPoints) > maxURLLength) {
-    //     divSizeGood = false;
-    //     divisions.x += 1;
-    //     divisions.y += 1;
-    //   }
-    // }
-
-    let xdivisions = [];
-    let ydivisions = [];
-
-    let chunkSize = Math.ceil((xrange.max - xrange.min) / divisions.x);
-    for(let i = 0; i < divisions.x - 1; i++) {
-      xdivisions.push({
-        min: xrange.min + i * chunkSize,
-        //subtract 1 so upper bound centroid not in bounds (boundary centroids get placed in latter section)
-        max: xrange.min + (i + 1) * chunkSize - 1
-      });
-    }
-    //add last chunk separately so all included if not evenly divisible
-    xdivisions.push({
-      min: xrange.min + (divisions.x - 1) * chunkSize,
-      max: xrange.max
-    });
-
-    chunkSize = Math.ceil((yrange.max - yrange.min) / divisions.y);
-    for(let i = 0; i < divisions.y - 1; i++) {
-      ydivisions.push({
-        //subtract 1 so centroid within bounds
-        min: yrange.min + i * chunkSize - 1,
-        //subtract 1 so upper bound centroid not in bounds (boundary centroids get placed in latter section)
-        max: yrange.min + (i + 1) * chunkSize - 1
-      });
-    }
-    //add last chunk separately so all included if not evenly divisible
-    ydivisions.push({
-      min: yrange.min + (divisions.y - 1) * chunkSize - 1,
-      max: yrange.max + 1
-    });
+    let chunkSizeX = Math.ceil((xrange.max - xrange.min) / divisions.x);
+    let chunkSizeY = Math.ceil((yrange.max - yrange.min) / divisions.y);
 
     let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
     let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
 
     let geometries = [];
+    
 
-    //squares
+    //rectangles
     //-----------------------------------------------------------------------------------
 
+    let bounds = [];
+    for(let i = 0; i < divisions.x; i++) {
+      bounds.push([]);
+      for(let j = 0; j < divisions.y; j++) {
+        bounds[i].push({
+          xrange: {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY
+          },
+          yrange: {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY
+          }
+        });
+      }
+    }
+    points.forEach((point) => {
+      let offsetX = point.x - xrange.min;
+      let offsetY = point.y - yrange.min;
+      let chunkX = Math.floor(offsetX / chunkSizeX);
+      let chunkY = Math.floor(offsetY / chunkSizeY);
+      if(point.x < bounds[chunkX][chunkY].xrange.min) {
+        bounds[chunkX][chunkY].xrange.min = point.x;
+      }
+      if(point.x > bounds[chunkX][chunkY].xrange.max) {
+        bounds[chunkX][chunkY].xrange.max = point.x;
+      }
+      if(point.y < bounds[chunkX][chunkY].yrange.min) {
+        bounds[chunkX][chunkY].yrange.min = point.y;
+      }
+      if(point.y > bounds[chunkX][chunkY].yrange.max) {
+        bounds[chunkX][chunkY].yrange.max = point.y;
+      }
+    });
 
-
-    for(let i = 0; i < xdivisions.length; i++) {
-      for(let j = 0; j < ydivisions.length; j++) {
+    for(let i = 0; i < bounds.length; i++) {
+      for(let j = 0; j < bounds[i].length; j++) {
+        //if min still infinity then no points in section, ignore this subgrid
+        if(bounds[i][j].xrange.min == Number.POSITIVE_INFINITY) {
+          continue;
+        }
 
         let shape = [];
-        let p1 = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].min] + 74];
-        let p2 = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].max] - 74];
-        let p3 = [xs[xdivisions[i].max] + 74, ys[ydivisions[j].max] - 74];
-        let p4 = [xs[xdivisions[i].max] + 74, ys[ydivisions[j].min] + 74];
-        let p5 = [xs[xdivisions[i].min] - 74, ys[ydivisions[j].min] + 74];
+        let p1 = [xs[bounds[i][j].xrange.min] - 74, ys[bounds[i][j].yrange.min] + 74];
+        let p2 = [xs[bounds[i][j].xrange.min] - 74, ys[bounds[i][j].yrange.max] - 74];
+        let p3 = [xs[bounds[i][j].xrange.max] + 74, ys[bounds[i][j].yrange.max] - 74];
+        let p4 = [xs[bounds[i][j].xrange.max] + 74, ys[bounds[i][j].yrange.min] + 74];
+        let p5 = [xs[bounds[i][j].xrange.min] - 74, ys[bounds[i][j].yrange.min] + 74];
 
         //wrong order
         // let p1 = [ydivisions[j].min, xdivisions[i].min];
@@ -2749,8 +2760,62 @@ export class MapComponent implements OnInit {
     
 
 
-    //not squares
+    //not rectangles
     //-----------------------------------------------------------------------------------------------------------------------
+
+    // let maxURLLength = 2000;
+    
+    // let divSizeGood = false;
+    //might want to convert meters to lat or long measurement for minDistanceParallelLines
+    // while(!divSizeGood) {
+    //   divSizeGood = true;
+
+    //   let ySubrange = Math.ceil((yrange.max - yrange.min) / divisions.y);
+    //   let xSubrange = Math.ceil((xrange.max - xrange.min) / divisions.x);
+    //   let numPoints = 5 + 2 * ySubrange;
+
+    //   if(this.minDistanceParallelLines(xSubrange) < 0.01) {
+    //     divSizeGood = false;
+    //     divisions.x += 1;
+    //   }
+    //   else if(this.DBService.maxSpatialQueryLength(numPoints) > maxURLLength) {
+    //     divSizeGood = false;
+    //     divisions.x += 1;
+    //     divisions.y += 1;
+    //   }
+    // }
+
+    // let xdivisions = [];
+    // let ydivisions = [];
+
+    // 
+    // for(let i = 0; i < divisions.x - 1; i++) {
+    //   xdivisions.push({
+    //     min: xrange.min + i * chunkSizeX,
+    //     //subtract 1 so upper bound centroid not in bounds (boundary centroids get placed in latter section)
+    //     max: xrange.min + (i + 1) * chunkSizeX - 1
+    //   });
+    // }
+    // //add last chunk separately so all included if not evenly divisible
+    // xdivisions.push({
+    //   min: xrange.min + (divisions.x - 1) * chunkSizeX,
+    //   max: xrange.max
+    // });
+
+    // 
+    // for(let i = 0; i < divisions.y - 1; i++) {
+    //   ydivisions.push({
+    //     //subtract 1 so centroid within bounds
+    //     min: yrange.min + i * chunkSizeY - 1,
+    //     //subtract 1 so upper bound centroid not in bounds (boundary centroids get placed in latter section)
+    //     max: yrange.min + (i + 1) * chunkSizeY - 1
+    //   });
+    // }
+    // //add last chunk separately so all included if not evenly divisible
+    // ydivisions.push({
+    //   min: yrange.min + (divisions.y - 1) * chunkSizeY - 1,
+    //   max: yrange.max + 1
+    // });
 
     // let yMapping = [];
     // //let xMapping = [];
@@ -2892,7 +2957,7 @@ export class MapComponent implements OnInit {
     //     //reverse right side points since want from top to bottom which is min to max (put in array max to min)
     //     //rightPoints = rightPoints.reverse();
     //     //reverse bottom points so right to left
-    //     leftPoints = leftPoints.reverse();
+    //     rightPoints = rightPoints.reverse();
     //     //console.log(leftPoints);
     //     let shape = rightPoints.concat(leftPoints);
     //     //shape = shape.concat(rightPoints);
@@ -2934,17 +2999,18 @@ export class MapComponent implements OnInit {
     //debug-----------------------------------------------------------------------------
     // console.log(objects);
 
-    geometries.forEach((geometry) => {
-      // let geojsonBounds = {
-      //   "type": "Feature",
-      //   "properties": {},
-      //   "geometry": geometry
-      // };
-      let polyCoords = this.swapCoordinates(geometry.coordinates);
-      this.addDrawnItem(L.polygon(polyCoords, {}));
+    // geometries.forEach((geometry) => {
+    //   // let geojsonBounds = {
+    //   //   "type": "Feature",
+    //   //   "properties": {},
+    //   //   "geometry": geometry
+    //   // };
+    //   //console.log(geometry);
+    //   let polyCoords = this.swapCoordinates(geometry.coordinates);
+    //   this.addDrawnItem(L.polygon(polyCoords, {}));
       
-      //L.geoJSON(geojsonBounds).addTo(this.map);
-    });
+    //   //L.geoJSON(geojsonBounds).addTo(this.map);
+    // });
     // let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
     // this.metrics.customAreasTotal.metrics = customTotal;
     // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
@@ -2957,27 +3023,27 @@ export class MapComponent implements OnInit {
   }
 
 
-  minDistanceParallelLines(cellA: {x: number, y: number}, cellB: {x: number, y: number}, lineBaseSeparation: number = 74 * 2) {
-    let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-    let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-    let maxCellSeparation = Math.abs(cellA.x - cellB.x);
-    //height equal to distance between centroids
-    let outerTriangleHeight = 75;
-    //get distance between opposing cells
-    let outerTriangleBase = maxCellSeparation * 75;
-    //subtract width of buffer zone (base separation on one side of the centroid, assuming base separation centered on centroid)
-    outerTriangleBase -= lineBaseSeparation / 2;
-    //angle of triangle formed on outer triangle (geometrically equivalent to inner angle for the parallelogram formed byt the parallel lines)
-    let theta = Math.atan(outerTriangleHeight / outerTriangleBase);
+  // minDistanceParallelLines(cellA: {x: number, y: number}, cellB: {x: number, y: number}, lineBaseSeparation: number = 74 * 2) {
+  //   let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+  //   let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+  //   let maxCellSeparation = Math.abs(cellA.x - cellB.x);
+  //   //height equal to distance between centroids
+  //   let outerTriangleHeight = 75;
+  //   //get distance between opposing cells
+  //   let outerTriangleBase = maxCellSeparation * 75;
+  //   //subtract width of buffer zone (base separation on one side of the centroid, assuming base separation centered on centroid)
+  //   outerTriangleBase -= lineBaseSeparation / 2;
+  //   //angle of triangle formed on outer triangle (geometrically equivalent to inner angle for the parallelogram formed byt the parallel lines)
+  //   let theta = Math.atan(outerTriangleHeight / outerTriangleBase);
 
-    //lineBaseSeparation is hypotenuse inner triangle (triangle formed with perpendicular line between parallel lines to create triangle at parallelogram base)
-    //need to find length of theta opposite side (inner triangle height)
-    //this is the distance between the parallel lines
-    //wrong, probably actually want to 
-    let innerTriangleHeight = lineBaseSeparation * Math.sin(theta);
+  //   //lineBaseSeparation is hypotenuse inner triangle (triangle formed with perpendicular line between parallel lines to create triangle at parallelogram base)
+  //   //need to find length of theta opposite side (inner triangle height)
+  //   //this is the distance between the parallel lines
+  //   //wrong, probably actually want to 
+  //   let innerTriangleHeight = lineBaseSeparation * Math.sin(theta);
     
     
-  }
+  // }
 
 
 
@@ -4327,6 +4393,41 @@ export class MapComponent implements OnInit {
       let start = new Date().getTime();
       Observable.forkJoin(geojsonObjects.features.map(element => {
         return this.DBService.spatialSearch(element.geometry);
+      }))
+      .subscribe((data) => {
+        let optime = new Date().getTime()
+        console.log("Operation took " + (optime - start).toString() + "ms");
+        //console.log(typeof data);
+        //use file(s) generated as cover
+        dataHandler(data);
+        console.log("Data handler took " + (new Date().getTime() - optime).toString() + "ms");
+        this.mapService.setLoading(this, false);
+      }, (error) => {
+        //console.log(error);
+        this.dialog.open(MessageDialogComponent, {data: {message: "An error has occurred while retrieving recharge data. Land cover changes have been reverted. Please try again.", type: "Error"}});
+        errorHandler(error);
+        this.mapService.setLoading(this, false);
+      });
+    }
+  }
+
+  //too many queries, breaks everything
+  private letsTryPointsAgain(points: {x: number, y: number}[], dataHandler: any, errorHandler: any) {
+    
+    //console.log(geojsonObjects);
+    if (points.length != 0) {
+
+      let pointsPerChunk = 100;
+      let chunks = [];
+      for(let i = 0; i < points.length; i += pointsPerChunk) {
+        chunks.push(points.slice(i, Math.min(i + pointsPerChunk, points.length)));
+      }
+
+      this.mapService.setLoading(this, true);
+      //deal with errors too
+      let start = new Date().getTime();
+      Observable.forkJoin(chunks.map(points => {
+        return this.DBService.indexSearch(points);
       }))
       .subscribe((data) => {
         let optime = new Date().getTime()
