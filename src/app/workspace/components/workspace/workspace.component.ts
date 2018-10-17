@@ -1,5 +1,8 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ViewContainerRef, ComponentFactoryResolver } from '@angular/core';
 import { DisplayUnitComponent } from '../window-display-components/display-unit/display-unit.component';
+import {MatDialog} from "@angular/material";
+import {TermsOfUseComponent} from "../../../terms-of-use/terms-of-use.component"
+
 @Component({
   selector: 'app-workspace',
   templateUrl: './workspace.component.html',
@@ -12,7 +15,9 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
 
   idPos = [];
 
-  constructor(private componentFactoryResolver: ComponentFactoryResolver) { }
+  constructor(private componentFactoryResolver: ComponentFactoryResolver, private dialog: MatDialog) {
+    this.dialog.open(TermsOfUseComponent);
+  }
 
   ngOnInit() {
     this.loadDisplayUnit();
@@ -29,7 +34,7 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
     componentRef.instance.close.subscribe(() => {
       let id = this.idPos.indexOf(componentRef);
       this.idPos[id] = null;
-      console.log(this.idPos);
+      //console.log(this.idPos);
       componentRef.destroy();
     });
   }

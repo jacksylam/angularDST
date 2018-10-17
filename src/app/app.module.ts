@@ -66,7 +66,8 @@ import { VisWindowComponent } from './workspace/components/window-display-compon
 import { ReportWindowComponent } from './workspace/components/window-display-components/report-window/report-window.component';
 
 import { RouteReuseStrategy } from '@angular/router';
-import { CustomReuseStrategy } from './reuse-strategy'
+import { CustomReuseStrategy } from './reuse-strategy';
+import { TermsOfUseComponent } from './terms-of-use/terms-of-use.component'
 
 @NgModule({
   declarations: [
@@ -86,7 +87,8 @@ import { CustomReuseStrategy } from './reuse-strategy'
     DisplayWrapperComponent,
     DisplayUnitComponent,
     VisWindowComponent,
-    ReportWindowComponent
+    ReportWindowComponent,
+    TermsOfUseComponent
   ],
   imports: [
     HttpModule,
@@ -126,7 +128,8 @@ import { CustomReuseStrategy } from './reuse-strategy'
   entryComponents: [
     MessageDialogComponent,
     AdvancedMappingDialogComponent,
-    DisplayUnitComponent
+    DisplayUnitComponent,
+    TermsOfUseComponent
   ]
 })
 
