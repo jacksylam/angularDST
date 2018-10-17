@@ -16,11 +16,10 @@
   authorized or unauthorized use.
 </div>
 
-
-  <mat-checkbox (change)="setAccepted($event.checked)">I have read and understand the terms of use</mat-checkbox>
-
 <br>
-<br>
+
+<mat-checkbox (change)="setAccepted($event.checked)">I have read and understand the terms of use</mat-checkbox>
+
 <mat-dialog-actions>
   <div matTooltip="Please accept the terms of use to continue">
     <button mat-raised-button class="mat-primary" [disabled]="!accepted" (click)="this.dialogRef.close()">Continue</button>

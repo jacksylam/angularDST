@@ -10,7 +10,7 @@ export class TermsOfUseComponent implements OnInit {
   accepted = false;
 
   constructor(private dialogRef: MatDialogRef<TermsOfUseComponent>, @Inject(MAT_DIALOG_DATA) data) {
-    //dialogRef.disableClose = true;
+    dialogRef.disableClose = true;
   }
 
   ngOnInit() {

@@ -69,6 +69,9 @@ import { RouteReuseStrategy } from '@angular/router';
 import { CustomReuseStrategy } from './reuse-strategy';
 import { TermsOfUseComponent } from './terms-of-use/terms-of-use.component'
 
+import {MatCheckboxModule} from '@angular/material/checkbox';
+
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -106,7 +109,8 @@ import { TermsOfUseComponent } from './terms-of-use/terms-of-use.component'
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    FormsModule
+    FormsModule,
+    MatCheckboxModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
