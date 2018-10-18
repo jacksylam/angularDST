@@ -26,6 +26,7 @@ import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advan
 import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
 import { CovjsonTemplateService } from './shared/covjson-template.service';
 import { AQUIFER_NAME_MAP, AQUIFER_CODE_MAP } from './shared/aquifer_name_map';
+import { resolve } from 'path';
 
 
 
@@ -52,6 +53,8 @@ export class MapComponent implements OnInit {
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
   static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
 
+  currentDataInitialized = false;
+  scenariosInitialized = false;
 
   map: any;
   popup: any;
@@ -238,7 +241,92 @@ export class MapComponent implements OnInit {
     //thinking I like the collapsed version with this stuff
     this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
 
-    this.initializeLayers();
+    this.initializeLayers().then(() => {
+      this.loadDrawControls();
+      this.metrics = this.createMetrics();
+      this.mapService.setLoading(this, false);
+
+      //possibly change if on recharge
+      this.map.on('mouseover', () => {
+        L.DomUtil.addClass(this.map._container, 'crosshair-cursor-enabled');
+        this.map.on('mousemove', (e) => {
+          if (this.highlightedCell) {
+            this.map.removeLayer(this.highlightedCell);
+            this.highlightedCell = null;
+          }
+          this.map.closePopup();
+          clearTimeout(this.popupTimer);
+          this.popupTimer = setTimeout(() => {
+
+            //coords for conversion in long lat format
+            let convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
+            //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
+            let data = this.types.landCover.data._covjson.ranges.cover.values;
+            let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+            let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+            //get difference from min to mouse position
+            let diffx = convertedMousePoint[0] - this.xmin;
+            let diffy = convertedMousePoint[1] - this.ymin;
+            //do nothing if out of range of grid
+            if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+
+              //round down to nearest 75
+              diffx = Math.floor(diffx / 75) * 75;
+              diffy = Math.floor(diffy / 75) * 75;
+
+              //get cell boundaries as geojson object to draw on map
+              //cell corners
+              let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
+              let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
+              let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
+              let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
+              let cellBounds = {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                  "type": "Polygon",
+                  "coordinates": [[c1, c2, c3, c4, c1]]
+                }
+              };
+              this.highlightedCell = L.geoJSON(cellBounds, { interactive: false })
+                .setStyle({
+                  fillColor: 'orange',
+                  weight: 3,
+                  opacity: 1,
+                  color: 'orange',
+                  fillOpacity: 0.2
+                })
+                .addTo(this.map)
+
+              //add back 37.5 and rounded difference value to get cell coordinate
+              let xCellVal = this.xmin + 37.5 + diffx;
+              let yCellVal = this.ymin + 37.5 + diffy;
+
+              //find index of cell with coordinates
+              let xIndex = xs.indexOf(xCellVal);
+              let yIndex = ys.indexOf(yCellVal);
+
+              //convert to data cell index
+              let index = this.getIndex(xIndex, yIndex);
+
+              //popup cell value
+              let popup = L.popup({ autoPan: false })
+                .setLatLng(e.latlng);
+              if (data[index] == this.types.landCover.baseData[index]) {
+                popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type)
+              }
+              else {
+                popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type + "<br> Original: " + COVER_INDEX_DETAILS[this.types.landCover.baseData[index]].type)
+              }
+              popup.openOn(this.map);
+            }
+
+          }, 1000)
+        });
+
+      });
+    });
 
     this.undoStack = [];
     this.redoStack = [];
@@ -356,88 +444,6 @@ export class MapComponent implements OnInit {
           }, 0);
           break;
       }
-    });
-
-
-    //possibly change if on recharge
-    this.map.on('mouseover', () => {
-      L.DomUtil.addClass(this.map._container, 'crosshair-cursor-enabled');
-      this.map.on('mousemove', (e) => {
-        if (this.highlightedCell) {
-          this.map.removeLayer(this.highlightedCell);
-          this.highlightedCell = null;
-        }
-        this.map.closePopup();
-        clearTimeout(this.popupTimer);
-        this.popupTimer = setTimeout(() => {
-
-          //coords for conversion in long lat format
-          let convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
-          //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
-          let data = this.types.landCover.data._covjson.ranges.cover.values;
-          let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-          let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-
-          //get difference from min to mouse position
-          let diffx = convertedMousePoint[0] - this.xmin;
-          let diffy = convertedMousePoint[1] - this.ymin;
-          //do nothing if out of range of grid
-          if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
-
-            //round down to nearest 75
-            diffx = Math.floor(diffx / 75) * 75;
-            diffy = Math.floor(diffy / 75) * 75;
-
-            //get cell boundaries as geojson object to draw on map
-            //cell corners
-            let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
-            let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
-            let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
-            let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
-            let cellBounds = {
-              "type": "Feature",
-              "properties": {},
-              "geometry": {
-                "type": "Polygon",
-                "coordinates": [[c1, c2, c3, c4, c1]]
-              }
-            };
-            this.highlightedCell = L.geoJSON(cellBounds, { interactive: false })
-              .setStyle({
-                fillColor: 'orange',
-                weight: 3,
-                opacity: 1,
-                color: 'orange',
-                fillOpacity: 0.2
-              })
-              .addTo(this.map)
-
-            //add back 37.5 and rounded difference value to get cell coordinate
-            let xCellVal = this.xmin + 37.5 + diffx;
-            let yCellVal = this.ymin + 37.5 + diffy;
-
-            //find index of cell with coordinates
-            let xIndex = xs.indexOf(xCellVal);
-            let yIndex = ys.indexOf(yCellVal);
-
-            //convert to data cell index
-            let index = this.getIndex(xIndex, yIndex);
-
-            //popup cell value
-            let popup = L.popup({ autoPan: false })
-              .setLatLng(e.latlng);
-            if (data[index] == this.types.landCover.baseData[index]) {
-              popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type)
-            }
-            else {
-              popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type + "<br> Original: " + COVER_INDEX_DETAILS[this.types.landCover.baseData[index]].type)
-            }
-            popup.openOn(this.map);
-          }
-
-        }, 1000)
-      });
-
     });
 
     this.map.on('mouseout', () => {
@@ -666,7 +672,7 @@ export class MapComponent implements OnInit {
       
       //reload layer from changes
       this.loadCover(this.types.landCover, false);
-      resolve()
+      resolve();
     });
 
     this.updateRecharge(queryShapes, (update) => {
@@ -897,7 +903,7 @@ export class MapComponent implements OnInit {
         //console.log(indexes);
         this.mapService.updateMetrics(this, "aquifer", metrics);
       });
-    })
+    });
 
     this.mapService.updateMetrics(this, "aquifer", this.defaultMetrics);
 
@@ -1101,12 +1107,10 @@ export class MapComponent implements OnInit {
 
 
 
-  private initializeLayers() {
+  private initializeLayers(): Promise<any> {
     setTimeout(() => {
       this.mapService.setLoading(this, true);
     }, 0);
-    
-    let __this = this;
 
     this.metrics = {
       customAreas: [],
@@ -1117,35 +1121,118 @@ export class MapComponent implements OnInit {
       totalNoCaprock: {}
     }
 
-    let metricCoordination = {
-      rechargeVals: false,
-      aquifers: false,
-      caprock: false
+    this.currentScenario = "recharge_scenario0"
+    this.shapeMetricsEnabled = false;
+    this.interactionType = "custom";
+
+    let __this = this;
+
+    let pause = 1000;
+    
+    //if still slow can add pauses within these sub-funtions
+    //this is still slow, should modify some
+    //load current data, needed for metric computations
+    let initializeCurrentData = (): Promise<any> => {
+      let tasks = [
+        CovJSON.read(MapComponent.landCoverFile).then((coverage) => {
+          let xs = coverage._covjson.domain.axes.x.values;
+          let ys = coverage._covjson.domain.axes.y.values;
+          //console.log(coverage)
+    
+          //find which value's the minimum, assumes oredered values
+          //subtract 37.5 since centroid of 75m cell
+          __this.xmin = Math.min(xs[0], xs[xs.length - 1]) - 37.5;
+          __this.ymin = Math.min(ys[0], ys[ys.length - 1]) - 37.5;
+          //get range + 75 to account for cell width
+          __this.xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
+          __this.yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75;
+    
+    
+          
+    
+          __this.gridWidthCells = xs.length;
+          __this.gridHeightCells = ys.length;
+    
+          __this.types.landCover.data = coverage;
+          //deepcopy values for comparisons with modified types, array of primitives, so can use array.from
+          __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
+          //console.log(__this.currentCover._covjson.domain.axes);
+          __this.loadCover(__this.types.landCover, false);
+        }),
+
+        this.http.get(MapComponent.caprockFile).subscribe(data => {
+          let details = data.text().split('\n');
+          //console.log(details.length);
+          for(let i = 6; i < details.length; i++) {
+            //get data values after first six detail lines
+            //split on spaces, tabs, or commas for values
+            this.caprock = this.caprock.concat(details[i].trim().split(/[ \t,]+/));
+            
+            //if whitespace at the end might reult in whitespace only element, remove these
+            if(this.caprock[this.caprock.length - 1].trim() == "") {
+              this.caprock.splice(this.caprock.length - 1, 1);
+            }
+          }
+        }),
+    
+        //load aquifer grid
+        this.http.get(MapComponent.aquiferFiles.aquiferGridFile).subscribe(data => {
+          let details = data.text().split('\n');
+          //console.log(details.length);
+          for(let i = 6; i < details.length; i++) {
+            //get data values after first six detail lines
+            //split on spaces, tabs, or commas for values
+            this.aquifers = this.aquifers.concat(details[i].trim().split(/[ \t,]+/));
+            
+            //if whitespace at the end might reult in whitespace only element, remove these
+            if(this.aquifers[this.aquifers.length - 1].trim() == "") {
+              this.aquifers.splice(this.aquifers.length - 1, 1);
+            }
+          }
+        }),
+
+        CovJSON.read(MapComponent.rechargeFiles[this.currentScenario]).then(function (coverage) {
+          //deepcopy values for comparisons with modified types
+          __this.types.recharge.baseData[__this.currentScenario] = Array.from(coverage._covjson.ranges.recharge.values);
+          //deepcopy so not messed up when data swapped
+          __this.types.recharge.currentData[__this.currentScenario] = Array.from(coverage._covjson.ranges.recharge.values);
+    
+          //set up data, recharge layer, and metrics based on these values
+          __this.types.recharge.data = coverage;
+          __this.loadCover(__this.types.recharge, true);
+          
+        }),
+      ];
+
+      return Promise.all(tasks);
     };
 
-    this.currentScenario = "recharge_scenario0"
+    let initializeRemainingScenarios = (): Promise<any> => {
+      return new Promise<any>((resolve) => {
+        Object.keys(MapComponent.rechargeFiles).forEach((scenario) => {
+          //current scenario already processed
+          if(scenario != this.currentScenario) {
+            CovJSON.read(MapComponent.rechargeFiles[scenario]).then(function (coverage) {
+              //deepcopy values for comparisons with modified types
+              __this.types.recharge.baseData[scenario] = Array.from(coverage._covjson.ranges.recharge.values);
+              //deepcopy so not messed up when data swapped
+              __this.types.recharge.currentData[scenario] = Array.from(coverage._covjson.ranges.recharge.values);     
+            });
+          }
+        });
+        resolve();
+      })
+    }
 
-    
-    CovJSON.read(MapComponent.landCoverFile).then(function (coverage) {
-      let xs = coverage._covjson.domain.axes.x.values;
-      let ys = coverage._covjson.domain.axes.y.values;
-      //console.log(coverage)
-
-      //find which value's the minimum, assumes oredered values
-      //subtract 37.5 since centroid of 75m cell
-      __this.xmin = Math.min(xs[0], xs[xs.length - 1]) - 37.5;
-      __this.ymin = Math.min(ys[0], ys[ys.length - 1]) - 37.5;
-      //get range + 75 to account for cell width
-      __this.xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
-      __this.yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75;
-
-
-      //load aquifer shapes after boundaries found so can filter out external aquifers
+    //doesn't matter when aesthetic parts complete, so load last
+    let initializeAesthetics = () => {
+      //load aquifer shapes
       shp(MapComponent.aquiferFiles.aquiferShpFile).then((geojson) => {
         // this.aquifers = L.featureGroup
         let aquifers = L.geoJSON();
         //two shape files, so array
         //might want to just remove "lines" shapefile
+        //can break this loop up if affects performance
         geojson[0].features.forEach(aquifer => {
 
           //convert one point to UTM and check if in bounds (if one point in bounds the aquifer should be internal)
@@ -1170,136 +1257,22 @@ export class MapComponent implements OnInit {
         aquifers.addTo(__this.map);
         __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
       });
+    }
 
-      // let xutm = coverage._covjson.domain.axes.x.values;
-      // let yutm = coverage._covjson.domain.axes.y.values;
-      // let convertUpperLeft = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[0] - 37.5, yutm[0] + 37.5]);
-      // let convertLowerRight = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xutm[xutm.length - 1] + 37.5, yutm[yutm.length - 1] - 37.5]);
-      // //coordinate standards are dumb and inconsistent, need to swap
-      // __this.upperLeftLatLng = [convertUpperLeft[1], convertUpperLeft[0]];
-      // __this.lowerRightLatLng = [convertLowerRight[1], convertLowerRight[0]];
-      // //test conversion
-      // //L.marker(__this.lowerRightLatLng).addTo(__this.map);
-      __this.gridWidthCells = xs.length;
-      __this.gridHeightCells = ys.length;
-      // //height lat, width long, should be long lat order in conversion (this is why standardizations exist...)
-      // __this.gridHeightLat = Math.abs(convertUpperLeft[1] - convertLowerRight[1]);
-      // __this.gridWidthLong = Math.abs(convertUpperLeft[0] - convertLowerRight[0]);
-      // __this.coverBase = coverage;
-
-      __this.types.landCover.data = coverage;
-      //deepcopy values for comparisons with modified types, array of primitives, so can use array.from
-      __this.types.landCover.baseData = Array.from(coverage._covjson.ranges.cover.values);
-      //console.log(__this.currentCover._covjson.domain.axes);
-      __this.loadCover(__this.types.landCover, false);
+    return initializeCurrentData().then(() => {
+      this.currentDataInitialized = true;
+      //can resolve once the current data initialization is complete
+      resolve();
+      setTimeout(() => {
+        initializeRemainingScenarios().then(() => {
+          //indicate scenario initialization complete
+          this.scenariosInitialized = true;
+          setTimeout(() => {
+            initializeAesthetics();
+          }, pause);
+        });
+      }, pause); 
     });
-
-
-    Object.keys(MapComponent.rechargeFiles).forEach((scenario) => {
-      CovJSON.read(MapComponent.rechargeFiles[scenario]).then(function (coverage) {
-        //deepcopy values for comparisons with modified types
-        __this.types.recharge.baseData[scenario] = Array.from(coverage._covjson.ranges.recharge.values);
-        //deepcopy so not messed up when data swapped
-        __this.types.recharge.currentData[scenario] = Array.from(coverage._covjson.ranges.recharge.values);
-        //console.log(__this.currentCover._covjson.domain.axes);
-        //change this
-  
-        //if file represents current scenario set up data, recharge layer, and metrics based on these values
-        if(scenario == __this.currentScenario) {
-          __this.types.recharge.data = coverage;
-
-          __this.loadCover(__this.types.recharge, true);
-    
-          //Race conditions? Don't think js can have race conditions on value checks since single threaded, should complete conditional before allowing other things to run
-          //can't set metrics until aquifers in place and recharge values set
-          if(metricCoordination.aquifers && metricCoordination.caprock) {
-            //document.body.style.cursor='wait';
-            //draw control usage requires ability to create metrics
-            __this.loadDrawControls();
-            __this.metrics = __this.createMetrics();
-            __this.mapService.setLoading(__this, false);
-          }
-          else {
-            //indicate recharge vals are set
-            metricCoordination.rechargeVals = true;
-          }
-        }
-        
-      });
-    
-    });
-
-    
-
-
-
-
-
-    this.http.get(MapComponent.caprockFile).subscribe(data => {
-      let details = data.text().split('\n');
-      //console.log(details.length);
-      for(let i = 6; i < details.length; i++) {
-        //get data values after first six detail lines
-        //split on spaces, tabs, or commas for values
-        this.caprock = this.caprock.concat(details[i].trim().split(/[ \t,]+/));
-        
-        //if whitespace at the end might reult in whitespace only element, remove these
-        if(this.caprock[this.caprock.length - 1].trim() == "") {
-          this.caprock.splice(this.caprock.length - 1, 1);
-        }
-      }
-
-      if(metricCoordination.aquifers && metricCoordination.rechargeVals) {
-        //document.body.style.cursor='wait';
-        //draw control usage requires ability to create metrics
-        __this.loadDrawControls();
-        __this.metrics = __this.createMetrics();
-        __this.mapService.setLoading(__this, false);
-      }
-      else {
-        //indicate recharge vals are set
-        metricCoordination.caprock = true;
-      }
-    });
-
-    //load aquifer grid
-    this.http.get(MapComponent.aquiferFiles.aquiferGridFile).subscribe(data => {
-      let details = data.text().split('\n');
-      //console.log(details.length);
-      for(let i = 6; i < details.length; i++) {
-        //get data values after first six detail lines
-        //split on spaces, tabs, or commas for values
-        this.aquifers = this.aquifers.concat(details[i].trim().split(/[ \t,]+/));
-        
-        //if whitespace at the end might reult in whitespace only element, remove these
-        if(this.aquifers[this.aquifers.length - 1].trim() == "") {
-          this.aquifers.splice(this.aquifers.length - 1, 1);
-        }
-      }
-
-      //metrics require recharge, caprock, and aquifer grids
-      if(metricCoordination.caprock && metricCoordination.rechargeVals) {
-        //draw control usage requires ability to create metrics
-        __this.loadDrawControls();
-        __this.metrics = __this.createMetrics();
-        __this.mapService.setLoading(__this, false);
-      }
-      else {
-        //indicate recharge vals are set
-        metricCoordination.aquifers = true;
-      }
-    });
-
-
-
-    this.shapeMetricsEnabled = false;
-    this.interactionType = "custom";
-
-    // //initialize metrics
-    // Promise.all([init1, init2]).then(() => {
-    //   //__this.metrics = this.createMetrics();
-    //     console.log(__this.metrics)
-    // })
   }
 
 
@@ -1512,6 +1485,11 @@ export class MapComponent implements OnInit {
   */
 
   createMetrics() {
+    //if still initializing just ignore, metrics will be computed after initialization completed, shouldn't ever happen, but might as well include as a failsafe
+    if(!this.currentDataInitialized) {
+      return null;
+    }
+
     let data = {
       customAreas: [],
       aquifers: [],
@@ -1703,8 +1681,6 @@ export class MapComponent implements OnInit {
     };
 
     let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
-    let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
-
     
     //this.aquifers will be the aquifer id array
     //this.SPECIAL_AQUIFERS
@@ -1759,16 +1735,6 @@ export class MapComponent implements OnInit {
         }
         case 3: {
           let aquifer = this.aquifers[i];
-
-          if(metrics[aquifer] == undefined) {
-            // console.log(i);
-            // console.log(this.aquifers[i]);
-            // console.log(lcVals[i]);
-            // console.log(this.aquifers.length);
-            // console.log(lcVals.length);
-            //just ignore this area for now
-            break;
-          }
 
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
@@ -1939,6 +1905,7 @@ export class MapComponent implements OnInit {
 
   //also need to update all full map computations to disclude background cells
   getMetricsSuite(indexes: number[], caprock: boolean) {
+
     let metrics = {
       USC: {
         average: {
@@ -2332,6 +2299,15 @@ export class MapComponent implements OnInit {
 
 
   upload(info: any) {
+    //ensure current data is initialized before processing upload
+    //use exponential backoff
+    let backoff = 1;
+    while(!this.currentDataInitialized) {
+      setTimeout(() => {
+        backoff *= 2;
+      }, backoff);
+    }
+
     this.verifyFilesAndGetData(info).then((data) => {
 
       //console.log(data);
@@ -3806,6 +3782,14 @@ export class MapComponent implements OnInit {
 
   //default download drawn items
   download(info: any) {
+    //ensure current data is initialized before processing download
+    //use exponential backoff
+    let backoff = 1;
+    while(!this.currentDataInitialized) {
+      setTimeout(() => {
+        backoff *= 2;
+      }, backoff);
+    }
 
     //console.log(info)
     let ready = [];
@@ -4385,6 +4369,7 @@ export class MapComponent implements OnInit {
   
   
   private updateRecharge(geojsonObjects: any, dataHandler: any, errorHandler: any) {
+    
     let numItems = geojsonObjects.features.length;
     //console.log(geojsonObjects);
     if (numItems != 0) {
@@ -4910,6 +4895,15 @@ export class MapComponent implements OnInit {
   // }
 
   public changeScenario(type: string) {
+    //if all scenarios have not yet been loaded, pause until complete
+    //use exponential backoff
+    let backoff = 1;
+    while(!this.scenariosInitialized) {
+      setTimeout(() => {
+        backoff *= 2;
+      }, backoff);
+    }
+
     this.currentScenario = type;
     let swapData = this.types.recharge.currentData[type];
     let data = this.types.recharge.data._covjson.ranges.recharge.values;

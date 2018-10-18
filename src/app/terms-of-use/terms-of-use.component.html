@@ -21,7 +21,7 @@
 <mat-checkbox (change)="setAccepted($event.checked)">I have read and understand the terms of use</mat-checkbox>
 
 <mat-dialog-actions>
-  <div matTooltip="Please accept the terms of use to continue">
+  <div matTooltip="{{tooltip}}" [matTooltipPosition]="position">
     <button mat-raised-button class="mat-primary" [disabled]="!accepted" (click)="this.dialogRef.close()">Continue</button>
   </div>
 </mat-dialog-actions>

@@ -21,40 +21,61 @@ export class DBConnectService {
 
   spatialQueryLength(geometry: any): number {
     let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
     return url.length;
   }
 
-  // spatialSearch(geometry: any): Observable<Cover[]> {
-  //   let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+  debugQuery() {
+    console.log("called debug query");
+    let sampleQuery = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':{'type':'Polygon','coordinates':[[[-158.068537,21.465326],[-158.068537,21.54625],[-157.926289,21.54625],[-157.926289,21.465326],[-158.068537,21.465326]]]}}}}]}";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(sampleQuery)+"&limit=100000&offset=0";
+    let head = new HttpHeaders()
+    .set("Authorization", "Bearer " + this.oAuthAccessToken)
+    .set("Content-Type", "application/x-www-form-urlencoded");
+    let options = {
+      headers: head
+    };
 
-  //   let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
-  //   let head = new HttpHeaders()
-  //   .set("Authorization", "Bearer " + this.oAuthAccessToken)
-  //   .set("Content-Type", "application/x-www-form-urlencoded");
-  //   let options = {
-  //     headers: head
-  //   };
+    this.http.get<ResponseResults>(url, options)
+    .retry(3)
+    .map((data) => {
+      data.result.forEach((record) => {
+        this.sanityCheck(record);
+      });
+    }).subscribe();
 
-  //   let response = this.http.get<ResponseResults>(url, options)
-  //   .retry(3)
-  //   .map((data) => {
-  //     return data.result as Cover[];
-  //   }).catch((e) => {
-  //     return Observable.throw(new Error(e.message));
-  //   });
-  //   return response;
+    interface ResponseResults {
+      result: any
+    }
+  }
 
-  //   interface ResponseResults {
-  //     result: any
-  //   }
-  // }
+  sanityCheck(record: any) {
+    let base = record.value;
+    let scenarios = ["recharge_scenario0", "recharge_scenario1"];
+    let dne = [1, 3, 19];
+    let large = [13, 25]
+
+    scenarios.forEach((scenario) => {
+      base[scenario].forEach((value, i) => {
+        if(value == null && !dne.includes(i)) {
+          console.log("Null value found:\n"
+          + "Scenario: " + scenario + "\n"
+          + "Land Cover Index: " + i.toString() + "\n"
+          + "Cell Index: {" + base.x.toString() + "," + base.y.toString() + "}");
+        }
+        if(value > 400 && !large.includes(i)) {
+          console.log("Large value found:\n"
+          + "Scenario: " + scenario + "\n"
+          + "Land Cover Index: " + i.toString() + "\n"
+          + "Cell Index: (" + base.x.toString() + "," + base.y.toString() + ")");
+        }
+      });
+    });
+  }
 
   spatialSearch(geometry: any): Observable<Cover[]> {
-    //console.log(JSON.stringify(JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')));
-    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$polygon':"+JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')+"}}}]}";
-    //console.log(query);
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
@@ -70,12 +91,38 @@ export class DBConnectService {
       return Observable.throw(new Error(e.message));
     });
     return response;
-    // }
 
     interface ResponseResults {
       result: any
     }
   }
+
+  // spatialSearch(geometry: any): Observable<Cover[]> {
+  //   //console.log(JSON.stringify(JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')));
+  //   let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$polygon':"+JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')+"}}}]}";
+  //   //console.log(query);
+  //   let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
+  //   let head = new HttpHeaders()
+  //   .set("Authorization", "Bearer " + this.oAuthAccessToken)
+  //   .set("Content-Type", "application/x-www-form-urlencoded");
+  //   let options = {
+  //     headers: head
+  //   };
+
+  //   let response = this.http.get<ResponseResults>(url, options)
+  //   .retry(3)
+  //   .map((data) => {
+  //     return data.result as Cover[];
+  //   }).catch((e) => {
+  //     return Observable.throw(new Error(e.message));
+  //   });
+  //   return response;
+  //   // }
+
+  //   interface ResponseResults {
+  //     result: any
+  //   }
+  // }
 
 
   indexSearch(indexes: {x: number, y: number}[]): Observable<Cover[]> {

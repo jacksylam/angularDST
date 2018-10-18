@@ -1,5 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material";
+
 @Component({
   selector: 'app-terms-of-use',
   templateUrl: './terms-of-use.component.html',
@@ -8,6 +9,8 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material";
 export class TermsOfUseComponent implements OnInit {
 
   accepted = false;
+  tooltip = "Please accept the terms of use to continue";
+  position = "after";
 
   constructor(private dialogRef: MatDialogRef<TermsOfUseComponent>, @Inject(MAT_DIALOG_DATA) data) {
     dialogRef.disableClose = true;
@@ -18,6 +21,7 @@ export class TermsOfUseComponent implements OnInit {
 
   setAccepted(value: boolean) {
     this.accepted = value;
+    this.tooltip = value == true ? "" : "Please accept the terms of use to continue";
   }
 
 }

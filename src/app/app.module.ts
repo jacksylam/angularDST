@@ -70,7 +70,7 @@ import { CustomReuseStrategy } from './reuse-strategy';
 import { TermsOfUseComponent } from './terms-of-use/terms-of-use.component'
 
 import {MatCheckboxModule} from '@angular/material/checkbox';
-
+import {MatTooltipModule} from '@angular/material/tooltip'
 
 @NgModule({
   declarations: [
@@ -110,7 +110,8 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
     MatButtonModule,
     MatIconModule,
     FormsModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatTooltipModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
