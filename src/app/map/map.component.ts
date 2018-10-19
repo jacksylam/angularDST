@@ -235,7 +235,9 @@ export class MapComponent implements OnInit {
     let empty = L.featureGroup();
     L.control.scale().addTo(this.map);
 
-    this.map._controlContainer.removeChild(this.map._controlContainer.children[3]);
+    //completely removes bottom right control, need to revamp
+    //this.map._controlContainer.removeChild(this.map._controlContainer.children[3]);
+
     this.popup = L.popup();
 
     //thinking I like the collapsed version with this stuff
@@ -4837,6 +4839,136 @@ export class MapComponent implements OnInit {
   }
 
 
+  //raycasting algorithm, point is internal if intersects an odd number of edges
+  // isInternal(a: any[], b: any[], point: any, origin: any = [149, 64]): boolean {
+  //   //need to convert points to lat long for this to work properly
+  //   let convertedOrigin = origin;//MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [origin.x, origin.y]);
+  //   let convertedPoint = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [point.x, point.y]);
+  //   let referenceArc = this.getGreatCircleSegment(origin, point);
+  //   let referenceCircle = this.getGreatCircle(origin, point);
+  //   let reference = {
+  //     arc: referenceArc,
+  //     circle: referenceCircle
+  //   };
+
+  //   let internal = false;
+  //   for (let i = 0; i < a.length; i++) {
+  //     let covertedA = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [a[i].x, a[i].y]);
+  //     let convertedB = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [b[i].x, b[i].y]);
+  //     let segmentArc = this.getGreatCircleSegment(covertedA, convertedB);
+  //     let segmentCircle = this.getGreatCircle(covertedA, convertedB);
+  //     let segment = {
+  //       arc: segmentArc,
+  //       circle: segmentCircle
+  //     };
+
+  //     if(this.arcsIntersect(reference, segment)) {
+  //       internal = !internal;
+  //     }
+  //   }
+  //   return internal;
+  // }
+
+  //great circle segments (arcs), a and b, intersect if a intersects b's great circle and b intersects with a's great circle
+  arcsIntersect(a: {arc: any, circle: any}, b: {arc: any, circle: any}) {
+    return this.arcIntersectsCircle(a, b.circle) && this.arcIntersectsCircle(b, a.circle);
+  }
+
+  //a great circle segment, a, intersects a great circle, b, if
+  //vectors c and d are the intersects between a's great circle and b
+  //and c or d lies between a.start and a.end
+  arcIntersectsCircle(a: {arc: any, circle: any}, b: {x: number, y: number, z: number}) {
+    let intersects = this.greatCirclesIntersect(a.circle, b);
+    return this.intersectBetween(intersects.intersect1, a.arc) || this.intersectBetween(intersects.intersect2, a.arc);
+  }
+
+  //determines if intersect is between the start and end points of the arc
+  //vector is between the start and end vectors of the arc if the angle between the start point and the vector and the vector and the end point is equal to the angle between the start and end points
+  intersectBetween(intersect: {x: number, y: number, z: number}, arc: {start: any, end: any}) {
+    if(this.angleBetween(arc.start, intersect) + this.angleBetween(intersect, arc.end) - this.angleBetween(arc.start, arc.end) < 0.01) {
+      console.log("small");
+    }
+    return this.angleBetween(arc.start, intersect) + this.angleBetween(intersect, arc.end) == this.angleBetween(arc.start, arc.end);
+  }
+
+  //dot product of two vectors, a and b, is equal to the magnitude of a times the magnitude of b times cos(theta)
+  //rearrange to solve for theta
+  angleBetween(a: {x: number, y: number, z: number}, b: {x: number, y: number, z: number}) {
+    return Math.acos(this.dot(a, b)) / (this.mag(a) * this.mag(b));
+  }
+
+  //magnitude of a vector
+  mag(vector: {x: number, y: number, z: number}) {
+    return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2) + Math.pow(vector.z, 2));
+  }
+
+  //dot product of two vectors
+  dot(a: {x: number, y: number, z: number}, b: {x: number, y: number, z: number}) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+  }
+
+  //two great circles intersect at the cross product of their vectors and the antipode of this value
+  greatCirclesIntersect(a: {x: number, y: number, z: number}, b: {x: number, y: number, z: number}) {
+    let intersect1 = this.cross(a, b);
+    let intersect2 = this.getAntipode(intersect1);
+    return {
+      intersect1: intersect1,
+      intersect2: intersect2
+    }
+  }
+
+  getAntipode(vector: {x: number, y: number, z: number}) {
+    return {
+      x: -vector.x,
+      y: -vector.y,
+      z: -vector.z
+    }
+  }
+
+  //computes a representation of a great circle segment by the projection vectors of its endpoints through the spheres center
+  getGreatCircleSegment(a: number[], b: number[]) {
+    return {
+      start: this.projectThroughUnitSphere(a),
+      end: this.projectThroughUnitSphere(b)
+    };
+  }
+
+  getGreatCircle(a: number[], b: number[]) {
+    let va = this.projectThroughUnitSphere(a);
+    let vb = this.projectThroughUnitSphere(b);
+    return this.cross(va, vb);
+  }
+
+  //find vector from point through center of a unit sphere
+  //not trying to find distance, so actual radius of the earth is irrelevant (easier to just use a unit sphere)
+  projectThroughUnitSphere(point: number[]) {
+    //tan(lat) = y/x, tan(long) = z/x
+    //get x, y, z where sqrt(x^2 + y^2 + z^2) = mag, mag = 1
+    let long = Math.abs(point[0]);
+    let lat = Math.abs(point[1]);
+    let x = 1 / Math.sqrt(Math.pow(Math.tan(long), 2) + Math.pow(Math.tan(lat), 2) + 1);
+    let y = x * Math.tan(lat);
+    let z = x * Math.tan(long);
+
+    return {
+      x: x,
+      y: y,
+      z: z
+    };
+  }
+
+  cross(a: {x: number, y: number, z: number}, b: {x: number, y: number, z: number}) {
+    return {
+      x: a.y * b.z - a.z * b.y,
+      y: a.z * b.x - a.x * b.z,
+      z: a.x * b.y - a.y * b.x
+    };
+  }
+
+
+
+
+
   //prolly need parameter to say whether to start layer toggled on or off, might want to add this to types def
   //update names and make sure works
   private loadCover(coverage, legend: boolean) {
@@ -4844,24 +4976,11 @@ export class MapComponent implements OnInit {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
     }
-    //remove old layer from map and control
-    //__this.currentCover = coverages;
-
-    //let xaxis = coverage._covjson.domain.axes.x.values;
-    //let yaxis = coverage._covjson.domain.axes.y.values;
-
-    // let test = [];
-    // for(let i = 0; i < 100000; i++) {
-    //   test.push(null);
-    // }
-
-    // rechargeVals.splice(100000, 100000, ...test);
-    //console.log(coverage);
     // work with Coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
       if(legend) {
-        C.legend(layer).addTo(this.map);
+        this.createLegend();
       }
     })
     .setOpacity(this.opacity);
@@ -4887,6 +5006,26 @@ export class MapComponent implements OnInit {
     this.layers.addBaseLayer(layer, coverage.label);
     coverage.layer = layer;
 
+  }
+
+
+  createLegend() {
+    let legend = L.control({position: "bottomright"});
+    legend.onAdd = (map) => {
+      let div = L.DomUtil.create("div", "info legend")
+      let grades = [0, 10, 20, 50, 100, 200, 500, 1000]
+      let labels = [];
+      for(let i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+        '<div style="color: red"> ' +
+        grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</div><br>' : '+');
+      }
+      console.log(div);
+      return div;
+      
+    };
+    legend.addTo(this.map);
+    console.log(this.map);
   }
 
 
