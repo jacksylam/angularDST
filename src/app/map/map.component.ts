@@ -4980,8 +4980,10 @@ export class MapComponent implements OnInit {
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
       if(legend) {
-        console.log(coverage.palette);
-        this.createLegend(this.rechargePalette(), ["0.00", "200.00"]);
+        let upper = this.roundToDecimalPlaces(layer._paletteExtent[1] / 2, 2) + "+";
+        let lower = this.roundToDecimalPlaces(layer._paletteExtent[0], 2);
+        let palette = this.rechargePalette();
+        this.createLegend(palette.slice(0, Math.ceil(palette.length / 2)), [lower, upper]);
       }
     })
     .setOpacity(this.opacity);
@@ -5137,14 +5139,14 @@ export class MapComponent implements OnInit {
     let palette = [];
     let rgb = [];
     let colorScale = [{
-      r: 247,
-      g: 251,
-      b: 255
+      r: 222,
+      g: 235,
+      b: 247
     },
     {
-      r: 0,
-      g: 47,
-      b: 119
+      r: 8,
+      g: 48,
+      b: 107
     }];
     let range = {
       r: colorScale[0].r - colorScale[1].r,
@@ -5160,12 +5162,11 @@ export class MapComponent implements OnInit {
 
     for(let i = 0; i < divs; i++) {
       rgb.push({
-        r: Math.floor(colorScale[0].r - i * sizes.r),
-        g: Math.floor(colorScale[0].g - i * sizes.g),
-        b: Math.floor(colorScale[0].b - i * sizes.b)
+        r: Math.ceil(colorScale[0].r - i * sizes.r),
+        g: Math.ceil(colorScale[0].g - i * sizes.g),
+        b: Math.ceil(colorScale[0].b - i * sizes.b)
       });
     }
-    console.log(rgb);
     
     rgb.forEach((color, i) => {
       for(let j = 0; j < i + 1; j++) {
@@ -5173,7 +5174,6 @@ export class MapComponent implements OnInit {
       }
     });
 
-    console.log(palette[palette.length - 1]);
     let last = palette.length;
     for(let i = 0; i < last; i++) {
       palette.push(palette[palette.length - 1]);
