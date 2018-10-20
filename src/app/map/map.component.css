@@ -40,7 +40,7 @@
     cursor: crosshair !important;
 }
 
-.leaflet-container.legend {
+.legend {
     line-height: 18px !important;
     color: red !important;
     background-color: #009933 !important;

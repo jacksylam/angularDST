@@ -4980,7 +4980,8 @@ export class MapComponent implements OnInit {
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
       if(legend) {
-        this.createLegend();
+        console.log(coverage.palette);
+        this.createLegend(this.rechargePalette(), ["0.00", "200.00"]);
       }
     })
     .setOpacity(this.opacity);
@@ -5009,23 +5010,45 @@ export class MapComponent implements OnInit {
   }
 
 
-  createLegend() {
+  createLegend(palette: string[], range: string[]) {
     let legend = L.control({position: "bottomright"});
     legend.onAdd = (map) => {
       let div = L.DomUtil.create("div", "info legend")
-      let grades = [0, 10, 20, 50, 100, 200, 500, 1000]
-      let labels = [];
-      for(let i = 0; i < grades.length; i++) {
-        div.innerHTML +=
-        '<div style="color: red"> ' +
-        grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</div><br>' : '+');
-      }
+
+      let html = "<div style='border-radius: 10px; background-color: lightgray; width: 90px; padding: 10px;'>"
+      + "<div>"
+      + "Recharge"
+      + "</div>"
+      + "<div style='display: flex; font-size: 12px;'>"
+      + "<div style='padding-right: 5px;'>"
+      + "<div style='background-image: linear-gradient(to top, ";
+      palette.forEach((color, i) => {
+        html += color;
+        if(i < palette.length - 1) {
+          html += ", ";
+        }
+      });
+      html += "); height: 100px; width: 10px;'></div>"
+      + "</div>"
+      + "<div style='height: 100px; display: flex; flex-direction: column;'>"
+      + "<div style='height: 98%;'>"
+      + range[1]
+      + "</div>"
+      + "<div>"
+      + range[0]
+      + "</div>"
+      + "</div>"
+      + "</div>"
+      + "<div style='font-size: 10px;'>"
+      + "Inches per Year"
+      + "</div>"
+      + "</div>";
+      div.innerHTML += html;
       console.log(div);
       return div;
       
     };
     legend.addTo(this.map);
-    console.log(this.map);
   }
 
 
@@ -5098,15 +5121,77 @@ export class MapComponent implements OnInit {
   }
 
 
+  //colorbrewer
+  // private rechargePalette(): string[] {
+  //   let palette = [];
+  //   let colorScale = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
+  //   for(let i = 0; i < colorScale.length; i++) {
+  //     for(let j = 0; j < Math.pow(2, i); j++) {
+  //       palette.push(colorScale[i]);
+  //     }
+  //   }
+  //   return palette;
+  // }
+
   private rechargePalette(): string[] {
     let palette = [];
-    let colorScale = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
-    for(let i = 0; i < colorScale.length; i++) {
-      for(let j = 0; j < Math.pow(2, i); j++) {
-        palette.push(colorScale[i]);
+    let rgb = [];
+    let colorScale = [{
+      r: 247,
+      g: 251,
+      b: 255
+    },
+    {
+      r: 0,
+      g: 47,
+      b: 119
+    }];
+    let range = {
+      r: colorScale[0].r - colorScale[1].r,
+      g: colorScale[0].g - colorScale[1].g,
+      b: colorScale[0].b - colorScale[1].b
+    };
+    let divs = 200;
+    let sizes = {
+      r: range.r / divs,
+      g: range.g / divs,
+      b: range.b / divs
+    };
+
+    for(let i = 0; i < divs; i++) {
+      rgb.push({
+        r: Math.floor(colorScale[0].r - i * sizes.r),
+        g: Math.floor(colorScale[0].g - i * sizes.g),
+        b: Math.floor(colorScale[0].b - i * sizes.b)
+      });
+    }
+    console.log(rgb);
+    
+    rgb.forEach((color, i) => {
+      for(let j = 0; j < i + 1; j++) {
+        palette.push(this.rgbToHex(color));
       }
+    });
+
+    console.log(palette[palette.length - 1]);
+    let last = palette.length;
+    for(let i = 0; i < last; i++) {
+      palette.push(palette[palette.length - 1]);
     }
     return palette;
+  }
+
+  rgbToHex(rgb: {r: number, g: number, b: number}) {
+    let hex = "#";
+    hex += this.toHex(rgb.r);
+    hex += this.toHex(rgb.g);
+    hex += this.toHex(rgb.b);
+    return hex;
+  }
+
+  toHex(color: number) {
+    let hex = color.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
   }
 
 
