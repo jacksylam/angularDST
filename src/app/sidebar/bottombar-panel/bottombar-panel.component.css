@@ -101,7 +101,8 @@
     font-size: 8pt !important;
     color: black;
     position: absolute;
-    bottom:15px;
+    bottom: 5px;
+    left: 15px;
   }
 
   .disable {

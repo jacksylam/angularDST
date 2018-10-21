@@ -58,14 +58,21 @@
                     <table border="0" class="no-border">
                         <tr class="no-border">
                             <td class="no-border-cell-title">Area:</td>
-                            <td class="no-border-cell-description">{{displayMetrics.values.area}} {{displayMetrics.units.area}}</td>
+                            <td class="no-border-cell-description">
+                                <div *ngIf="mode!='Cell';else cell">
+                                    {{displayMetrics.values.area}} {{displayMetrics.units.area}}
+                                </div>
+                                <ng-template #cell>
+                                    {{displayMetrics.values.area}} {{displayMetrics.units.cell}}
+                                </ng-template>
+                            </td>
                         </tr>
                     </table>
 
                     <div style="height:4px;"></div>
 
                     <table border="0" class="no-border">
-                        <tr class="no-border">
+                        <tr *ngIf="mode!='Cell'" class="no-border">
                             <td class="no-border-cell-title">Volumetric Difference:</td>
                             <td class="no-border-cell-description">{{displayMetrics.values.volumetric.diff}} {{displayMetrics.units.volumetric}}</td>
                         </tr>
@@ -75,22 +82,21 @@
                         </tr>
                     </table>
                     
-                    
-                   <div class="width-ctrl footer">
-                        <hr width="100%">
-                        Values rounded to two decimal places
-                    </div> 
                 </div>
                 
+                <div *ngIf="mode!='Cell'" #chart> </div>
                 
-                <div #chart> </div>
             </div>
+            <div class="width-ctrl footer">
+                <hr width="100%">
+                Values rounded to two decimal places
+            </div> 
             
             <!-- <div  class="chart-container">
                     <div #chart> </div>
             </div> -->
 
-            </div>
+        </div>
 
     </div>
 </div>

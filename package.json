@@ -28,6 +28,7 @@
     "angular2-file-drop": "^0.2.0",
     "angularfire2": "^5.0.0-rc.3",
     "bootstrap": "^3.3.7",
+    "chroma-js": "^1.4.0",
     "core-js": "^2.5.3",
     "covjson-reader": "^0.16.3",
     "d3": "^4.13.0",

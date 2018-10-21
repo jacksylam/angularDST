@@ -92,11 +92,13 @@ export class BottombarPanelComponent implements OnInit {
   units = {
     USC: {
       area: "Square Miles",
+      cell: "Square Feet",
       volumetric: "Million Gallons Per Day",
       average: "Inches Per Year"
     },
     Metric: {
       area: "Square Kilometers",
+      cell: "Square Meters",
       volumetric: "Megaliters Per Day",
       average: "Millimeters Per Year"
     }
@@ -153,7 +155,7 @@ export class BottombarPanelComponent implements OnInit {
     this.displayMetrics.units = this.units[type];
 
     //regenerate bargraph with new units if in a recharge vis mode
-    if(this.mode != "none") {
+    if(this.mode != "none" && this.mode != "Cell") {
       this.generateBargraph(parseFloat(this.metrics[this.unitSystem].volumetric.original), parseFloat(this.metrics[this.unitSystem].volumetric.current));
     }
   }

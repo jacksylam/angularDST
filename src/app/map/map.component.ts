@@ -26,7 +26,8 @@ import { AdvancedMappingDialogComponent } from '../advanced-mapping-dialog/advan
 import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
 import { CovjsonTemplateService } from './shared/covjson-template.service';
 import { AQUIFER_NAME_MAP, AQUIFER_CODE_MAP } from './shared/aquifer_name_map';
-import { resolve } from 'path';
+import * as chroma from '../../../node_modules/chroma-js/chroma.js';
+
 
 
 
@@ -162,11 +163,13 @@ export class MapComponent implements OnInit {
   } 
   static readonly caprockFile = "../assets/Oahu__75m__caprock.asc";
 
+  rcPalette: string[];
+
   types = {
     landCover: {
       parameter: 'cover',
       label: 'Land Cover',
-      palette: C.directPalette(this.landCoverPalette()),
+      palette: null,
       data: null,
       baseData: null,
       layer: null
@@ -174,7 +177,7 @@ export class MapComponent implements OnInit {
     recharge: {
       parameter: 'recharge',
       label: 'Recharge Rate',
-      palette: C.linearPalette(this.rechargePalette()),
+      palette: null,
       data: null,
       baseData: {
         recharge_scenario0: null,
@@ -235,13 +238,17 @@ export class MapComponent implements OnInit {
     let empty = L.featureGroup();
     L.control.scale().addTo(this.map);
 
-    //completely removes bottom right control, need to revamp
-    //this.map._controlContainer.removeChild(this.map._controlContainer.children[3]);
+    //remove esri logo, couldn't find a better way
+    this.map._controlContainer.children[3].removeChild(this.map._controlContainer.children[3].children[0]);
 
     this.popup = L.popup();
 
     //thinking I like the collapsed version with this stuff
     this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
+
+    this.rcPalette = this.rechargePalette();
+      this.types.recharge.palette = C.linearPalette(this.rcPalette);
+      this.types.landCover.palette = C.directPalette(this.landCoverPalette());
 
     this.initializeLayers().then(() => {
       this.loadDrawControls();
@@ -1010,6 +1017,9 @@ export class MapComponent implements OnInit {
 
         //send get rounded metrics and send to bottom panel
         let metrics = this.roundMetrics(this.getMetricsSuite([index], true));
+        //single cell too small, still want to be able to display size, so just use meters and feet
+        metrics.USC.area = "246.063";
+        metrics.Metric.area = "75.00";
         this.mapService.updateMetrics(this, "cell", metrics);
       }
     });
@@ -1262,18 +1272,20 @@ export class MapComponent implements OnInit {
     }
 
     return initializeCurrentData().then(() => {
-      this.currentDataInitialized = true;
-      //can resolve once the current data initialization is complete
-      resolve();
-      setTimeout(() => {
-        initializeRemainingScenarios().then(() => {
-          //indicate scenario initialization complete
-          this.scenariosInitialized = true;
-          setTimeout(() => {
-            initializeAesthetics();
-          }, pause);
-        });
-      }, pause); 
+      return new Promise((resolve) => {
+        this.currentDataInitialized = true;
+        //can resolve once the current imdata initialization is complete
+        resolve();
+        setTimeout(() => {
+          initializeRemainingScenarios().then(() => {
+            //indicate scenario initialization complete
+            this.scenariosInitialized = true;
+            setTimeout(() => {
+              initializeAesthetics();
+            }, pause);
+          });
+        }, pause); 
+      });
     });
   }
 
@@ -4972,18 +4984,21 @@ export class MapComponent implements OnInit {
   //prolly need parameter to say whether to start layer toggled on or off, might want to add this to types def
   //update names and make sure works
   private loadCover(coverage, legend: boolean) {
-    if (coverage.layer != undefined) {
+    if(coverage.layer != undefined) {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
     }
+    
     // work with Coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
+      if(this.legend != undefined) {
+        this.map.removeControl(this.legend);
+      }
       if(legend) {
-        let upper = this.roundToDecimalPlaces(layer._paletteExtent[1] / 2, 2) + "+";
+        let upper = this.roundToDecimalPlaces(layer._paletteExtent[1] * 2 / 5, 2) + "+";
         let lower = this.roundToDecimalPlaces(layer._paletteExtent[0], 2);
-        let palette = this.rechargePalette();
-        this.createLegend(palette.slice(0, Math.ceil(palette.length / 2)), [lower, upper]);
+        this.legend = this.createLegend(this.rcPalette.slice(0, Math.ceil(this.rcPalette.length * 2 / 5)), [lower, upper]);
       }
     })
     .setOpacity(this.opacity);
@@ -5046,11 +5061,11 @@ export class MapComponent implements OnInit {
       + "</div>"
       + "</div>";
       div.innerHTML += html;
-      console.log(div);
       return div;
       
     };
     legend.addTo(this.map);
+    return legend;
   }
 
 
@@ -5082,6 +5097,7 @@ export class MapComponent implements OnInit {
 
   //generate 31 colors
   private landCoverPalette(): string[] {
+
     let palette = [];
     let range = 255;
     let color;
@@ -5135,63 +5151,77 @@ export class MapComponent implements OnInit {
   //   return palette;
   // }
 
+          // private rechargePalette(): string[] {
+          //   console.log((chroma as any).scale(['#f7fbff','#08306b']).mode('lab').colors(200));
+
+          //   let palette = [];
+          //   let rgb = [];
+          //   let colorScale = [{
+          //     r: 222,
+          //     g: 235,
+          //     b: 247
+          //   },
+          //   {
+          //     r: 8,
+          //     g: 48,
+          //     b: 107
+          //   }];
+          //   let range = {
+          //     r: colorScale[0].r - colorScale[1].r,
+          //     g: colorScale[0].g - colorScale[1].g,
+          //     b: colorScale[0].b - colorScale[1].b
+          //   };
+          //   let divs = 200;
+          //   let sizes = {
+          //     r: range.r / divs,
+          //     g: range.g / divs,
+          //     b: range.b / divs
+          //   };
+
+          //   for(let i = 0; i < divs; i++) {
+          //     rgb.push({
+          //       r: Math.ceil(colorScale[0].r - i * sizes.r),
+          //       g: Math.ceil(colorScale[0].g - i * sizes.g),
+          //       b: Math.ceil(colorScale[0].b - i * sizes.b)
+          //     });
+          //   }
+            
+          //   rgb.forEach((color, i) => {
+          //     for(let j = 0; j < i + 1; j++) {
+          //       palette.push(this.rgbToHex(color));
+          //     }
+          //   });
+
+          //   let last = palette.length;
+          //   for(let i = 0; i < last; i++) {
+          //     palette.push(palette[palette.length - 1]);
+          //   }
+          //   return palette;
+          // }
+
+          // rgbToHex(rgb: {r: number, g: number, b: number}) {
+          //   let hex = "#";
+          //   hex += this.toHex(rgb.r);
+          //   hex += this.toHex(rgb.g);
+          //   hex += this.toHex(rgb.b);
+          //   return hex;
+          // }
+
+          // toHex(color: number) {
+          //   let hex = color.toString(16);
+          //   return hex.length == 1 ? "0" + hex : hex;
+          // }
+
+
   private rechargePalette(): string[] {
-    let palette = [];
-    let rgb = [];
-    let colorScale = [{
-      r: 222,
-      g: 235,
-      b: 247
-    },
-    {
-      r: 8,
-      g: 48,
-      b: 107
-    }];
-    let range = {
-      r: colorScale[0].r - colorScale[1].r,
-      g: colorScale[0].g - colorScale[1].g,
-      b: colorScale[0].b - colorScale[1].b
-    };
     let divs = 200;
-    let sizes = {
-      r: range.r / divs,
-      g: range.g / divs,
-      b: range.b / divs
-    };
+    let palette = (chroma as any).scale(['#deebf7','#08306b']).mode('lab').colors(divs);
 
-    for(let i = 0; i < divs; i++) {
-      rgb.push({
-        r: Math.ceil(colorScale[0].r - i * sizes.r),
-        g: Math.ceil(colorScale[0].g - i * sizes.g),
-        b: Math.ceil(colorScale[0].b - i * sizes.b)
-      });
-    }
-    
-    rgb.forEach((color, i) => {
-      for(let j = 0; j < i + 1; j++) {
-        palette.push(this.rgbToHex(color));
-      }
-    });
-
-    let last = palette.length;
+    let last = palette.length * 1.5;
     for(let i = 0; i < last; i++) {
       palette.push(palette[palette.length - 1]);
     }
     return palette;
-  }
-
-  rgbToHex(rgb: {r: number, g: number, b: number}) {
-    let hex = "#";
-    hex += this.toHex(rgb.r);
-    hex += this.toHex(rgb.g);
-    hex += this.toHex(rgb.b);
-    return hex;
-  }
-
-  toHex(color: number) {
-    let hex = color.toString(16);
-    return hex.length == 1 ? "0" + hex : hex;
   }
 
 
