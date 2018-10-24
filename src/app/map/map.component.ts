@@ -91,6 +91,8 @@ export class MapComponent implements OnInit {
     selectedShape: any
   }
 
+  paletteExtent: number[];
+
   shapeMetricsEnabled: boolean;
 
   windowId: number;
@@ -108,6 +110,11 @@ export class MapComponent implements OnInit {
     customAreasTotal: any,
     total: any,
     totalNoCaprock: any
+  }
+
+  scenarioFnames = {
+    recharge_scenario0: "_baseline_rainfall",
+    recharge_scenario1: "_rainfall_projection_RCP_8.5"
   }
 
   defaultMetrics: any;
@@ -555,6 +562,12 @@ export class MapComponent implements OnInit {
 
   setUnits(type: string) {
     this.unitType = type;
+    if(this.legend != undefined) {
+      this.map.removeControl(this.legend);
+    }
+    if(this.baseLayer.name == "Recharge Rate") {
+      this.createLegend();
+    }
   }
 
   //should anything be here?
@@ -3825,8 +3838,9 @@ export class MapComponent implements OnInit {
     let genDataFileContents = (type: string, format: string) => {
 
       let data = this.types[type].data._covjson;
-      let xs = this.types.recharge.data._covjson.domain.axes.x.values;
-      let ys = this.types.recharge.data._covjson.domain.axes.y.values;
+      console.log(this.types.recharge.data._covjson)
+      let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+      let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
       let vals = type == "recharge" ? data.ranges.recharge.values :  data.ranges.cover.values;
       let fcontents;
   
@@ -3857,7 +3871,7 @@ export class MapComponent implements OnInit {
           }
         });
 
-        let fname = type == "recharge" ? (this.unitType == "Metric" ? type + "_millimeters_per_year." + format : type + "_inches_per_year." + format) : type + "." + format;
+        let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
         return {
           data: fcontents,
           name: fname,
@@ -3866,7 +3880,7 @@ export class MapComponent implements OnInit {
         
       }
       else if(format == "covjson") {
-        let fname = type == "recharge" ? (this.unitType == "Metric" ? type + "_millimeters_per_year." + format : type + "_inches_per_year." + format) : type + "." + format;
+        let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
         return {
           data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType)),
           name: fname,
@@ -4992,13 +5006,12 @@ export class MapComponent implements OnInit {
     // work with Coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
+      this.paletteExtent = layer._paletteExtent;
       if(this.legend != undefined) {
         this.map.removeControl(this.legend);
       }
       if(legend) {
-        let upper = this.roundToDecimalPlaces(layer._paletteExtent[1] * 2 / 5, 2) + "+";
-        let lower = this.roundToDecimalPlaces(layer._paletteExtent[0], 2);
-        this.legend = this.createLegend(this.rcPalette.slice(0, Math.ceil(this.rcPalette.length * 2 / 5)), [lower, upper]);
+        this.createLegend()
       }
     })
     .setOpacity(this.opacity);
@@ -5026,8 +5039,20 @@ export class MapComponent implements OnInit {
 
   }
 
+  createLegend() {
+    console.log(this.unitType);
+    let upperRaw = this.paletteExtent[1] * 2 / 5;
+    let lowerRaw = this.paletteExtent[0];
+    if(this.unitType == "Metric") {
+      upperRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR;
+      lowerRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR;
+    }
+    let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
+    let lower = this.roundToDecimalPlaces(lowerRaw, 2);
+    this.legend = this.addLegend(this.rcPalette.slice(0, Math.ceil(this.rcPalette.length * 2 / 5)), [lower, upper]);
+  }
 
-  createLegend(palette: string[], range: string[]) {
+  addLegend(palette: string[], range: string[]) {
     let legend = L.control({position: "bottomright"});
     legend.onAdd = (map) => {
       let div = L.DomUtil.create("div", "info legend")
@@ -5057,7 +5082,7 @@ export class MapComponent implements OnInit {
       + "</div>"
       + "</div>"
       + "<div style='font-size: 10px;'>"
-      + "Inches per Year"
+      + (this.unitType == "Metric" ? "Milimeters per Year" : "Inches per Year")
       + "</div>"
       + "</div>";
       div.innerHTML += html;
@@ -5138,6 +5163,53 @@ export class MapComponent implements OnInit {
     return palette;
   }
 
+  //generate 31 colors
+  // private landCoverPalette(): string[] {
+
+  //   let palette = [];
+    
+  //   let r = (chroma as any).scale(["#ff0000", "#000000"]).mode('lab').colors(4);
+  //   let g = (chroma as any).scale(["#00ff00", "#000000"]).mode('lab').colors(3);
+  //   let b = (chroma as any).scale(["#0000ff", "#000000"]).mode('lab').colors(3);
+
+  //   console.log(r);
+  //   console.log(g);
+  //   console.log(b);
+
+  //   for (let i = 0; i < 4; i++) {
+  //     for (let j = 0; j < 3; j++) {
+  //       for (let k = 0; k < 3; k++) {
+  //         if (palette.length >= 31) {
+  //           break;
+  //         }
+  //         let rc = r[i];
+  //         let gc = g[j];
+  //         let bc = g[k]
+  //         console.log(rc);
+  //         console.log(gc);
+  //         console.log(bc);
+  //         rc = rc.substring(1, 3);
+  //         gc = gc.substring(3, 5);
+  //         bc = bc.substring(5, 7);
+  //         console.log(rc);
+  //         console.log(gc);
+  //         console.log(bc);
+  //         let color = "#" + rc + gc + gc;
+  //         palette.push(color);
+  //       }
+  //     }
+  //   }
+  //   console.log(palette)
+
+  //   for (let i = 0; i < 30; i++) {
+  //     COVER_INDEX_DETAILS[i].color = palette[i];
+  //     document.documentElement.style.setProperty("--color" + (LC_TO_BUTTON_INDEX[i + 1]).toString(), palette[i + 1]);
+  //   }
+
+  //   //palette = this.agitate(palette);
+  //   return palette;
+  // }
+
 
   //colorbrewer
   // private rechargePalette(): string[] {
@@ -5151,72 +5223,84 @@ export class MapComponent implements OnInit {
   //   return palette;
   // }
 
-          // private rechargePalette(): string[] {
-          //   console.log((chroma as any).scale(['#f7fbff','#08306b']).mode('lab').colors(200));
+  // private rechargePalette(): string[] {
+  //   console.log((chroma as any).scale(['#f7fbff','#08306b']).mode('lab').colors(200));
 
-          //   let palette = [];
-          //   let rgb = [];
-          //   let colorScale = [{
-          //     r: 222,
-          //     g: 235,
-          //     b: 247
-          //   },
-          //   {
-          //     r: 8,
-          //     g: 48,
-          //     b: 107
-          //   }];
-          //   let range = {
-          //     r: colorScale[0].r - colorScale[1].r,
-          //     g: colorScale[0].g - colorScale[1].g,
-          //     b: colorScale[0].b - colorScale[1].b
-          //   };
-          //   let divs = 200;
-          //   let sizes = {
-          //     r: range.r / divs,
-          //     g: range.g / divs,
-          //     b: range.b / divs
-          //   };
+  //   let palette = [];
+  //   let rgb = [];
+  //   let colorScale = [{
+  //     r: 222,
+  //     g: 235,
+  //     b: 247
+  //   },
+  //   {
+  //     r: 8,
+  //     g: 48,
+  //     b: 107
+  //   }];
+  //   let range = {
+  //     r: colorScale[0].r - colorScale[1].r,
+  //     g: colorScale[0].g - colorScale[1].g,
+  //     b: colorScale[0].b - colorScale[1].b
+  //   };
+  //   let divs = 200;
+  //   let sizes = {
+  //     r: range.r / divs,
+  //     g: range.g / divs,
+  //     b: range.b / divs
+  //   };
 
-          //   for(let i = 0; i < divs; i++) {
-          //     rgb.push({
-          //       r: Math.ceil(colorScale[0].r - i * sizes.r),
-          //       g: Math.ceil(colorScale[0].g - i * sizes.g),
-          //       b: Math.ceil(colorScale[0].b - i * sizes.b)
-          //     });
-          //   }
-            
-          //   rgb.forEach((color, i) => {
-          //     for(let j = 0; j < i + 1; j++) {
-          //       palette.push(this.rgbToHex(color));
-          //     }
-          //   });
+  //   for(let i = 0; i < divs; i++) {
+  //     rgb.push({
+  //       r: Math.ceil(colorScale[0].r - i * sizes.r),
+  //       g: Math.ceil(colorScale[0].g - i * sizes.g),
+  //       b: Math.ceil(colorScale[0].b - i * sizes.b)
+  //     });
+  //   }
+    
+  //   rgb.forEach((color, i) => {
+  //     for(let j = 0; j < i + 1; j++) {
+  //       palette.push(this.rgbToHex(color));
+  //     }
+  //   });
 
-          //   let last = palette.length;
-          //   for(let i = 0; i < last; i++) {
-          //     palette.push(palette[palette.length - 1]);
-          //   }
-          //   return palette;
-          // }
+  //   let last = palette.length;
+  //   for(let i = 0; i < last; i++) {
+  //     palette.push(palette[palette.length - 1]);
+  //   }
+  //   return palette;
+  // }
 
-          // rgbToHex(rgb: {r: number, g: number, b: number}) {
-          //   let hex = "#";
-          //   hex += this.toHex(rgb.r);
-          //   hex += this.toHex(rgb.g);
-          //   hex += this.toHex(rgb.b);
-          //   return hex;
-          // }
+  // rgbToHex(rgb: {r: number, g: number, b: number}) {
+  //   let hex = "#";
+  //   hex += this.toHex(rgb.r);
+  //   hex += this.toHex(rgb.g);
+  //   hex += this.toHex(rgb.b);
+  //   return hex;
+  // }
 
-          // toHex(color: number) {
-          //   let hex = color.toString(16);
-          //   return hex.length == 1 ? "0" + hex : hex;
-          // }
+  // toHex(color: number) {
+  //   let hex = color.toString(16);
+  //   return hex.length == 1 ? "0" + hex : hex;
+  // }
 
 
   private rechargePalette(): string[] {
+    let palette = [];
+    //linear segments
+    let colorSegments = (chroma as any).scale(["#f7fbff", "#08306b"]).mode('lab').colors(9);
+    //colorbrewer segments
+    //let colorSegments = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
     let divs = 200;
-    let palette = (chroma as any).scale(['#deebf7','#08306b']).mode('lab').colors(divs);
-
+    let exp = 1.5
+    let scale = Math.pow(exp, colorSegments.length - 1);
+    let modifier = Math.ceil(divs / scale);
+    for(let i = 0; i < colorSegments.length - 1; i++) {
+      let numColors = scale / Math.pow(exp, (colorSegments.length - i)) * modifier;
+      palette = palette.concat((chroma as any).scale([colorSegments[i], colorSegments[i + 1]]).mode('lab').colors(numColors));
+    }
+    //console.log(palette);
+      
     let last = palette.length * 1.5;
     for(let i = 0; i < last; i++) {
       palette.push(palette[palette.length - 1]);

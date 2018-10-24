@@ -20,14 +20,14 @@ export class DBConnectService {
   }
 
   spatialQueryLength(geometry: any): number {
-    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10192018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
     let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
     return url.length;
   }
 
   debugQuery() {
     console.log("called debug query");
-    let sampleQuery = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':{'type':'Polygon','coordinates':[[[-158.068537,21.465326],[-158.068537,21.54625],[-157.926289,21.54625],[-157.926289,21.465326],[-158.068537,21.465326]]]}}}}]}";
+    let sampleQuery = "{'$and':[{'name':'Landuse'},{'value.name':'testset10192018'},{'value.loc': {$geoWithin: {'$geometry':{'type':'Polygon','coordinates':[[[-158.068537,21.465326],[-158.068537,21.54625],[-157.926289,21.54625],[-157.926289,21.465326],[-158.068537,21.465326]]]}}}}]}";
     let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(sampleQuery)+"&limit=100000&offset=0";
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
@@ -74,7 +74,7 @@ export class DBConnectService {
   }
 
   spatialSearch(geometry: any): Observable<Cover[]> {
-    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+    let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10192018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
     let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
@@ -131,7 +131,7 @@ export class DBConnectService {
     //alert(JSON.stringify(drawnItems.toGeoJSON().features[i].geometry));
 
     //build query
-    let query = "{$and:[{'name':'Landuse','value.name':'testset10092018','$or':[";
+    let query = "{$and:[{'name':'Landuse','value.name':'testset10192018','$or':[";
     indexes.forEach((index) => {
       query += "{'value.x':" + index.x + ", 'value.y':" + index.y + "},";
     });

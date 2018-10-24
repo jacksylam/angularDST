@@ -68,12 +68,14 @@ export class VisWindowComponent implements AfterViewInit {
     this.controlPanel.setWindowId(1);
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
-      // const mouseX = e.pageX;
-      // const mouseY = e.pageY;
-      //transition = false;
+      e.stopPropagation();
+      e.preventDefault();
 
-      // this.mouseWindowLeft = this.panelDiv.nativeElement.offsetLeft;
-      // this.mouseWindowTop = this.panelDiv.nativeElement.offsetTop;
+      //ensure left click, if right click just return
+      if(e.which != 1) {
+        return;
+      }
+
       this.mouseCornerOffset = {
         left: e.pageX - this.panelDiv.nativeElement.offsetLeft,
         top: e.pageY - this.panelDiv.nativeElement.offsetTop
@@ -85,8 +87,7 @@ export class VisWindowComponent implements AfterViewInit {
       }
       //console.log(this.scrollPos);
 
-      e.stopPropagation();
-      e.preventDefault();
+      
       this.phantomScrollLock.nativeElement.style.top = window.pageYOffset == 0 ? '0px' : window.pageYOffset + window.innerHeight + 'px';
       this.phantomScrollLock.nativeElement.style.left = window.pageXOffset == 0 ? '0px' : window.pageXOffset + window.innerWidth + 'px';
 
@@ -110,6 +111,11 @@ export class VisWindowComponent implements AfterViewInit {
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      if(e.which != 1) {
+        return;
+      }
+
       this.lastMouseXPosition = e.pageX;
       this.lastMouseYPosition = e.pageY;
       
@@ -124,8 +130,12 @@ export class VisWindowComponent implements AfterViewInit {
     this.resizeRight.nativeElement.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      if(e.which != 1) {
+        return;
+      }
+
       this.lastMouseXPosition = e.pageX;
-      
       
       //need to pass __this in to function, so save anonymous function call for removal
       document.addEventListener('mousemove', resizeFunct = (e) => {
@@ -138,9 +148,13 @@ export class VisWindowComponent implements AfterViewInit {
     this.resizeBot.nativeElement.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      if(e.which != 1) {
+        return;
+      };
+
       const mouseY = e.pageY;
       this.lastMouseYPosition = e.pageY;
-      
       
       //need to pass __this in to function, so save anonymous function call for removal
       document.addEventListener('mousemove', resizeFunct = (e) => {

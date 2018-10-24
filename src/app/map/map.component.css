@@ -43,7 +43,7 @@
 .legend {
     line-height: 18px !important;
     color: red !important;
-    background-color: #009933 !important;
+    background-color: lightgray !important;
 }
 .legend i {
     width: 18px !important;
