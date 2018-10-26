@@ -1,7 +1,7 @@
 img {
     float: right;
     max-width: calc(75% - 100px);
-    width: 760px;
+    width: 400px;
     height: auto;
     clear: both;
     margin: 50px;

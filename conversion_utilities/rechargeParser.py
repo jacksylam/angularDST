@@ -11,9 +11,8 @@ if(len(sys.argv) == 5):
     exclude = sys.argv[4].split(',')
 data = []
 
-
 def write_scenario_to_covjson(land_covers, template, sc_fname, data):
-    values = [];
+    values = []
     
     i = 0
     for cover in lc:
@@ -21,7 +20,7 @@ def write_scenario_to_covjson(land_covers, template, sc_fname, data):
             code = cover - 1
             v = data[code]
             r = v[i]
-            values.append(r)
+            values.append(round(r, 3))
         else:
             values.append(0)
         i = i + 1

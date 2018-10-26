@@ -100,25 +100,26 @@ export class CovjsonTemplateService {
   constructor() { }
 
 
-  constructCovjson(xs: number[], ys: number[], values: number[], shape: number[], type: "cover" | "recharge", unitType): any {
+  constructCovjson(xs: number[], ys: number[], values: number[], shape: number[], type: "cover" | "recharge", unitType, roundingFunct: any): any {
     let covjsonBase = JSON.parse(JSON.stringify(CovjsonTemplateService.template));
     let varParts = CovjsonTemplateService.variableComponents[type];
     Object.keys(varParts).forEach((key) => {
       covjsonBase[key] = JSON.parse(JSON.stringify(varParts[key]));
     });
 
-    covjsonBase.domain.axes.x.values = xs;
-    covjsonBase.domain.axes.y.values = ys;
+    covjsonBase.domain.axes.x.values = [].slice.call(xs);
+    covjsonBase.domain.axes.y.values = [].slice.call(ys);
     covjsonBase.ranges[type].shape = shape;
     
     let downloadVals = values;
 
-    if(unitType == "Metric") {
+    if(unitType == "Metric" && type == "recharge") {
       downloadVals = []
       values.forEach((value) => {
-        downloadVals.push(value * MapComponent.INCH_TO_MILLIMETER_FACTOR);
+        downloadVals.push(roundingFunct(value * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3));
       });
     }
+
     covjsonBase.ranges[type].values = downloadVals;
 
     return covjsonBase;
@@ -145,5 +146,7 @@ export class CovjsonTemplateService {
       return null;
     }
   }
+
+  //create stringification that
 
 }

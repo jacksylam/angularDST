@@ -872,7 +872,7 @@ export class ReportWindowComponent implements AfterViewInit {
     for(let i = 1; i < numberOfPages; i++) {
       this.pdf.setPage(i);
       this.pdf.line(50, linePos, width - 50, linePos);
-      this.pdf.text(50, footerPos, "*Values rounded to 3 significant figures")
+      this.pdf.text(50, footerPos, "*Values rounded to two decimal places")
     }
     
     

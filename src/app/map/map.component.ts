@@ -2230,6 +2230,13 @@ export class MapComponent implements OnInit {
     return rounded;
   }
 
+  numericRoundToDecimalPlaces(value: number, places: number): number {
+    let shift = Math.pow(10, places);
+    let scaled = value * shift;
+    let rounded = Math.round(scaled);
+    return rounded / shift;
+  }
+
 
 
 
@@ -3860,7 +3867,7 @@ export class MapComponent implements OnInit {
         vals.forEach((val) => {
           let convertedVal = val;
           if(this.unitType == "Metric" && type == "recharge") {
-            convertedVal *= MapComponent.INCH_TO_MILLIMETER_FACTOR
+            convertedVal = this.numericRoundToDecimalPlaces(convertedVal * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3);
           }
           fcontents += convertedVal + " "
           
@@ -3882,7 +3889,7 @@ export class MapComponent implements OnInit {
       else if(format == "covjson") {
         let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
         return {
-          data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType)),
+          data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType, this.numericRoundToDecimalPlaces)),
           name: fname,
           type: 'text/plain;charset=utf-8'
         }
