@@ -405,7 +405,7 @@ export class MapComponent implements OnInit {
     this.map.on('baselayerchange', (e) => {
       //store current layer details
       this.baseLayer = e;
-
+console.log(this.map._controlCorners.topright.children[0].children[1][0].labels[0].innerText);
       switch (e.name) {
         case "Land Cover":
           this.mapService.changeLayer(this, "landcover");
@@ -438,6 +438,7 @@ export class MapComponent implements OnInit {
           this.drawControl.remove();
           this.mapService.baseDetails(this);
           break;
+        //can use fallthrough to have any recharge layers have the same behavior
         case "Recharge Rate":
           //default caprock to true
           //this.includeCaprock = true;
@@ -3845,7 +3846,7 @@ export class MapComponent implements OnInit {
     let genDataFileContents = (type: string, format: string) => {
 
       let data = this.types[type].data._covjson;
-      console.log(this.types.recharge.data._covjson)
+      //console.log(this.types.recharge.data._covjson)
       let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
       let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
       let vals = type == "recharge" ? data.ranges.recharge.values :  data.ranges.cover.values;
@@ -4138,7 +4139,7 @@ export class MapComponent implements OnInit {
     this.map.addLayer(this.drawnItems);
     //this.map.addLayer(this.editableItems);
 
-    L.drawLocal.draw.handlers.marker.tooltip.start = "Click map to select cell"
+    L.drawLocal.draw.handlers.marker.tooltip.start = "Click map to select cell";
 
 
     //might want to add some kind of undo button
@@ -5008,9 +5009,11 @@ export class MapComponent implements OnInit {
     if(coverage.layer != undefined) {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
+      this.layers.removeLayer(coverage.layer);
+      this.layers.removeLayer(coverage.layer);
     }
-    
-    // work with Coverage object
+
+    // work with coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
       this.paletteExtent = layer._paletteExtent;
@@ -5018,7 +5021,7 @@ export class MapComponent implements OnInit {
         this.map.removeControl(this.legend);
       }
       if(legend) {
-        this.createLegend()
+        this.createLegend();
       }
     })
     .setOpacity(this.opacity);
@@ -5041,13 +5044,18 @@ export class MapComponent implements OnInit {
       this.baseLayer.layer = layer;
     }
 
-    this.layers.addBaseLayer(layer, coverage.label);
+    this.layers.addBaseLayer(layer);
     coverage.layer = layer;
+
+    if(coverage == this.types.recharge) {
+      this.layers.addBaseLayer(layer, "test1");
+      this.layers.addBaseLayer(layer, "test2");
+    }
 
   }
 
   createLegend() {
-    console.log(this.unitType);
+    //console.log(this.unitType);
     let upperRaw = this.paletteExtent[1] * 2 / 5;
     let lowerRaw = this.paletteExtent[0];
     if(this.unitType == "Metric") {
