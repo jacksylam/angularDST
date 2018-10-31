@@ -26,7 +26,8 @@ export class SidebarPanelComponent implements OnInit {
 
   layer = "landcover";
 
-  selected="Baseline Rainfall 1978-2007";
+  selected = "Baseline Rainfall 1978-2007";
+  rechargeStyle = "rate"
 
   loading = 0;
   debug = false;
@@ -64,6 +65,10 @@ export class SidebarPanelComponent implements OnInit {
         this.mapService.changeScenario(this, "recharge_scenario1");
         break;
     }
+  }
+
+  styleChange(e) {
+    this.mapService.changeRechargeStyle(this, e.value);
   }
 
   changeCover(type: string) {

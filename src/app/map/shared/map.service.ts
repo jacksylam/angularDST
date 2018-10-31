@@ -206,5 +206,10 @@ export class MapService {
     this.detailPanelHash[index].setLoading(loading);
     this.panelButtonHash[index].setLoading(loading);
   }
+
+  changeRechargeStyle(buttonPanel: any, style: string) {
+    let index = this.panelButtonHash.indexOf(buttonPanel);
+    this.mapHash[index].changeRechargeStyle(style);
+  }
   
 }

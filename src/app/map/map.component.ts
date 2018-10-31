@@ -1447,7 +1447,38 @@ export class MapComponent implements OnInit {
 
 
 
-
+  changeRechargeStyle(style: string) {
+    let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+    switch(style) {
+      case "rate": {
+        for(let i = 0; i < rechargeData.length; i++) {
+          rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i];
+        }
+        break;
+      }
+      case "pchange": {
+        for(let i = 0; i < rechargeData.length; i++) {
+          if(this.types.recharge.baseData[this.currentScenario][i] == 0) {
+            rechargeData[i] = 0;
+          }
+          else {
+            let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
+            //make sure not dividing by 0 if no recharge in selected cells
+            rechargeData[i] = diff / this.types.recharge.baseData[this.currentScenario][i] * 100  + 0.1;
+          }
+          
+        }
+        break;
+      }
+      case "diff": {
+        for(let i = 0; i < rechargeData.length; i++) {
+          rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i] + 0.1;
+        }
+        break;
+      }
+    }
+    this.loadCover(this.types.recharge, true);
+  }
 
 
 

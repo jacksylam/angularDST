@@ -66,12 +66,27 @@
         </div>
       </div>
 
-      <div *ngSwitchCase="layer == 'recharge'" [ngClass]="{'disable': loading > 0}" class="outline btn-group-vertical internal-menu">
-        <button type="button" class="btn btn-primary btn-responsive btn-label">Data Mode</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('cell')">Display Data by Cell</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('custom')">Display Custom Area Data</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('aquifer')">Display Aquifer Data</button>
-        <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('full')">Display Full Map Data</button>
+      <div *ngSwitchCase="layer == 'recharge'" [ngClass]="{'disable': loading > 0}">
+        <div class="outline btn-group-vertical internal-menu">
+          <button type="button" class="btn btn-primary btn-responsive btn-label">Visualization Style</button>
+          <mat-select [(value)]="rechargeStyle" (change)="styleChange($event)">
+            <mat-option value="rate">Recharge Rate</mat-option>
+            <mat-option value="pchange">Percent Change</mat-option>
+            <mat-option value="diff">Difference</mat-option>
+          </mat-select>
+        </div>
+
+        <p></p>
+
+        <div class="outline btn-group-vertical internal-menu">
+            <button type="button" class="btn btn-primary btn-responsive btn-label">Data Mode</button>
+            <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('cell')">Display Data by Cell</button>
+            <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('custom')">Display Custom Area Data</button>
+            <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('aquifer')">Display Aquifer Data</button>
+            <button type="button" class="btn btn-primary btn-responsive btn-custom btn-ivory btn-custom-t4" (click)="setMode('full')">Display Full Map Data</button>
+    
+            
+        </div>
       </div>
 
     
