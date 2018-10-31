@@ -405,7 +405,9 @@ export class MapComponent implements OnInit {
     this.map.on('baselayerchange', (e) => {
       //store current layer details
       this.baseLayer = e;
-console.log(this.map._controlCorners.topright.children[0].children[1][0].labels[0].innerText);
+      //if ever need to get neame from leaflet layer control, here it is, change "0" in children[1][0] to index of label
+      //let's just use my control panel and toss the idea of using the layer control, waaaaay more effort than anything is worth
+      //console.log(this.map._controlCorners.topright.children[0].children[1][0].labels[0].innerText);
       switch (e.name) {
         case "Land Cover":
           this.mapService.changeLayer(this, "landcover");
@@ -5044,13 +5046,8 @@ console.log(this.map._controlCorners.topright.children[0].children[1][0].labels[
       this.baseLayer.layer = layer;
     }
 
-    this.layers.addBaseLayer(layer);
+    this.layers.addBaseLayer(layer, coverage.label);
     coverage.layer = layer;
-
-    if(coverage == this.types.recharge) {
-      this.layers.addBaseLayer(layer, "test1");
-      this.layers.addBaseLayer(layer, "test2");
-    }
 
   }
 
