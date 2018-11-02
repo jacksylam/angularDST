@@ -209,7 +209,7 @@ export class MapService {
 
   changeRechargeStyle(buttonPanel: any, style: string) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
-    this.mapHash[index].changeRechargeStyle(style);
+    this.mapHash[index].loadRechargeStyle(style);
   }
   
 }

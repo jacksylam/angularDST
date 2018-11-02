@@ -91,9 +91,11 @@ export class MapComponent implements OnInit {
     selectedShape: any
   }
 
-  paletteExtent: number[];
-
   shapeMetricsEnabled: boolean;
+
+  paletteExtent = [];
+  pchangeExtent = [-100, 100];
+  diffExtent = [-20, 20];
 
   windowId: number;
 
@@ -171,6 +173,7 @@ export class MapComponent implements OnInit {
   static readonly caprockFile = "../assets/Oahu__75m__caprock.asc";
 
   rcPalette: string[];
+  rcDivergingPalette: string[];
 
   types = {
     landCover: {
@@ -194,7 +197,8 @@ export class MapComponent implements OnInit {
         recharge_scenario0: null,
         recharge_scenario1: null
       },
-      layer: null
+      layer: null,
+      style: "rate"
     },
     aquifers: {
       label: 'Aquifers',
@@ -254,8 +258,10 @@ export class MapComponent implements OnInit {
     this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
 
     this.rcPalette = this.rechargePalette();
-      this.types.recharge.palette = C.linearPalette(this.rcPalette);
-      this.types.landCover.palette = C.directPalette(this.landCoverPalette());
+    this.rcDivergingPalette = this.divergingPalette();
+
+    this.types.recharge.palette = C.linearPalette(this.rcPalette);
+    this.types.landCover.palette = C.directPalette(this.landCoverPalette());
 
     this.initializeLayers().then(() => {
       this.loadDrawControls();
@@ -442,8 +448,7 @@ export class MapComponent implements OnInit {
           break;
         //can use fallthrough to have any recharge layers have the same behavior
         case "Recharge Rate":
-          //default caprock to true
-          //this.includeCaprock = true;
+          
           this.mapService.changeLayer(this, "recharge");
           this.drawControl.remove();
           //console.log(this.metrics.total);
@@ -456,10 +461,13 @@ export class MapComponent implements OnInit {
             this.nameModeDetails.oldInteractionType = "full";
           }
           
-          //throws an error for some reason if run immediately (though it still works...)
+          //throw errors for some reason if run immediately
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
-            this.baseLayer.layer.setOpacity(this.opacity);
+            this.loadRechargeStyle(this.types.recharge.style);
+            setTimeout(() => {
+              this.baseLayer.layer.setOpacity(this.opacity);
+            }, 0);
           }, 0);
           break;
       }
@@ -569,7 +577,7 @@ export class MapComponent implements OnInit {
       this.map.removeControl(this.legend);
     }
     if(this.baseLayer.name == "Recharge Rate") {
-      this.createLegend();
+      this.createLegend(this.types.recharge.style);
     }
   }
 
@@ -663,7 +671,6 @@ export class MapComponent implements OnInit {
     }
     let queryShapes = lcShapes;
     let covData = this.types.landCover.data._covjson.ranges.cover.values;
-    let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
 
     //backup values to restore on data failure
     let backupData = Array.from(covData);
@@ -722,19 +729,14 @@ export class MapComponent implements OnInit {
               //if background type set recharge rate to 0
               let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
-              this.types.recharge.currentData[scenario] = recordValue;
+              this.types.recharge.currentData[scenario][index] = recordValue;
               if(overwrite) {
-                this.types.recharge.baseData[scenario] = recordValue;
-              }
-              if(scenario == this.currentScenario) {
-                rechargeData[index] = recordValue;
+                this.types.recharge.baseData[scenario][index] = recordValue;
               }
             });
 
           });
         });
-        //reload recharge cover
-        this.loadCover(this.types.recharge, true)
 
         this.updateMetrics(lcShapes);
       });
@@ -1447,16 +1449,22 @@ export class MapComponent implements OnInit {
 
 
 
-  changeRechargeStyle(style: string) {
+  loadRechargeStyle(style: string) {
     let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
     switch(style) {
       case "rate": {
+        this.types.recharge.palette = C.linearPalette(this.rcPalette);
+        this.types.recharge.style = "rate";
         for(let i = 0; i < rechargeData.length; i++) {
           rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i];
         }
         break;
       }
       case "pchange": {
+        
+        this.types.recharge.style = "pchange";
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
         for(let i = 0; i < rechargeData.length; i++) {
           if(this.types.recharge.baseData[this.currentScenario][i] == 0) {
             rechargeData[i] = 0;
@@ -1464,16 +1472,36 @@ export class MapComponent implements OnInit {
           else {
             let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
             //make sure not dividing by 0 if no recharge in selected cells
-            rechargeData[i] = diff / this.types.recharge.baseData[this.currentScenario][i] * 100  + 0.1;
+            rechargeData[i] = diff / this.types.recharge.baseData[this.currentScenario][i] * 100;
           }
-          
+          if(rechargeData[i] > max) {
+            max = rechargeData[i];
+          }
+          if(rechargeData[i] < min) {
+            min = rechargeData[i];
+          }
         }
+        let paletteWindow = this.paletteWindow([min, max], this.pchangeExtent, 200);
+        this.types.recharge.palette = C.linearPalette(this.rcDivergingPalette.slice(paletteWindow[0] - 1, paletteWindow[1] + 1));
+        rechargeData[0] = 0.0001;
         break;
       }
       case "diff": {
+        this.types.recharge.style = "diff";
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
         for(let i = 0; i < rechargeData.length; i++) {
-          rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i] + 0.1;
+          rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
+          if(rechargeData[i] > max) {
+            max = rechargeData[i];
+          }
+          if(rechargeData[i] < min) {
+            min = rechargeData[i];
+          }
         }
+        let paletteWindow = this.paletteWindow([min, max], this.pchangeExtent, 200);
+        this.types.recharge.palette = C.linearPalette(this.rcDivergingPalette.slice(paletteWindow[0] - 1, paletteWindow[1] + 1));
+        rechargeData[0] = 0.0001;
         break;
       }
     }
@@ -1741,7 +1769,7 @@ export class MapComponent implements OnInit {
       }
     };
 
-    let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    let rechargeVals = this.types.recharge.currentData[this.currentScenario];
     
     //this.aquifers will be the aquifer id array
     //this.SPECIAL_AQUIFERS
@@ -2000,7 +2028,7 @@ export class MapComponent implements OnInit {
       }
     };
 
-    let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+    let rechargeVals = this.types.recharge.currentData[this.currentScenario];
     let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
 
     let cells = 0
@@ -2127,7 +2155,7 @@ export class MapComponent implements OnInit {
     
     //if empty just return all 0 metrics
     if(codes.length != 0) {
-      let rechargeVals = this.types.recharge.data._covjson.ranges.recharge.values;
+      let rechargeVals = this.types.recharge.currentData[this.currentScenario];
 
       this.aquifers.forEach((aquifer, i) => {
         //aquifer code 0 (no aquifer), no need to check through code array
@@ -2464,7 +2492,6 @@ export class MapComponent implements OnInit {
         if(data.cover != null) {
           
           let covData = this.types.landCover.data._covjson.ranges.cover.values;
-          let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
 
           //backup values to restore on data failure
           let backupData = Array.from(covData);
@@ -2549,10 +2576,7 @@ export class MapComponent implements OnInit {
                   //if background type set recharge rate to 0
                   let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
-                  this.types.recharge.currentData[scenario] = recordValue;
-                  if(scenario == this.currentScenario) {
-                    rechargeData[index] = recordValue;
-                  }
+                  this.types.recharge.currentData[scenario][index] = recordValue;
                 });
 
               });
@@ -2649,8 +2673,6 @@ export class MapComponent implements OnInit {
             //debugging------------------------------------------------------------------------------------------------
 
             this.updateMetrics(geometries);
-            //reload recharge cover
-            this.loadCover(this.types.recharge, true)
           }, (error) => {
             //restore land cover on failure
             backupData.forEach((value, i) => {
@@ -3878,11 +3900,9 @@ export class MapComponent implements OnInit {
     //get string representation of specified file contents
     let genDataFileContents = (type: string, format: string) => {
 
-      let data = this.types[type].data._covjson;
-      //console.log(this.types.recharge.data._covjson)
       let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
       let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-      let vals = type == "recharge" ? data.ranges.recharge.values :  data.ranges.cover.values;
+      let vals = type == "recharge" ? this.types.recharge.currentData[this.currentScenario] : this.types.landCover.data.ranges.cover.values;
       let fcontents;
   
       if(format == "asc") {
@@ -4517,7 +4537,6 @@ export class MapComponent implements OnInit {
     else {
 
       let covData = this.types.landCover.data._covjson.ranges.cover.values;
-      let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
 
       //backup values to restore on data failure
       let backupData = Array.from(covData);
@@ -4591,18 +4610,12 @@ export class MapComponent implements OnInit {
                         //if background type set recharge rate to 0
                         let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
-                        this.types.recharge.currentData[scenario] = recordValue;
-                        if(scenario == this.currentScenario) {
-                          rechargeData[index] = recordValue;
-                        }
+                        this.types.recharge.currentData[scenario][index] = recordValue;
                       });
 
                     });
                   });
                   this.updateMetrics(geojsonObjects);
-                  //reload recharge cover
-                  this.loadCover(this.types.recharge, true)
-                  //reenable report generation
                 });
                 
               }, (error) => {
@@ -4632,8 +4645,6 @@ export class MapComponent implements OnInit {
         //       rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
         //     });
         //   });
-        //   //reload recharge cover
-        //   this.loadCover(this.types.recharge, true)
 
         //   this.updateMetrics(geojsonObjects);
         //   //reenable report generation
@@ -4656,26 +4667,16 @@ export class MapComponent implements OnInit {
       else if (type == "base") {
         indexes.forEach(index => {
           covData[index] = this.types.landCover.baseData[index];
-          rechargeData[index] = this.types.recharge.baseData[this.currentScenario][index];
+          Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+            this.types.recharge.currentData[scenario][index] = this.types.recharge.baseData[scenario][index];
+          });
         });
         this.loadCover(this.types.landCover, false);
-        this.loadCover(this.types.recharge, true);
 
 
         this.updateMetrics(geojsonObjects);
       }
       else {
-        //let __this = this;
-        //might as well update recharge as well, async so shouldnt affect performance of core app
-
-        //also may need to add some sort of block that releases when finished (eg a boolean switch) to ensure reports generated include all changes (wait until async actions completed)
-
-        //should grey out report generation button while this is going
-        //might also want to add some sort of loading indicator
-        
-
-        
-
         this.updateRecharge(geojsonObjects, (update) => {
           update.forEach(area => {
             //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
@@ -4691,22 +4692,12 @@ export class MapComponent implements OnInit {
                 //background is not included in the database so indexes shifted by 1
                 //if background type set recharge rate to 0
                 let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
-                this.types.recharge.currentData[scenario] = recordValue;
+                this.types.recharge.currentData[scenario][index] = recordValue;
                 
-                // if(recordBase[scenario][mappedType - 1] > 400) {
-                //   console.log(record);
-                // }
-                //console.log(record);
-
-                if(scenario == this.currentScenario) {
-                  rechargeData[index] = recordValue;
-                }
               });
             });
           });
           this.updateMetrics(geojsonObjects);
-          //reload recharge cover
-          this.loadCover(this.types.recharge, true)
           //reenable report generation
         }, (error) => {
           //restore land cover on failure
@@ -5042,19 +5033,17 @@ export class MapComponent implements OnInit {
     if(coverage.layer != undefined) {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
-      this.layers.removeLayer(coverage.layer);
-      this.layers.removeLayer(coverage.layer);
     }
 
     // work with coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
     .on('afterAdd', () => {
-      this.paletteExtent = layer._paletteExtent;
       if(this.legend != undefined) {
         this.map.removeControl(this.legend);
       }
       if(legend) {
-        this.createLegend();
+        this.paletteExtent = layer._paletteExtent
+        this.createLegend(coverage.style);
       }
     })
     .setOpacity(this.opacity);
@@ -5082,27 +5071,52 @@ export class MapComponent implements OnInit {
 
   }
 
-  createLegend() {
-    //console.log(this.unitType);
-    let upperRaw = this.paletteExtent[1] * 2 / 5;
-    let lowerRaw = this.paletteExtent[0];
-    if(this.unitType == "Metric") {
-      upperRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR;
-      lowerRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR;
+  createLegend(style: string) {
+    switch(style) {
+      case "rate": {
+        let upperRaw = this.paletteExtent[1] * 2 / 5;
+        let lowerRaw = this.paletteExtent[0];
+        let units = "Inches per Year"
+        if(this.unitType == "Metric") {
+          upperRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR;
+          lowerRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR;
+          units = "Milimeters per Year";
+        }
+        let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
+        let lower = this.roundToDecimalPlaces(lowerRaw, 2);
+        this.legend = this.addLegend(this.rcPalette.slice(0, Math.ceil(this.rcPalette.length * 2 / 5)), [lower, upper], "Recharge", units);
+        break;
+      }
+      case "pchange": {
+        let upperRaw = this.pchangeExtent[1];
+        let lowerRaw = this.pchangeExtent[0];
+        let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
+        let lower = this.roundToDecimalPlaces(lowerRaw, 2) + "-";
+        this.legend = this.addLegend(this.rcDivergingPalette, [lower, upper], "Recharge Change", "Percent");
+        break;
+      }
+      case "diff": {
+        let upperRaw = this.diffExtent[1];
+        let lowerRaw = this.diffExtent[0];
+        let units = (this.unitType == "Metric" ? "Milimeters per Year" : "Inches per Year")
+        let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
+        let lower = this.roundToDecimalPlaces(lowerRaw, 2) + "-";
+        this.legend = this.addLegend(this.rcDivergingPalette, [lower, upper], "Recharge Change", units);
+        break;
+      }
     }
-    let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
-    let lower = this.roundToDecimalPlaces(lowerRaw, 2);
-    this.legend = this.addLegend(this.rcPalette.slice(0, Math.ceil(this.rcPalette.length * 2 / 5)), [lower, upper]);
+    //console.log(this.unitType);
+    
   }
 
-  addLegend(palette: string[], range: string[]) {
+  addLegend(palette: string[], range: string[], title: string, units: string) {
     let legend = L.control({position: "bottomright"});
     legend.onAdd = (map) => {
       let div = L.DomUtil.create("div", "info legend")
 
       let html = "<div style='border-radius: 10px; background-color: lightgray; width: 90px; padding: 10px;'>"
       + "<div>"
-      + "Recharge"
+      + title
       + "</div>"
       + "<div style='display: flex; font-size: 12px;'>"
       + "<div style='padding-right: 5px;'>"
@@ -5125,7 +5139,7 @@ export class MapComponent implements OnInit {
       + "</div>"
       + "</div>"
       + "<div style='font-size: 10px;'>"
-      + (this.unitType == "Metric" ? "Milimeters per Year" : "Inches per Year")
+      + units
       + "</div>"
       + "</div>";
       div.innerHTML += html;
@@ -5152,15 +5166,8 @@ export class MapComponent implements OnInit {
     }
 
     this.currentScenario = type;
-    let swapData = this.types.recharge.currentData[type];
-    let data = this.types.recharge.data._covjson.ranges.recharge.values;
-
-    for(let i = 0; i < swapData.length; i++) {
-      data[i] = swapData[i];
-    }
 
     this.metrics = this.createMetrics();
-    this.loadCover(this.types.recharge, true);
   }
 
   //generate 31 colors
@@ -5351,6 +5358,22 @@ export class MapComponent implements OnInit {
     return palette;
   }
 
+  divergingPalette(): string[] {
+    let palette = [];
+    let colorSegments = ["#a50026", "#ffffff", "#313695"];
+    palette = (chroma as any).scale([colorSegments[0], colorSegments[1]]).mode('lab').colors(100);
+    palette = palette.concat((chroma as any).scale([colorSegments[1], colorSegments[2]]).mode('lab').colors(100));
+    return palette;
+  }
+
+  paletteWindow(paletteRange: number[], paletteExtremes: number[], paletteVals: number) {
+    let realrange = [Math.max(paletteRange[0], paletteExtremes[0]), Math.min(paletteRange[1], paletteExtremes[1])];
+    let cdiff = (paletteExtremes[1] - paletteExtremes[0]) / paletteVals;
+    let botdiff = Math.ceil((realrange[0] - paletteExtremes[0]) / cdiff);
+    let topdiff = Math.ceil((paletteExtremes[1] - realrange[1]) / cdiff);
+    //console.log(topdiff);
+    return [botdiff, paletteVals - topdiff];
+  }
 
 
   private getIndex(x: number, y: number, __this = this): number {
