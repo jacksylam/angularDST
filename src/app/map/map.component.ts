@@ -95,7 +95,7 @@ export class MapComponent implements OnInit {
 
   paletteExtent = [];
   pchangeExtent = [-100, 100];
-  diffExtent = [-20, 20];
+  diffExtent = [-10, 10];
 
   windowId: number;
 
@@ -739,6 +739,7 @@ export class MapComponent implements OnInit {
         });
 
         this.updateMetrics(lcShapes);
+        this.loadRechargeStyle(this.types.recharge.style);
       });
       
     }, (error) => {
@@ -1466,13 +1467,15 @@ export class MapComponent implements OnInit {
         let min = Number.POSITIVE_INFINITY;
         let max = Number.NEGATIVE_INFINITY;
         for(let i = 0; i < rechargeData.length; i++) {
+          //make sure not dividing by 0 if no recharge in cell
           if(this.types.recharge.baseData[this.currentScenario][i] == 0) {
             rechargeData[i] = 0;
           }
           else {
             let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
-            //make sure not dividing by 0 if no recharge in selected cells
-            rechargeData[i] = diff / this.types.recharge.baseData[this.currentScenario][i] * 100;
+            let pchange = diff / this.types.recharge.baseData[this.currentScenario][i] * 100;
+            //lock at max and min values
+            rechargeData[i] = Math.max(Math.min(pchange, this.pchangeExtent[1]), this.pchangeExtent[0]);
           }
           if(rechargeData[i] > max) {
             max = rechargeData[i];
@@ -1481,8 +1484,8 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow([min, max], this.pchangeExtent, 200);
-        this.types.recharge.palette = C.linearPalette(this.rcDivergingPalette.slice(paletteWindow[0] - 1, paletteWindow[1] + 1));
+        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.pchangeExtent, 200);
+        this.types.recharge.palette = C.linearPalette(paletteWindow);
         rechargeData[0] = 0.0001;
         break;
       }
@@ -1491,7 +1494,9 @@ export class MapComponent implements OnInit {
         let min = Number.POSITIVE_INFINITY;
         let max = Number.NEGATIVE_INFINITY;
         for(let i = 0; i < rechargeData.length; i++) {
-          rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
+          let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
+          //lock at max and min values
+          rechargeData[i] = Math.max(Math.min(diff, this.diffExtent[1]), this.diffExtent[0]);
           if(rechargeData[i] > max) {
             max = rechargeData[i];
           }
@@ -1499,8 +1504,8 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow([min, max], this.pchangeExtent, 200);
-        this.types.recharge.palette = C.linearPalette(this.rcDivergingPalette.slice(paletteWindow[0] - 1, paletteWindow[1] + 1));
+        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.diffExtent, 200);
+        this.types.recharge.palette = C.linearPalette(paletteWindow);
         rechargeData[0] = 0.0001;
         break;
       }
@@ -2673,6 +2678,7 @@ export class MapComponent implements OnInit {
             //debugging------------------------------------------------------------------------------------------------
 
             this.updateMetrics(geometries);
+            this.loadRechargeStyle(this.types.recharge.style);
           }, (error) => {
             //restore land cover on failure
             backupData.forEach((value, i) => {
@@ -4616,6 +4622,7 @@ export class MapComponent implements OnInit {
                     });
                   });
                   this.updateMetrics(geojsonObjects);
+                  this.loadRechargeStyle(this.types.recharge.style);
                 });
                 
               }, (error) => {
@@ -4698,6 +4705,7 @@ export class MapComponent implements OnInit {
             });
           });
           this.updateMetrics(geojsonObjects);
+          this.loadRechargeStyle(this.types.recharge.style);
           //reenable report generation
         }, (error) => {
           //restore land cover on failure
@@ -5366,13 +5374,19 @@ export class MapComponent implements OnInit {
     return palette;
   }
 
-  paletteWindow(paletteRange: number[], paletteExtremes: number[], paletteVals: number) {
-    let realrange = [Math.max(paletteRange[0], paletteExtremes[0]), Math.min(paletteRange[1], paletteExtremes[1])];
+  //assumes palette range doesnt't extend past palette extremes
+  paletteWindow(palette: string[], paletteRange: number[], paletteExtremes: number[], paletteVals: number) {   
     let cdiff = (paletteExtremes[1] - paletteExtremes[0]) / paletteVals;
-    let botdiff = Math.ceil((realrange[0] - paletteExtremes[0]) / cdiff);
-    let topdiff = Math.ceil((paletteExtremes[1] - realrange[1]) / cdiff);
-    //console.log(topdiff);
-    return [botdiff, paletteVals - topdiff];
+    let botdiff = Math.ceil((paletteRange[0] - paletteExtremes[0]) / cdiff);
+    let topdiff = Math.ceil((paletteExtremes[1] - paletteRange[1]) / cdiff);
+
+    let minIndex = botdiff;
+    let maxIndex = paletteVals - topdiff;
+    if(minIndex == maxIndex) {
+      return [palette[minIndex], palette[maxIndex]];
+    }
+
+    return palette.slice(minIndex, maxIndex);
   }
 
 
