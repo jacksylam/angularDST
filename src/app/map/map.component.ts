@@ -2554,7 +2554,9 @@ export class MapComponent implements OnInit {
           
           //debugging------------------------------------------------------------------------------------------------
 
-          // let returnedIndices = [];            
+          // let returnedIndices = [];
+          //let errors = [];
+          let errors = 0;
 
           //debugging------------------------------------------------------------------------------------------------
 
@@ -2577,9 +2579,20 @@ export class MapComponent implements OnInit {
                 let mappedType = covData[index];
 
                 Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+
                   //background is not included in the database so indexes shifted by 1
                   //if background type set recharge rate to 0
                   let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+
+                  //debugging------------------------------------------------------------------------------------------------
+
+                  if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
+                    console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
+                    //errors.push();
+                    errors++;
+                  }
+
+                  //debugging------------------------------------------------------------------------------------------------
 
                   this.types.recharge.currentData[scenario][index] = recordValue;
                 });
@@ -2589,6 +2602,7 @@ export class MapComponent implements OnInit {
 
             //debugging------------------------------------------------------------------------------------------------
 
+            console.log(errors);
             // console.log(update);
 
             // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
