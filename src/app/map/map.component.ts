@@ -2556,7 +2556,7 @@ export class MapComponent implements OnInit {
 
           // let returnedIndices = [];
           //let errors = [];
-          let errors = 0;
+          //let errors = 0;
 
           //debugging------------------------------------------------------------------------------------------------
 
@@ -2586,11 +2586,11 @@ export class MapComponent implements OnInit {
 
                   //debugging------------------------------------------------------------------------------------------------
 
-                  if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
-                    console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
-                    //errors.push();
-                    errors++;
-                  }
+                  // if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
+                  //   console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
+                  //   //errors.push();
+                  //   errors++;
+                  // }
 
                   //debugging------------------------------------------------------------------------------------------------
 
@@ -2602,7 +2602,7 @@ export class MapComponent implements OnInit {
 
             //debugging------------------------------------------------------------------------------------------------
 
-            console.log(errors);
+            //console.log(errors);
             // console.log(update);
 
             // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
@@ -3922,7 +3922,7 @@ export class MapComponent implements OnInit {
 
       let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
       let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-      let vals = type == "recharge" ? this.types.recharge.currentData[this.currentScenario] : this.types.landCover.data.ranges.cover.values;
+      let vals = type == "recharge" ? this.types.recharge.currentData[this.currentScenario] : this.types.landCover.data._covjson.ranges.cover.values;
       let fcontents;
   
       if(format == "asc") {
