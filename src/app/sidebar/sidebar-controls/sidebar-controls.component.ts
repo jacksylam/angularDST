@@ -109,6 +109,10 @@ export class SidebarControlsComponent implements OnInit {
     this.displayType = this.displayType == "Show" ? "Hide" : "Show";
   }
 
+  switchToShow() {
+    this.displayType = "Hide";
+  }
+
   toggleNameMode() {
     this.mode = this.mode == "normal" ? "name" : "normal";
     this.mapService.toggleNameMode(this);

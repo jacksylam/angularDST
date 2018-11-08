@@ -464,10 +464,7 @@ export class MapComponent implements OnInit {
           //throw errors for some reason if run immediately
           //possible that event goes through before layer fully swapped, so run on a delay
           setTimeout(() => {
-            this.loadRechargeStyle(this.types.recharge.style);
-            setTimeout(() => {
-              this.baseLayer.layer.setOpacity(this.opacity);
-            }, 0);
+            this.baseLayer.layer.setOpacity(this.opacity);
           }, 0);
           break;
       }
@@ -750,8 +747,14 @@ export class MapComponent implements OnInit {
       this.loadCover(this.types.landCover, false);
     });
 
-    
-    
+  }
+
+  forceObjectsShow() {
+    if(!this.map.hasLayer(this.drawnItems)) {
+      this.drawnItems.addTo(this.map);
+      this.drawControl.addTo(this.map);
+    }
+    this.mapService.switchToShow(this);
   }
 
   showHideObjects(showOrHide: string) {
@@ -779,6 +782,7 @@ export class MapComponent implements OnInit {
         this.addCellInteraction();
         break;
       case "custom":
+        this.forceObjectsShow();
         if(this.baseLayer.name == "Recharge Rate") {
           this.enableShapeInteraction(true);
           //get initial metrics for already selected shapes
@@ -828,6 +832,7 @@ export class MapComponent implements OnInit {
       
     }
     else {
+      this.forceObjectsShow();
       this.drawControl.remove();
       this.disableInteraction(this.interactionType);
       this.nameModeDetails = {
@@ -1182,6 +1187,7 @@ export class MapComponent implements OnInit {
           
     
           __this.gridWidthCells = xs.length;
+          //console.log(xs.length);
           __this.gridHeightCells = ys.length;
     
           __this.types.landCover.data = coverage;
@@ -2556,7 +2562,7 @@ export class MapComponent implements OnInit {
 
           // let returnedIndices = [];
           //let errors = [];
-          //let errors = 0;
+          let errors = 0;
 
           //debugging------------------------------------------------------------------------------------------------
 
@@ -2586,11 +2592,11 @@ export class MapComponent implements OnInit {
 
                   //debugging------------------------------------------------------------------------------------------------
 
-                  // if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
-                  //   console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
-                  //   //errors.push();
-                  //   errors++;
-                  // }
+                  if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
+                    console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
+                    //errors.push();
+                    errors++;
+                  }
 
                   //debugging------------------------------------------------------------------------------------------------
 
@@ -2602,7 +2608,7 @@ export class MapComponent implements OnInit {
 
             //debugging------------------------------------------------------------------------------------------------
 
-            //console.log(errors);
+            console.log(errors);
             // console.log(update);
 
             // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
@@ -4694,8 +4700,8 @@ export class MapComponent implements OnInit {
         });
         this.loadCover(this.types.landCover, false);
 
-
         this.updateMetrics(geojsonObjects);
+        this.loadRechargeStyle(this.types.recharge.style);
       }
       else {
         this.updateRecharge(geojsonObjects, (update) => {
@@ -5120,6 +5126,11 @@ export class MapComponent implements OnInit {
       case "diff": {
         let upperRaw = this.diffExtent[1];
         let lowerRaw = this.diffExtent[0];
+        if(this.unitType == "Metric") {
+          upperRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR
+          lowerRaw *= MapComponent.INCH_TO_MILLIMETER_FACTOR
+        }
+        
         let units = (this.unitType == "Metric" ? "Milimeters per Year" : "Inches per Year")
         let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
         let lower = this.roundToDecimalPlaces(lowerRaw, 2) + "-";
@@ -5190,6 +5201,7 @@ export class MapComponent implements OnInit {
     this.currentScenario = type;
 
     this.metrics = this.createMetrics();
+    this.loadRechargeStyle(this.types.recharge.style);
   }
 
   //generate 31 colors

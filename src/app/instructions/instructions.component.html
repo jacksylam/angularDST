@@ -1,3 +1,226 @@
-<p>
-  Under Construction
-</p>
+<div class="buffer">
+  <div class="header">
+    <div class="pad">
+      <h1>Workspace Usage</h1>
+    </div>
+  </div>
+
+  <br>
+  
+  <div class="body">
+    <p>
+      The <a routerLink="/workspace">Workspace</a> should start with a map open. To add additional maps for analysis, click the “New Map” button in the top left corner of the screen.
+    </p>
+
+    <h2>
+      Land Cover Visualization
+    </h2>
+    <h3>
+      Draw Tools
+    </h3>
+
+    <p>
+      The initial map view represents the current land cover usage for the island of Oahu. To create an area to update, the leaflet draw tools on the left side of the map can be used. 
+    </p>
+
+    <ul>
+      <li>
+        The hexagon button allows drawing freeform polygons by clicking the map at the desired vertex positions.
+      </li>
+      <li>
+        The rectangle button allows rectangles to be drawn by clicking at a desired starting point and dragging the mouse to adjust the width and height of the rectangle.
+      </li>
+      <li>
+        The map point button allows for a single map cell (75m<sup>2</sup> area) to be selected.
+      </li>
+    </ul>
+
+    <p>
+      When finished drawing, click the “Cancel” button to exit draw mode.
+    </p>
+    <p>
+      The two buttons below the draw controls allow polygons to be modified or deleted.
+    </p>
+
+    <h3>
+      Menu Panel
+    </h3>
+
+    <p>
+      The menu panel on the left edge of the map window provides controls for modifying land covers and climate scenarios.
+    </p>
+
+    <ul>
+      <li>
+        Use the climate dropdown menu to change the rainfall scenario for the map.
+      </li>
+      <ul>
+        <li>
+              Baseline rainfall is based on rainfall data taken between 1978 and 2007.
+        </li>
+        <li>
+              Rainfall projection RCP 8.5 is based on dryer climate projections for the years 2041-2070.
+        </li>
+      </ul>
+      <li>
+        The buttons in the land covers area will change the land cover within any selected shapes that have been drawn on the map. Shapes can be selected or deselected by clicking on them (start out selected and are automatically deselected once a change is applied to them).
+      </li>
+      <ul>
+        <li>
+          “Create Advance Mapping” allows specific land cover types to be mapped to other land cover types. The “+” and “-“ buttons can be used to add or remove mappings. The “Everything Else” option allows a default cover to be selected for any land covers without a specific mapping. The “Submit” button will apply the specified mapping to selected areas.
+        </li>
+        <li>
+          “Revert to Baseline Land Cover” sets any selected areas back to its initial land cover (the land cover that was there when the application was loaded, or the new baseline land cover if a land cover raster was uploaded with the “Overwrite default land cover values?” option selected).
+        </li>
+        <li>
+          The remaining buttons will change any selected areas to the indicated land cover type. For example, clicking the “Alien Forest” button will change the land cover for any selected areas to alien forest.
+        </li>
+      </ul>
+    </ul>
+
+    <h2>
+      Recharge Visualization
+    </h2>
+
+    <p>
+      To change to the recharge portion of the visualization, hover over the layer controls in the upper left corner of the map and select “Recharge Rate” (to switch back to the land cover visualization select “Land Cover”). This displays the level of groundwater recharge for each map cell.
+    </p>
+
+    <h3>
+      Details Panel
+    </h3>
+
+    <p>
+      The details panel at the bottom of the map shows various metrics for the island’s groundwater recharge rates based on the land cover modifications made in the land cover layer. The “Include Caprock” box also allows the island’s caprock to be included or excluded from the recharge calculations.
+    </p>
+
+    <h3>
+      Menu Panel
+    </h3>
+
+    <p>
+      The menu panel on the left side of the window allows for the visualization style and metric mode to be changed.
+    </p>
+
+    <ul>
+      <li>
+        Visualization Style
+        <ul>
+          <li>
+            “Recharge Rate” displays the groundwater recharge rates for the island based on modifications made.
+          </li>
+          <li>
+            “Percent Change” displays the percent change in groundwater recharge rates from the baseline values.
+          </li>
+          <li>
+            “Difference” displays the difference in groundwater recharge rates from the baseline values.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Data Mode
+        <ul>
+          <li>
+              The data mode changes the area for which the metrics in the details panel are displayed.
+              <ul>
+                <li>
+                  “Display Data by Cell” allows a single 75m<sup>2</sup> cell to be selected.
+                </li>
+                <li>
+                  “Display Custom Area Data” allows a set of user defined areas to be selected.
+                </li>
+                <li>
+                  “Display Aquifer Data” allows a set of aquifers to be selected.
+                </li>
+                <li>
+                  “Display Full Map Data” is the default mode and displays metrics for the entire island.
+                </li>
+              </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>
+      Application Controls and Report Generation
+    </h2>
+
+    <p>
+      The control panel on the right side of the window provides various options for the map.
+    </p>
+
+    <ul>
+      <li>
+        “Name Custom Areas” allows user defined areas to be named. In this mode, an area can be selected displaying the areas name. This name can be changed by typing a new name into the box that appears in the control panel and clicking “Set Name”. To exit this naming mode click the “Exit” button. This changes the name the area is referred to as in generated reports as well as in the properties of the shapefile generated if the custom areas are downloaded.
+      </li>
+      <li>
+        “Hide/Show Custom Areas” will remove or display any user defined areas.
+      </li>
+      <li>
+        “Layer Opacity” allows for the visualization layer to be made transparent, making a satellite image of the map visible beneath the visualization.
+      </li>
+      <li>
+        “Units” allows the units used by the application to be changed between united states customary and metric.
+      </li>
+      <li>
+        “Load/Save Changes” allows a state to be uploaded or downloaded.
+        <ul>
+          <li>
+            Upload
+            <ul>
+              <li>
+                The “Upload Shapefile” option allows a shapefile to be loaded onto the map wither as a custom area, reference layer, or land cover update.
+                <ul>
+                  <li>
+                    Any option can also allow the shape’s properties to set the land cover for the uploaded shape.
+                  </li>
+                </ul>
+              </li>
+              <li>
+                The “Upload Land Cover Raster” option allows a grid of land cover codes to be uploaded to the map.
+              </li>
+              <li>
+                The advanced options allows uploaded land covers to be used as the default land cover (values compared against in analysis) and allows the user to specify the property names of shape names or land cover code for uploaded shape files.
+              </li>
+              <li>
+                Files can be uploaded as a zip folder with all the necessary files for shapefile option or as a .asc or .covjson file for land cover rasters. Uploaded files can also be stored in a zip file for multiple uploads.
+              </li>
+            </ul>
+          </li>
+          <li>
+            Download
+            <ul>
+              <li>
+                Allows the set of user defined areas to be downloaded as a shapefile or the land cover or recharge values to be downloaded as .asc or .covjson files.
+              </li>
+              <li>
+                If multiple download types are selected all the requested items will be downloaded in a zip file.
+              </li>
+              <li>
+                Downloading the current land cover and set of custom areas will allow the download to be uploaded at a later time, reinstating the current application state.
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        “Generate Report” creates a new window displaying a detailed breakdown of the current groundwater recharge rates and variation from baseline values for the island. This analysis includes analysis for aquifers with and without the caprock included, user-defined areas, and a map summary with and without the caprock included. Graphs of the change in recharge rates are also displayed. This report can be downloaded as a PDF using the “Download as PDF” button in the top left corner of the report window.
+      </li>
+    </ul>
+
+    <h2>
+      Miscellaneous
+    </h2>
+
+    <ul>
+      <li>
+        Hovering over an area of the map will display a popup with the baseline and current land cover type for that cell.
+      </li>
+      <li>
+        Scrolling on the map allows the map view to be zoomed in or out. Alternatively, the + and – buttons above the draw controls can be used for more rapid zooming.
+      </li>
+    </ul>
+
+  </div>
+</div>
+

@@ -56,7 +56,6 @@ export class MapService {
   showHideObjects(showOrHide: string, controlPanel: any) {
     let index = this.controlPanelHash.indexOf(controlPanel);
     this.mapHash[index].showHideObjects(showOrHide);
-    console.log(this.mapHash.length);
   }
 
   changeLayer(map: any, type: string) {
@@ -210,6 +209,11 @@ export class MapService {
   changeRechargeStyle(buttonPanel: any, style: string) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
     this.mapHash[index].loadRechargeStyle(style);
+  }
+
+  switchToShow(map: any) {
+    let index = this.mapHash.indexOf(map);
+    this.controlPanelHash[index].switchToShow();
   }
   
 }

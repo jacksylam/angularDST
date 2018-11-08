@@ -1,0 +1,66 @@
+img {
+    float: right;
+    max-width: calc(75% - 100px);
+    width: 400px;
+    height: auto;
+    clear: both;
+    margin: 50px;
+}
+
+.header {
+    background: rgb(56, 117, 194);
+    color: white;
+}
+
+.figure {
+    float: right;
+    padding: 50px;
+    max-width: 75%;
+    width: 760px;
+    height: auto;
+    clear: both;
+}
+
+table {
+    width: 100%;
+    border-bottom: 1px solid;
+    border-top: 1px solid;
+}
+
+h1 {
+    text-align: center;
+}
+
+th {
+    text-align: center;
+}
+
+p {
+    font-size: 20px;
+}
+
+li {
+    font-size: 20px;
+}
+
+.body {
+    position: absolute;
+    width: 90%;
+    left: 5%;
+    padding-bottom: 100px;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.pad {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.buffer {
+    padding-bottom: 20px;
+}

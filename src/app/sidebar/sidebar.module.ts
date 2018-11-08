@@ -17,6 +17,7 @@ import { UploadDialogComponent } from './upload-dialog/upload-dialog.component';
 import { DownloadDialogComponent } from './download-dialog/download-dialog.component';
 import {MatDialogModule} from "@angular/material";
 import { MatButtonModule } from '@angular/material/button';
+import {MatInputModule} from '@angular/material';
 
 @NgModule({
   imports: [
@@ -31,7 +32,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatCheckboxModule,
     MatRadioModule,
     MatDialogModule,
-    MatButtonModule
+    MatButtonModule,
+    MatInputModule
   ],
   declarations: [
     SidebarMenuComponent, 
