@@ -1,10 +1,13 @@
 img {
     float: right;
-    max-width: calc(75% - 100px);
-    width: 400px;
+    max-width: calc(75% - 150px);
+    width: 500px;
+    min-width: 40%;
     height: auto;
     clear: both;
     margin: 50px;
+    margin-top: 0px;
+    margin-left: 100px;
 }
 
 .header {
@@ -15,6 +18,7 @@ img {
 .figure {
     float: right;
     padding: 50px;
+    padding-top: 0px;
     max-width: 75%;
     width: 760px;
     height: auto;

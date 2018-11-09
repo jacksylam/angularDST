@@ -1,4 +1,4 @@
-<div id="content" [@movePanel]='state' class="container sidebar">
+<div *ngIf="layer != 'base'" id="content" [@movePanel]='state' class="container sidebar">
 
   <div (click)="toggleMenu()" class="menuButton">
     <div class="menuButton-text">Menu</div>
