@@ -1,9 +1,9 @@
 import json
 import os
 
-os.chdir("resources")
+os.chdir("output")
 
-with open('testset14_sc0_2-fin.covjson') as f:
+with open('sc0.covjson') as f:
     value = json.load(f)["ranges"]["recharge"]["values"]
 
     
