@@ -2,9 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Http } from '@angular/http';
-import {MapFirestoreService} from './map-firestore.service'
-
-
 import { MapComponent } from '../map.component'
 import { Grid } from './grid'
 
@@ -25,7 +22,7 @@ export class MapService {
   tempData: any;
   csvData: Grid[];
 
-  constructor(private http: Http, private firestore: MapFirestoreService) {
+  constructor(private http: Http) {
 
    }
 

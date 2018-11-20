@@ -20,17 +20,10 @@ import { GraphsComponent } from './graphs/graphs.component';
 //Service
 import { WindowService } from './window/shared/window.service';
 import { MapService } from './map/shared/map.service'
-import { MapFirestoreService } from './map/shared/map-firestore.service'
 import { DBConnectService } from './map/shared/dbconnect.service';
 import { CovDetailsService } from './map/shared/cov-details.service';
 import { ModifiedShpwriteService } from './map/shared/modified-shpwrite.service';
 import { CovjsonTemplateService } from './map/shared/covjson-template.service';
-
-//firebase
-import { AngularFireModule } from 'angularfire2';
-import { environment } from '../environments/environment';
-import { AngularFirestoreModule } from 'angularfire2/firestore';
-import { AngularFireAuthModule } from 'angularfire2/auth';
 
 //Agave imports
 import { HttpModule } from '@angular/http'; //deprecated, replace with httpclientmodule
@@ -41,7 +34,7 @@ import { HttpClientModule } from '@angular/common/http';
 // import { APIHelper } from 'ng-agave/ng-agave'; // <-- import API Helper
 
 import { FileUploadModule } from 'ng2-file-upload';
-import { NgUploaderModule } from 'ngx-uploader';
+import { NgxUploaderModule } from 'ngx-uploader';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
 import { MatDialogModule } from "@angular/material";
 import { AdvancedMappingDialogComponent } from './advanced-mapping-dialog/advanced-mapping-dialog.component';
@@ -98,13 +91,10 @@ import {MatTooltipModule} from '@angular/material/tooltip'
     HttpClientModule,
     BrowserModule,
     AppRoutingModule,
-    SidebarModule,
-    AngularFireModule.initializeApp(environment.firebase),
-    AngularFirestoreModule, // imports firebase/firestore, only needed for database features
-    AngularFireAuthModule, // imports firebase/auth, only needed for auth features   
+    SidebarModule,   
     // HttpClientModule
     FileUploadModule,
-    NgUploaderModule,
+    NgxUploaderModule,
     MatDialogModule,
     MatSelectModule,
     MatButtonModule,
@@ -118,7 +108,6 @@ import {MatTooltipModule} from '@angular/material/tooltip'
   providers: [
     WindowService,
     MapService,
-    MapFirestoreService,
     CovDetailsService,
     ModifiedShpwriteService,
     CovjsonTemplateService,

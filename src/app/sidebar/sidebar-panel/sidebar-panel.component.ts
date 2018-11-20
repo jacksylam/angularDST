@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import {animate, transition, state, trigger, style} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import {animate, transition, state, trigger, style} from '@angular/animations';
 import {MapService} from '../../map/shared/map.service';
 
 @Component({

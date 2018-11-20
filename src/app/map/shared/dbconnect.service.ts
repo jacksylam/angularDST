@@ -3,6 +3,7 @@ import { Http } from '@angular/http';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Cover } from './cover';
+import { map, retry, catchError } from 'rxjs/operators';
 
 @Injectable()
 export class DBConnectService {
@@ -37,12 +38,14 @@ export class DBConnectService {
     };
 
     this.http.get<ResponseResults>(url, options)
-    .retry(3)
-    .map((data) => {
-      data.result.forEach((record) => {
-        this.sanityCheck(record);
-      });
-    }).subscribe();
+    .pipe(
+      retry(3),
+      map((data) => {
+        data.result.forEach((record) => {
+          this.sanityCheck(record);
+        });
+      })
+    ).subscribe();
 
     interface ResponseResults {
       result: any
@@ -84,12 +87,15 @@ export class DBConnectService {
     };
 
     let response = this.http.get<ResponseResults>(url, options)
-    .retry(3)
-    .map((data) => {
-      return data.result as Cover[];
-    }).catch((e) => {
-      return Observable.throw(new Error(e.message));
-    });
+    .pipe(
+      retry(3),
+      map((data) => {
+        return data.result as Cover[];
+      }),
+      catchError((e) => {
+        return Observable.throw(new Error(e.message));
+      })
+    );
     return response;
 
     interface ResponseResults {
@@ -148,12 +154,15 @@ export class DBConnectService {
     };
 
     let response = this.http.get<ResponseResults>(url, options)
-    .retry(3)
-    .map((data) => {
-      return data.result as Cover[]
-    }).catch((e) => {
-      return Observable.throw(new Error(e.message));
-    });
+    .pipe(
+      retry(3),
+      map((data) => {
+        return data.result as Cover[];
+      }),
+      catchError((e) => {
+        return Observable.throw(new Error(e.message));
+      })
+    );
     
     return response;
     

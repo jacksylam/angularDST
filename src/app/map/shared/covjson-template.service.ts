@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { MapComponent } from '../map.component';
 
 @Injectable()
 export class CovjsonTemplateService {
+
+  readonly INCH_TO_MILLIMETER_FACTOR = 25.4;
 
   static readonly template = {
     "type": "Coverage",
@@ -116,7 +117,7 @@ export class CovjsonTemplateService {
     if(unitType == "Metric" && type == "recharge") {
       downloadVals = []
       values.forEach((value) => {
-        downloadVals.push(roundingFunct(value * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3));
+        downloadVals.push(roundingFunct(value * this.INCH_TO_MILLIMETER_FACTOR, 3));
       });
     }
 

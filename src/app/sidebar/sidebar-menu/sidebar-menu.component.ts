@@ -1,4 +1,5 @@
-import { Component, OnInit, animate, transition, state, trigger, style, } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import {animate, transition, state, trigger, style} from '@angular/animations';
 import {WindowService} from '../../window/shared/window.service'
 import {WindowPanel} from '../../window/shared/windowPanel'
 

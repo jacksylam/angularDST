@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import {animate, transition, state, trigger, style} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import {animate, transition, state, trigger, style} from '@angular/animations';
 import {MapService} from '../../map/shared/map.service';
 import {MatDialog} from "@angular/material";
 import {UploadDialogComponent} from "../upload-dialog/upload-dialog.component"

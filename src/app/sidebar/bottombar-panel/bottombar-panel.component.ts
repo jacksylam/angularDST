@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import {animate, transition, state, trigger, style, ViewChild} from '@angular/core';
+import {ViewChild} from '@angular/core';
+import {animate, transition, state, trigger, style} from '@angular/animations';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
 import {MapService} from '../../map/shared/map.service';
 @Component({
