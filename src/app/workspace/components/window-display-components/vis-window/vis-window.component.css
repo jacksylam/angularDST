@@ -1,40 +1,30 @@
 
 .panel {
-
-    position: absolute;
-    z-index: 0;
-    border-radius: 1%;
-    transition: left .01s ease-in, top .01s ease-in;
-  }
+  box-shadow: 5px 5px 3px rgba(0,0,0,0.4);
+  position: absolute;
+  z-index: 0;
+  border-radius: 1%;
+  transition: left .01s ease-in, top .01s ease-in;
+}
   
   .map-container {
     position: absolute;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: ivory;
     width: 100%;
     height: calc(100% - 30px);
     padding: 10px;
     border-radius: 1%;
-  }
-  
-  .report-container {
-    position: absolute;
-    background-color: rgba(255, 255, 255, 1);
-    width: 100%;
-    height: calc(100% - 30px);
-    padding: 10px;
-    border-radius: 1%;
-    overflow: scroll;
-    
   }
   
   
   
   
   .panel-default>.panel-heading-custom {
-    background-color: rgba(108, 138, 164, 1);
+    background-color: rgb(56, 117, 194);
     color: #fff;
     height: 30px;
     padding: 5px;
+    border-radius: 5px 5px 0px 0px;
   }
   
   .panel-default>.panel-heading-custom:hover {
@@ -62,8 +52,9 @@
     transform: translate(-30%, -25%);
   }
   
-  .glyphicon-remove {
-    color: #F37E7E;
+  .icon-remove {
+    top: 50px !important;
+    height: -50px;
   }
   
   .glyphicon-plus {

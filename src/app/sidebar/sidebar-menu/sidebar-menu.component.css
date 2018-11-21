@@ -19,9 +19,7 @@
     background-color: rgb(56, 117, 194);
     font-style: bold;
     color: white;
-    border-bottom-right-radius: 7pt;
-    border-bottom-left-radius: 0pt !important;
-    z-index: -10;
+    border-radius: 0px !important;
   }
 
   .menuButton-text {
