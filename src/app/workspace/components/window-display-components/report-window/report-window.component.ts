@@ -87,6 +87,14 @@ export class ReportWindowComponent implements AfterViewInit {
     this.bringWindowForward();
 
     this.dragBar.nativeElement.addEventListener('mousedown', (e) => {
+
+      e.stopPropagation();
+      e.preventDefault();
+
+      //ensure left click, if right click just return
+      if(e.which != 1) {
+        return;
+      }
  
       this.mouseCornerOffset = {
         left: e.pageX - this.panelDiv.nativeElement.offsetLeft,
@@ -97,9 +105,7 @@ export class ReportWindowComponent implements AfterViewInit {
         left: window.pageXOffset,
         top: window.pageYOffset
       }
-
-      e.stopPropagation();
-      e.preventDefault();
+      
       this.phantomScrollLock.nativeElement.style.top = window.pageYOffset == 0 ? '0px' : window.pageYOffset + window.innerHeight + 'px';
       this.phantomScrollLock.nativeElement.style.left = window.pageXOffset == 0 ? '0px' : window.pageXOffset + window.innerWidth + 'px';
 
@@ -123,6 +129,12 @@ export class ReportWindowComponent implements AfterViewInit {
     this.resizeCorner.nativeElement.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      //ensure left click, if right click just return
+      if(e.which != 1) {
+        return;
+      }
+
       this.lastMouseXPosition = e.pageX;
       this.lastMouseYPosition = e.pageY;
       
@@ -137,6 +149,12 @@ export class ReportWindowComponent implements AfterViewInit {
     this.resizeRight.nativeElement.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      //ensure left click, if right click just return
+      if(e.which != 1) {
+        return;
+      }
+
       this.lastMouseXPosition = e.pageX;
       
       
@@ -151,6 +169,12 @@ export class ReportWindowComponent implements AfterViewInit {
     this.resizeBot.nativeElement.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       e.preventDefault();
+
+      //ensure left click, if right click just return
+      if(e.which != 1) {
+        return;
+      }
+
       const mouseY = e.pageY;
       this.lastMouseYPosition = e.pageY;
       

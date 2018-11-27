@@ -4,7 +4,7 @@
   padding: 6px;
   background: ivory;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: normal;
   border-radius: 0px 0px 0px 5px;
 }
 
@@ -17,11 +17,11 @@
 
 .sidebar {
     position: absolute;
-    top: 30px;
+    top: 35px;
     z-index: -1000;
     background-color: rgba(255, 255, 255, 0.9);
     width: 225px;
-    height: calc(100% - 35px);
+    height: calc(100% - 40px);
     border-radius: 10px 0px 0px 10px;
     padding: 8px;
     box-shadow: 5px 5px 3px rgba(0,0,0,0.4);
@@ -121,22 +121,22 @@
 
 .btn-label{
     pointer-events: none;   
-    font-size: 125%;
-    font-weight: bold
+    font-size: 18px;
+    font-weight: normal
 }
 
 .btn-sublabel1{
   background-color: #016422;
   pointer-events: none;   
-  font-size: 100%;
-  font-weight: bold
+  font-size: 15px;
+  font-weight: normal
 }
 
 .btn-sublabel2{
   background-color: rgb(0, 97, 110);
   pointer-events: none;   
-  font-size: 100%;
-  font-weight: bold
+  font-size: 15px;
+  font-weight: normal
 }
 
 .disable {
@@ -203,7 +203,7 @@
 .btn-ivory {
   background: ivory;
   color: black;
-  font-weight: bold;
+  font-weight: normal;
 }
 
 .c0{

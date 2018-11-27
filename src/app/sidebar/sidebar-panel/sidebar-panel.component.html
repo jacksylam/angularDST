@@ -8,12 +8,10 @@
   
     <ng-container [ngSwitch]="true">
       <div *ngSwitchCase="layer == 'landcover'" class="scrollable-menu" #scrollableMenu role="group">
-
-        <p></p>
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-primary btn-responsive btn-label">Climate</button>
 
-          <mat-select [(value)]="selected" (change)="climateChange($event)">
+          <mat-select [(ngModel)]="selected" (ngModelChange)="climateChange($event)">
             <mat-option value="Baseline Rainfall 1978-2007">Baseline Rainfall 1978-2007</mat-option>
             <mat-option value="Rainfall Projection 2041-2070 (RCP 8.5)">Rainfall Projection 2041-2070 (RCP 8.5)</mat-option>
           </mat-select>
@@ -69,7 +67,7 @@
       <div *ngSwitchCase="layer == 'recharge'" [ngClass]="{'disable': loading > 0}">
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-primary btn-responsive btn-label">Visualization Style</button>
-          <mat-select [(value)]="rechargeStyle" (change)="styleChange($event)">
+          <mat-select [(ngModel)]="rechargeStyle" (ngModelChange)="styleChange($event)">
             <mat-option value="rate">Recharge Rate</mat-option>
             <mat-option value="pchange">Percent Change</mat-option>
             <mat-option value="diff">Difference</mat-option>

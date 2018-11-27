@@ -241,8 +241,15 @@ export class MapComponent implements OnInit {
 
     this.map = L.map(this.mapid.nativeElement, {
       zoomSnap: 0.01,
-      wheelPxPerZoomLevel: 200
-    }).setView([21.48, -157.9665], 10.6);
+      wheelPxPerZoomLevel: 200,
+      minZoom: 10,
+      center: [21.48, -157.9665],
+      zoom: 10.6,
+      maxBounds: [
+        [21.1462, -158.4377],
+        [21.7852, -157.5153]
+      ]
+    });
 
     L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
@@ -1293,6 +1300,8 @@ export class MapComponent implements OnInit {
         __this.types.aquifers.layer = aquifers;
         aquifers.addTo(__this.map);
         __this.layers.addOverlay(aquifers, __this.types.aquifers.label);
+      }, (e) => {
+        console.log(e);
       });
     }
 
@@ -4583,7 +4592,7 @@ export class MapComponent implements OnInit {
 
         info.state = this.advancedMappingState;
 
-        this.dialog.open(AdvancedMappingDialogComponent, {data: info}).afterClosed()
+        this.dialog.open(AdvancedMappingDialogComponent, {data: info, maxHeight: "90vh"}).afterClosed()
         .subscribe((data) => {
           //console.log(data);
           //default closing disabled, data should always exist, still check just in case
@@ -5062,6 +5071,7 @@ export class MapComponent implements OnInit {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
     }
+    console.log("test");
 
     // work with coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })

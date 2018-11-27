@@ -57,7 +57,7 @@ export class SidebarPanelComponent implements OnInit {
 
 
   climateChange(e) {
-    switch(e.value) {
+    switch(e) {
       case "Baseline Rainfall 1978-2007":
         this.mapService.changeScenario(this, "recharge_scenario0");
         break;
@@ -68,7 +68,7 @@ export class SidebarPanelComponent implements OnInit {
   }
 
   styleChange(e) {
-    this.mapService.changeRechargeStyle(this, e.value);
+    this.mapService.changeRechargeStyle(this, e);
   }
 
   changeCover(type: string) {

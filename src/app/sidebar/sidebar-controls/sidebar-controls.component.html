@@ -63,7 +63,7 @@
         <div class="select-text">
           Select an Area to Name
         </div>
-        <br>
+        <p></p>
         <div class="name-button-container" *ngIf="areaSelected; else cancel">
           <input class="input-field" #nameInput type="text" [value]="name">
           <button type="button" class="btn btn-primary btn-responsive btn-custom-half-left" (click)="registerNameToShape()"><div class="set-name-shift">Set Name</div></button>
@@ -90,7 +90,7 @@
 
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
-          <mat-select [value]="units" (change)="setUnits($event)">
+          <mat-select [(ngModel)]="units" (ngModelChange)="setUnits($event)">
             <mat-option value="USC">United States Customary</mat-option>
             <mat-option value="Metric">Metric</mat-option>
           </mat-select>

@@ -1,28 +1,20 @@
 
 .panel {
-
-    position: absolute;
-    z-index: 0;
-    border-radius: 1%;
-    transition: left .01s ease-in, top .01s ease-in;
-  }
+  box-shadow: 5px 5px 3px rgba(0,0,0,0.4);
+  position: absolute;
+  z-index: 0;
+  border-radius: 1%;
+  transition: left .01s ease-in, top .01s ease-in;
+}
   
-  .map-container {
-    position: absolute;
-    background-color: rgba(255, 255, 255, 1);
-    width: 100%;
-    height: calc(100% - 30px);
-    padding: 10px;
-    border-radius: 1%;
-  }
   
   .report-container {
     position: absolute;
     background-color: rgba(255, 255, 255, 1);
     width: 100%;
-    height: calc(100% - 30px);
+    height: calc(100% - 35px);
     padding: 10px;
-    border-radius: 1%;
+    border-radius: 0px 0px 5px 5px;
     overflow: scroll;
     
   }
@@ -33,10 +25,11 @@
   
   
   .panel-default>.panel-heading-custom {
-    background-color: rgba(108, 138, 164, 1);
+    background-color: rgb(56, 117, 194);
     color: #fff;
-    height: 30px;
+    height: 35px;
     padding: 5px;
+    border-radius: 5px 5px 0px 0px;
   }
   
   .panel-default>.panel-heading-custom:hover {
@@ -45,18 +38,21 @@
   
   .download-button {
     position: absolute;
-    top: 35px;
+    top: 40px;
     right: 25px;
     z-index: 100;
   }
   
   .navbarButton {
-    height: 20px; 
-    width: 20px;
-    float: right;
-    margin-left: 3px;
-    border-radius: 10%;
-    border-color: transparent;
+    width: 25px !important;
+    height: 25px !important;
+    top: 0px !important;
+    float: right !important;
+    border-radius: 3px !important;
+  }
+
+  .icon-remove {
+    transform: translate(0, calc(-50% + 5px));
   }
   
   .glyphicon {

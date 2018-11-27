@@ -66,7 +66,7 @@ export class SidebarControlsComponent implements OnInit {
   openDialog(type: string) {
     switch(type) {
       case "upload":
-        this.dialog.open(UploadDialogComponent, {data: {id: this.id}}).afterClosed()
+        this.dialog.open(UploadDialogComponent, {data: {id: this.id}, maxHeight: "90vh"}).afterClosed()
         .subscribe((data) => {
           if(data) {
             this.mapService.upload(this, data);
@@ -75,7 +75,7 @@ export class SidebarControlsComponent implements OnInit {
         break;
 
       case "download":
-        this.dialog.open(DownloadDialogComponent, {data: {id: this.id}}).afterClosed()
+        this.dialog.open(DownloadDialogComponent, {data: {id: this.id}, maxHeight: "90vh"}).afterClosed()
         .subscribe((data) => {
           if(data) {
             this.mapService.download(this, data);
@@ -147,8 +147,7 @@ export class SidebarControlsComponent implements OnInit {
 
   setUnits(e) {
     //should switch mapService coordination to window service
-    this.mapService.setUnits(this, e.value);
-    this.units = e.value;
+    this.mapService.setUnits(this, e);
   }
 
   generateReport() {

@@ -19,6 +19,10 @@
  */
 
 global.Buffer = global.Buffer || require('buffer').Buffer;
+console.log(global.Buffer);
+(window as any).process = {
+env: { DEBUG: undefined },
+};
 
 /** IE9, IE10 and IE11 requires all of the following polyfills. **/
 // import 'core-js/es6/symbol';
