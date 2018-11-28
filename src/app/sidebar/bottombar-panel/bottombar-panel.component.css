@@ -10,6 +10,7 @@
     z-index: -2000;
     background-color: rgba(255, 255, 255, 0.9);
     width: 98% !important;
+    min-width: 98% !important;
     height: 245px;
     border-radius: 0px 0px 10px 10px;
     padding: 8px;
@@ -31,6 +32,31 @@
     text-align: center;
   }
 
+  .menuButton:before {
+    content: var(--in-out-bottom);
+    transform: rotate(90deg);
+    color: black;
+    position: absolute;
+    left: 150px;
+    top: 0px;
+    font-size: 40px;
+    z-index: -2000;
+    transition: all 200ms ease;
+    opacity: 0;
+  }
+
+  .phantom-page-anchor {
+    position: absolute;
+    visibility: hidden;
+    height: 10px;
+    width: 10px;
+    bottom: -300px;
+  }
+  
+  .menuButton:hover:before {
+    top: 15px;
+    opacity: .9;
+  }
   
 
   .menuButton-text {

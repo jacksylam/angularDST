@@ -168,6 +168,7 @@ export class BottombarPanelComponent implements OnInit {
 
   toggleMenu() {
     this.state = (this.state == 'inactive' ? 'active' : 'inactive');
+    this.state == 'active' ? document.documentElement.style.setProperty("--in-out-bottom", "'\\00AB'") : document.documentElement.style.setProperty("--in-out-bottom", "'\\00BB'");
   }
 
 

@@ -99,7 +99,6 @@ export class SidebarControlsComponent implements OnInit {
   toggleMenu() {
     this.state = this.state == 'inactive' ? 'active' : 'inactive';
     this.state == 'active' ? document.documentElement.style.setProperty("--in-out-control", "'\\00AB'") : document.documentElement.style.setProperty("--in-out-control", "'\\00BB'");
-    
   }
 
   sliderChange(e) {
