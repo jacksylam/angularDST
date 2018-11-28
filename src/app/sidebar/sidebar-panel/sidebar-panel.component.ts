@@ -41,7 +41,8 @@ export class SidebarPanelComponent implements OnInit {
   }
 
   toggleMenu() {
-    this.state = (this.state == 'inactive' ? 'active' : 'inactive');
+    this.state = this.state == 'inactive' ? 'active' : 'inactive';
+    this.state == 'active' ? document.documentElement.style.setProperty("--in-out-menu", "'\\00BB'") : document.documentElement.style.setProperty("--in-out-menu", "'\\00AB'");
   }
 
   changeShapeFile(){

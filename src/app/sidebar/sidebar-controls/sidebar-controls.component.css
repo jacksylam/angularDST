@@ -21,6 +21,23 @@
   overflow-x: hidden;
 }
 
+.menuButton:before {
+  content: var(--in-out-control);
+  color: black;
+  position: absolute;
+  left: 20px;
+  top: 10px;
+  font-size: 40px;
+  z-index: -2000;
+  transition: all 200ms ease;
+  opacity: 0;
+}
+
+.menuButton:hover:before {
+  left: 35px;
+  opacity: .9;
+}
+
 
 .left-scrollbar {
   margin: 0px !important;

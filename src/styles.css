@@ -34,6 +34,10 @@
     --color27: #ffffff;
     --color28: #ffffff;
     --color29: #ffffff;
+
+    --in-out-control: "\00AB";
+    --in-out-menu: "\00BB";
+    --in-out-bottom: "\00AB";
   }
 
   
