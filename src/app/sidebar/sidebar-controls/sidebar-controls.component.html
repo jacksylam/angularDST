@@ -8,10 +8,16 @@
     
     <div class="left-scrollbar" #leftScrollbar (scroll)="scrollbarScroll($event)"  [ngClass]="{'disable': mode=='name'}">
       <!-- fake buttons to size phony scrollbar div to same size as menu -->
-      <button *ngIf="mode!='name'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+      <div *ngIf="mode!='name'">
+        <div class="outline btn-group-vertical internal-menu invisible">
+          <button type="button" class="btn btn-primary btn-responsive btn-label invisible"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible" (click)="toggleNameMode()"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible" (click)="toggleAreas()"><div class="shift">a</div></button>
+        </div>
+      </div>
       <div *ngIf="mode=='name'" class="outline">
         <div class="select-text invisible">
-          Select an Area to Name
+          a
         </div>
         <br>
         <div class="name-button-container" *ngIf="areaSelected; else cancel">
@@ -24,41 +30,47 @@
         </ng-template>
       </div>
 
-        <p></p>
-
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
-
-        <p></p>
+      <p></p>
   
+      <div>
         <div class="outline slider-background invisible">
-          <button type="button" class="btn btn-primary btn-responsive btn-label internal-menu invisible">a</button>
-          <br><mat-slider [max]="1" [min]="0" [step]="0.01"></mat-slider>
-        </div>
-  
-        <p></p>
-  
-        <div class="outline btn-group-vertical internal-menu invisible">
-            <button type="button" class="btn btn-primary btn-responsive btn-label invisible"><div class="shift">a</div></button>
-            <mat-select>
-            </mat-select>
+            <button type="button" class="btn btn-primary btn-responsive btn-label internal-menu invisible">a</button>
+            <br><mat-slider [max]="1" [min]="0" [step]="0.01"></mat-slider>
           </div>
-  
-        <p></p>
-  
-        <div class="outline btn-group-vertical internal-menu invisible">
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
-        </div>
-
-        <p></p>
-        
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
+    
+          <p></p>
+    
+          <div class="outline btn-group-vertical internal-menu invisible">
+              <button type="button" class="btn btn-primary btn-responsive btn-label invisible"><div class="shift">a</div></button>
+              <mat-select>
+              </mat-select>
+            </div>
+    
+          <p></p>
+    
+          <div class="outline btn-group-vertical internal-menu invisible">
+            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+          </div>
+    
+          <p></p>
+          
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
+      </div>
+      
     </div>
 
     <div class="menu" #menu  (scroll)="menuScroll($event)">
       
-      <button *ngIf="mode!='name'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
+      
+      <div *ngIf="mode!='name'">
+        <div class="outline btn-group-vertical internal-menu">
+          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
+          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
+        </div>
+      </div>
       <div *ngIf="mode=='name'" class="outline">
         <div class="select-text">
           Select an Area to Name
@@ -77,9 +89,6 @@
       <p></p>
 
       <div [ngClass]="{'disable': mode=='name'}">
-        <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
-
-        <p></p>
 
         <div class="outline slider-background">
           <button type="button" class="btn btn-primary btn-responsive btn-label">Layer Opacity</button>
@@ -113,7 +122,11 @@
         
         <button [disabled]="loading > 0" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()">
           <div *ngIf="loading > 0; else report" class="shift"><div class="loading">Loading Metrics</div></div>
-          <ng-template #report>Generate Report</ng-template>
+          <ng-template #report>
+            <div style="font-weight: bold">
+              Generate Report
+            </div>
+          </ng-template>
         </button>
       </div>
 

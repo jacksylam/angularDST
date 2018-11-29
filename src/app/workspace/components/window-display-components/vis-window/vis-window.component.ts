@@ -118,6 +118,12 @@ export class VisWindowComponent implements AfterViewInit {
 
       this.lastMouseXPosition = e.pageX;
       this.lastMouseYPosition = e.pageY;
+
+      this.phantomScrollLock.nativeElement.style.top = window.pageYOffset == 0 ? '0px' : window.pageYOffset + window.innerHeight + 'px';
+      this.phantomScrollLock.nativeElement.style.left = window.pageXOffset == 0 ? '0px' : window.pageXOffset + window.innerWidth + 'px';
+
+      this.phantomScrollSmooth.nativeElement.style.top = this.phantomScrollLock.nativeElement.style.top;
+      this.phantomScrollSmooth.nativeElement.style.left = this.phantomScrollLock.nativeElement.style.left;
       
       //need to pass __this in to function, so save anonymous function call for removal
       document.addEventListener('mousemove', resizeFunct = (e) => {
@@ -155,6 +161,12 @@ export class VisWindowComponent implements AfterViewInit {
 
       const mouseY = e.pageY;
       this.lastMouseYPosition = e.pageY;
+
+      this.phantomScrollLock.nativeElement.style.top = window.pageYOffset == 0 ? '0px' : window.pageYOffset + window.innerHeight + 'px';
+      this.phantomScrollLock.nativeElement.style.left = window.pageXOffset == 0 ? '0px' : window.pageXOffset + window.innerWidth + 'px';
+
+      this.phantomScrollSmooth.nativeElement.style.top = this.phantomScrollLock.nativeElement.style.top;
+      this.phantomScrollSmooth.nativeElement.style.left = this.phantomScrollLock.nativeElement.style.left;
       
       //need to pass __this in to function, so save anonymous function call for removal
       document.addEventListener('mousemove', resizeFunct = (e) => {

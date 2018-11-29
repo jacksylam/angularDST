@@ -2602,7 +2602,7 @@ export class MapComponent implements OnInit {
                   //debugging------------------------------------------------------------------------------------------------
 
                   if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
-                    console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
+                    //console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
                     //errors.push();
                     errors++;
                   }

@@ -46,7 +46,7 @@
   
   .menuButton {
     position: absolute;
-    top: 50%;
+    top: calc(50% - 45px);
     left: -30px;
     /* transform: translate(0%, 50%); */
     background-color: rgb(56, 117, 194);
@@ -92,7 +92,7 @@
     color: white;
     font-size: 16px;
   }
-  
+
   .capcity-button {
     width: 100%;
     background-color: rgb(175, 75, 75);
