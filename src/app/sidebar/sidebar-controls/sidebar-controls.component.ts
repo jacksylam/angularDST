@@ -61,6 +61,8 @@ export class SidebarControlsComponent implements OnInit {
   // }
 
   ngAfterViewInit() {
+    let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
+    document.documentElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth + 1).toString() + "px");
   }
 
   openDialog(type: string) {
@@ -173,6 +175,9 @@ export class SidebarControlsComponent implements OnInit {
       //lock scroll so other element doesn't scroll
       this.scrollLock = true;
       this.menuDiv.nativeElement.scrollTop = e.target.scrollTop;
+      //set scrollbar width so dynamic with mac's dissappearing scroll bar
+      let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
+      document.documentElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth).toString() + "px");
     }
     else {
       //unlock after bounce
