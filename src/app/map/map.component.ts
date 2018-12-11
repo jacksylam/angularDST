@@ -1310,6 +1310,40 @@ export class MapComponent implements OnInit {
       }, (e) => {
         console.log(e);
       });
+
+      // //load caprock shapes
+      // shp(MapComponent.aquiferFiles.aquiferShpFile).then((geojson) => {
+      //   // this.aquifers = L.featureGroup
+      //   let caprock = L.geoJSON();
+      //   //two shape files, so array
+      //   //might want to just remove "lines" shapefile
+      //   //can break this loop up if affects performance
+      //   geojson[0].features.forEach(aquifer => {
+
+      //     //convert one point to UTM and check if in bounds (if one point in bounds the aquifer should be internal)
+      //     let sampleCoord = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, aquifer.geometry.coordinates[0][0]);
+
+      //     if (sampleCoord[0] >= __this.xmin && sampleCoord[0] <= __this.xmin + __this.xrange
+      //       && sampleCoord[1] >= __this.ymin && sampleCoord[1] <= __this.ymin + __this.yrange
+      //       && aquifer.properties.CODE != 0) {
+
+      //       aquifers.addData(aquifer);
+      //     }
+
+
+      //   });
+      //   caprock.setStyle({
+      //     weight: 3,
+      //     opacity: 1,
+      //     color: 'black',
+      //     fillOpacity: 0
+      //   });
+      //   __this.types.aquifers.layer = aquifers;
+      //   caprock.addTo(__this.map);
+      //   __this.layers.addOverlay(caprock, __this.types.aquifers.label);
+      // }, (e) => {
+      //   console.log(e);
+      // });
     }
 
     return initializeCurrentData().then(() => {

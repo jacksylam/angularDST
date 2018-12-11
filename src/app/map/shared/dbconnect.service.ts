@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, merge, of } from 'rxjs';
 import { Cover } from './cover';
-import { map, retry, catchError } from 'rxjs/operators';
+import { map, retry, catchError, mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class DBConnectService {
@@ -22,14 +22,14 @@ export class DBConnectService {
 
   spatialQueryLength(geometry: any): number {
     let query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset10302018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
     return url.length;
   }
 
   debugQuery() {
     console.log("called debug query");
     let sampleQuery = "{'$and':[{'name':'Landuse'},{'value.name':'dataset10302018'},{'value.loc': {$geoWithin: {'$geometry':{'type':'Polygon','coordinates':[[[-158.068537,21.465326],[-158.068537,21.54625],[-157.926289,21.54625],[-157.926289,21.465326],[-158.068537,21.465326]]]}}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(sampleQuery)+"&limit=100000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(sampleQuery)+"&limit=10000&offset=0";
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
@@ -76,9 +76,9 @@ export class DBConnectService {
     });
   }
 
-  spatialSearch(geometry: any): Observable<Cover[]> {
+  spatialSearch(geometry: any, offset: number = 0, resultSet = []): Observable<Cover[]> {
     let query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset10302018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=" + offset.toString();
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
@@ -89,13 +89,22 @@ export class DBConnectService {
     let response = this.http.get<ResponseResults>(url, options)
     .pipe(
       retry(3),
-      map((data) => {
-        return data.result as Cover[];
+      mergeMap((data) => {
+        let result = resultSet.concat(data.result as Cover[]);
+        //console.log("got");
+        if(result.length == 10000) {
+          return this.spatialSearch(geometry, offset + 10000, result);
+        }
+        else {
+          return of(result);
+        }
+        //return this.spatialSearch(geometry, 10000);
       }),
       catchError((e) => {
         return Observable.throw(new Error(e.message));
       })
     );
+
     return response;
 
     interface ResponseResults {
@@ -107,7 +116,7 @@ export class DBConnectService {
   //   //console.log(JSON.stringify(JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')));
   //   let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$polygon':"+JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')+"}}}]}";
   //   //console.log(query);
-  //   let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
+  //   let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
   //   let head = new HttpHeaders()
   //   .set("Authorization", "Bearer " + this.oAuthAccessToken)
   //   .set("Content-Type", "application/x-www-form-urlencoded");
