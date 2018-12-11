@@ -18,12 +18,6 @@
  * BROWSER POLYFILLS
  */
 
-global.Buffer = global.Buffer || require('buffer').Buffer;
-console.log(global.Buffer);
-(window as any).process = {
-env: { DEBUG: undefined },
-};
-
 /** IE9, IE10 and IE11 requires all of the following polyfills. **/
 // import 'core-js/es6/symbol';
 // import 'core-js/es6/object';
@@ -77,3 +71,8 @@ import 'zone.js/dist/zone';  // Included with Angular CLI.
  * Need to import at least one locale-data with intl.
  */
 // import 'intl/locale-data/jsonp/en';
+
+global.Buffer = global.Buffer || require('buffer').Buffer;
+(window as any).process = {
+env: { DEBUG: undefined },
+};

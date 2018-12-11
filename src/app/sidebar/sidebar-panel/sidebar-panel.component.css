@@ -3,9 +3,13 @@
   height: 30px;
   padding: 6px;
   background: ivory;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: normal;
   border-radius: 0px 0px 0px 5px;
+}
+
+::ng-deep .mat-checkbox-checked .mat-checkbox-background {
+  background-color: rgb(56, 117, 194) !important;
 }
 
 .colorDisplay {
@@ -30,6 +34,13 @@
 .menuButton:hover:before {
   left: -25px;
   opacity: .9;
+}
+
+.checkbox-div {
+  font-size: 12px !important;
+  padding: 5px;
+  background-color: ivory;
+  width: 100%;
 }
 
 .sidebar {
@@ -140,21 +151,25 @@
 .btn-label{
     pointer-events: none;   
     font-size: 18px;
-    font-weight: normal
+    font-weight: normal;
+    background-color: rgb(56, 117, 194) !important;
+    color: white;
 }
 
 .btn-sublabel1{
   background-color: #016422;
   pointer-events: none;   
   font-size: 15px;
-  font-weight: normal
+  font-weight: normal;
+  color: white;
 }
 
 .btn-sublabel2{
   background-color: rgb(0, 97, 110);
   pointer-events: none;   
   font-size: 15px;
-  font-weight: normal
+  font-weight: normal;
+  color: white;
 }
 
 .disable {
@@ -196,6 +211,7 @@
 
 .btn-custom-t2 {
   border: 1px solid #016422;
+  font-size: 12px;
 }
 
 .btn-custom-t2:hover {
@@ -203,7 +219,8 @@
 }
 
 .btn-custom-t3 {
-  border: 1px solid rgb(0, 97, 110);;
+  border: 1px solid rgb(0, 97, 110);
+  font-size: 12px;
 }
 
 .btn-custom-t3:hover {
@@ -212,6 +229,7 @@
 
 .btn-custom-t4 {
   border: 1px solid rgb(125, 0, 0);
+  font-size: 12px;
 }
 
 .btn-custom-t4:hover {

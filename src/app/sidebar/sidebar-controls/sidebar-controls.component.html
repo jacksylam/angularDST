@@ -10,9 +10,9 @@
       <!-- fake buttons to size phony scrollbar div to same size as menu -->
       <div *ngIf="mode!='name'">
         <div class="outline btn-group-vertical internal-menu invisible">
-          <button type="button" class="btn btn-primary btn-responsive btn-label invisible"><div class="shift">a</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible" (click)="toggleNameMode()"><div class="shift">a</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible" (click)="toggleAreas()"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-responsive btn-label invisible"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom invisible" (click)="toggleNameMode()"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom invisible" (click)="toggleAreas()"><div class="shift">a</div></button>
         </div>
       </div>
       <div *ngIf="mode=='name'" class="outline">
@@ -22,11 +22,11 @@
         <br>
         <div class="name-button-container" *ngIf="areaSelected; else cancel">
           <input class="input-field" type="text">
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-left invisible">a</button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-right invisible">a</button>
+          <button type="button" class="btn btn-responsive btn-custom-half-left invisible">a</button>
+          <button type="button" class="btn btn-responsive btn-custom-half-right invisible">a</button>
         </div>
         <ng-template>
-            <button type="button" class="btn btn-primary btn-responsive internal-menu invisible">a</button>
+            <button type="button" class="btn btn-responsive internal-menu invisible">a</button>
         </ng-template>
       </div>
 
@@ -34,41 +34,42 @@
   
       <div>
         <div class="outline slider-background invisible">
-            <button type="button" class="btn btn-primary btn-responsive btn-label internal-menu invisible">a</button>
+            <button type="button" class="btn btn-responsive btn-label internal-menu invisible">a</button>
             <br><mat-slider [max]="1" [min]="0" [step]="0.01"></mat-slider>
           </div>
     
           <p></p>
     
           <div class="outline btn-group-vertical internal-menu invisible">
-              <button type="button" class="btn btn-primary btn-responsive btn-label invisible"><div class="shift">a</div></button>
-              <mat-select>
+              <button type="button" class="btn btn-responsive btn-label invisible"><div class="shift">a</div></button>
+              <mat-select class="invisible">
+                  <mat-option value="a">a</mat-option>
               </mat-select>
             </div>
     
           <p></p>
     
           <div class="outline btn-group-vertical internal-menu invisible">
-            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
-            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
-            <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible">a</button>
+            <button type="button" class="btn btn-responsive btn-ivory btn-custom invisible">a</button>
+            <button type="button" class="btn btn-responsive btn-ivory btn-custom invisible">a</button>
+            <button type="button" class="btn btn-responsive btn-ivory btn-custom invisible">a</button>
           </div>
     
           <p></p>
           
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom invisible"><div class="shift">a</div></button>
       </div>
       
     </div>
 
-    <div class="menu" #menu  (scroll)="menuScroll($event)">
+    <div class="menu" #menu (scroll)="menuScroll($event)">
       
       
       <div *ngIf="mode!='name'">
         <div class="outline btn-group-vertical internal-menu">
-          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Area Controls</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
+          <button type="button" class="btn btn-responsive btn-label"><div class="shift">Area Controls</div></button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom" (click)="toggleNameMode()"><div class="shift">Name Custom Areas</div></button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom" (click)="toggleAreas()"><div class="shift">{{displayType}} Custom Areas</div></button>
         </div>
       </div>
       <div *ngIf="mode=='name'" class="outline">
@@ -78,11 +79,11 @@
         <p></p>
         <div class="name-button-container" *ngIf="areaSelected; else cancel">
           <input class="input-field" #nameInput type="text" [value]="name">
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-left" (click)="registerNameToShape()"><div class="set-name-shift">Set Name</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-custom-half-right" (click)="toggleNameMode()"><div class="cancel-shift">Exit</div></button>
+          <button type="button" class="btn btn-responsive btn-custom-half-left" (click)="registerNameToShape()"><div class="set-name-shift">Set Name</div></button>
+          <button type="button" class="btn btn-responsive btn-custom-half-right" (click)="toggleNameMode()"><div class="cancel-shift">Exit</div></button>
         </div>
         <ng-template #cancel>
-            <button type="button" class="btn btn-primary btn-responsive cancel" (click)="toggleNameMode()"><div class="shift">Cancel</div></button>
+            <button type="button" class="btn btn-responsive cancel" (click)="toggleNameMode()"><div class="shift">Cancel</div></button>
         </ng-template>
       </div>
 
@@ -91,14 +92,14 @@
       <div [ngClass]="{'disable': mode=='name'}">
 
         <div class="outline slider-background">
-          <button type="button" class="btn btn-primary btn-responsive btn-label">Layer Opacity</button>
+          <button type="button" class="btn btn-responsive btn-label">Layer Opacity</button>
           <br><mat-slider [max]="1" [min]="0" [step]="0.01" [(ngModel)]="value" (input)="sliderChange($event)"></mat-slider>
         </div> 
 
         <p></p>
 
         <div class="outline btn-group-vertical internal-menu">
-          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="shift">Units</div></button>
+          <button type="button" class="btn btn-responsive btn-label"><div class="shift">Units</div></button>
           <mat-select [(ngModel)]="units" (ngModelChange)="setUnits($event)">
             <mat-option value="USC">United States Customary</mat-option>
             <mat-option value="Metric">Metric</mat-option>
@@ -113,14 +114,14 @@
         <p></p>
 
         <div class="outline btn-group-vertical internal-menu">
-          <button type="button" class="btn btn-primary btn-responsive btn-label"><div class="save-apply-shift">Load/Save Changes</div></button>
-          <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('upload')"><div class="shift">Upload</div></button>
-          <button type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="openDialog('download')"><div class="shift">Download</div></button>
+          <button type="button" class="btn btn-responsive btn-label"><div class="save-apply-shift">Load/Save Changes</div></button>
+          <button [disabled]="baselayer!='landcover'" type="button" class="btn btn-responsive btn-ivory btn-custom" (click)="openDialog('upload')"><div class="shift">Import</div></button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom" (click)="openDialog('download')"><div class="shift">Export</div></button>
         </div>
         
         <p></p>
         
-        <button [disabled]="loading > 0" type="button" class="btn btn-primary btn-responsive btn-ivory btn-custom" (click)="generateReport()">
+        <button [disabled]="loading > 0" type="button" class="btn btn-responsive btn-ivory btn-custom" (click)="generateReport()">
           <div *ngIf="loading > 0; else report" class="shift"><div class="loading">Loading Metrics</div></div>
           <ng-template #report>
             <div style="font-weight: bold">

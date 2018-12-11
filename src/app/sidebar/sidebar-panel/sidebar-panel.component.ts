@@ -28,9 +28,12 @@ export class SidebarPanelComponent implements OnInit {
 
   selected = "Baseline Rainfall 1978-2007";
   rechargeStyle = "rate"
+  colorScheme = "usgs";
 
   loading = 0;
   debug = false;
+
+  updateBase = false;
 
   disabled = false;
 
@@ -45,7 +48,7 @@ export class SidebarPanelComponent implements OnInit {
     this.state == 'active' ? document.documentElement.style.setProperty("--in-out-menu", "'\\00BB'") : document.documentElement.style.setProperty("--in-out-menu", "'\\00AB'");
   }
 
-  changeShapeFile(){
+  changeShapeFile() {
     this.mapService.toggleShape(this);
     
   }
@@ -56,14 +59,19 @@ export class SidebarPanelComponent implements OnInit {
   }
 
 
+  colorChange() {
+    this.mapService.changeColor(this, this.colorScheme);
+  }
 
-  climateChange(e) {
-    switch(e) {
+
+  climateChange() {
+    //console.log(this.selected);
+    switch(this.selected) {
       case "Baseline Rainfall 1978-2007":
-        this.mapService.changeScenario(this, "recharge_scenario0");
+        this.mapService.changeScenario(this, "recharge_scenario0", this.updateBase);
         break;
       case "Rainfall Projection 2041-2070 (RCP 8.5)":
-        this.mapService.changeScenario(this, "recharge_scenario1");
+        this.mapService.changeScenario(this, "recharge_scenario1", this.updateBase);
         break;
     }
   }

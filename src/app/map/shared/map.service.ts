@@ -76,9 +76,14 @@ export class MapService {
     this.mapHash[index].toggleCaprock(mode);
   }
 
-  changeScenario(buttonPanel: any, scenario: string) {
+  changeScenario(buttonPanel: any, scenario: string, updateBase: boolean) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
-    this.mapHash[index].changeScenario(scenario);
+    this.mapHash[index].changeScenario(scenario, updateBase);
+  }
+
+  changeColor(buttonPanel: any, scheme: string) {
+    let index = this.panelButtonHash.indexOf(buttonPanel);
+    this.mapHash[index].changeColor(scheme);
   }
 
   updateMetrics(map: any, mode: string, metrics: any) {

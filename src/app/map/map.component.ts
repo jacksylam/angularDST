@@ -53,6 +53,10 @@ export class MapComponent implements OnInit {
   static readonly INCH_TO_MILLIMETER_FACTOR = 25.4;
   static readonly GALLON_TO_LITER_FACTOR = 3.78541;
   static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
+  static readonly MAX_RECHARGE = 180;
+  static readonly USGS_PURPLE_RECHARGE = 450;
+
+  rechargePaletteTailLength: number;
 
   currentDataInitialized = false;
   scenariosInitialized = false;
@@ -62,6 +66,7 @@ export class MapComponent implements OnInit {
   shpfile: any;
   shpfileString: string;
   toggleShapeFile: boolean;
+  paletteType: string;
 
   csvLayer: any;
   csvData: any;
@@ -93,7 +98,7 @@ export class MapComponent implements OnInit {
 
   shapeMetricsEnabled: boolean;
 
-  paletteExtent = [];
+  paletteExtent = [0, MapComponent.MAX_RECHARGE];
   pchangeExtent = [-100, 100];
   diffExtent = [-10, 10];
 
@@ -117,7 +122,7 @@ export class MapComponent implements OnInit {
   scenarioFnames = {
     recharge_scenario0: "_baseline_rainfall",
     recharge_scenario1: "_rainfall_projection_RCP_8.5"
-  }
+  };
 
   defaultMetrics: any;
 
@@ -128,6 +133,7 @@ export class MapComponent implements OnInit {
   // aquiferLayer: any;
 
   currentScenario: string;
+  baseScenario: string;
   legend: any;
 
   // upperLeftLatLng: any;
@@ -214,7 +220,6 @@ export class MapComponent implements OnInit {
 
   highlightedAquiferIndices = [];
 
-  //???, can probably just remove
   readonly layerOrdering = [this.types.landCover, this.types.recharge, this.types.aquifers];
 
   static readonly utm = "+proj=utm +zone=4 +datum=NAD83 +units=m";
@@ -260,11 +265,12 @@ export class MapComponent implements OnInit {
     this.map._controlContainer.children[3].removeChild(this.map._controlContainer.children[3].children[0]);
 
     this.popup = L.popup();
+    this.paletteType = "usgs";
 
     //thinking I like the collapsed version with this stuff
     this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
 
-    this.rcPalette = this.rechargePalette();
+    this.rcPalette = this.USGSStyleRechargePalette();
     this.rcDivergingPalette = this.divergingPalette();
 
     this.types.recharge.palette = C.linearPalette(this.rcPalette);
@@ -1162,9 +1168,10 @@ export class MapComponent implements OnInit {
       customAreasTotal: {},
       total: {},
       totalNoCaprock: {}
-    }
+    };
 
-    this.currentScenario = "recharge_scenario0"
+    this.currentScenario = "recharge_scenario0";
+    this.baseScenario = "recharge_scenario0";
     this.shapeMetricsEnabled = false;
     this.interactionType = "custom";
 
@@ -1243,7 +1250,7 @@ export class MapComponent implements OnInit {
     
           //set up data, recharge layer, and metrics based on these values
           __this.types.recharge.data = coverage;
-          __this.loadCover(__this.types.recharge, true);
+          __this.loadRechargeStyle("rate");
           
         }),
       ];
@@ -1467,28 +1474,43 @@ export class MapComponent implements OnInit {
 
   loadRechargeStyle(style: string) {
     let rechargeData = this.types.recharge.data._covjson.ranges.recharge.values;
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+      
     switch(style) {
       case "rate": {
-        this.types.recharge.palette = C.linearPalette(this.rcPalette);
         this.types.recharge.style = "rate";
         for(let i = 0; i < rechargeData.length; i++) {
-          rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i];
+          if(this.paletteType == "usgs") {
+            rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] <= MapComponent.USGS_PURPLE_RECHARGE ? Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE) : MapComponent.USGS_PURPLE_RECHARGE;
+          }
+          else {
+            rechargeData[i] = Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE);
+          }
+          //rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i];
+          if(rechargeData[i] > max) {
+            max = rechargeData[i];
+          }
+          if(rechargeData[i] < min) {
+            min = rechargeData[i];
+          }
         }
+        let paletteWindow = this.paletteWindow(this.rcPalette, [min, max], this.paletteExtent, this.rcPalette.length);
+        this.types.recharge.palette = C.linearPalette(paletteWindow);
         break;
       }
       case "pchange": {
         
         this.types.recharge.style = "pchange";
-        let min = Number.POSITIVE_INFINITY;
-        let max = Number.NEGATIVE_INFINITY;
+        
         for(let i = 0; i < rechargeData.length; i++) {
           //make sure not dividing by 0 if no recharge in cell
-          if(this.types.recharge.baseData[this.currentScenario][i] == 0) {
+          if(this.types.recharge.baseData[this.baseScenario][i] == 0) {
             rechargeData[i] = 0;
           }
           else {
-            let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
-            let pchange = diff / this.types.recharge.baseData[this.currentScenario][i] * 100;
+            let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.baseScenario][i];
+            let pchange = diff / this.types.recharge.baseData[this.baseScenario][i] * 100;
             //lock at max and min values
             rechargeData[i] = Math.max(Math.min(pchange, this.pchangeExtent[1]), this.pchangeExtent[0]);
           }
@@ -1499,17 +1521,15 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.pchangeExtent, 200);
+        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.pchangeExtent, this.rcPalette.length);
         this.types.recharge.palette = C.linearPalette(paletteWindow);
         rechargeData[0] = 0.0001;
         break;
       }
       case "diff": {
         this.types.recharge.style = "diff";
-        let min = Number.POSITIVE_INFINITY;
-        let max = Number.NEGATIVE_INFINITY;
         for(let i = 0; i < rechargeData.length; i++) {
-          let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.currentScenario][i];
+          let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.baseScenario][i];
           //lock at max and min values
           rechargeData[i] = Math.max(Math.min(diff, this.diffExtent[1]), this.diffExtent[0]);
           if(rechargeData[i] > max) {
@@ -1519,7 +1539,7 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.diffExtent, 200);
+        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.diffExtent, this.rcPalette.length);
         this.types.recharge.palette = C.linearPalette(paletteWindow);
         rechargeData[0] = 0.0001;
         break;
@@ -1825,7 +1845,7 @@ export class MapComponent implements OnInit {
           //special aquifers have no nocaprock component and are not included in map total
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
-          metrics[aquifer].caprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics[aquifer].caprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           break;
         }
@@ -1834,11 +1854,11 @@ export class MapComponent implements OnInit {
           
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
-          metrics[aquifer].caprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics[aquifer].caprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           metrics.total.caprock.USC.area++;
           metrics.total.caprock.USC.average.current += rechargeVals[i];
-          metrics.total.caprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics.total.caprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           break;
         }
@@ -1847,19 +1867,19 @@ export class MapComponent implements OnInit {
 
           metrics[aquifer].caprock.USC.area++;
           metrics[aquifer].caprock.USC.average.current += rechargeVals[i];
-          metrics[aquifer].caprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics[aquifer].caprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           metrics[aquifer].nocaprock.USC.area++;
           metrics[aquifer].nocaprock.USC.average.current += rechargeVals[i];
-          metrics[aquifer].nocaprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics[aquifer].nocaprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           metrics.total.caprock.USC.area++;
           metrics.total.caprock.USC.average.current += rechargeVals[i];
-          metrics.total.caprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics.total.caprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           metrics.total.nocaprock.USC.area++;
           metrics.total.nocaprock.USC.average.current += rechargeVals[i];
-          metrics.total.nocaprock.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics.total.nocaprock.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
 
           break;
         }
@@ -2076,10 +2096,10 @@ export class MapComponent implements OnInit {
         if(checkInclude(i)) {
           cells++;
           metrics.USC.average.current += rechargeVals[i];
-          metrics.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+          metrics.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
           
           metrics.Metric.average.current += rechargeVals[i] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
-          metrics.Metric.average.original += this.types.recharge.baseData[this.currentScenario][i] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[this.baseScenario][i] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
         }
       }
 
@@ -2091,10 +2111,10 @@ export class MapComponent implements OnInit {
         if(checkInclude(index)) {
           cells++;
           metrics.USC.average.current += rechargeVals[index];
-          metrics.USC.average.original += this.types.recharge.baseData[this.currentScenario][index];
+          metrics.USC.average.original += this.types.recharge.baseData[this.baseScenario][index];
 
           metrics.Metric.average.current += rechargeVals[index] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
-          metrics.Metric.average.original += this.types.recharge.baseData[this.currentScenario][index] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
+          metrics.Metric.average.original += this.types.recharge.baseData[this.baseScenario][index] * MapComponent.INCH_TO_MILLIMETER_FACTOR;
         }
       });
     
@@ -2187,7 +2207,7 @@ export class MapComponent implements OnInit {
           if(caprock || this.caprock[i] == 1) {
             metrics.USC.area++;
             metrics.USC.average.current += rechargeVals[i];
-            metrics.USC.average.original += this.types.recharge.baseData[this.currentScenario][i];
+            metrics.USC.average.original += this.types.recharge.baseData[this.baseScenario][i];
           }
         }
 
@@ -2414,321 +2434,323 @@ export class MapComponent implements OnInit {
 
 
 
-  upload(info: any) {
-    //ensure current data is initialized before processing upload
-    //use exponential backoff
-    let backoff = 1;
-    while(!this.currentDataInitialized) {
-      setTimeout(() => {
-        backoff *= 2;
-      }, backoff);
-    }
-
-    this.verifyFilesAndGetData(info).then((data) => {
-
-      //console.log(data);
-      if(data.notFound.length != 0) {
-        let message = ""
-        if(data.notFound.includes("shapes")) {
-          message += "Could not find valid shapefile:\n\t- Must contain all necessary data objects inside a zip folder.\n\n";
-        }
-        if(data.notFound.includes("cover")) {
-          message += "Could not find a valid land cover file:\n\t- Must be in a valid asc or covjson format."
-          + "\n\t\t- asc:"
-          + "\n\t\t\tMust have a 6 line header with the values ncols, nrows, xllcorner, yllcorner, cellsize, and NODATA_value"
-          + "\n\t\t\tGrid must be a subset of the provided map (e.g. fully contained within a " + this.gridWidthCells + " column by " + this.gridHeightCells + " row grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ")"
-          + "\n\t\t\tMust contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "]"
-          + "\n\t\t- covjson:"
-          + "\n\t\t\tGrid must be " + this.gridWidthCells + " columns by " + this.gridHeightCells + " rows grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ". Covjson subgrid support will be implemented at a later date"
-          + "\n\t\t\tMust contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "]\n\n";
-        }
-        message += "Files are accepted as uploaded or contained within a zip folder."
-        this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Warning"}});
-      }
+  upload(info: any, backoff: number = 1) {
+    if(this.currentDataInitialized) {
       
-      if(info.shapes) {
-        if(data.shapes != null) {
-          if(info.shapeDetails.format == "custom") {
+      this.verifyFilesAndGetData(info).then((data) => {
 
-            //array if multiple shapefiles?
-            if(Array.isArray(data.shapes)) {
-              data.shapes.forEach(shpset => {
-                this.parseAndAddShapes(shpset, info.shapeDetails.properties.name);
-              });
-            }
-            else {
-              //console.log(data.shapes)
-              this.parseAndAddShapes(data.shapes, info.shapeDetails.properties.name);
-            }
+        //console.log(data);
+        if(data.notFound.length != 0) {
+          let message = ""
+          if(data.notFound.includes("shapes")) {
+            message += "Could not find valid shapefile:\n\t- Must contain all necessary data objects inside a zip folder.\n\n";
           }
-          else if(info.shapeDetails.format == "reference") {
-            let refLayer = L.geoJSON();
-
-            //array if multiple shpfiles
-            if (Array.isArray(data.shapes)) {
-              data.shapes.forEach((shpset) => {
-                shpset.features.forEach(object => {
-                  refLayer.addData(object);
-                })
-              })
-  
-            }
-            //else single element
-            else {
-              data.shapes.features.forEach(object => {
-                refLayer.addData(object);
-              })
-            }
-  
-            refLayer.setStyle({
-              weight: 3,
-              opacity: 1,
-              color: 'black',
-              fillOpacity: 0
-            });
-            refLayer.addTo(this.map);
-            let overlayName = "Custom Overlay " + (++this.numCustomOverlays).toString();
-
-            this.layers.addOverlay(refLayer, overlayName);
+          if(data.notFound.includes("cover")) {
+            message += "Could not find a valid land cover file:\n\t- Must be in a valid asc or covjson format."
+            + "\n\t\t- asc:"
+            + "\n\t\t\tMust have a 6 line header with the values ncols, nrows, xllcorner, yllcorner, cellsize, and NODATA_value"
+            + "\n\t\t\tGrid must be a subset of the provided map (e.g. fully contained within a " + this.gridWidthCells + " column by " + this.gridHeightCells + " row grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ")"
+            + "\n\t\t\tMust contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "]"
+            + "\n\t\t- covjson:"
+            + "\n\t\t\tGrid must be " + this.gridWidthCells + " columns by " + this.gridHeightCells + " rows grid of 75m resolution starting at x: " + this.xmin + ", y: " + this.ymin + ". Covjson subgrid support will be implemented at a later date"
+            + "\n\t\t\tMust contain whole number values on the range [" + this.validLandcoverRange.min.toString() + ", " + this.validLandcoverRange.max.toString() + "]\n\n";
           }
-
-          if(info.shapeDetails.includeLC || info.shapeDetails.format=="lcOnly") {
-            if(Array.isArray(data.shapes)) {
-              data.shapes.forEach(shpset => {
-                this.addUploadedLandcoverByShape(shpset, info.shapeDetails.properties.lc, info.overwrite);
-              });
-            }
-            else {
-              //console.log(data.shapes)
-              this.addUploadedLandcoverByShape(data.shapes, info.shapeDetails.properties.lc, info.overwrite);
-            }
-            
-          }
-          
+          message += "Files are accepted as uploaded or contained within a zip folder."
+          this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Warning"}});
         }
-      }
+        
+        if(info.shapes) {
+          if(data.shapes != null) {
+            if(info.shapeDetails.format == "custom") {
 
-      if(info.cover) {
-        if(data.cover != null) {
-          
-          let covData = this.types.landCover.data._covjson.ranges.cover.values;
-
-          //backup values to restore on data failure
-          let backupData = Array.from(covData);
-
-          // let dbQueryChunkSize = 50;
-          // let subarrayCounter = 0;
-          //let changedIndexComponents = [[]];
-          let changedIndexComponents = [];
-          
-          for(let i = 0; i < covData.length; i++) {
-
-            //don't replace if nodata value, also check if value the same since don't need to get recharge from db for correct values
-            if(data.cover.values[i] != data.cover.nodata && covData[i] != data.cover.values[i]) {
-              covData[i] = data.cover.values[i];
-
-              changedIndexComponents.push(this.getComponents(i));
-
-              //add index to query array chunk
-              // if(subarrayCounter <= dbQueryChunkSize) {
-              //   changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
-              //   subarrayCounter++;
-              // }
-              // else {
-              //   changedIndexComponents.push([this.getComponents(i)]);
-              //   subarrayCounter = 1;
-              // }
-              //   subarrayCounter++;
-              // }
-              // else {
-              //   changedIndexComponents.push([this.getComponents(i)])
-              //   subarrayCounter = 1;
-              // }
-              
-
-              //if overwriting base values, set value in baseData array
-              if(info.overwrite) {
-                this.types.landCover.baseData[i] = data.cover.values[i];
+              //array if multiple shapefiles?
+              if(Array.isArray(data.shapes)) {
+                data.shapes.forEach(shpset => {
+                  this.parseAndAddShapes(shpset, info.shapeDetails.properties.name);
+                });
+              }
+              else {
+                //console.log(data.shapes)
+                this.parseAndAddShapes(data.shapes, info.shapeDetails.properties.name);
               }
             }
+            else if(info.shapeDetails.format == "reference") {
+              let refLayer = L.geoJSON();
 
+              //array if multiple shpfiles
+              if (Array.isArray(data.shapes)) {
+                data.shapes.forEach((shpset) => {
+                  shpset.features.forEach(object => {
+                    refLayer.addData(object);
+                  })
+                })
+    
+              }
+              //else single element
+              else {
+                data.shapes.features.forEach(object => {
+                  refLayer.addData(object);
+                })
+              }
+    
+              refLayer.setStyle({
+                weight: 3,
+                opacity: 1,
+                color: 'black',
+                fillOpacity: 0
+              });
+              refLayer.addTo(this.map);
+              let overlayName = "Custom Overlay " + (++this.numCustomOverlays).toString();
+
+              this.layers.addOverlay(refLayer, overlayName);
+            }
+
+            if(info.shapeDetails.includeLC || info.shapeDetails.format=="lcOnly") {
+              if(Array.isArray(data.shapes)) {
+                data.shapes.forEach(shpset => {
+                  this.addUploadedLandcoverByShape(shpset, info.shapeDetails.properties.lc, info.overwrite);
+                });
+              }
+              else {
+                //console.log(data.shapes)
+                this.addUploadedLandcoverByShape(data.shapes, info.shapeDetails.properties.lc, info.overwrite);
+              }
+              
+            }
             
           }
+        }
 
-          //need to slice up array since can only handle certain length, use forkjoin
-          //also probably faster since queries slow with many indices
-          // Observable.forkJoin(changedIndexComponents.map(indexGroup => {
-          //   return this.DBService.indexSearch(indexGroup)
-          // }))
-          // .subscribe((data) => {
-          //   console.log(data);
-          // });
+        if(info.cover) {
+          if(data.cover != null) {
+            
+            let covData = this.types.landCover.data._covjson.ranges.cover.values;
 
-          //this 4x4 with fancy shapes seems to work now, so does 8x8...
-          let geometries = this.generateGeometriesFromPoints(changedIndexComponents);
-          
-          //debugging------------------------------------------------------------------------------------------------
+            //backup values to restore on data failure
+            let backupData = Array.from(covData);
 
-          // let returnedIndices = [];
-          //let errors = [];
-          let errors = 0;
+            // let dbQueryChunkSize = 50;
+            // let subarrayCounter = 0;
+            //let changedIndexComponents = [[]];
+            let changedIndexComponents = [];
+            
+            for(let i = 0; i < covData.length; i++) {
 
-          //debugging------------------------------------------------------------------------------------------------
+              //don't replace if nodata value, also check if value the same since don't need to get recharge from db for correct values
+              if(data.cover.values[i] != data.cover.nodata && covData[i] != data.cover.values[i]) {
+                covData[i] = data.cover.values[i];
 
-          this.updateRecharge(geometries, (update) => {
-            update.forEach((area) => {
-              //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
-              area.forEach((record) => {
-                let recordBase = record.value;
-                let x = recordBase.x;
-                let y = recordBase.y;
-                let index = this.getIndex(x, y);
+                changedIndexComponents.push(this.getComponents(i));
+
+                //add index to query array chunk
+                // if(subarrayCounter <= dbQueryChunkSize) {
+                //   changedIndexComponents[changedIndexComponents.length - 1].push(this.getComponents(i));
+                //   subarrayCounter++;
+                // }
+                // else {
+                //   changedIndexComponents.push([this.getComponents(i)]);
+                //   subarrayCounter = 1;
+                // }
+                //   subarrayCounter++;
+                // }
+                // else {
+                //   changedIndexComponents.push([this.getComponents(i)])
+                //   subarrayCounter = 1;
+                // }
                 
-                //debugging------------------------------------------------------------------------------------------------
 
-                // returnedIndices.push({x: x, y: y});
+                //if overwriting base values, set value in baseData array
+                if(info.overwrite) {
+                  this.types.landCover.baseData[i] = data.cover.values[i];
+                }
+              }
 
-                //debugging------------------------------------------------------------------------------------------------
-
-                //coverage reassignment completed first, so use this value (covData[index]) to get index in db results
-                let mappedType = covData[index];
-
-                Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-
-                  //background is not included in the database so indexes shifted by 1
-                  //if background type set recharge rate to 0
-                  let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
-
-                  //debugging------------------------------------------------------------------------------------------------
-
-                  if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
-                    //console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
-                    //errors.push();
-                    errors++;
-                  }
-
-                  //debugging------------------------------------------------------------------------------------------------
-
-                  this.types.recharge.currentData[scenario][index] = recordValue;
-                });
-
-              });
-            });
-
-            //debugging------------------------------------------------------------------------------------------------
-
-            console.log(errors);
-            // console.log(update);
-
-            // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-            // let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-
-            // let missingPoints: any = {};
-
-            // changedIndexComponents.forEach((point) => {
-            //   let includes = returnedIndices.some((rp) => {
-            //     return rp.x == point.x && rp.y == point.y;
-            //   });
               
-            //   if(!includes) {
-            //     this.DBService.indexSearch([point])
-            //     .subscribe((data) => {
-            //       console.log(data);
-            //     });
-            //     // //test different point to ensure query properly constructed
-            //     // this.DBService.indexSearch([{x: point.x + 1, y: point.y}])
-            //     // .subscribe((data) => {
-            //     //   console.log(data);
-            //     // });
-                
-            //     if(missingPoints[point.x] == undefined) {
-            //       missingPoints[point.x] = {
-            //         min: point.y,
-            //         max: point.y
-            //       }
-            //     }
-            //     else {
-            //       if(point.y < missingPoints[point.x].min) {
-            //         missingPoints[point.x].min = point.y;
-            //       }
-            //       if(point.y > missingPoints[point.x].max) {
-            //         missingPoints[point.x].max = point.y;
-            //       }
-            //     }
-            //     let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
-            //     let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
-            //     let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
-            //     let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
-            //     let cellBounds = {
-            //       "type": "Feature",
-            //       "properties": {},
-            //       "geometry": {
-            //         "type": "Polygon",
-            //         "coordinates": [[c1, c2, c3, c4, c1]]
-            //       }
-            //     };
-            //     L.geoJSON(cellBounds, { interactive: false })
-            //     .setStyle({
-            //       fillColor: 'orange',
-            //       weight: 5,
-            //       opacity: 1,
-            //       color: 'orange',
-            //       fillOpacity: 0.2
-            //     })
-            //     .addTo(this.map);
-            //   }
-            //   else {
-            //     // let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
-            //     // let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
-            //     // let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
-            //     // let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
-            //     // let cellBounds = {
-            //     //   "type": "Feature",
-            //     //   "properties": {},
-            //     //   "geometry": {
-            //     //     "type": "Polygon",
-            //     //     "coordinates": [[c1, c2, c3, c4, c1]]
-            //     //   }
-            //     // };
-            //     // L.geoJSON(cellBounds, { interactive: false })
-            //     // .setStyle({
-            //     //   fillColor: 'green',
-            //     //   weight: 5,
-            //     //   opacity: 1,
-            //     //   color: 'green',
-            //     //   fillOpacity: 0.2
-            //     // })
-            //     // .addTo(this.map);
-            //   }
+            }
+
+            //need to slice up array since can only handle certain length, use forkjoin
+            //also probably faster since queries slow with many indices
+            // Observable.forkJoin(changedIndexComponents.map(indexGroup => {
+            //   return this.DBService.indexSearch(indexGroup)
+            // }))
+            // .subscribe((data) => {
+            //   console.log(data);
             // });
 
-            // console.log(missingPoints);
+            //this 4x4 with fancy shapes seems to work now, so does 8x8...
+            let geometries = this.generateGeometriesFromPoints(changedIndexComponents);
+            
+            //debugging------------------------------------------------------------------------------------------------
+
+            // let returnedIndices = [];
+            //let errors = [];
+            let errors = 0;
 
             //debugging------------------------------------------------------------------------------------------------
 
-            this.updateMetrics(geometries);
-            this.loadRechargeStyle(this.types.recharge.style);
-          }, (error) => {
-            //restore land cover on failure
-            backupData.forEach((value, i) => {
-              covData[i] = value;
+            this.updateRecharge(geometries, (update) => {
+              update.forEach((area) => {
+                //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+                area.forEach((record) => {
+                  let recordBase = record.value;
+                  let x = recordBase.x;
+                  let y = recordBase.y;
+                  let index = this.getIndex(x, y);
+                  
+                  //debugging------------------------------------------------------------------------------------------------
+
+                  // returnedIndices.push({x: x, y: y});
+
+                  //debugging------------------------------------------------------------------------------------------------
+
+                  //coverage reassignment completed first, so use this value (covData[index]) to get index in db results
+                  let mappedType = covData[index];
+
+                  Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+
+                    //background is not included in the database so indexes shifted by 1
+                    //if background type set recharge rate to 0
+                    let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+
+                    //debugging------------------------------------------------------------------------------------------------
+
+                    if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
+                      //console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
+                      //errors.push();
+                      errors++;
+                    }
+
+                    //debugging------------------------------------------------------------------------------------------------
+
+                    this.types.recharge.currentData[scenario][index] = recordValue;
+                  });
+
+                });
+              });
+
+              //debugging------------------------------------------------------------------------------------------------
+
+              console.log(errors);
+              // console.log(update);
+
+              // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+              // let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+
+              // let missingPoints: any = {};
+
+              // changedIndexComponents.forEach((point) => {
+              //   let includes = returnedIndices.some((rp) => {
+              //     return rp.x == point.x && rp.y == point.y;
+              //   });
+                
+              //   if(!includes) {
+              //     this.DBService.indexSearch([point])
+              //     .subscribe((data) => {
+              //       console.log(data);
+              //     });
+              //     // //test different point to ensure query properly constructed
+              //     // this.DBService.indexSearch([{x: point.x + 1, y: point.y}])
+              //     // .subscribe((data) => {
+              //     //   console.log(data);
+              //     // });
+                  
+              //     if(missingPoints[point.x] == undefined) {
+              //       missingPoints[point.x] = {
+              //         min: point.y,
+              //         max: point.y
+              //       }
+              //     }
+              //     else {
+              //       if(point.y < missingPoints[point.x].min) {
+              //         missingPoints[point.x].min = point.y;
+              //       }
+              //       if(point.y > missingPoints[point.x].max) {
+              //         missingPoints[point.x].max = point.y;
+              //       }
+              //     }
+              //     let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
+              //     let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
+              //     let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
+              //     let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
+              //     let cellBounds = {
+              //       "type": "Feature",
+              //       "properties": {},
+              //       "geometry": {
+              //         "type": "Polygon",
+              //         "coordinates": [[c1, c2, c3, c4, c1]]
+              //       }
+              //     };
+              //     L.geoJSON(cellBounds, { interactive: false })
+              //     .setStyle({
+              //       fillColor: 'orange',
+              //       weight: 5,
+              //       opacity: 1,
+              //       color: 'orange',
+              //       fillOpacity: 0.2
+              //     })
+              //     .addTo(this.map);
+              //   }
+              //   else {
+              //     // let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
+              //     // let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
+              //     // let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
+              //     // let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
+              //     // let cellBounds = {
+              //     //   "type": "Feature",
+              //     //   "properties": {},
+              //     //   "geometry": {
+              //     //     "type": "Polygon",
+              //     //     "coordinates": [[c1, c2, c3, c4, c1]]
+              //     //   }
+              //     // };
+              //     // L.geoJSON(cellBounds, { interactive: false })
+              //     // .setStyle({
+              //     //   fillColor: 'green',
+              //     //   weight: 5,
+              //     //   opacity: 1,
+              //     //   color: 'green',
+              //     //   fillOpacity: 0.2
+              //     // })
+              //     // .addTo(this.map);
+              //   }
+              // });
+
+              // console.log(missingPoints);
+
+              //debugging------------------------------------------------------------------------------------------------
+
+              this.updateMetrics(geometries);
+              this.loadRechargeStyle(this.types.recharge.style);
+            }, (error) => {
+              //restore land cover on failure
+              backupData.forEach((value, i) => {
+                covData[i] = value;
+              });
+              this.loadCover(this.types.landCover, false);
             });
+
             this.loadCover(this.types.landCover, false);
-          });
-
-          this.loadCover(this.types.landCover, false);
+          }
         }
-      }
 
 
-      //ignore not found values for now, need to implement error message
-      //generate error message based on not found list here
+        //ignore not found values for now, need to implement error message
+        //generate error message based on not found list here
 
 
-    }, (message) => {
-      //fail if already uploading or other issues occured while uploading
-      this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Error"}});
-    });
+      }, (message) => {
+        //fail if already uploading or other issues occured while uploading
+        this.dialog.open(MessageDialogComponent, {data: {message: message, type: "Error"}});
+      });
+    }
+    else {
+      //ensure current data is initialized before processing upload
+      //use exponential backoff
+      setTimeout(() => {
+        this.upload(info, backoff * 2)
+      }, backoff);
+
+    }
   }
 
 
@@ -3906,125 +3928,191 @@ export class MapComponent implements OnInit {
   //is there a workaround to make this work better?
 
   //default download drawn items
-  download(info: any) {
-    //ensure current data is initialized before processing download
-    //use exponential backoff
-    let backoff = 1;
-    while(!this.currentDataInitialized) {
-      setTimeout(() => {
-        backoff *= 2;
-      }, backoff);
-    }
+  download(info: any, backoff: number = 1) {
+    if(this.currentDataInitialized) {
 
-    //console.log(info)
-    let ready = [];
-    let index = 0;
+      //console.log(info)
+      let ready = [];
+      let index = 0;
 
-    [info.shapes, info.recharge, info.cover].forEach((item) => {
-      if(item) {
-        ready.push({
-          ready: false,
-          fname: "",
-          type: "",
-          data: null
-        });
-      }
-    });
-
-
-    //get string representation of specified file contents
-    let genDataFileContents = (type: string, format: string) => {
-
-      let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-      let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-      let vals = type == "recharge" ? this.types.recharge.currentData[this.currentScenario] : this.types.landCover.data._covjson.ranges.cover.values;
-      let fcontents;
-  
-      if(format == "asc") {
-        
-        
-        //generate header lines
-        fcontents = "ncols " + this.gridWidthCells + "\n";
-        fcontents += "nrows " + this.gridHeightCells + "\n";
-        fcontents += "xllcorner " + this.xmin + "\n";
-        fcontents += "yllcorner " + this.ymin + "\n";
-        fcontents += "cellsize " + 75 + "\n";
-        fcontents += "NODATA_value -9999 \n";
-    
-        let colCounter = 0;
-        //add data
-        vals.forEach((val) => {
-          let convertedVal = val;
-          if(this.unitType == "Metric" && type == "recharge") {
-            convertedVal = this.numericRoundToDecimalPlaces(convertedVal * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3);
-          }
-          fcontents += convertedVal + " "
-          
-          //should have newline at the end of every row
-          if(++colCounter >= this.gridWidthCells) {
-            fcontents += "\n";
-            colCounter = 0;
-          }
-        });
-
-        let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
-        return {
-          data: fcontents,
-          name: fname,
-          type: 'text/plain;charset=utf-8'
-        }
-        
-      }
-      else if(format == "covjson") {
-        let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
-        return {
-          data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType, this.numericRoundToDecimalPlaces)),
-          name: fname,
-          type: 'text/plain;charset=utf-8'
-        }
-        
-      }
-      //download as a shapefile
-      //not currently available
-      else {
-        let cells = [];
-
-        //need to change property label if recharge
-
-        xs.forEach((x, i) => {
-          ys.forEach((y, j) => {
-            let value = vals[this.getIndex(i, j)];
-            if(value == 0) {
-              return;
-            }
-            console.log("test");
-
-            let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y - 37.5]);
-            let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y + 37.5]);
-            let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y + 37.5]);
-            let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y - 37.5]);
-
-            let cellBounds = {
-              type: "Feature",
-              properties: {},
-              geometry: {
-                type: "Polygon",
-                coordinates: [[c1, c2, c3, c4, c1]]
-              }
-            };
-
-            cellBounds.properties = type == "landCover" ? { lcCode: value } : { recharge: value };
-
-            cells.push(cellBounds);
+      [info.shapes, info.recharge, info.cover].forEach((item) => {
+        if(item) {
+          ready.push({
+            ready: false,
+            fname: "",
+            type: "",
+            data: null
           });
-        });
+        }
+      });
 
-        console.log("complete");
-        
-        let shapes = L.geoJSON(cells).toGeoJSON();
+
+      //get string representation of specified file contents
+      let genDataFileContents = (type: string, format: string) => {
+
+        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+        let vals = type == "recharge" ? this.types.recharge.currentData[this.currentScenario] : this.types.landCover.data._covjson.ranges.cover.values;
+        let fcontents;
+    
+        if(format == "asc") {
+          
+          
+          //generate header lines
+          fcontents = "ncols " + this.gridWidthCells + "\n";
+          fcontents += "nrows " + this.gridHeightCells + "\n";
+          fcontents += "xllcorner " + this.xmin + "\n";
+          fcontents += "yllcorner " + this.ymin + "\n";
+          fcontents += "cellsize " + 75 + "\n";
+          fcontents += "NODATA_value -9999 \n";
+      
+          let colCounter = 0;
+          //add data
+          vals.forEach((val) => {
+            let convertedVal = val;
+            if(this.unitType == "Metric" && type == "recharge") {
+              convertedVal = this.numericRoundToDecimalPlaces(convertedVal * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3);
+            }
+            fcontents += convertedVal + " "
+            
+            //should have newline at the end of every row
+            if(++colCounter >= this.gridWidthCells) {
+              fcontents += "\n";
+              colCounter = 0;
+            }
+          });
+
+          let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
+          return {
+            data: fcontents,
+            name: fname,
+            type: 'text/plain;charset=utf-8'
+          }
+          
+        }
+        else if(format == "covjson") {
+          let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
+          return {
+            data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType, this.numericRoundToDecimalPlaces)),
+            name: fname,
+            type: 'text/plain;charset=utf-8'
+          }
+          
+        }
+        //download as a shapefile
+        //not currently available
+        else {
+          let cells = [];
+
+          //need to change property label if recharge
+
+          xs.forEach((x, i) => {
+            ys.forEach((y, j) => {
+              let value = vals[this.getIndex(i, j)];
+              if(value == 0) {
+                return;
+              }
+              console.log("test");
+
+              let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y - 37.5]);
+              let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y + 37.5]);
+              let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y + 37.5]);
+              let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y - 37.5]);
+
+              let cellBounds = {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "Polygon",
+                  coordinates: [[c1, c2, c3, c4, c1]]
+                }
+              };
+
+              cellBounds.properties = type == "landCover" ? { lcCode: value } : { recharge: value };
+
+              cells.push(cellBounds);
+            });
+          });
+
+          console.log("complete");
+          
+          let shapes = L.geoJSON(cells).toGeoJSON();
+
+          let zip = new JSZip();
+
+          //redefine shp-write zip feature with desired file hierarchy
+          let polygons = shpWriteGeojson.polygon(shapes);
+          polygons.geometries = polygons.geometries[0];
+          if (polygons.geometries.length && polygons.geometries[0].length) {
+            this.modShpWrite.write(
+              // field definitions
+              polygons.properties,
+              // geometry type
+              polygons.type,
+              // geometries
+              polygons.geometries,
+              function (err, files) {
+                let fileName = type;
+                zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+                zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+                zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+                zip.file(fileName + '.prj', shpWritePrj);
+              }
+            );
+          }
+          
+          zip.generateAsync({ type: "base64" }).then((file) => {
+            return {
+              data: this.base64ToArrayBuffer(file),
+              name: type + ".zip",
+              type: 'data:application/zip'
+            }
+          });
+        }
+      };
+
+
+      let genAndDownloadPackage = () => {
+        let name = "downloadPackage.zip";
+        //shouldn't be here if empty, but check equal to 1 just in case (if empty for some reason forEach loop in else will cause nothing to happen)
+        //if single item just download file, no need put in zip folder
+        if(ready.length == 1) {
+          let item = ready[0]
+          saveAs(new Blob([item.data], { type: item.type }), item.fname);
+        }
+        //otherwise zip files together
+        else {
+          let downloadPackage = new JSZip();
+          ready.forEach((item) => {
+            downloadPackage.file(item.fname, item.data);
+          })
+
+          downloadPackage.generateAsync({ type: "base64" }).then((file) => {
+            saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name)
+          })
+        }
+      };
+      
+
+      let __this = this;
+
+      if(info.shapes) {
+
+        //get current details object and increment index
+        let thisDetails = ready[index++];
 
         let zip = new JSZip();
 
+        let shapes = this.drawnItems.toGeoJSON();
+        //toGeoJSON seems to use eachLayer function, so should be same order, having a hard time finding full source code in readable format, so hopefully won't cause problems
+        let i = 0;
+        this.drawnItems.eachLayer((layer) => {
+          shapes.features[i++].properties.name = this.customAreaMap[layer._leaflet_id].name;
+        });
+        //shapes.features[0].properties = {name: "test"};
+        // let name = "DefinedAreas";
+    
+        
         //redefine shp-write zip feature with desired file hierarchy
         let polygons = shpWriteGeojson.polygon(shapes);
         polygons.geometries = polygons.geometries[0];
@@ -4037,7 +4125,7 @@ export class MapComponent implements OnInit {
             // geometries
             polygons.geometries,
             function (err, files) {
-              let fileName = type;
+              let fileName = "DefinedAreas";
               zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
               zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
               zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
@@ -4045,85 +4133,42 @@ export class MapComponent implements OnInit {
             }
           );
         }
-        
+
         zip.generateAsync({ type: "base64" }).then((file) => {
-          return {
-            data: this.base64ToArrayBuffer(file),
-            name: type + ".zip",
-            type: 'data:application/zip'
+          //generate file details
+          thisDetails.data = this.base64ToArrayBuffer(file);
+          thisDetails.fname = "DefinedAreas.zip";
+          thisDetails.type = 'data:application/zip';
+
+          //signal ready
+          thisDetails.ready = true;
+
+          //check if all items are ready, and download if they are
+          let allReady = true;
+          ready.forEach((item) => {
+            allReady = item.ready && allReady;
+          });
+          //don't think the way js works will allow for race conditions here (would need to concede resources right here),
+          //but if multiple downloads ever reported then can change ready signal to after this, and check all but the current ready state
+          if(allReady) {
+            genAndDownloadPackage();
           }
+          // saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name + ".zip")
         });
       }
-    };
 
-
-    let genAndDownloadPackage = () => {
-      let name = "downloadPackage.zip";
-      //shouldn't be here if empty, but check equal to 1 just in case (if empty for some reason forEach loop in else will cause nothing to happen)
-      //if single item just download file, no need put in zip folder
-      if(ready.length == 1) {
-        let item = ready[0]
-        saveAs(new Blob([item.data], { type: item.type }), item.fname);
-      }
-      //otherwise zip files together
-      else {
-        let downloadPackage = new JSZip();
-        ready.forEach((item) => {
-          downloadPackage.file(item.fname, item.data);
-        })
-
-        downloadPackage.generateAsync({ type: "base64" }).then((file) => {
-          saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name)
-        })
-      }
-    };
-    
-
-    let __this = this;
-
-    if(info.shapes) {
-
-      //get current details object and increment index
-      let thisDetails = ready[index++];
-
-      let zip = new JSZip();
-
-      let shapes = this.drawnItems.toGeoJSON();
-      //toGeoJSON seems to use eachLayer function, so should be same order, having a hard time finding full source code in readable format, so hopefully won't cause problems
-      let i = 0;
-      this.drawnItems.eachLayer((layer) => {
-        shapes.features[i++].properties.name = this.customAreaMap[layer._leaflet_id].name;
-      });
-      //shapes.features[0].properties = {name: "test"};
-      // let name = "DefinedAreas";
-  
       
-      //redefine shp-write zip feature with desired file hierarchy
-      let polygons = shpWriteGeojson.polygon(shapes);
-      polygons.geometries = polygons.geometries[0];
-      if (polygons.geometries.length && polygons.geometries[0].length) {
-        this.modShpWrite.write(
-          // field definitions
-          polygons.properties,
-          // geometry type
-          polygons.type,
-          // geometries
-          polygons.geometries,
-          function (err, files) {
-            let fileName = "DefinedAreas";
-            zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-            zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-            zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-            zip.file(fileName + '.prj', shpWritePrj);
-          }
-        );
-      }
 
-      zip.generateAsync({ type: "base64" }).then((file) => {
+      if(info.recharge) {
+
+        //get current details object and increment index
+        let thisDetails = ready[index++];
+
         //generate file details
-        thisDetails.data = this.base64ToArrayBuffer(file);
-        thisDetails.fname = "DefinedAreas.zip";
-        thisDetails.type = 'data:application/zip';
+        let fdetails = genDataFileContents("recharge", info.format);
+        thisDetails.data = fdetails.data;
+        thisDetails.fname = fdetails.name;
+        thisDetails.type = fdetails.type;
 
         //signal ready
         thisDetails.ready = true;
@@ -4133,70 +4178,44 @@ export class MapComponent implements OnInit {
         ready.forEach((item) => {
           allReady = item.ready && allReady;
         });
-        //don't think the way js works will allow for race conditions here (would need to concede resources right here),
-        //but if multiple downloads ever reported then can change ready signal to after this, and check all but the current ready state
         if(allReady) {
           genAndDownloadPackage();
         }
-        // saveAs(new Blob([this.base64ToArrayBuffer(file)], { type: "data:application/zip" }), name + ".zip")
-      });
-    }
-
-    
-
-    if(info.recharge) {
-
-      //get current details object and increment index
-      let thisDetails = ready[index++];
-
-      //generate file details
-      let fdetails = genDataFileContents("recharge", info.format);
-      thisDetails.data = fdetails.data;
-      thisDetails.fname = fdetails.name;
-      thisDetails.type = fdetails.type;
-
-      //signal ready
-      thisDetails.ready = true;
-
-      //check if all items are ready, and download if they are
-      let allReady = true;
-      ready.forEach((item) => {
-        allReady = item.ready && allReady;
-      });
-      if(allReady) {
-        genAndDownloadPackage();
-      }
-    }
-
-    if(info.cover) {
-
-      //get current details object and increment index
-      let thisDetails = ready[index++];
-
-      //generate file details
-      let fdetails = genDataFileContents("landCover", info.format);
-      thisDetails.data = fdetails.data;
-      thisDetails.fname = fdetails.name;
-      thisDetails.type = fdetails.type;
-
-      //signal ready
-      thisDetails.ready = true;
-
-      //check if all items are ready, and download if they are
-      let allReady = true;
-      ready.forEach((item) => {
-        allReady = item.ready && allReady;
-      });
-      if(allReady) {
-        genAndDownloadPackage();
       }
 
-    }
-    
+      if(info.cover) {
 
-    
-  
+        //get current details object and increment index
+        let thisDetails = ready[index++];
+
+        //generate file details
+        let fdetails = genDataFileContents("landCover", info.format);
+        thisDetails.data = fdetails.data;
+        thisDetails.fname = fdetails.name;
+        thisDetails.type = fdetails.type;
+
+        //signal ready
+        thisDetails.ready = true;
+
+        //check if all items are ready, and download if they are
+        let allReady = true;
+        ready.forEach((item) => {
+          allReady = item.ready && allReady;
+        });
+        if(allReady) {
+          genAndDownloadPackage();
+        }
+
+      }
       // saveAs(new Blob([fcontents], {type: 'text/plain;charset=utf-8'}), type + "." + format);
+    }
+    else {
+      //ensure current data is initialized before processing download
+      //use exponential backoff
+      setTimeout(() => {
+        this.download(info, backoff * 2);
+      }, backoff);
+    }
 
   }
 
@@ -5071,7 +5090,6 @@ export class MapComponent implements OnInit {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
     }
-    console.log("test");
 
     // work with coverage object
     let layer = C.dataLayer(coverage.data, { parameter: coverage.parameter, palette: coverage.palette })
@@ -5080,7 +5098,6 @@ export class MapComponent implements OnInit {
         this.map.removeControl(this.legend);
       }
       if(legend) {
-        this.paletteExtent = layer._paletteExtent
         this.createLegend(coverage.style);
       }
     })
@@ -5112,7 +5129,7 @@ export class MapComponent implements OnInit {
   createLegend(style: string) {
     switch(style) {
       case "rate": {
-        let upperRaw = this.paletteExtent[1] * 2 / 5;
+        let upperRaw = this.paletteExtent[1];
         let lowerRaw = this.paletteExtent[0];
         let units = "Inches per Year"
         if(this.unitType == "Metric") {
@@ -5122,7 +5139,7 @@ export class MapComponent implements OnInit {
         }
         let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
         let lower = this.roundToDecimalPlaces(lowerRaw, 2);
-        this.legend = this.addLegend(this.rcPalette.slice(0, Math.ceil(this.rcPalette.length * 2 / 5)), [lower, upper], "Recharge", units);
+        this.legend = this.addLegend(this.rcPalette.slice(0, this.rcPalette.length - this.rechargePaletteTailLength), [lower, upper], "Recharge", units);
         break;
       }
       case "pchange": {
@@ -5198,20 +5215,42 @@ export class MapComponent implements OnInit {
   //   this.loadcovJSON(cover, this.map, this.layers);
   // }
 
-  public changeScenario(type: string) {
+  changeColor(scheme: string) {
+    switch(scheme) {
+      case "usgs": {
+        this.rcPalette = this.USGSStyleRechargePalette();
+        break;
+      }
+      case "blue": {
+        this.rcPalette = this.rechargePalette();
+        break;
+      }
+    }
+    this.paletteType = scheme;
+    if(this.types.recharge.style == "rate") {
+      this.loadRechargeStyle("rate");
+    }
+  }
+
+  public changeScenario(type: string, updateBase: boolean, backoff: number = 1) {
+    if(this.scenariosInitialized) {
+      this.currentScenario = type;
+      if(updateBase) {
+        this.baseScenario = type;
+      }
+  
+      this.metrics = this.createMetrics();
+      this.loadRechargeStyle(this.types.recharge.style);
+    }
     //if all scenarios have not yet been loaded, pause until complete
     //use exponential backoff
-    let backoff = 1;
-    while(!this.scenariosInitialized) {
+    else {
+      //console.log(backoff);
       setTimeout(() => {
-        backoff *= 2;
+        this.changeScenario(type, updateBase, backoff * 2)
       }, backoff);
     }
-
-    this.currentScenario = type;
-
-    this.metrics = this.createMetrics();
-    this.loadRechargeStyle(this.types.recharge.style);
+    
   }
 
   //generate 31 colors
@@ -5378,11 +5417,78 @@ export class MapComponent implements OnInit {
   //   return hex.length == 1 ? "0" + hex : hex;
   // }
 
+  private USGSStyleRechargePalette() {
+    let colors = [[0.758,0.32,0.234],[0.887,0.539,0.117],[0.938,0.691,0.066],
+    [0.965,0.828,0.039],[0.984,0.984,0],[0.578,0.938,0],
+    [0.27,0.898,0],[0.043,0.855,0],[0.031,0.809,0.148],
+    [0.063,0.766,0.273],[0.078,0.719,0.367],[0.098,0.688,0.43],
+    [0.105,0.668,0.473],[0.109,0.648,0.496],[0.121,0.629,0.516],
+    [0.121,0.609,0.535],[0.125,0.586,0.551],[0.125,0.586,0.57],
+    [0.117,0.563,0.578],[0.109,0.523,0.566],[0.102,0.48,0.559],
+    [0.094,0.449,0.547],[0.086,0.418,0.539],[0.078,0.395,0.527],
+    [0.078,0.379,0.527],[0.074,0.348,0.52],[0.074,0.332,0.52],
+    [0.066,0.309,0.508],[0.066,0.293,0.508],[0.059,0.273,0.5],
+    [0.059,0.258,0.5],[0.055,0.234,0.488],[0.055,0.227,0.488],
+    [0.047,0.207,0.477],[0.047,0.199,0.477],[0.047,0.191,0.477],
+    [0.047,0.184,0.477]];
+
+    let purple = [0.48,0.188,0.566];
+    let hexColors = [];
+
+    colors.forEach((color) => {
+      hexColors.push((chroma as any).gl(color).hex());
+    });
+    //console.log(hexColors)
+
+    let purpleTailScale = Math.floor(MapComponent.USGS_PURPLE_RECHARGE / MapComponent.MAX_RECHARGE * colors.length);
+
+    for(let i = 0; i < purpleTailScale; i++) {
+      hexColors.push(hexColors[hexColors.length - 1]);
+    }
+    hexColors.push((chroma as any).gl(purple).hex());
+    this.rechargePaletteTailLength = purpleTailScale + 1;
+
+    //console.log(hexColors);
+    return hexColors;
+  }
+
+
+  // private rechargePalette(): string[] {
+  //   let palette = [];
+  //   //linear segments
+  //   let colorSegments = (chroma as any).scale(["#f7fbff", "#08306b"]).mode('lab').colors(9);
+  //   //colorbrewer segments
+  //   //let colorSegments = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
+  //   let divs = 200;
+  //   let exp = 1.5
+  //   let scale = Math.pow(exp, colorSegments.length - 1);
+  //   let modifier = Math.ceil(divs / scale);
+  //   for(let i = 0; i < colorSegments.length - 1; i++) {
+  //     let numColors = scale / Math.pow(exp, (colorSegments.length - i)) * modifier;
+  //     palette = palette.concat((chroma as any).scale([colorSegments[i], colorSegments[i + 1]]).mode('lab').colors(numColors));
+  //   }
+  //   //console.log(palette);
+      
+  //   // let last = palette.length * 1.5;
+  //   // for(let i = 0; i < last; i++) {
+  //   //   palette.push(palette[palette.length - 1]);
+  //   // }
+
+  //   this.rechargePaletteTailLength = 0;
+
+  //   return palette;
+  // }
 
   private rechargePalette(): string[] {
     let palette = [];
+    //let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
+    let colors = ["#f7fbff", "#08306b"];
+    //let colors = ["#fff7fb", "#ece7f2", "#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", "#0570b0", "#045a8d", "#023858"];
+    //let colors = ["#fff7fb", "#023858"];
+    //let colors = ["#f7fbff", "#0c2f7a"];
+    
     //linear segments
-    let colorSegments = (chroma as any).scale(["#f7fbff", "#08306b"]).mode('lab').colors(9);
+    let colorSegments = (chroma as any).scale(colors).mode('lab').colors(9);
     //colorbrewer segments
     //let colorSegments = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
     let divs = 200;
@@ -5395,10 +5501,13 @@ export class MapComponent implements OnInit {
     }
     //console.log(palette);
       
-    let last = palette.length * 1.5;
-    for(let i = 0; i < last; i++) {
-      palette.push(palette[palette.length - 1]);
-    }
+    // let last = palette.length * 1.5;
+    // for(let i = 0; i < last; i++) {
+    //   palette.push(palette[palette.length - 1]);
+    // }
+
+    this.rechargePaletteTailLength = 0;
+
     return palette;
   }
 
