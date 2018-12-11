@@ -1555,7 +1555,7 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.pchangeExtent, this.rcPalette.length);
+        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.pchangeExtent, this.rcDivergingPalette.length);
         this.types.recharge.palette = C.linearPalette(paletteWindow);
         rechargeData[0] = 0.0001;
         break;
@@ -1573,7 +1573,7 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.diffExtent, this.rcPalette.length);
+        let paletteWindow = this.paletteWindow(this.rcDivergingPalette, [min, max], this.diffExtent, this.rcDivergingPalette.length);
         this.types.recharge.palette = C.linearPalette(paletteWindow);
         rechargeData[0] = 0.0001;
         break;
