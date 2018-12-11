@@ -5269,9 +5269,7 @@ export class MapComponent implements OnInit {
   public changeScenario(type: string, updateBase: boolean, backoff: number = 1) {
     if(this.scenariosInitialized) {
       this.currentScenario = type;
-      if(updateBase) {
-        this.baseScenario = type;
-      }
+      this.baseScenario = updateBase ? type : "recharge_scenario0";
   
       this.metrics = this.createMetrics();
       this.loadRechargeStyle(this.types.recharge.style);
