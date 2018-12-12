@@ -57,6 +57,7 @@ export class MapComponent implements OnInit {
   static readonly USGS_PURPLE_RECHARGE = 450;
 
   rechargePaletteTailLength: number;
+  rechargePaletteHeadLength: number;
 
   currentDataInitialized = false;
   scenariosInitialized = false;
@@ -119,6 +120,17 @@ export class MapComponent implements OnInit {
     totalNoCaprock: any
   }
 
+  scenarioLabelMap = {
+    recharge_scenario0: {
+      baseline: "Baseline Rainfall",
+      current: "Baseline Rainfall"
+    },
+    recharge_scenario1: {
+      baseline: "RCP 8.5",
+      current: "RCP 8.5"
+    }
+  }
+
   scenarioFnames = {
     recharge_scenario0: "_baseline_rainfall",
     recharge_scenario1: "_rainfall_projection_RCP_8.5"
@@ -175,24 +187,27 @@ export class MapComponent implements OnInit {
   static readonly aquiferFiles = {
     aquiferShpFile: "../assets/dlnr_aquifers.zip",
     aquiferGridFile: "/assets/Oahu__75m__AQUI_CODE.asc"
-  } 
-  static readonly caprockFile = "../assets/Oahu__75m__caprock.asc";
+  };
+  static readonly caprockFiles = {
+    caprockShpFile: "../assets/oahu_caprock.zip",
+    caprockGridFile: "../assets/Oahu__75m__caprock.asc"
+  };
 
   rcPalette: string[];
   rcDivergingPalette: string[];
 
   types = {
     landCover: {
-      parameter: 'cover',
-      label: 'Land Cover',
+      parameter: "cover",
+      label: "Land Cover",
       palette: null,
       data: null,
       baseData: null,
       layer: null
     },
     recharge: {
-      parameter: 'recharge',
-      label: 'Recharge Rate',
+      parameter: "recharge",
+      label: "Recharge Rate",
       palette: null,
       data: null,
       baseData: {
@@ -207,7 +222,11 @@ export class MapComponent implements OnInit {
       style: "rate"
     },
     aquifers: {
-      label: 'Aquifers',
+      label: "Aquifers",
+      layer: null
+    },
+    caprocks: {
+      label: "Caprocks",
       layer: null
     }
   };
@@ -1161,6 +1180,9 @@ export class MapComponent implements OnInit {
       this.mapService.setLoading(this, true);
     }, 0);
 
+    this.currentScenario = "recharge_scenario0";
+    this.baseScenario = "recharge_scenario0";
+
     this.metrics = {
       customAreas: [],
       aquifers: [],
@@ -1170,8 +1192,6 @@ export class MapComponent implements OnInit {
       totalNoCaprock: {}
     };
 
-    this.currentScenario = "recharge_scenario0";
-    this.baseScenario = "recharge_scenario0";
     this.shapeMetricsEnabled = false;
     this.interactionType = "custom";
 
@@ -1211,7 +1231,7 @@ export class MapComponent implements OnInit {
           __this.loadCover(__this.types.landCover, false);
         }),
 
-        this.http.get(MapComponent.caprockFile).subscribe(data => {
+        this.http.get(MapComponent.caprockFiles.caprockGridFile).subscribe(data => {
           let details = data.text().split('\n');
           //console.log(details.length);
           for(let i = 6; i < details.length; i++) {
@@ -1311,39 +1331,30 @@ export class MapComponent implements OnInit {
         console.log(e);
       });
 
-      // //load caprock shapes
-      // shp(MapComponent.aquiferFiles.aquiferShpFile).then((geojson) => {
-      //   // this.aquifers = L.featureGroup
-      //   let caprock = L.geoJSON();
-      //   //two shape files, so array
-      //   //might want to just remove "lines" shapefile
-      //   //can break this loop up if affects performance
-      //   geojson[0].features.forEach(aquifer => {
-
-      //     //convert one point to UTM and check if in bounds (if one point in bounds the aquifer should be internal)
-      //     let sampleCoord = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, aquifer.geometry.coordinates[0][0]);
-
-      //     if (sampleCoord[0] >= __this.xmin && sampleCoord[0] <= __this.xmin + __this.xrange
-      //       && sampleCoord[1] >= __this.ymin && sampleCoord[1] <= __this.ymin + __this.yrange
-      //       && aquifer.properties.CODE != 0) {
-
-      //       aquifers.addData(aquifer);
-      //     }
-
-
-      //   });
-      //   caprock.setStyle({
-      //     weight: 3,
-      //     opacity: 1,
-      //     color: 'black',
-      //     fillOpacity: 0
-      //   });
-      //   __this.types.aquifers.layer = aquifers;
-      //   caprock.addTo(__this.map);
-      //   __this.layers.addOverlay(caprock, __this.types.aquifers.label);
-      // }, (e) => {
-      //   console.log(e);
-      // });
+      //load caprock shapes
+      shp(MapComponent.caprockFiles.caprockShpFile).then((geojson) => {
+        console.log(geojson);
+        // this.aquifers = L.featureGroup
+        let caprocks = L.geoJSON();
+        //two shape files, so array
+        //might want to just remove "lines" shapefile
+        //can break this loop up if affects performance
+        geojson.features.forEach(caprock => {
+          caprocks.addData(caprock);
+        });
+        console.log(caprocks);
+        caprocks.setStyle({
+          weight: 3,
+          opacity: 1,
+          color: 'black',
+          fillOpacity: 0
+        });
+        __this.types.caprocks.layer = caprocks;
+        //caprocks.addTo(__this.map);
+        __this.layers.addOverlay(caprocks, __this.types.caprocks.label);
+      }, (e) => {
+        console.log(e);
+      });
     }
 
     return initializeCurrentData().then(() => {
@@ -1516,7 +1527,13 @@ export class MapComponent implements OnInit {
         this.types.recharge.style = "rate";
         for(let i = 0; i < rechargeData.length; i++) {
           if(this.paletteType == "usgs") {
-            rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] <= MapComponent.USGS_PURPLE_RECHARGE ? Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE) : MapComponent.USGS_PURPLE_RECHARGE;
+            let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
+            if(lcVals[i] == 0) {
+              rechargeData[i] = -180;
+            }
+            else {
+              rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] <= MapComponent.USGS_PURPLE_RECHARGE ? Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE) : MapComponent.USGS_PURPLE_RECHARGE;
+            }
           }
           else {
             rechargeData[i] = Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE);
@@ -1599,7 +1616,11 @@ export class MapComponent implements OnInit {
 
   generateReport(unitSystem: string) {
     let data : any = {
-      metrics: this.metrics
+      metrics: this.metrics,
+      scenarioLabels: {
+        baseline: this.scenarioLabelMap[this.baseScenario].baseline,
+        current: this.scenarioLabelMap[this.currentScenario].current
+      }
     }
     switch(unitSystem) {
       case "USC": {
@@ -5173,7 +5194,7 @@ export class MapComponent implements OnInit {
         }
         let upper = this.roundToDecimalPlaces(upperRaw, 2) + "+";
         let lower = this.roundToDecimalPlaces(lowerRaw, 2);
-        this.legend = this.addLegend(this.rcPalette.slice(0, this.rcPalette.length - this.rechargePaletteTailLength), [lower, upper], "Recharge", units);
+        this.legend = this.addLegend(this.rcPalette.slice(this.rechargePaletteHeadLength, this.rcPalette.length - this.rechargePaletteTailLength), [lower, upper], "Recharge", units);
         break;
       }
       case "pchange": {
@@ -5211,8 +5232,21 @@ export class MapComponent implements OnInit {
       let html = "<div style='border-radius: 10px; background-color: lightgray; width: 90px; padding: 10px;'>"
       + "<div>"
       + title
-      + "</div>"
-      + "<div style='display: flex; font-size: 12px;'>"
+      + "</div>";
+      if(this.paletteType == "usgs") {
+        html += "<div style='align-items: center; display: flex; font-size: 12px;'>"
+        + "<div style='padding-right: 5px; padding-top: 5px; padding-bottom: 7px;'>"
+        + "<div style='height: 10px; width: 10px; background-color: "
+        + this.rcPalette[this.rcPalette.length - 1]
+        + "'></div>"
+        + "</div>"
+        + "<div style='align-items: center; display: flex; font-size: 12px;'>";
+        html += this.unitType == "Metric" ? (MapComponent.USGS_PURPLE_RECHARGE * MapComponent.INCH_TO_MILLIMETER_FACTOR).toString() : MapComponent.USGS_PURPLE_RECHARGE.toString();
+        html += "+"
+        + "</div>"
+        + "</div>";
+      }
+      html += "<div style='align-items: center; display: flex; font-size: 12px;'>"
       + "<div style='padding-right: 5px;'>"
       + "<div style='background-image: linear-gradient(to top, ";
       palette.forEach((color, i) => {
@@ -5223,8 +5257,8 @@ export class MapComponent implements OnInit {
       });
       html += "); height: 100px; width: 10px;'></div>"
       + "</div>"
-      + "<div style='height: 100px; display: flex; flex-direction: column;'>"
-      + "<div style='height: 98%;'>"
+      + "<div style='height: 120px; display: flex; flex-direction: column;'>"
+      + "<div style='height: 100%;'>"
       + range[1]
       + "</div>"
       + "<div>"
@@ -5467,18 +5501,27 @@ export class MapComponent implements OnInit {
     let purple = [0.48,0.188,0.566];
     let hexColors = [];
 
+    for(let i = 0; i < colors.length; i++) {
+      hexColors.push("#ffffff");
+    }
+    this.rechargePaletteHeadLength = hexColors.length;
+
     colors.forEach((color) => {
       hexColors.push((chroma as any).gl(color).hex());
     });
     //console.log(hexColors)
 
-    let purpleTailScale = Math.floor(MapComponent.USGS_PURPLE_RECHARGE / MapComponent.MAX_RECHARGE * colors.length);
+    let purpleTailScale = Math.floor((MapComponent.USGS_PURPLE_RECHARGE / MapComponent.MAX_RECHARGE - 1) * colors.length);
 
     for(let i = 0; i < purpleTailScale; i++) {
       hexColors.push(hexColors[hexColors.length - 1]);
     }
     hexColors.push((chroma as any).gl(purple).hex());
     this.rechargePaletteTailLength = purpleTailScale + 1;
+
+    // console.log(hexColors.length);
+    // console.log(colors.length);
+    // console.log(hexColors.length / (450 + 180) * 180);
 
     //console.log(hexColors);
     return hexColors;
@@ -5539,6 +5582,7 @@ export class MapComponent implements OnInit {
     // }
 
     this.rechargePaletteTailLength = 0;
+    this.rechargePaletteHeadLength = 0;
 
     return palette;
   }

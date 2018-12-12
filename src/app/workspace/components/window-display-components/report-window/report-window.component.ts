@@ -297,9 +297,9 @@ export class ReportWindowComponent implements AfterViewInit {
     let columnsName = [
       {title: "Name", dataKey: "name"},
       {title: "Area (" + this.data.unitSystem.units.area + ")", dataKey: "area"},  
-      {title: "Baseline", dataKey: "ormgd"}, 
+      {title: this.data.scenarioLabels.baseline, dataKey: "ormgd"}, 
       {title: "This Analysis", dataKey: "crmgd"},
-      {title: "Baseline", dataKey: "oriny"}, 
+      {title: this.data.scenarioLabels.baseline, dataKey: "oriny"}, 
       {title: "This Analysis", dataKey: "criny"},
       {title: this.data.unitSystem.units.volumetric, dataKey: "diff"},
       {title: "Percent Change", dataKey: "pchange"}
@@ -330,7 +330,7 @@ export class ReportWindowComponent implements AfterViewInit {
       return spacedValue;
     }
   
-    let y = 50;
+    let y = 70;
     
     this.pdf = new jsPDF('p', 'pt');
 
@@ -349,6 +349,23 @@ export class ReportWindowComponent implements AfterViewInit {
     let blankWidth = nameWidth + normalWidth;
 
     let rows = [];
+
+    this.pdf.setFontSize(22);
+    this.pdf.text(50, y, "HiGRE Groundwater Recharge Analysis Report");
+
+    y += 50;
+
+    this.pdf.setFontSize(graphTitleSize);
+    this.pdf.setFont('arial');
+    this.pdf.text(50, y, "This Analysis Rainfall Scenario: " + this.data.scenarioLabels.current);
+
+    y += 50;
+
+    this.pdf.setFontSize(titleSize);
+    this.pdf.text(50, y, "Aquifer Systems*");
+    this.pdf.setFontSize(descriptionSize);
+    this.pdf.text(220, y - 5, "Hydrological units established by the Hawaii State Commission on Water Resource");
+    this.pdf.text(220, y + 5, "Management to manage groundwater resources");
     
     this.pdf.autoTable(infoHeaders, rows, {
       startY: y + 20,
@@ -389,13 +406,7 @@ export class ReportWindowComponent implements AfterViewInit {
         pchange: decimalAlign(aquifer.roundedMetrics[this.data.unitSystem.system].volumetric.pchange),
       });
     });
-
-    this.pdf.setFontSize(titleSize);
-    this.pdf.setFont('arial');
-    this.pdf.text(50, y, "Aquifer Systems*");
-    this.pdf.setFontSize(descriptionSize);
-    this.pdf.text(220, y - 5, "Hydrological units established by the Hawaii State Commission on Water Resource");
-    this.pdf.text(220, y + 5, "Management to manage groundwater resources");
+    
     this.pdf.autoTable(columnsName, rows, {
       startY: y + 50,
       styles: {
@@ -431,17 +442,29 @@ export class ReportWindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
+    rows = [];
+
     y = this.pdf.autoTable.previous.finalY + 50;
 
-    if(y + 50 >= height) {
+    if(y + 100 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+    this.pdf.setFontSize(titleSize);
+    this.pdf.setFont('arial');
+    this.pdf.text(50, y - 10, "Aquifer Systems\nExcluding Caprock*");
+    this.pdf.setFontSize(descriptionSize);
+    this.pdf.text(220, y - 5, "Aquifer systems minus the area covered by caprock (semi-confining, mostly sedimentary unit");
+    this.pdf.text(220, y + 5, "that partly overlies coastal areas of some aquifer systems)");
+
+    y += 20;
+    if(y + 100 >= height) {
       this.pdf.addPage();
       y = 50;
     }
 
-    rows = [];
-
     this.pdf.autoTable(infoHeaders, rows, {
-      startY: y + 20,
+      startY: y,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4, halign: "center"},
       columnStyles: {
@@ -466,14 +489,8 @@ export class ReportWindowComponent implements AfterViewInit {
       })
     })
 
-    this.pdf.setFontSize(titleSize);
-    this.pdf.setFont('arial');
-    this.pdf.text(50, y - 10, "Aquifer Systems\nExcluding Caprock*");
-    this.pdf.setFontSize(descriptionSize);
-    this.pdf.text(220, y - 5, "Aquifer systems minus the area covered by caprock (semi-confining, mostly sedimentary unit");
-    this.pdf.text(220, y + 5, "that partly overlies coastal areas of some aquifer systems)");
     this.pdf.autoTable(columnsName, rows, {
-      startY: y + 50,
+      startY: y + 30,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
@@ -507,6 +524,10 @@ export class ReportWindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
+    
+
+    rows = [];
+
     y = this.pdf.autoTable.previous.finalY + 50;
 
     if(y + 50 >= height) {
@@ -520,10 +541,14 @@ export class ReportWindowComponent implements AfterViewInit {
     this.pdf.setFontSize(descriptionSize);
     this.pdf.text(220, y, "Areas of land cover change designated by the user for this analysis");
 
-    rows = [];
+    y += 20;
+    if(y + 100 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
 
     this.pdf.autoTable(infoHeaders, rows, {
-      startY: y + 20,
+      startY: y,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4, halign: "center"},
       columnStyles: {
@@ -549,7 +574,7 @@ export class ReportWindowComponent implements AfterViewInit {
     });
 
     this.pdf.autoTable(columnsName, rows, {
-      startY: y + 50,
+      startY: y + 30,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
@@ -583,6 +608,8 @@ export class ReportWindowComponent implements AfterViewInit {
       margin: {top: 60}
     });
 
+    rows = [];
+
     y = this.pdf.autoTable.previous.finalY + 50;
 
     if(y + 50 >= height) {
@@ -595,7 +622,12 @@ export class ReportWindowComponent implements AfterViewInit {
     this.pdf.setFont('arial');
     this.pdf.text(50, y, "Summary*");
 
-    rows = [];
+    y += 20;
+    if(y + 75 >= height) {
+      this.pdf.addPage();
+      y = 50;
+    }
+
     let total = this.data.metrics.total
     let totalNoCaprock = this.data.metrics.totalNoCaprock
     let customAreasTotal = this.data.metrics.customAreasTotal;
@@ -612,7 +644,7 @@ export class ReportWindowComponent implements AfterViewInit {
       sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].area)
     });
     rows.push({
-      type: "Total Recharge, Baseline (" + this.data.unitSystem.units.volumetric + ")",
+      type: "Total Recharge, " + this.data.scenarioLabels.baseline + " (" + this.data.unitSystem.units.volumetric + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].volumetric.original),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].volumetric.original),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].volumetric.original),
@@ -628,7 +660,7 @@ export class ReportWindowComponent implements AfterViewInit {
       sp2: decimalAlign(sp2.roundedMetrics[this.data.unitSystem.system].volumetric.current)
     });
     rows.push({
-      type: "Average Recharge, Baseline (" + this.data.unitSystem.units.average + ")",
+      type: "Average Recharge, " + this.data.scenarioLabels.baseline + " (" + this.data.unitSystem.units.average + ")",
       uda: decimalAlign(customAreasTotal.roundedMetrics[this.data.unitSystem.system].average.original),
       total: decimalAlign(total.roundedMetrics[this.data.unitSystem.system].average.original),
       totalNoCaprock: decimalAlign(totalNoCaprock.roundedMetrics[this.data.unitSystem.system].average.original),
@@ -661,7 +693,7 @@ export class ReportWindowComponent implements AfterViewInit {
     });
 
     this.pdf.autoTable(columnsSummary, rows, {
-      startY: y + 20,
+      startY: y,
       styles: {
         overflow: 'linebreak', font: 'arial', fontSize: 9, cellPadding: 4},
       columnStyles: {
@@ -670,7 +702,7 @@ export class ReportWindowComponent implements AfterViewInit {
         totalNoCaprock: {halign: "center"},
         sp1: {halign: "center"},
         sp2: {halign: "center"},
-        type: {columnWidth: 202, overflow: "visible"}
+        type: {columnWidth: 190, overflow: "visible"}
       },
       drawHeaderRow: (row, data) => {
         row.cells.type.styles.halign = "center";
@@ -681,7 +713,7 @@ export class ReportWindowComponent implements AfterViewInit {
         row.cells.sp2.styles.halign = "center";
       },
       drawRow: (row, data) => {
-        row.cells.type.styles.fontSize = 8;
+        row.cells.type.styles.fontSize = 7;
         row.cells.uda.styles.font = "courier";
         row.cells.total.styles.font = "courier";
         row.cells.totalNoCaprock.styles.font = "courier";
@@ -928,7 +960,7 @@ export class ReportWindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline',
+          name: this.data.scenarioLabels.baseline,
           type: 'bar'
         },
         {
@@ -943,7 +975,7 @@ export class ReportWindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline',
+          name: this.data.scenarioLabels.baseline,
           type: 'bar'
         },
         {
@@ -958,7 +990,7 @@ export class ReportWindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline',
+          name: this.data.scenarioLabels.baseline,
           type: 'bar'
         },
         {
@@ -973,7 +1005,7 @@ export class ReportWindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline',
+          name: this.data.scenarioLabels.baseline,
           type: 'bar'
         },
         {
@@ -988,7 +1020,7 @@ export class ReportWindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline',
+          name: this.data.scenarioLabels.baseline,
           type: 'bar'
         },
         {
@@ -1003,7 +1035,7 @@ export class ReportWindowComponent implements AfterViewInit {
         data: [{
           x: [],
           y: [],
-          name: 'Baseline',
+          name: this.data.scenarioLabels.baseline,
           type: 'bar'
         },
         {

@@ -11,12 +11,17 @@
   </div>
 
   <div class="download-button">
-    <button type="button" class="btn btn-primary btn-responsive" (click)="download('PDF')">Download as PDF</button>
+    <button type="button" class="btn btn-responsive pdf-btn" (click)="download('PDF')">Download as PDF</button>
   </div>
 
   <div class="report-container">
     
     <h1>Report for Map {{ id }}</h1>
+    <br>
+    <h4>
+        This Analysis Rainfall Scenario: {{data.scenarioLabels.current}}
+    </h4>
+    <br>
     <table border="0" class="no-border header-table">
       <tr class="no-border">
         <td class="no-border-cell-title"><h2>Aquifer Systems*</h2></td>
@@ -32,7 +37,7 @@
           <hr>
           <table border="0" class="no-border nested-table">
             <tr class="no-border">
-              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">{{data.scenarioLabels.baseline}}</td>
               <td class="no-border-cell-internal">This Analysis</td>
             </tr>
           </table>
@@ -42,7 +47,7 @@
           <hr>
           <table border="0" class="no-border nested-table">
             <tr class="no-border">
-              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">{{data.scenarioLabels.baseline}}</td>
               <td class="no-border-cell-internal">This Analysis</td>
             </tr>
           </table>
@@ -137,7 +142,7 @@
           <hr>
           <table border="0" class="no-border nested-table">
             <tr class="no-border">
-              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">{{data.scenarioLabels.baseline}}</td>
               <td class="no-border-cell-internal">This Analysis</td>
             </tr>
           </table>
@@ -147,7 +152,7 @@
           <hr>
           <table border="0" class="no-border nested-table">
             <tr class="no-border">
-              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">{{data.scenarioLabels.baseline}}</td>
               <td class="no-border-cell-internal">This Analysis</td>
             </tr>
           </table>
@@ -214,7 +219,7 @@
           <hr>
           <table border="0" class="no-border nested-table">
             <tr class="no-border">
-              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">{{data.scenarioLabels.baseline}}</td>
               <td class="no-border-cell-internal">This Analysis</td>
             </tr>
           </table>
@@ -224,7 +229,7 @@
           <hr>
           <table border="0" class="no-border nested-table">
             <tr class="no-border">
-              <td class="no-border-cell-internal">Baseline</td>
+              <td class="no-border-cell-internal">{{data.scenarioLabels.baseline}}</td>
               <td class="no-border-cell-internal">This Analysis</td>
             </tr>
           </table>
@@ -297,7 +302,7 @@
         <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].area}}</td>
       </tr>
       <tr>
-        <th>Total Recharge, Baseline ({{data.unitSystem.units.volumetric}})</th>
+        <th>Total Recharge, {{data.scenarioLabels.baseline}} ({{data.unitSystem.units.volumetric}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].volumetric.original}}</td>
@@ -313,7 +318,7 @@
         <td>{{data.metrics.specialAquifers[1].roundedMetrics[data.unitSystem.system].volumetric.current}}</td>
       </tr>
       <tr>
-        <th>Average Recharge, Baseline ({{data.unitSystem.units.average}})</th>
+        <th>Average Recharge, {{data.scenarioLabels.baseline}} ({{data.unitSystem.units.average}})</th>
         <td>{{data.metrics.customAreasTotal.roundedMetrics[data.unitSystem.system].average.original}}</td>
         <td>{{data.metrics.total.roundedMetrics[data.unitSystem.system].average.original}}</td>
         <td>{{data.metrics.totalNoCaprock.roundedMetrics[data.unitSystem.system].average.original}}</td>

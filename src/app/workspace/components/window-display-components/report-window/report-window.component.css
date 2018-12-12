@@ -130,7 +130,10 @@
     padding: 10px;
   }
   
-  
+  .pdf-btn {
+    background-color: rgb(56, 117, 194);
+    color: white;
+  }
   
   .phantom-scroll-lock {
     position: absolute;
@@ -154,7 +157,7 @@
   
   .no-border-cell-title {
     border: none;
-    width: 40%;
+    width: 45%;
   }
   
   .no-border-cell-description {
