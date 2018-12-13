@@ -639,11 +639,20 @@ export class MapComponent implements OnInit {
   }
 
   private repackageShapes(shapes: any): any {
-    let componentIndices = []
+    let componentIndices = [];
     let indices = this.getInternalIndexes(shapes.toGeoJSON());
     indices.forEach((index) => {
       componentIndices.push(this.getComponents(index));
     });
+    return this.generateGeometriesFromPoints(componentIndices);
+  }
+
+  private repackageIndices(internalIndices: number[]) {
+    let componentIndices = [];
+    internalIndices.forEach((index) => {
+      componentIndices.push(this.getComponents(index));
+    });
+    console.log(componentIndices);
     return this.generateGeometriesFromPoints(componentIndices);
   }
 
@@ -688,7 +697,7 @@ export class MapComponent implements OnInit {
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
-  //need to add overwriting if indicated
+  
   //need to check if shapes have valid property (moved so have to check here)
   addUploadedLandcoverByShape(shapes: any, lcProperty: string, overwrite: boolean) {
     //create new geojson set with only items that have landcover property
@@ -723,9 +732,11 @@ export class MapComponent implements OnInit {
 
         //here need to also check if overwrite base values
         internal.forEach((index) => {
-          covData[index] = lc;
-          if(overwrite) {
-            this.types.landCover.baseData[index] = lc;
+          if(covData[index] != 0) {
+            covData[index] = lc;
+            if(overwrite) {
+              this.types.landCover.baseData[index] = lc;
+            }
           }
         });
 
@@ -1216,8 +1227,6 @@ export class MapComponent implements OnInit {
           //get range + 75 to account for cell width
           __this.xrange = Math.abs(xs[0] - xs[xs.length - 1]) + 75
           __this.yrange = Math.abs(ys[0] - ys[ys.length - 1]) + 75;
-    
-    
           
     
           __this.gridWidthCells = xs.length;
@@ -2591,8 +2600,8 @@ export class MapComponent implements OnInit {
             
             for(let i = 0; i < covData.length; i++) {
 
-              //don't replace if nodata value, also check if value the same since don't need to get recharge from db for correct values
-              if(data.cover.values[i] != data.cover.nodata && covData[i] != data.cover.values[i]) {
+              //don't replace if nodata value or background cell, also check if value the same since don't need to get recharge from db for correct values
+              if(data.cover.values[i] != data.cover.nodata && covData[i] != 0 && covData[i] != data.cover.values[i]) {
                 covData[i] = data.cover.values[i];
 
                 changedIndexComponents.push(this.getComponents(i));
@@ -2639,7 +2648,7 @@ export class MapComponent implements OnInit {
 
             // let returnedIndices = [];
             //let errors = [];
-            let errors = 0;
+            // let errors = 0;
 
             //debugging------------------------------------------------------------------------------------------------
 
@@ -2669,11 +2678,11 @@ export class MapComponent implements OnInit {
 
                     //debugging------------------------------------------------------------------------------------------------
 
-                    if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
-                      //console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
-                      //errors.push();
-                      errors++;
-                    }
+                    // if(this.types.landCover.baseData[index] == covData[index] && recordValue != this.types.recharge.baseData[scenario][index]) {
+                    //   //console.log("scenario: " + scenario + " Land Cover code: " + covData[index] + "\n" + "x: " + x + " y: " + y + "\n" + "expected: " + this.types.recharge.baseData[scenario][index] + " got: " + recordValue);
+                    //   //errors.push();
+                    //   errors++;
+                    // }
 
                     //debugging------------------------------------------------------------------------------------------------
 
@@ -2685,7 +2694,7 @@ export class MapComponent implements OnInit {
 
               //debugging------------------------------------------------------------------------------------------------
 
-              console.log(errors);
+              // console.log(errors);
               // console.log(update);
 
               // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
@@ -2846,15 +2855,36 @@ export class MapComponent implements OnInit {
       // }
     });
 
-    //check to ensure the minimum distance between generated lines in geometry is sufficient, and that the constructed query will not be too long
-    //start at a base 8x8 subgrid
+    //determine divisions based on bounding box dimensions, and ensure maximum potential points in each box less than 10000
+    let cellWidth = xrange.max - xrange.min + 1;
+    let cellHeight = yrange.max - yrange.min + 1;
+    let maxCells = cellWidth * cellHeight;
+    let queryCellLimit = 10000;
+    //use half of query cell limit because faster for smaller queries
+    let imposedCellLimit = queryCellLimit / 2;
+    let whRatio = cellWidth / cellHeight;
+
     let divisions = {
-      x: 8,
-      y: 8
+      x: 1,
+      y: 1
     };
 
-    let chunkSizeX = Math.ceil((xrange.max - xrange.min) / divisions.x);
-    let chunkSizeY = Math.ceil((yrange.max - yrange.min) / divisions.y);
+    while(maxCells > imposedCellLimit) {
+      //split proportionally
+      if(divisions.x / divisions.y < whRatio) {
+        divisions.x++;
+      }
+      else {
+        divisions.y++;
+      }
+      let subWidth = Math.ceil(cellWidth / divisions.x);
+      let subHeight = Math.ceil(cellHeight / divisions.y);
+      maxCells = subWidth * subHeight;
+    }
+    console.log(divisions);
+
+    let chunkSizeX = Math.ceil((xrange.max - xrange.min + 1) / divisions.x);
+    let chunkSizeY = Math.ceil((yrange.max - yrange.min + 1) / divisions.y);
 
     let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
     let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
@@ -2881,11 +2911,19 @@ export class MapComponent implements OnInit {
         });
       }
     }
+    // console.log(chunkSizeX);
+    // console.log(chunkSizeY);
+    // console.log(xrange);
+    // console.log(yrange);
     points.forEach((point) => {
       let offsetX = point.x - xrange.min;
       let offsetY = point.y - yrange.min;
+      //console.log(offsetX);
+      //console.log(offsetY);
       let chunkX = Math.floor(offsetX / chunkSizeX);
       let chunkY = Math.floor(offsetY / chunkSizeY);
+      //console.log(chunkX);
+      //console.log(chunkY);
       if(point.x < bounds[chunkX][chunkY].xrange.min) {
         bounds[chunkX][chunkY].xrange.min = point.x;
       }
@@ -4640,6 +4678,11 @@ export class MapComponent implements OnInit {
     let geojsonObjects = this.highlightedItems.toGeoJSON();
     let indexes = this.getInternalIndexes(geojsonObjects);
 
+    if(indexes.length > 10000) {
+      console.log("large");
+      geojsonObjects = this.repackageIndices(indexes);
+    }
+
     if(indexes.length == 0) {
       this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small", type: "Info"}});
     }
@@ -4940,6 +4983,7 @@ export class MapComponent implements OnInit {
 
         let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
         let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+        let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
 
         let minxIndex;
         let maxxIndex;
@@ -4967,14 +5011,19 @@ export class MapComponent implements OnInit {
           minyIndex = ys.findIndex(function (val) { return val <= ymax });
         }
 
+        let index;
         //check if shape boundaries out of coverage range
-        if (minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
+        if(minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
           //convert cell coords to long lat and raycast
           //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-          for (let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-            for (let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-              if (this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                indexes.push(this.getIndex(xIndex, yIndex))
+          for(let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+            for(let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+              index = this.getIndex(xIndex, yIndex);
+              //don't include if background
+              if(lcVals[index] != 0) {
+                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                  indexes.push(index)
+                }
               }
             }
           }
@@ -5140,10 +5189,15 @@ export class MapComponent implements OnInit {
 
   //prolly need parameter to say whether to start layer toggled on or off, might want to add this to types def
   //update names and make sure works
-  private loadCover(coverage, legend: boolean) {
+  private loadCover(coverage: any, legend: boolean) {
     if(coverage.layer != undefined) {
       this.map.removeControl(coverage.layer);
       this.layers.removeLayer(coverage.layer);
+    }
+    if(coverage == this.types.landCover) {
+      for(let i = 0; i < 30; i++) {
+        coverage.data._covjson.ranges.cover.values[i] = i;
+      }
     }
 
     // work with coverage object
@@ -5233,7 +5287,7 @@ export class MapComponent implements OnInit {
       + "<div>"
       + title
       + "</div>";
-      if(this.paletteType == "usgs") {
+      if(this.paletteType == "usgs" && this.types.recharge.style == "rate") {
         html += "<div style='align-items: center; display: flex; font-size: 12px;'>"
         + "<div style='padding-right: 5px; padding-top: 5px; padding-bottom: 7px;'>"
         + "<div style='height: 10px; width: 10px; background-color: "

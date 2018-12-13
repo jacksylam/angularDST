@@ -90,12 +90,15 @@ export class DBConnectService {
     .pipe(
       retry(3),
       mergeMap((data) => {
-        let result = resultSet.concat(data.result as Cover[]);
-        //console.log("got");
-        if(result.length == 10000) {
+        let localResult = data.result as Cover[]
+        let result = resultSet.concat(localResult);
+        //console.log(localResult);
+        if(localResult.length >= 10000) {
+          console.log("next");
           return this.spatialSearch(geometry, offset + 10000, result);
         }
         else {
+          console.log("done");
           return of(result);
         }
         //return this.spatialSearch(geometry, 10000);
