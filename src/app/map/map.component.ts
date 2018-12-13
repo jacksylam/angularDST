@@ -123,11 +123,11 @@ export class MapComponent implements OnInit {
   scenarioLabelMap = {
     recharge_scenario0: {
       baseline: "Baseline Rainfall",
-      current: "Baseline Rainfall"
+      current: "Baseline Rainfall 1978-2007"
     },
     recharge_scenario1: {
       baseline: "RCP 8.5",
-      current: "RCP 8.5"
+      current: "RCP 8.5 2041-2070"
     }
   }
 
@@ -1342,7 +1342,7 @@ export class MapComponent implements OnInit {
 
       //load caprock shapes
       shp(MapComponent.caprockFiles.caprockShpFile).then((geojson) => {
-        console.log(geojson);
+        //console.log(geojson);
         // this.aquifers = L.featureGroup
         let caprocks = L.geoJSON();
         //two shape files, so array
@@ -1351,7 +1351,7 @@ export class MapComponent implements OnInit {
         geojson.features.forEach(caprock => {
           caprocks.addData(caprock);
         });
-        console.log(caprocks);
+        //console.log(caprocks);
         caprocks.setStyle({
           weight: 3,
           opacity: 1,
