@@ -27,12 +27,12 @@ import { ModifiedShpwriteService } from './shared/modified-shpwrite.service';
 import { CovjsonTemplateService } from './shared/covjson-template.service';
 import { AQUIFER_NAME_MAP, AQUIFER_CODE_MAP } from './shared/aquifer_name_map';
 import * as chroma from '../../../node_modules/chroma-js/chroma.js';
-
+import * as CovJSON from 'covjson-reader';
+import { WebWorkerService } from 'ngx-web-worker';
 
 
 
 declare let L: any;
-declare let CovJSON: any;
 declare let C: any;
 declare let require: any;
 
@@ -252,7 +252,7 @@ export class MapComponent implements OnInit {
   };
 
 
-  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog, private modShpWrite: ModifiedShpwriteService, private covjsonTemplate: CovjsonTemplateService) {
+  constructor(private DBService: DBConnectService, private mapService: MapService, private windowService: WindowService, private http: Http, private dialog: MatDialog, private modShpWrite: ModifiedShpwriteService, private covjsonTemplate: CovjsonTemplateService, private webWorker: WebWorkerService) {
     //should put all these in constructors to ensure initialized before use
     this.mapService.setMap(this);
   }
@@ -652,7 +652,7 @@ export class MapComponent implements OnInit {
     internalIndices.forEach((index) => {
       componentIndices.push(this.getComponents(index));
     });
-    console.log(componentIndices);
+    //console.log(componentIndices);
     return this.generateGeometriesFromPoints(componentIndices);
   }
 
@@ -1209,11 +1209,31 @@ export class MapComponent implements OnInit {
     let __this = this;
 
     let pause = 1000;
+
+    let startLoad = new Date().getTime();
+    
+    let loadDataArrayFromASC = (data) => {
+      let details = data.split('\n');
+      let dataArray = []
+      //console.log(details.length);
+      for(let i = 6; i < details.length; i++) {
+        //get data values after first six detail lines
+        //split on spaces, tabs, or commas for values
+        dataArray = dataArray.concat(details[i].trim().split(/[ \t,]+/));
+        
+        //if whitespace at the end might reult in whitespace only element, remove these
+        if(dataArray[dataArray.length - 1].trim() == "") {
+          dataArray.splice(dataArray.length - 1, 1);
+        }
+      }
+      return dataArray;
+    };
     
     //if still slow can add pauses within these sub-funtions
     //this is still slow, should modify some
     //load current data, needed for metric computations
     let initializeCurrentData = (): Promise<any> => {
+
       let tasks = [
         CovJSON.read(MapComponent.landCoverFile).then((coverage) => {
           let xs = coverage._covjson.domain.axes.x.values;
@@ -1240,36 +1260,10 @@ export class MapComponent implements OnInit {
           __this.loadCover(__this.types.landCover, false);
         }),
 
-        this.http.get(MapComponent.caprockFiles.caprockGridFile).subscribe(data => {
-          let details = data.text().split('\n');
-          //console.log(details.length);
-          for(let i = 6; i < details.length; i++) {
-            //get data values after first six detail lines
-            //split on spaces, tabs, or commas for values
-            this.caprock = this.caprock.concat(details[i].trim().split(/[ \t,]+/));
-            
-            //if whitespace at the end might reult in whitespace only element, remove these
-            if(this.caprock[this.caprock.length - 1].trim() == "") {
-              this.caprock.splice(this.caprock.length - 1, 1);
-            }
-          }
-        }),
+        this.http.get(MapComponent.caprockFiles.caprockGridFile).toPromise(),
     
         //load aquifer grid
-        this.http.get(MapComponent.aquiferFiles.aquiferGridFile).subscribe(data => {
-          let details = data.text().split('\n');
-          //console.log(details.length);
-          for(let i = 6; i < details.length; i++) {
-            //get data values after first six detail lines
-            //split on spaces, tabs, or commas for values
-            this.aquifers = this.aquifers.concat(details[i].trim().split(/[ \t,]+/));
-            
-            //if whitespace at the end might reult in whitespace only element, remove these
-            if(this.aquifers[this.aquifers.length - 1].trim() == "") {
-              this.aquifers.splice(this.aquifers.length - 1, 1);
-            }
-          }
-        }),
+        this.http.get(MapComponent.aquiferFiles.aquiferGridFile).toPromise(),
 
         CovJSON.read(MapComponent.rechargeFiles[this.currentScenario]).then(function (coverage) {
           //deepcopy values for comparisons with modified types
@@ -1366,26 +1360,29 @@ export class MapComponent implements OnInit {
       });
     }
 
-    return initializeCurrentData().then(() => {
-      return new Promise((resolve) => {
-        this.currentDataInitialized = true;
-        //can resolve once the current imdata initialization is complete
-        resolve();
-        setTimeout(() => {
-          initializeRemainingScenarios().then(() => {
-            //indicate scenario initialization complete
-            this.scenariosInitialized = true;
-            setTimeout(() => {
-              initializeAesthetics();
-            }, pause);
-          });
-        }, pause); 
+    return initializeCurrentData().then((resolveVals) => {
+      let workerPromises = [this.webWorker.run(loadDataArrayFromASC, resolveVals[1].text()), this.webWorker.run(loadDataArrayFromASC, resolveVals[2].text())];
+      console.log("main load took: " + (new Date().getTime() - startLoad).toString() + "ms");
+      setTimeout(() => {
+        initializeRemainingScenarios().then(() => {
+          //indicate scenario initialization complete
+          this.scenariosInitialized = true;
+          setTimeout(() => {
+            initializeAesthetics();
+          }, pause);
+        });
+      }, pause); 
+      return Promise.all(workerPromises).then((data) => {
+        this.caprock = data[0];
+        this.aquifers = data[1];
+        return new Promise((resolve) => {
+          this.currentDataInitialized = true;
+          //can resolve once the current data initialization is complete
+          resolve();
+        });
       });
     });
   }
-
-
-
 
 
 
@@ -2881,7 +2878,7 @@ export class MapComponent implements OnInit {
       let subHeight = Math.ceil(cellHeight / divisions.y);
       maxCells = subWidth * subHeight;
     }
-    console.log(divisions);
+    //console.log(divisions);
 
     let chunkSizeX = Math.ceil((xrange.max - xrange.min + 1) / divisions.x);
     let chunkSizeY = Math.ceil((yrange.max - yrange.min + 1) / divisions.y);

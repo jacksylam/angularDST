@@ -57,6 +57,7 @@ import { DisplayWrapperComponent } from 'app/workspace/components/window-display
 import { DisplayUnitComponent } from './workspace/components/window-display-components/display-unit/display-unit.component'
 import { VisWindowComponent } from './workspace/components/window-display-components/vis-window/vis-window.component';
 import { ReportWindowComponent } from './workspace/components/window-display-components/report-window/report-window.component';
+import { WebWorkerService } from 'ngx-web-worker';
 
 import { RouteReuseStrategy } from '@angular/router';
 import { CustomReuseStrategy } from './reuse-strategy';
@@ -116,7 +117,8 @@ import {MatTooltipModule} from '@angular/material/tooltip'
     {
       provide: RouteReuseStrategy,
       useClass: CustomReuseStrategy
-    }
+    },
+    WebWorkerService
   ],
   bootstrap: [AppComponent],
   entryComponents: [

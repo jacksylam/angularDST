@@ -241,12 +241,12 @@
   
   @keyframes ellipsis {
     to {
-      width: 1.25em;
+      width: 1em;
     }
   }
   
   @-webkit-keyframes ellipsis {
     to {
-      width: 1.25em;    
+      width: 1em;    
     }
   }

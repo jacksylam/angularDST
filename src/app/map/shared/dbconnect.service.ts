@@ -94,11 +94,11 @@ export class DBConnectService {
         let result = resultSet.concat(localResult);
         //console.log(localResult);
         if(localResult.length >= 10000) {
-          console.log("next");
+          //console.log("next");
           return this.spatialSearch(geometry, offset + 10000, result);
         }
         else {
-          console.log("done");
+          //console.log("done");
           return of(result);
         }
         //return this.spatialSearch(geometry, 10000);
