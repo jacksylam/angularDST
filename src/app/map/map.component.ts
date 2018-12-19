@@ -2594,7 +2594,7 @@ export class MapComponent implements OnInit {
             // let subarrayCounter = 0;
             //let changedIndexComponents = [[]];
             let changedIndexComponents = [];
-            
+            let messageShown = false;
             for(let i = 0; i < covData.length; i++) {
 
               //don't replace if nodata value or background cell, also check if value the same since don't need to get recharge from db for correct values
@@ -2624,6 +2624,11 @@ export class MapComponent implements OnInit {
                 if(info.overwrite) {
                   this.types.landCover.baseData[i] = data.cover.values[i];
                 }
+              }
+              else if(data.cover.values[i] != data.cover.nodata && data.cover.values[i] != 0 && covData[i] == 0 && !messageShown) {
+                //console.log(data.cover.values[i]);
+                this.dialog.open(MessageDialogComponent, {data: {message: "Attempted to change background cell.\nPlease note that changes to background cells will not be included.", type: "Warning"}});
+                messageShown = true;
               }
 
               
@@ -4673,216 +4678,225 @@ export class MapComponent implements OnInit {
     //this.downloadShapefile(this.highlightedItems.toGeoJSON());
 
     let geojsonObjects = this.highlightedItems.toGeoJSON();
-    let indexes = this.getInternalIndexes(geojsonObjects);
-
-    if(indexes.length > 10000) {
-      console.log("large");
-      geojsonObjects = this.repackageIndices(indexes);
-    }
+    let backgroundIndices = [];
+    let indexes = this.getInternalIndexes(geojsonObjects, backgroundIndices);
 
     if(indexes.length == 0) {
-      this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small", type: "Info"}});
+      this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small or contain no valid cells", type: "Info"}});
+      return;
     }
-    else {
 
-      let covData = this.types.landCover.data._covjson.ranges.cover.values;
+    if(backgroundIndices.length > 0) {
+      this.dialog.open(MessageDialogComponent, {data: {message: "Background cells have been selected.\nPlease note that changes to background cells will not be included.", type: "Warning"}});
+    }
 
+    let covData = this.types.landCover.data._covjson.ranges.cover.values;
+    
+    if(type == "advanced") {
+      if(indexes.length + backgroundIndices.length > 10000) {
+        console.log("large");
+        geojsonObjects = this.repackageIndices(indexes);
+      }
       //backup values to restore on data failure
       let backupData = Array.from(covData);
-      
-      if(type == "advanced") {
 
-        let info: any = {}
+      let info: any = {}
 
-        let containedTypes = new Set();
+      let containedTypes = new Set();
 
-        indexes.forEach(index => {
-          containedTypes.add(COVER_INDEX_DETAILS[covData[index]].type);
-        });
+      indexes.forEach(index => {
+        containedTypes.add(COVER_INDEX_DETAILS[covData[index]].type);
+      });
 
-        info.sourceTypes = Array.from(containedTypes);
+      info.sourceTypes = Array.from(containedTypes);
 
-        info.allTypes = Object.keys(COVER_ENUM);
+      info.allTypes = Object.keys(COVER_ENUM);
 
-        info.state = this.advancedMappingState;
+      info.state = this.advancedMappingState;
 
-        this.dialog.open(AdvancedMappingDialogComponent, {data: info, maxHeight: "90vh"}).afterClosed()
-        .subscribe((data) => {
-          //console.log(data);
-          //default closing disabled, data should always exist, still check just in case
-          if(data) {
-            //check if a mapping was created or if operation canceled
-            if(data.mapping) {
+      this.dialog.open(AdvancedMappingDialogComponent, {data: info, maxHeight: "90vh"}).afterClosed()
+      .subscribe((data) => {
+        //console.log(data);
+        //default closing disabled, data should always exist, still check just in case
+        if(data) {
+          //check if a mapping was created or if operation canceled
+          if(data.mapping) {
 
-              let covRemap = new Promise((resolve) => {
-                indexes.forEach(index => {
-                  //set to default type
-                  let mappedType = data.mapping.default;
-                  let currentType = COVER_INDEX_DETAILS[covData[index]].type;
-                  //if mapping exists assign to mapped type
-                  if(data.mapping[currentType]) {
-                    mappedType = data.mapping[currentType];
-                  }
-      
-                  //if mapped type is base assign base value
-                  if(mappedType == "base") {
-                    covData[index] = this.types.landCover.baseData[index];
-                  }
-                  //if mapped type isn't "no change" change cover to mapped value
-                  else if(mappedType != "No Change") {
-                    covData[index] = COVER_ENUM[mappedType];
-                  }
-      
-                });
-                //reload layer from changes
-                this.loadCover(this.types.landCover, false);
-                resolve()
+            let covRemap = new Promise((resolve) => {
+              indexes.forEach(index => {
+                //set to default type
+                let mappedType = data.mapping.default;
+                let currentType = COVER_INDEX_DETAILS[covData[index]].type;
+                //if mapping exists assign to mapped type
+                if(data.mapping[currentType]) {
+                  mappedType = data.mapping[currentType];
+                }
+    
+                //if mapped type is base assign base value
+                if(mappedType == "base") {
+                  covData[index] = this.types.landCover.baseData[index];
+                }
+                //if mapped type isn't "no change" change cover to mapped value
+                else if(mappedType != "No Change") {
+                  covData[index] = COVER_ENUM[mappedType];
+                }
+    
               });
+              //reload layer from changes
+              this.loadCover(this.types.landCover, false);
+              resolve()
+            });
 
-              this.updateRecharge(geojsonObjects, (update) => {
-                //ensure coverage remapping complete before processing recharge values
-                covRemap.then(() => {
-                  update.forEach((area) => {
-                    //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
-                    area.forEach((record) => {
-                      let recordBase = record.value;
-                      let x = recordBase.x;
-                      let y = recordBase.y;
-                      let index = this.getIndex(x, y);
-                      //does the array include base? if not have to shift
-      
-                      //coverage reassignment completed first, so use this value (covData[index]) to get index in db results
-                      let mappedType = covData[index];
+            this.updateRecharge(geojsonObjects, (update) => {
+              //ensure coverage remapping complete before processing recharge values
+              covRemap.then(() => {
+                update.forEach((area) => {
+                  //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+                  area.forEach((record) => {
+                    let recordBase = record.value;
+                    let x = recordBase.x;
+                    let y = recordBase.y;
+                    let index = this.getIndex(x, y);
+                    //does the array include base? if not have to shift
+    
+                    //coverage reassignment completed first, so use this value (covData[index]) to get index in db results
+                    let mappedType = covData[index];
 
-                      Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-                        //background is not included in the database so indexes shifted by 1
-                        //if background type set recharge rate to 0
-                        let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+                    Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+                      //background is not included in the database so indexes shifted by 1
+                      //if background type set recharge rate to 0
+                      let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
-                        this.types.recharge.currentData[scenario][index] = recordValue;
-                      });
-
+                      this.types.recharge.currentData[scenario][index] = recordValue;
                     });
+
                   });
-                  this.updateMetrics(geojsonObjects);
-                  this.loadRechargeStyle(this.types.recharge.style);
                 });
-                
-              }, (error) => {
-                //restore land cover on failure
-                backupData.forEach((value, i) => {
-                  covData[i] = value;
-                });
-                this.loadCover(this.types.landCover, false);
+                this.updateMetrics(geojsonObjects);
+                this.loadRechargeStyle(this.types.recharge.style);
               });
               
-            }
-
-            //save state
-            this.advancedMappingState = data.state;
-          }
-        });
-
-        // this.updateRecharge(type, geojsonObjects, (update) => {
-        //   update.forEach(area => {
-        //     //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
-        //     area.forEach(record => {
-        //       let recordBase = record.value;
-        //       let x = recordBase.x;
-        //       let y = recordBase.y;
-        //       let index = this.getIndex(x, y);
-        //       //does the array include base? if not have to shift
-        //       rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
-        //     });
-        //   });
-
-        //   this.updateMetrics(geojsonObjects);
-        //   //reenable report generation
-        // });
-        //get enclosed land cover types and pass to dialog
-        //asynchronously submit database request since need same areas regardless of landcover values
-        //get mapping back from dialog
-        /*
-        use format: 
-          {
-            <source land cover>: <destination land cover>
-            ...
-          }
-          create full mapping for all contained land covers for efficiency
-          if default value selected mapping should have all non-selected land covers mapped to this values
-          if default value is "no change" should be mapped to themselves
-        */
-      }
-      //type base indicates should be changed back to base values
-      else if (type == "base") {
-        indexes.forEach(index => {
-          covData[index] = this.types.landCover.baseData[index];
-          Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-            this.types.recharge.currentData[scenario][index] = this.types.recharge.baseData[scenario][index];
-          });
-        });
-        this.loadCover(this.types.landCover, false);
-
-        this.updateMetrics(geojsonObjects);
-        this.loadRechargeStyle(this.types.recharge.style);
-      }
-      else {
-        this.updateRecharge(geojsonObjects, (update) => {
-          update.forEach(area => {
-            //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
-            area.forEach(record => {
-              let recordBase = record.value;
-              let x = recordBase.x;
-              let y = recordBase.y;
-              let index = this.getIndex(x, y);
-              
-              let mappedType = COVER_ENUM[type];
-
-              Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-                //background is not included in the database so indexes shifted by 1
-                //if background type set recharge rate to 0
-                let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
-                this.types.recharge.currentData[scenario][index] = recordValue;
-                
+            }, (error) => {
+              //restore land cover on failure
+              backupData.forEach((value, i) => {
+                covData[i] = value;
               });
+              this.loadCover(this.types.landCover, false);
+            });
+            
+          }
+
+          //save state
+          this.advancedMappingState = data.state;
+        }
+      });
+
+      // this.updateRecharge(type, geojsonObjects, (update) => {
+      //   update.forEach(area => {
+      //     //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+      //     area.forEach(record => {
+      //       let recordBase = record.value;
+      //       let x = recordBase.x;
+      //       let y = recordBase.y;
+      //       let index = this.getIndex(x, y);
+      //       //does the array include base? if not have to shift
+      //       rechargeVals[index] = recordBase[this.currentScenario][COVER_ENUM[type]];
+      //     });
+      //   });
+
+      //   this.updateMetrics(geojsonObjects);
+      //   //reenable report generation
+      // });
+      //get enclosed land cover types and pass to dialog
+      //asynchronously submit database request since need same areas regardless of landcover values
+      //get mapping back from dialog
+      /*
+      use format: 
+        {
+          <source land cover>: <destination land cover>
+          ...
+        }
+        create full mapping for all contained land covers for efficiency
+        if default value selected mapping should have all non-selected land covers mapped to this values
+        if default value is "no change" should be mapped to themselves
+      */
+    }
+    //type base indicates should be changed back to base values
+    else if (type == "base") {
+      indexes.forEach(index => {
+        covData[index] = this.types.landCover.baseData[index];
+        Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+          this.types.recharge.currentData[scenario][index] = this.types.recharge.baseData[scenario][index];
+        });
+      });
+      this.loadCover(this.types.landCover, false);
+
+      this.updateMetrics(geojsonObjects);
+      this.loadRechargeStyle(this.types.recharge.style);
+    }
+    else {
+      if(indexes.length + backgroundIndices.length > 10000) {
+        console.log("large");
+        geojsonObjects = this.repackageIndices(indexes);
+      }
+      //backup values to restore on data failure
+      let backupData = Array.from(covData);
+
+      this.updateRecharge(geojsonObjects, (update) => {
+        update.forEach(area => {
+          //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
+          area.forEach(record => {
+            let recordBase = record.value;
+            let x = recordBase.x;
+            let y = recordBase.y;
+            let index = this.getIndex(x, y);
+            
+            let mappedType = COVER_ENUM[type];
+
+            Object.keys(this.types.recharge.currentData).forEach((scenario) => {
+              //background is not included in the database so indexes shifted by 1
+              //if background type set recharge rate to 0
+              let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
+              this.types.recharge.currentData[scenario][index] = recordValue;
+              
             });
           });
-          this.updateMetrics(geojsonObjects);
-          this.loadRechargeStyle(this.types.recharge.style);
-          //reenable report generation
-        }, (error) => {
-          //restore land cover on failure
-          backupData.forEach((value, i) => {
-            covData[i] = value;
-          });
-          this.loadCover(this.types.landCover, false);
         });
-
-        indexes.forEach(index => {
-          covData[index] = COVER_ENUM[type];
+        this.updateMetrics(geojsonObjects);
+        this.loadRechargeStyle(this.types.recharge.style);
+        //reenable report generation
+      }, (error) => {
+        //restore land cover on failure
+        backupData.forEach((value, i) => {
+          covData[i] = value;
         });
-
-        //reload layer from changes
         this.loadCover(this.types.landCover, false);
-      }
-
-      let unhighlight = {
-        weight: 3,
-        opacity: 0.5,
-        color: 'black',  //Outline color
-        fillOpacity: 0
-      };
-  
-      this.highlightedItems.eachLayer((layer) => {
-        layer.setStyle(unhighlight);
-        layer.highlighted = false;
-        this.highlightedItems.removeLayer(layer);
       });
-      
+
+      indexes.forEach(index => {
+        covData[index] = COVER_ENUM[type];
+      });
+
+      //reload layer from changes
+      this.loadCover(this.types.landCover, false);
     }
+
+    let unhighlight = {
+      weight: 3,
+      opacity: 0.5,
+      color: 'black',  //Outline color
+      fillOpacity: 0
+    };
+
+    this.highlightedItems.eachLayer((layer) => {
+      layer.setStyle(unhighlight);
+      layer.highlighted = false;
+      this.highlightedItems.removeLayer(layer);
+    });
+      
   }
 
-  private getInternalIndexes(geojsonFeatures: any): number[] {
+  private getInternalIndexes(geojsonFeatures: any, backgroundIndices: number[] = null): number[] {
     let indexes = [];
     geojsonFeatures.features.forEach(shape => {
       //console.log(shape);
@@ -5020,6 +5034,11 @@ export class MapComponent implements OnInit {
               if(lcVals[index] != 0) {
                 if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
                   indexes.push(index)
+                }
+              }
+              else if(backgroundIndices != null) {
+                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                  backgroundIndices.push(index)
                 }
               }
             }

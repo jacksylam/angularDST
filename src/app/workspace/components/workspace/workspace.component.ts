@@ -16,7 +16,7 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
   idPos = [];
 
   constructor(private componentFactoryResolver: ComponentFactoryResolver, private dialog: MatDialog) {
-    this.dialog.open(TermsOfUseComponent);
+    this.dialog.open(TermsOfUseComponent, {maxHeight: "90vh"});
   }
 
   ngOnInit() {
