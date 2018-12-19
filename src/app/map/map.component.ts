@@ -4203,6 +4203,7 @@ export class MapComponent implements OnInit {
         let i = 0;
         this.drawnItems.eachLayer((layer) => {
           shapes.features[i++].properties.name = this.customAreaMap[layer._leaflet_id].name;
+          shapes.features[i++].properties.scenario = this.scenarioLabelMap[this.currentScenario].current;
         });
         //shapes.features[0].properties = {name: "test"};
         // let name = "DefinedAreas";
