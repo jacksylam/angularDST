@@ -4202,8 +4202,9 @@ export class MapComponent implements OnInit {
         //toGeoJSON seems to use eachLayer function, so should be same order, having a hard time finding full source code in readable format, so hopefully won't cause problems
         let i = 0;
         this.drawnItems.eachLayer((layer) => {
-          shapes.features[i++].properties.name = this.customAreaMap[layer._leaflet_id].name;
-          shapes.features[i++].properties.scenario = this.scenarioLabelMap[this.currentScenario].current;
+          shapes.features[i].properties.name = this.customAreaMap[layer._leaflet_id].name;
+          shapes.features[i].properties.scenario = this.scenarioLabelMap[this.currentScenario].current;
+          i++;
         });
         //shapes.features[0].properties = {name: "test"};
         // let name = "DefinedAreas";
