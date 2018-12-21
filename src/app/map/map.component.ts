@@ -3440,7 +3440,7 @@ export class MapComponent implements OnInit {
           }
 
 
-          else if(format == "asc") {
+          else if(format == "asc" || format == "ascii" || format == "txt") {
             test = (data) => {
 
               //INSTEAD OF THIS, LETS JUST CONSTRUCT A FULL DATA GRID, FILL IN MISSING VALUES WITH NO DATA VALUE
