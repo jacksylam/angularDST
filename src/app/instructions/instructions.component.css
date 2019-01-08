@@ -1,7 +1,8 @@
-.toggleButton {
+.toggle-button {
     position: absolute;
     background-color: rgb(56, 117, 194);
     transform: translateX(-15px);
+    left: 50%;
     color: white;
     bottom: 0px;
     width: 30px;
@@ -16,19 +17,25 @@
     font-size: 35px;
 }
 
-.toggleButton:hover {
+.toggle-button:hover {
     cursor: pointer;
 }
 
-!http://jsfiddle.net/cope360/KbFGv/1/
+.height-balancer {
+    width: 10px;
+    height: 0px;
+    float: right;
+    clear: right;
+    background-color: red;
+}
 
 img {
-    position: absolute;
-    width: 100%;
+    width: 50%;
+    max-width: calc(100% - 300px);
     height: auto;
-    bottom: 25px;
-    display: block;
     border-style: double;
+    float: right;
+    clear: right;
 }
 
 .header {
@@ -45,15 +52,16 @@ img {
     clear: both;
 }
 
-.image-container {
-    position: relative;
+.button-container {
     right: 0px;
     float: right;
     width: 50%;
-    max-width: calc(100% - 400px);
+    max-width: calc(100% - 300px);
     transform: translateX(25px);
     text-align: center;
-    height: 118px;
+    height: 300px;
+    float: right;
+    clear: right;
 }
 
 table {
@@ -83,6 +91,8 @@ li {
     width: 90%;
     left: 5%;
     padding-bottom: 100px;
+    float: right;
+    clear: right;
 }
 
 .clearfix::after {

@@ -32,8 +32,10 @@ export class InstructionsComponent implements OnInit {
 
   mouseDown = false;
   scrolled = false;
-  expandHeight = 118 + 25;
+  expandHeight = 0;
   retractHeight = 0;
+  bounce = false;
+
 
   constructor(private changeDetector: ChangeDetectorRef) { }
 
@@ -44,34 +46,29 @@ export class InstructionsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.retractHeight = Math.max(window.pageYOffset - 125, 0);
+    this.retractHeight = window.pageYOffset;
 
-    document.addEventListener('mousedown', () => {
-      this.mouseDown = true;
-    });
+    // document.addEventListener('mousedown', () => {
+    //   this.mouseDown = true;
+    // });
 
-    document.addEventListener('mouseup', () => {
-      this.mouseDown = false;
-      if(this.scrolled) {
-        this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-        this.retractHeight = Math.max(window.pageYOffset - 125, 0);
-        this.scrolled = false;
-      }
-    });
+    // document.addEventListener('mouseup', () => {
+    //   this.mouseDown = false;
+    //   if(this.scrolled) {
+    //     this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
+    //     this.retractHeight = Math.max(window.pageYOffset - 125, 0);
+    //     this.scrolled = false;
+    //   }
+    // });
 
     document.addEventListener('scroll', (e) => {
-      if(this.toggleMessage == "Show Image" || !this.mouseDown) {
-        this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-        this.retractHeight = Math.max(window.pageYOffset - 125, 0);
-      }
-      else {
-        this.scrolled = true;
-      }
+      this.expandHeight = Math.max(window.pageYOffset - 75), 0;
+      this.retractHeight = window.pageYOffset;
     });
 
     window.addEventListener("resize", () => {
       this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-        this.retractHeight = Math.max(window.pageYOffset - 125, 0);
+      this.retractHeight = window.pageYOffset;
     });
   }
 
@@ -79,19 +76,17 @@ export class InstructionsComponent implements OnInit {
     this.image.nativeElement.setAttribute("src", src);
     this.ref.nativeElement.setAttribute("href", src);
     this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-    this.retractHeight = Math.max(window.pageYOffset - 125, 0);
+    this.retractHeight = window.pageYOffset;
   }
 
   toggleImage() {
     if(this.toggleMessage == "Hide Image") {
       this.image.nativeElement.style.visibility = "hidden";
-      this.imageContainer.nativeElement.style.position = "absolute";
       this.arrow.nativeElement.innerHTML = "&#187;";
       this.toggleMessage = "Show Image";
     }
     else {
       this.image.nativeElement.style.visibility = "visible";
-      this.imageContainer.nativeElement.style.position = "relative";
       this.arrow.nativeElement.innerHTML = "&#171;";
       this.toggleMessage = "Hide Image";
     }

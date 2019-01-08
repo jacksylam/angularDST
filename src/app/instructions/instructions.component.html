@@ -7,16 +7,16 @@
 
   <br>
   
+
   <div class="body">
-    <div class="height-balancer">
 
-    </div>
-
-    <div #imageContainer class="image-container" [@toggle]="{value: toggleMessage, params: {expanded: expandHeight, retracted: retractHeight}}">
-      <div>
+    <div class="height-balancer" [@toggle]="{value: toggleMessage, params: {expanded: expandHeight, retracted: retractHeight}}"></div>
+      <div #imageContainer>
         <a #ref target="_blank" href="../assets/instruction_images/lc_vis.PNG"><img #image (load)="initHeight()" src="../assets/instruction_images/lc_vis.PNG" alt="Web Interface Flow Chart"></a>
       </div>
-      <div (click)="toggleImage()" class="toggleButton" matTooltip="{{toggleMessage}}">
+
+      <div class="button-container">
+      <div (click)="toggleImage()" class="toggle-button" matTooltip="{{toggleMessage}}">
         <div>
           <div #arrow class="arrow">
             &#171;
@@ -24,7 +24,8 @@
         </div>
       </div>
     </div>
-
+    
+    
     <p>
       The <a routerLink="/workspace">Workspace</a> should start with a map open. To add additional maps for analysis, click the “New Map” button in the top left corner of the screen.
     </p>
