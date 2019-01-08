@@ -53,15 +53,13 @@ img {
 }
 
 .button-container {
-    right: 0px;
-    float: right;
+    position: absolute;
+    right: calc(5% - 15px);
     width: 50%;
     max-width: calc(100% - 300px);
     transform: translateX(25px);
     text-align: center;
     height: 300px;
-    float: right;
-    clear: right;
 }
 
 table {

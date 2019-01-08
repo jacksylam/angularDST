@@ -81,12 +81,12 @@ export class InstructionsComponent implements OnInit {
 
   toggleImage() {
     if(this.toggleMessage == "Hide Image") {
-      this.image.nativeElement.style.visibility = "hidden";
+      this.imageContainer.nativeElement.style.display = "none";
       this.arrow.nativeElement.innerHTML = "&#187;";
       this.toggleMessage = "Show Image";
     }
     else {
-      this.image.nativeElement.style.visibility = "visible";
+      this.imageContainer.nativeElement.style.display = "block";
       this.arrow.nativeElement.innerHTML = "&#171;";
       this.toggleMessage = "Hide Image";
     }
