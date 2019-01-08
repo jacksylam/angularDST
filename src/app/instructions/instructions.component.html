@@ -8,39 +8,61 @@
   <br>
   
   <div class="body">
+    <div class="height-balancer">
+
+    </div>
+
+    <div #imageContainer class="image-container" [@toggle]="{value: toggleMessage, params: {expanded: expandHeight, retracted: retractHeight}}">
+      <div>
+        <a #ref target="_blank" href="../assets/instruction_images/lc_vis.PNG"><img #image (load)="initHeight()" src="../assets/instruction_images/lc_vis.PNG" alt="Web Interface Flow Chart"></a>
+      </div>
+      <div (click)="toggleImage()" class="toggleButton" matTooltip="{{toggleMessage}}">
+        <div>
+          <div #arrow class="arrow">
+            &#171;
+          </div>
+        </div>
+      </div>
+    </div>
+
     <p>
       The <a routerLink="/workspace">Workspace</a> should start with a map open. To add additional maps for analysis, click the “New Map” button in the top left corner of the screen.
     </p>
 
-    <h2>
+    <h2 (mouseenter)="hover('../assets/instruction_images/lc_vis.PNG')">
       Land Cover Visualization
     </h2>
-    <h3>
-      Draw Tools
-    </h3>
 
-    <p>
-      The initial map view represents the current land cover usage for the island of Oahu. To create an area to update, the leaflet draw tools on the left side of the map can be used. 
-    </p>
+    <div (mouseenter)="hover('../assets/instruction_images/draw_controls.PNG')">
+    
+      <h3>
+        Draw Tools
+      </h3>
 
-    <ul>
-      <li>
-        The hexagon button allows drawing freeform polygons by clicking the map at the desired vertex positions.
-      </li>
-      <li>
-        The rectangle button allows rectangles to be drawn by clicking at a desired starting point and dragging the mouse to adjust the width and height of the rectangle.
-      </li>
-      <li>
-        The map point button allows for a single map cell (75m<sup>2</sup> area) to be selected.
-      </li>
-    </ul>
+      <p>
+        The initial map view represents the current land cover usage for the island of Oahu. To create an area to update, the leaflet draw tools on the left side of the map can be used. 
+      </p>
 
-    <p>
-      When finished drawing, click the “Cancel” button to exit draw mode.
-    </p>
-    <p>
-      The two buttons below the draw controls allow polygons to be modified or deleted.
-    </p>
+      <ul>
+        <li>
+          The hexagon button allows drawing freeform polygons by clicking the map at the desired vertex positions.
+        </li>
+        <li>
+          The rectangle button allows rectangles to be drawn by clicking at a desired starting point and dragging the mouse to adjust the width and height of the rectangle.
+        </li>
+        <li>
+          The map point button allows for a single map cell (75m<sup>2</sup> area) to be selected.
+        </li>
+      </ul>
+
+      <p>
+        When finished drawing, click the “Cancel” button to exit draw mode.
+      </p>
+      <p>
+        The two buttons below the draw controls allow polygons to be modified or deleted.
+      </p>
+
+    </div>
 
     <h3>
       Menu Panel
@@ -51,26 +73,56 @@
     </p>
 
     <ul>
-      <li>
-        Use the climate dropdown menu to change the rainfall scenario for the map.
+      <li (mouseenter)="hover('../assets/instruction_images/climate_controls.PNG')">
+        Climate
+        <ul>
+          <li>
+            Selecting "Update Default Scenario" causes recharge rates to be compared to the default data of selected scenario for comparitive metrics such as recharge difference and percent change. If this option is not selected, the baseline rainfall scenario is used as a point of comparison for metric creation.
+          </li>
+          <li>
+            The climate dropdown menu changes the rainfall scenario for the map.
+          </li>
+          <ul>
+            <li>
+                Baseline rainfall is based on rainfall data taken between 1978 and 2007.
+            </li>
+            <li>
+                Rainfall projection RCP 8.5 is based on dryer climate projections for the years 2041-2070.
+            </li>
+          </ul>
+        </ul>
       </li>
-      <ul>
-        <li>
-              Baseline rainfall is based on rainfall data taken between 1978 and 2007.
-        </li>
-        <li>
-              Rainfall projection RCP 8.5 is based on dryer climate projections for the years 2041-2070.
-        </li>
-      </ul>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/lc_controls.PNG')">
         The buttons in the land covers area will change the land cover within any selected shapes that have been drawn on the map. Shapes can be selected or deselected by clicking on them (start out selected and are automatically deselected once a change is applied to them).
       </li>
       <ul>
-        <li>
-          “Create Advance Mapping” allows specific land cover types to be mapped to other land cover types. The “+” and “-“ buttons can be used to add or remove mappings. The “Everything Else” option allows a default cover to be selected for any land covers without a specific mapping. The “Submit” button will apply the specified mapping to selected areas.
+        <li (mouseenter)="hover('../assets/instruction_images/advanced_mapping.PNG')">
+          Advanced mapping
+          <ul>
+            <li>
+              Allows specific land cover types to be mapped to other land cover types.
+            </li>
+            <li>
+              The “+” and “-“ buttons can be used to add or remove mappings.
+            </li>
+            <li>
+              The “Everything Else” option allows a default cover to be selected for any land covers without a specific mapping.
+            </li>
+            <li>
+              When finished, clicking “Submit” will apply the specified mapping to selected areas.
+            </li>
+          </ul>
         </li>
-        <li>
-          “Revert to Baseline Land Cover” sets any selected areas back to its initial land cover (the land cover that was there when the application was loaded, or the new baseline land cover if a land cover raster was uploaded with the “Overwrite default land cover values?” option selected).
+        <li (mouseenter)="hover('../assets/instruction_images/draw_controls.PNG')">
+          Revert to Default Land Cover
+          <ul>
+            <li>
+              Sets any selected areas back to its initial land cover value.
+            </li>
+            <li>
+              The default land cover is the land cover that was there when the application was loaded, or the new default land cover if a land cover raster was uploaded with the “Overwrite default land cover values?” option selected.
+            </li>
+          </ul>
         </li>
         <li>
           The remaining buttons will change any selected areas to the indicated land cover type. For example, clicking the “Alien Forest” button will change the land cover for any selected areas to alien forest.
@@ -78,13 +130,15 @@
       </ul>
     </ul>
 
-    <h2>
-      Recharge Visualization
-    </h2>
+    <div (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
+      <h2>
+        Recharge Visualization
+      </h2>
 
-    <p>
-      To change to the recharge portion of the visualization, hover over the layer controls in the upper left corner of the map and select “Recharge Rate” (to switch back to the land cover visualization select “Land Cover”). This displays the level of groundwater recharge for each map cell.
-    </p>
+      <p>
+        To change to the recharge portion of the visualization, hover over the layer controls in the upper right corner of the map and select “Recharge Rate” (to switch back to the land cover visualization select “Land Cover”). This displays the level of groundwater recharge for each map cell.
+      </p>
+    </div>
 
     <h3>
       Details Panel
@@ -104,7 +158,7 @@
 
     <ul>
       <li>
-        Visualization Style
+        Visualization style
         <ul>
           <li>
             “Recharge Rate” displays the groundwater recharge rates for the island based on modifications made.
@@ -118,7 +172,15 @@
         </ul>
       </li>
       <li>
-        Data Mode
+        Color scheme
+        <ul>
+          <li>
+            Changes the color gradient for the recharge rate map between a diverging orange-blue gradient and a monochromatic blue gradient.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Data mode
         <ul>
           <li>
               The data mode changes the area for which the metrics in the details panel are displayed.
@@ -141,12 +203,210 @@
       </li>
     </ul>
 
+
+
+
+
+
+
+
+
+
+
     <h2>
-      Application Controls and Report Generation
+      Importing and Exporting Items
     </h2>
 
     <p>
-      The control panel on the right side of the window provides various options for the map.
+      The "Load/Save Changes" section of the control panel on the right side of the map allows users to import and export items to and from the application.
+    </p>
+
+    <ul>
+      <li>
+        Import
+        <ul>
+          <li>
+            Allows shapefile data or land cover data grids to be loaded onto the map.
+          </li>
+          <li>
+            Upload shapefile
+            <ul>
+              <li>
+                All of the required shapefile components (.shp, .dbf, .shx, .prj) should be stored in a zip folder.
+              </li>
+              <li>
+                Shapefiles can be uploaded in three ways
+                <ul>
+                  <li>
+                    Custom areas
+                    <ul>
+                      <li>
+                        These areas will be assigned their own metrics for analysis and will be modifiable through the application interface.
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    Reference layer
+                    <ul>
+                      <li>
+                        The geometries in the shapefile will be loaded into a toggleable layer and added to the layer control menu with the aquifer and caprock overlays.
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    Land cover update
+                    <ul>
+                      <li>
+                        A property of the geometries in the shapefile will be used to update all map cells within the shape.
+                      </li>
+                      <li>
+                        Selecting “Update land cover using shape properties (if available)” will include this procedure in the former two options, or the “Land Cover Update Only” option will apply this procedure without displaying the contained shapes on the map.
+                      </li>
+                      <li>
+                        The default property name for the land cover code is “lcCode”. This is modifiable in “advanced options”.
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            Upload land cover raster
+            <ul>
+              <li>
+                Allows a grid of land cover values to be imported as an ASCII file (accepts .asc, .ascii, or .txt file extensions) or a CoverageJSON file (.covjson file extension).
+                <ul>
+                  <li>
+                    ASCII files
+                    <ul>
+                      <li>
+                        Must contain six header lines
+                        <ul>
+                          <li>
+                            ncols – the number of columns
+                          </li>
+                          <li>
+                            nrows – the number of rows
+                          </li>
+                          <li>
+                            xllcorner – the UTM coordinate of the lower left x grid coordinate
+                          </li>
+                          <li>
+                            yllcorner – the UTM coordinate of the lower left y grid coordinate
+                          </li>
+                          <li>
+                            cellsize – resolution of cells
+                          </li>
+                          <li>
+                            NODATA_value – value for cells with no data (pre-existing value will be used for these cells)
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        UTM values must be provided as zone 4, NAD83 in meters.
+                      </li>
+                      <li>
+                        The data grid must be a subset of the data grid used by default. The default grid has 887 columns, 689 rows, an xllcorner corner value of 574000, yllcorner value of 2350025, and a cell size of 75 – resolution of 75m<sup>2</sup>.
+                      </li>
+                      <li>
+                        Data that does not align with the application’s value grid will be shifted up and to the left to match the nearest cell in the application grid.
+                      </li>
+                      <li>
+                        Grids with a different resolution from the application grid will be coerced into a resolution of 75m<sup>2</sup>. This may result in a loss of data or precision depending on the resolution of the imported grid.
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    CoverageJSON files
+                    <ul>
+                      <li>
+                        Data uploaded in this format must align with the application grid.
+                      </li>
+                      <li>
+                        x and y position arrays should have a constant spacing of 75 between all values and represent the position of cell centroids.
+                      </li>
+                      <li>
+                        “ranges” field must have a parameter label of “cover”.
+                      </li>
+                      <li>
+                        Information on the CoverageJSON format specification can be found here. The set of labels used by this application can be retrieved by exporting a copy of the land cover data, selecting the covjson format.
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            Advanced options
+            <ul>
+              <li>
+                “Overwrite default land cover values?” allows the default values for the map to be overwritten with the imported values. This will cause comparative metrics such as recharge percent change and difference to be evaluated against the imported land cover values instead of the pre-loaded land cover data for the island. This option is available if a modification to the map’s land cover data is being made.
+              </li>
+              <li>
+                “Enter the name of the property you would like to associate with the given data type.” allows the name of the property to be associated with the name of the object or the land cover code for updates to be customized for shapefile imports. This option is available if a shapefile is being imported to the application.
+              </li>
+            </ul>
+          </li>
+          <li>
+            Imported files may be contained inside a zip folder and up to one shapefile and one land cover raster may be imported at once. Invalid files or additional files will be ignored.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Export
+        <ul>
+          <li>
+            Allows the map’s land cover, recharge, or custom area data to be saved. This data can then be imported to restore the map state or used for further analysis or manipulation outside the application.
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+
+
+
+
+
+
+
+    <h2>
+      Report Generation 
+    </h2>
+
+    <p>
+      Clicking the “Generate Report” button in the control panel on the right side of the map will bring up a report containing a detailed breakdown of groundwater recharge rate metrics.
+    </p>
+
+    <ul>
+      <li>
+        Report includes aquifer metrics with and without the caprock, custom area metrics, and a summary of metrics for the entire island with and without caprock and combined custom area metrics (note that the metrics of the combined set of aquifers should be identical to that of the full island).
+      </li>
+      <li>
+        The scenario name next to “This Analysis Rainfall Scenario” is the climate scenario selected for analysis (can be changed in the menu panel of the land cover visualization).
+      </li>
+      <li>
+        The set of comparison metrics, listed as “Baseline Rainfall” or “RCP 8.5”, represents the metrics of the baseline rainfall, 1978-2007, or rainfall projection RCP 8.5, 2041-2070, respectively using the default land cover values for the island.
+      </li>
+      <li>
+        A PDF version of the report can be downloaded by clicking the “Download as PDF” button in the top right corner of the report window.
+      </li>
+    </ul>
+
+
+
+
+
+
+
+
+    <h2>
+      Map Controls
+    </h2>
+    
+    <p>
+      In addition to importing/exporting items and report generation, the control panel on the right side of the window provides various options for the map.
     </p>
 
     <ul>
@@ -162,50 +422,7 @@
       <li>
         “Units” allows the units used by the application to be changed between united states customary and metric.
       </li>
-      <li>
-        “Load/Save Changes” allows a state to be uploaded or downloaded.
-        <ul>
-          <li>
-            Upload
-            <ul>
-              <li>
-                The “Upload Shapefile” option allows a shapefile to be loaded onto the map wither as a custom area, reference layer, or land cover update.
-                <ul>
-                  <li>
-                    Any option can also allow the shape’s properties to set the land cover for the uploaded shape.
-                  </li>
-                </ul>
-              </li>
-              <li>
-                The “Upload Land Cover Raster” option allows a grid of land cover codes to be uploaded to the map.
-              </li>
-              <li>
-                The advanced options allows uploaded land covers to be used as the default land cover (values compared against in analysis) and allows the user to specify the property names of shape names or land cover code for uploaded shape files.
-              </li>
-              <li>
-                Files can be uploaded as a zip folder with all the necessary files for shapefile option or as a .asc or .covjson file for land cover rasters. Uploaded files can also be stored in a zip file for multiple uploads.
-              </li>
-            </ul>
-          </li>
-          <li>
-            Download
-            <ul>
-              <li>
-                Allows the set of user defined areas to be downloaded as a shapefile or the land cover or recharge values to be downloaded as .asc or .covjson files.
-              </li>
-              <li>
-                If multiple download types are selected all the requested items will be downloaded in a zip file.
-              </li>
-              <li>
-                Downloading the current land cover and set of custom areas will allow the download to be uploaded at a later time, reinstating the current application state.
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-      <li>
-        “Generate Report” creates a new window displaying a detailed breakdown of the current groundwater recharge rates and variation from baseline values for the island. This analysis includes analysis for aquifers with and without the caprock included, user-defined areas, and a map summary with and without the caprock included. Graphs of the change in recharge rates are also displayed. This report can be downloaded as a PDF using the “Download as PDF” button in the top left corner of the report window.
-      </li>
+      
     </ul>
 
     <h2>
@@ -218,6 +435,15 @@
       </li>
       <li>
         Scrolling on the map allows the map view to be zoomed in or out. Alternatively, the + and – buttons above the draw controls can be used for more rapid zooming.
+      </li>
+      <li>
+        In addition to the recharge and land cover visualizations, a simple satellite image of the map can be viewed by selecting “Satellite Image” from the layer controls in the upper right corner of the map.
+      </li>
+      <li>
+        The layer controls can also be used to toggle on and off the aquifer, caprock, or uploaded reference layers. These layers are listed under the three map visualization types.
+      </li>
+      <li>
+        Clicking the name tab of a panel will toggle it between expanded and hidden.
       </li>
     </ul>
 

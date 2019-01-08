@@ -11,7 +11,7 @@
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-responsive btn-label">Climate</button>
           <div class="checkbox-div">
-            <mat-checkbox [(ngModel)]="updateBase" (ngModelChange)="climateChange()"><div class="checkbox-text">Update Baseline Scenario</div></mat-checkbox>
+            <mat-checkbox [(ngModel)]="updateBase" (ngModelChange)="climateChange()"><div class="checkbox-text">Update Default Scenario</div></mat-checkbox>
           </div> 
           <mat-select [(ngModel)]="selected" (ngModelChange)="climateChange()">
             <mat-option value="Baseline Rainfall 1978-2007">Baseline Rainfall 1978-2007</mat-option>
@@ -25,7 +25,7 @@
 
           <button type="button" class="btn btn-responsive btn-ivory btn-custom-t4" (click)="changeCover('advanced')">Create Advanced Mapping</button>
 
-          <button type="button" class="btn btn-responsive btn-ivory btn-custom-t4" (click)="changeCover('base')">Revert to Baseline Land Cover</button>
+          <button type="button" class="btn btn-responsive btn-ivory btn-custom-t4" (click)="changeCover('base')">Revert to Default Land Cover</button>
 
           <p></p>
 

@@ -8,10 +8,6 @@
   border-radius: 0px 0px 0px 5px;
 }
 
-::ng-deep .mat-checkbox-checked .mat-checkbox-background {
-  background-color: rgb(56, 117, 194) !important;
-}
-
 .colorDisplay {
   display: inline-block;
   width: 30px;
