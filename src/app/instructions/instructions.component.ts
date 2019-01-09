@@ -7,13 +7,23 @@ import {animate, transition, state, trigger, style} from '@angular/animations';
   templateUrl: './instructions.component.html',
   styleUrls: ['./instructions.component.css'],
   animations: [
-    trigger('toggle', [
+    trigger('toggleButton', [
       state("Hide Image", style({
-        height: "{{expanded}}px",
+        top: "{{expanded}}px",
       }),
       {params: {expanded: "0px"}}),
       state("Show Image", style({
-        height: "{{retracted}}px",
+        top: "{{retracted}}px",
+      }),
+      {params: {retracted: "0px"}}),
+      transition("* => *", animate('500ms ease-in-out')),
+    ]),
+    trigger('toggleImage', [
+      state("Hide Image", style({
+        transform: "translateY(0px)",
+      })),
+      state("Show Image", style({
+        transform: "translateY(-{{retracted}}px)",
       }),
       {params: {retracted: "0px"}}),
       transition("* => *", animate('500ms ease-in-out')),
@@ -25,6 +35,7 @@ export class InstructionsComponent implements OnInit {
 
   @ViewChild('imageContainer') imageContainer;
   @ViewChild('image') image;
+  @ViewChild('heightBalancer') heightBalancer;
   @ViewChild('ref') ref;
   @ViewChild('arrow') arrow;
 
@@ -32,9 +43,10 @@ export class InstructionsComponent implements OnInit {
 
   mouseDown = false;
   scrolled = false;
-  expandHeight = 0;
-  retractHeight = 0;
-  bounce = false;
+
+  buttonExpand: number;
+  buttonRetract: number;
+  imgHeight: number;
 
 
   constructor(private changeDetector: ChangeDetectorRef) { }
@@ -46,37 +58,33 @@ export class InstructionsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.retractHeight = window.pageYOffset;
+    this.buttonRetract = 0;
+    this.buttonExpand = 182;
+    this.imgHeight = 182;
 
-    // document.addEventListener('mousedown', () => {
-    //   this.mouseDown = true;
-    // });
-
-    // document.addEventListener('mouseup', () => {
-    //   this.mouseDown = false;
-    //   if(this.scrolled) {
-    //     this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-    //     this.retractHeight = Math.max(window.pageYOffset - 125, 0);
-    //     this.scrolled = false;
-    //   }
-    // });
 
     document.addEventListener('scroll', (e) => {
-      this.expandHeight = Math.max(window.pageYOffset - 75), 0;
-      this.retractHeight = window.pageYOffset;
+      let height = Math.max(window.pageYOffset - 145, 0);
+      this.heightBalancer.nativeElement.style.height = height + 'px';
+      this.buttonExpand = height + this.imgHeight - 15;
+      // console.log(this.imgHeight);
+      // console.log(this.buttonExpand);
+      this.buttonRetract = height;
     });
 
     window.addEventListener("resize", () => {
-      this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-      this.retractHeight = window.pageYOffset;
+      let height = Math.max(window.pageYOffset - 145, 0);
+      this.heightBalancer.nativeElement.style.height = height + 'px';
+      this.buttonExpand = height + this.imgHeight - 15;
+      this.buttonRetract = height;
     });
   }
 
   hover(src) {
     this.image.nativeElement.setAttribute("src", src);
     this.ref.nativeElement.setAttribute("href", src);
-    this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-    this.retractHeight = window.pageYOffset;
+    this.imgHeight = this.image.nativeElement.offsetHeight;
+    this.buttonExpand = Math.max(window.pageYOffset - 145, 0) + this.imgHeight - 15;
   }
 
   toggleImage() {
@@ -89,6 +97,8 @@ export class InstructionsComponent implements OnInit {
       this.imageContainer.nativeElement.style.display = "block";
       this.arrow.nativeElement.innerHTML = "&#171;";
       this.toggleMessage = "Hide Image";
+      this.imgHeight = this.image.nativeElement.offsetHeight;
+      this.buttonExpand = Math.max(window.pageYOffset - 145, 0) + this.imgHeight - 15;
     }
   }
 

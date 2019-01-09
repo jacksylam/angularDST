@@ -22,18 +22,26 @@
 }
 
 .height-balancer {
-    width: 10px;
+    width: 0px;
     height: 0px;
     float: right;
     clear: right;
+}
+
+.image-container {
     background-color: red;
+    width: 50%;
+    max-width: calc(100% - 300px);
+    float: right;
+    clear: right;
 }
 
 img {
-    width: 50%;
-    max-width: calc(100% - 300px);
+    width: 100%;
     height: auto;
-    border-style: double;
+    outline: 5px double rgb(56, 117, 194);
+    outline-offset: -15px;
+    padding: 15px;
     float: right;
     clear: right;
 }
@@ -57,9 +65,9 @@ img {
     right: calc(5% - 15px);
     width: 50%;
     max-width: calc(100% - 300px);
-    transform: translateX(25px);
     text-align: center;
-    height: 300px;
+    height: 25px;
+    top: 0px;
 }
 
 table {
