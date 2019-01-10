@@ -17,6 +17,10 @@
     font-size: 35px;
 }
 
+body {
+    overflow: hidden !important;
+}
+
 .toggle-button:hover {
     cursor: pointer;
 }
@@ -61,8 +65,9 @@ img {
 }
 
 .button-container {
+    background-color: purple;
     position: absolute;
-    right: calc(5% - 15px);
+    right: 0px;
     width: 50%;
     max-width: calc(100% - 300px);
     text-align: center;

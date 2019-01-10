@@ -11,11 +11,11 @@
   <div class="body">
 
     <div #heightBalancer class="height-balancer"></div>
-      <div #imageContainer class="image-container" [@toggleImage]="{value: toggleMessage, params: {retracted: imgHeight}}">
+      <div #imageContainer class="image-container" [@toggleImage]="{value: toggleMessage, params: {retracted: imgOffset}}">
         <a #ref target="_blank" href="../assets/instruction_images/lc_vis.PNG"><img #image src="../assets/instruction_images/lc_vis.PNG" alt="Web Interface Flow Chart"></a>
       </div>
 
-      <div class="button-container" [@toggleButton]="{value: toggleMessage, params: {expanded: buttonExpand, retracted: buttonRetract}}">
+      <div #buttonContainer class="button-container" [@toggleButton]="{value: toggleMessage, params: {retracted: imgOffset}}">
       <div (click)="toggleImage()" class="toggle-button" matTooltip="{{toggleMessage}}">
         <div>
           <div #arrow class="arrow">

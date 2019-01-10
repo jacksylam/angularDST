@@ -9,11 +9,10 @@ import {animate, transition, state, trigger, style} from '@angular/animations';
   animations: [
     trigger('toggleButton', [
       state("Hide Image", style({
-        top: "{{expanded}}px",
-      }),
-      {params: {expanded: "0px"}}),
+        transform: "translateY(0px)",
+      })),
       state("Show Image", style({
-        top: "{{retracted}}px",
+        transform: "translateY(-{{retracted}}px)",
       }),
       {params: {retracted: "0px"}}),
       transition("* => *", animate('500ms ease-in-out')),
@@ -34,6 +33,7 @@ import {animate, transition, state, trigger, style} from '@angular/animations';
 export class InstructionsComponent implements OnInit {
 
   @ViewChild('imageContainer') imageContainer;
+  @ViewChild('buttonContainer') buttonContainer;
   @ViewChild('image') image;
   @ViewChild('heightBalancer') heightBalancer;
   @ViewChild('ref') ref;
@@ -44,47 +44,130 @@ export class InstructionsComponent implements OnInit {
   mouseDown = false;
   scrolled = false;
 
-  buttonExpand: number;
-  buttonRetract: number;
   imgHeight: number;
+  imgOffset: number;
+
+  bounce = false;
+  skip = false;
+
+  currentScrollPos = 0;
+
+  noScrollEl: HTMLStyleElement;
+
+  test = 0;
 
 
   constructor(private changeDetector: ChangeDetectorRef) { }
 
-  initHeight() {
-    // this.expandHeight = Math.max(window.pageYOffset + this.image.nativeElement.offsetHeight - 75, this.image.nativeElement.offsetHeight + 25);
-    // this.changeDetector.detectChanges()
+  updatePosition() {
     
+    if(!this.bounce) {
+      requestAnimationFrame(() => {
+        //this.currentScrollPos = window.pageYOffset;
+        let height = Math.max(window.pageYOffset - 125, 0);
+        this.heightBalancer.nativeElement.style.height = height + 'px';
+        this.buttonContainer.nativeElement.style.top = height + this.imgHeight - 15 + 'px';
+        this.updatePosition();
+      })
+    }
+    this.bounce = !this.bounce;
   }
 
   ngOnInit() {
-    this.buttonRetract = 0;
-    this.buttonExpand = 182;
+    // this.buttonRetract = 0;
+    // this.buttonExpand = 182;
     this.imgHeight = 182;
+    this.imgOffset = 190;
 
+    //this.updatePosition();
+
+    //this.noScrollEl = this.buildStyleElement()
+
+    // let __this = this;
+
+    // let bounceSentinal = new MutationObserver((mutationsList, observer) => {
+    //   __this.bounce = false;
+    //   console.log("!");
+    // });
+    // bounceSentinal.observe(document, {attributes: true , childList: true, subtree: true});
 
     document.addEventListener('scroll', (e) => {
-      let height = Math.max(window.pageYOffset - 145, 0);
-      this.heightBalancer.nativeElement.style.height = height + 'px';
-      this.buttonExpand = height + this.imgHeight - 15;
-      // console.log(this.imgHeight);
-      // console.log(this.buttonExpand);
-      this.buttonRetract = height;
+      
+      // if(e.timeStamp - this.lastTimestamp < 10) {
+      //   this.lastTimestamp = e.timeStamp;
+      //   return;
+      // }
+      // this.lastTimestamp = e.timeStamp;
+      // if(!this.bounce) {
+      if(this.skip) {
+        this.skip = false;
+        return;
+      }
+
+      if(!this.bounce) {
+        let test = window.pageYOffset;
+        setTimeout(() => {
+          console.log(test - window.pageYOffset)
+        }, 100);
+        console.log(this.currentScrollPos - window.pageYOffset)
+        //console.log(this.test++);
+        this.bounce = true;
+
+        this.currentScrollPos = window.pageYOffset;
+
+        let height = Math.max(this.currentScrollPos - 125, 0);
+        this.heightBalancer.nativeElement.style.height = height + 'px';
+        this.buttonContainer.nativeElement.style.top = height + this.imgHeight - 15 + 'px';
+        // });
+        
+        //console.log(window.pageYOffset < this.currentScrollPos)
+        if(window.pageYOffset != this.currentScrollPos) {
+          // requestAnimationFrame(() => {
+          //   console.log("Test");
+          // });
+          this.skip = true;
+          //console.log("end");
+          this.bounce = false;
+        }
+        else {
+          this.bounce = false;
+        }
+        // else {
+        //   console.log("end");
+        //   this.bounce = false;
+        // }
+        // this.bounce = false;
+        //document.body.removeChild(this.noScrollEl);
+        // setTimeout(() => {
+        //   this.bounce = false;
+        // }, 1000);
+        
+      }
+      
+      // }
     });
 
     window.addEventListener("resize", () => {
-      let height = Math.max(window.pageYOffset - 145, 0);
+      if(this.toggleMessage == "Hide Image") {
+        this.imgHeight = this.image.nativeElement.offsetHeight;
+        this.imgOffset = this.imgHeight + 10;
+      }
+      let height = Math.max(window.pageYOffset - 125, 0);
       this.heightBalancer.nativeElement.style.height = height + 'px';
-      this.buttonExpand = height + this.imgHeight - 15;
-      this.buttonRetract = height;
+      this.buttonContainer.nativeElement.style.top = height + this.imgHeight - 15 + 'px';
     });
   }
 
   hover(src) {
     this.image.nativeElement.setAttribute("src", src);
     this.ref.nativeElement.setAttribute("href", src);
-    this.imgHeight = this.image.nativeElement.offsetHeight;
-    this.buttonExpand = Math.max(window.pageYOffset - 145, 0) + this.imgHeight - 15;
+
+    let height = Math.max(window.pageYOffset - 125, 0);
+    if(this.toggleMessage == "Hide Image") {
+      this.imgHeight = this.image.nativeElement.offsetHeight;
+      this.imgOffset = this.imgHeight + 10;
+    }
+    this.buttonContainer.nativeElement.style.top = height + this.imgHeight - 15 + 'px';
   }
 
   toggleImage() {
@@ -95,10 +178,14 @@ export class InstructionsComponent implements OnInit {
     }
     else {
       this.imageContainer.nativeElement.style.display = "block";
-      this.arrow.nativeElement.innerHTML = "&#171;";
-      this.toggleMessage = "Hide Image";
+      let height = Math.max(window.pageYOffset - 125, 0);
       this.imgHeight = this.image.nativeElement.offsetHeight;
-      this.buttonExpand = Math.max(window.pageYOffset - 145, 0) + this.imgHeight - 15;
+      this.imgOffset = this.imgHeight + 10;
+      this.buttonContainer.nativeElement.style.top = height + this.imgHeight - 15 + 'px';
+      setTimeout(() => {
+        this.arrow.nativeElement.innerHTML = "&#171;";
+        this.toggleMessage = "Hide Image";
+      }, 0);
     }
   }
 
