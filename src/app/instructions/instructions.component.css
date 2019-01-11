@@ -33,7 +33,6 @@ body {
 }
 
 .image-container {
-    background-color: red;
     width: 50%;
     max-width: calc(100% - 300px);
     float: right;
@@ -65,7 +64,6 @@ img {
 }
 
 .button-container {
-    background-color: purple;
     position: absolute;
     right: 0px;
     width: 50%;
