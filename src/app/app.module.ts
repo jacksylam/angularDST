@@ -102,7 +102,8 @@ import {MatTooltipModule} from '@angular/material/tooltip'
     MatIconModule,
     FormsModule,
     MatCheckboxModule,
-    MatTooltipModule
+    MatTooltipModule,
+    BrowserModule.withServerTransition({appId: 'higre'})
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],
