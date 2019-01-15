@@ -1,7 +1,7 @@
 <div class="buffer">
   <div class="header">
     <div class="pad">
-      <h1>How the Web Interface Determines Recharge</h1>
+      <h1>How HIGRET Determines Recharge</h1>
     </div>
   </div>
 </div>
@@ -10,7 +10,7 @@
   <div>
     <a target="_blank" href="../assets/Recharge_web_interface.jpg"><img src="../assets/Recharge_web_interface.jpg" alt="Web Interface Flow Chart"></a>
     <p class="clearfix">
-      The Hawai‘i Groundwater Recharge Explorer (HiGRE) web interface allows users to study how changes in land cover and climate can affect groundwater recharge. The web interface initially presents a baseline condition representing 1978-2010 average rainfall conditions and 2010 land cover. Users can change land cover over areas of their choice, and (or) select a future climate condition (statistically downscaled projections of rainfall for 2041-2070 under representative concentration pathway (RCP) 8.5 [<a target="_blank" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2014JD022059">Elison Timm and others, 2015</a>]). The web interface accesses a database of recharge simulations representing various possible combinations of land-cover and climate conditions, and returns the recharge corresponding to the user’s input.
+      The Hawai‘i Groundwater Recharge Explorer Tool, HIGRET, allows users to evaluate how changes in land cover and climate can affect groundwater recharge. The web interface initially presents a baseline condition representing 1978-2010 average rainfall conditions and 2010 land cover. Users can change land cover over areas of their choice, and (or) select a future climate condition (statistically downscaled projections of rainfall for 2041-2070 under representative concentration pathway (RCP) 8.5 [<a target="_blank" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2014JD022059">Elison Timm and others, 2015</a>]). The web interface accesses a database of recharge simulations representing various possible combinations of land-cover and climate conditions, and returns the recharge corresponding to the user’s input.
     </p>
   </div>
 
@@ -21,72 +21,8 @@
       Database of Recharge Simulations
     </h2>
     <a target="_blank" href="../assets/lc_table.png"><img src="../assets/lc_table.png" alt="Web Interface Flow Chart"></a>
-    <!-- <div class="figure">
-      <table>
-        <tr>
-          <th>Table 1. Land Cover Types</th>
-        </tr>
-      </table>
-      <table>
-        <tr>
-          <td>Alien forest</td>
-          <td>Water body</td> 
-        </tr>
-        <tr>
-          <td>Developed, low-intensity</td>
-          <td>Wetland</td> 
-        </tr>
-        <tr>
-          <td>Grass/shrub - predevelopment</td>
-          <td>Coffee</td> 
-        </tr>
-        <tr>
-          <td>Grassland</td>
-          <td>Corn</td> 
-        </tr>
-        <tr>
-          <td>Kiawe/phreatophytes</td>
-          <td>Developed, high-intensity</td> 
-        </tr>
-        <tr>
-          <td>Native forest</td>
-          <td>Developed, medium-intensity</td> 
-        </tr>
-        <tr>
-          <td>Near-coastal or estuarine water body</td>
-          <td>Diversified agriculture</td> 
-        </tr>
-        <tr>
-          <td>Open native forest - predevelopment</td>
-          <td>Golf course</td> 
-        </tr>
-        <tr>
-          <td>Reservoirs</td>
-          <td>Macadamia</td> 
-        </tr>
-        <tr>
-          <td>Shrubland</td>
-          <td>Pineapple</td> 
-        </tr>
-        <tr>
-          <td>Sparse grassland - predevelopment</td>
-          <td>Sugarcane - drip irrigation</td> 
-        </tr>
-        <tr>
-          <td>Sparsely vegetated, barren</td>
-          <td>Sugarcane - furrow irrigation</td> 
-        </tr>
-        <tr>
-          <td>Sugarcane - unirrigated</td>
-          <td>Taro</td> 
-        </tr>
-        <tr>
-          <td>Tree Plantation</td>
-        </tr>
-      </table>
-    </div> -->
     <p class="clearfix">
-      The database consists of 58 recharge simulations for O‘ahu. Each simulation contains recharge values for the entire island for one of the 27 land-cover types from the study by <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> and <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a> (table 1), under one of the two climate conditions (1987-2010 or 2041-2017 RCP 8.5). When the user changes a land-cover or climate condition, the web interface retrieves the recharge values for the area for the appropriate land cover and climate in the database. 
+      The database consists of 54 recharge simulations for O‘ahu. Each simulation represents recharge that would result if the entire island was covered in one of the 27 land-cover types from the studies by <a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Engott and others (2017)</a> (table 1),  under one of the two climate conditions: (1) 1978-2007 or (2) 2041-2071 RCP 8.5. When the user changes a land-cover or climate condition, the web interface retrieves the recharge values for the area for the appropriate land cover and climate in the database.
     </p>
   </div>
 
@@ -98,10 +34,10 @@
     </h2>
     <a target="_blank" href="../assets/SWB_concepts.jpg"><img src="../assets/SWB_concepts.jpg" alt="SWB Recharge Model Concept Diagram"></a>
     <p>
-      The recharge values in the data base were computed using the USGS soil water-balance program SWB version 2.0 (<a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek and others, 2018</a>). SWB is a computer program that estimates groundwater recharge from precipitation, soil, and land-cover data. 
+      The recharge values in the database were computed using the USGS soil water-balance program SWB version 2.0 (<a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek and others, 2018</a>). SWB is a computer program that estimates groundwater recharge from precipitation, soil, land-cover, and other data.
     </p>
     <p>
-      SWB accounts for water entering, leaving, and being stored within the soil on a daily basis. Most groundwater recharge originates as precipitation. Irrigation contributes additional water in some areas. Some of the water from precipitation and irrigation runs off the land surface or is evaporated from wet surfaces. The remainder infiltrates the soil where it is subject to further losses through plant transpiration. The combined effect of evaporation and transpiration is referred to as “evapotranspiration.” In the soil water-balance computations of SWB, groundwater recharge occurs when more water infiltrates the soil than can be held in the soil given its water-storing capacity, antecedent water content, and losses through evapotranspiration. In some areas, additional water is contributed by leaks from artificial structures such as ponds, reservoirs, water mains, sewer lines, and cesspools. 
+      SWB accounts for water entering, leaving, and being stored within the soil on a daily basis. Most groundwater recharge originates as precipitation. Irrigation contributes additional water in some areas. Some of the water runs off the land surface or is evaporated from wet surfaces. The remainder infiltrates the soil where it is subject to further losses through plant transpiration. The combined effect of evaporation and transpiration is referred to as “evapotranspiration.” In the soil water-balance computations of SWB, groundwater recharge occurs when more water infiltrates the soil than can be held in the soil given its water-storing capacity, antecedent water content, and losses through evapotranspiration. In some areas, additional water is contributed by leaks from ponds, reservoirs, water mains, sewer lines, and cesspools; in the SWB simulations, these contributions are considered “direct recharge” that bypasses the evapotranspiration processes in the plant root zone.
     </p>
     <p>
       Parameter input values used to generate the SWB simulations were derived from spatial data sets compiled for publications by <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> and <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>. SWB uses a regular-grid environment for input of data and output of results. To generate the simulations accessed by the web interface, the island of O‘ahu was discretized into a grid of 75-m square cells. The spatial data sets from the previous publications, however, consisted of irregular shapes. To generate the gridded input data sets for SWB, the 75-m SWB grid was overlaid onto the data sets from the previous publications, and each cell in the SWB grid was assigned the value from the previous-publications’ dataset that corresponded to the center of the SWB cell. Rainfall (<a target="_blank" href="https://rmets.onlinelibrary.wiley.com/doi/abs/10.1002/joc.4437">Frazier and others, 2016</a>) and evapotranspiration (<a target="_blank" href="http://evapotranspiration.geography.hawaii.edu/">Giambelluca and others, 2014</a>) were left at the original grid size (about 240 m), effluent rates from point input (Whittier and El-Kadi, 2009) for cesspools and septic systems were summed over each SWB cell, and the total water-main leakage was distributed over the water main system (Board of Water Supply, written communication) and assigned to each cell by the amount of intersection from the lines with the SWB cell. All other spatial input parameters were rasterized at the centroid of the SWB grid using <a target="_blank" href="https://gdal.org/">GDAL/OGR contributors (2018)</a>.    

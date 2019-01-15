@@ -1,0 +1,30 @@
+.pad {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.buffer {
+    padding-bottom: 20px;
+}
+
+.header {
+    background: rgb(56, 117, 194);
+    color: white;
+}
+
+h1 {
+    text-align: center;
+}
+
+.body {
+    position: absolute;
+    width: 90%;
+    left: 5%;
+    padding-bottom: 100px;
+    float: right;
+    clear: right;
+}
+
+p {
+    font-size: 25px;
+}

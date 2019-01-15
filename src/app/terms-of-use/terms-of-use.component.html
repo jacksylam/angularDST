@@ -1,27 +1,26 @@
 <h2>
-  Terms of Use
+  CONDITIONS OF USE
 </h2>
 <div>
-  The Hawai‘i Groundwater Recharge Explorer (HiGRE) web interface was developed through
-  collaboration between the U.S. Geological Survey (USGS) and the University of Hawai‘i
-  Cyberinfrastructure Team (UH-CT), and is provided as a service to the community. Users are responsible
-  for understanding the background and limitations of the HiGRE web interface, and for exercising their
-  own professional judgment in evaluating the appropriateness of the results for their application.
-  The HiGRE web interface has been approved for release by the USGS. Although the web interface has
-  been subjected to rigorous review, the USGS reserves the right to update the web interface as needed
-  pursuant to further analysis and review. No warranty, expressed or implied, is made by the USGS or the
-  U.S. Government as to the functionality of the web interface and related material, nor shall the fact of
-  release constitute any such warranty. Furthermore, the web interface is released on condition that
-  neither the USGS nor the U.S. Government shall be held liable for any damages resulting from its
-  authorized or unauthorized use.
+    <p>
+      The Hawai‘i Groundwater Recharge Tool (HIGRET) web interface was developed through collaboration between the U.S. Geological Survey (USGS) and the University of Hawai‘i Cyberinfrastructure Team (UH-CT), and is provided as a service to the public. Users are responsible for understanding the <a (click)="dialogRef.close(false)" routerLink="/background">background and limitations</a> of the HIGRET web interface, and for evaluating the appropriateness of the results for their application.
+    </p>
+    <p>
+      The HIGRET web interface has been approved for release by the USGS. Although the web interface has been subjected to review, the USGS reserves the right to update the web interface as needed pursuant to further analysis and review. No warranty, expressed or implied, is made by the USGS or the U.S. Government as to the functionality of the web interface and related material, nor shall the fact of release constitute any such warranty. Furthermore, the web interface is released on condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from its authorized or unauthorized use.
+    </p>
+    <p>
+      All content and results are in the public domain and may be used freely, with appropriate credit given to this website. Suggested citation:
+    </p>
+    McLean, J., Rotzoll, K., Cleveland, S., and Izuka, S.K., 2018, The Hawaii Groundwater Recharge Tool (HIGRET), website, doi: ########
+    
 </div>
 
 <br>
 
-<mat-checkbox (change)="setAccepted($event.checked)">I have read and understand the terms of use</mat-checkbox>
+<mat-checkbox (change)="setAccepted($event.checked)">I have read and understand the conditions of use</mat-checkbox>
 
 <mat-dialog-actions>
   <div matTooltip="{{tooltip}}" [matTooltipPosition]="position">
-    <button mat-raised-button class="mat-primary" [disabled]="!accepted" (click)="this.dialogRef.close()">Continue</button>
+    <button mat-raised-button class="mat-primary" [disabled]="!accepted" (click)="dialogRef.close(true)">Continue</button>
   </div>
 </mat-dialog-actions>

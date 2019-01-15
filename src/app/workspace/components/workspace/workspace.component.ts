@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ViewContainerRef, Componen
 import { DisplayUnitComponent } from '../window-display-components/display-unit/display-unit.component';
 import {MatDialog} from "@angular/material";
 import {TermsOfUseComponent} from "../../../terms-of-use/terms-of-use.component"
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-workspace',
@@ -14,9 +15,12 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
   @ViewChild("windowContainer", { read: ViewContainerRef }) container: ViewContainerRef;
 
   idPos = [];
+  accepted = false;
 
-  constructor(private componentFactoryResolver: ComponentFactoryResolver, private dialog: MatDialog) {
-    this.dialog.open(TermsOfUseComponent, {maxHeight: "90vh"});
+  constructor(private componentFactoryResolver: ComponentFactoryResolver, private dialog: MatDialog, route: ActivatedRoute) {
+    route.url.subscribe(() => {
+      this.serveTerms();
+    });
   }
 
   ngOnInit() {
@@ -24,6 +28,15 @@ export class WorkspaceComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+  }
+
+  serveTerms() {
+    if(!this.accepted) {
+      this.dialog.open(TermsOfUseComponent, {maxHeight: "90vh"}).afterClosed()
+      .subscribe((accepted) => {
+        this.accepted = accepted;
+      });
+    }
   }
 
 

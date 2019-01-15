@@ -1,3 +1,7 @@
 .mat-primary {
     background-color: rgb(56, 117, 194);
 }
+
+a:focus {
+    outline: none !important;
+}

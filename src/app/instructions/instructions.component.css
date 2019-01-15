@@ -17,10 +17,6 @@
     font-size: 35px;
 }
 
-body {
-    overflow: hidden !important;
-}
-
 .toggle-button:hover {
     cursor: pointer;
 }

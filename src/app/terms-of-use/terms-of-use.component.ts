@@ -9,7 +9,7 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material";
 export class TermsOfUseComponent implements OnInit {
 
   accepted = false;
-  tooltip = "Please accept the terms of use to continue";
+  tooltip = "Please accept the conditions of use to continue";
   position = "after";
 
   constructor(private dialogRef: MatDialogRef<TermsOfUseComponent>, @Inject(MAT_DIALOG_DATA) data) {
