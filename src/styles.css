@@ -38,8 +38,29 @@
   --in-out-control: "\00AB";
   --in-out-menu: "\00BB";
   --in-out-bottom: "\00AB";
+
+  --control-scrollbar-width: 0;
 }
 
+.mat-checkbox-checked.mat-accent .mat-checkbox-background, .mat-checkbox-indeterminate.mat-accent .mat-checkbox-background {
+  background-color: rgb(56, 117, 194) !important;
+}
+  
+.mat-ripple-element {
+  background: rgba(56, 117, 194, .4) !important;
+}
+
+.mat-radio-button.mat-accent .mat-radio-inner-circle {
+  background-color: rgb(56, 117, 194) !important;
+}
+
+.mat-radio-button.mat-accent.mat-radio-checked .mat-radio-outer-circle {
+  border-color: rgb(56, 117, 194) !important;
+}
+
+.mat-radio-button.mat-accent .mat-radio-ripple .mat-ripple-element {
+  background-color:rgba(56, 117, 194, .4) !important;
+}
   
 
  
