@@ -131,23 +131,27 @@
       </ul>
     </ul>
 
-    <div (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
-      <h2>
-        Recharge Visualization
-      </h2>
+    <h2 (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
+      Recharge Visualization
+    </h2>
 
-      <p>
-        To change to the recharge portion of the visualization, hover over the layer controls in the upper right corner of the map and select “Recharge Rate” (to switch back to the land cover visualization select “Land Cover”). This displays the level of groundwater recharge for each map cell.
-      </p>
-    </div>
+    <p (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
+      To change to the recharge portion of the visualization, hover over the layer controls in the upper right corner of the map and select “Recharge Rate” (to switch back to the land cover visualization select “Land Cover”). This displays the level of groundwater recharge for each map cell.
+    </p>
+
 
     <h3>
       Details Panel
     </h3>
 
-    <p>
-      The details panel at the bottom of the map shows various metrics for the island’s groundwater recharge rates based on the land cover modifications made in the land cover layer. The “Include Caprock” box also allows the island’s caprock to be included or excluded from the recharge calculations.
-    </p>
+    <ul>
+      <li (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
+        The details panel at the bottom of the map shows various metrics for the island’s groundwater recharge rates based on the land cover modifications made in the land cover layer.
+      </li>
+      <li (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
+        The “Include Caprock” box also allows the island’s caprock to be included or excluded from the recharge calculations.
+      </li>
+    </ul>
 
     <h3>
       Menu Panel

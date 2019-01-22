@@ -104,8 +104,7 @@
     vertical-align: middle;
     z-index: -1000;
 }
-.menuButton-text
-  {
+.menuButton-text {
     top: 50%;
     left: 50%;
     position: absolute;
@@ -113,8 +112,7 @@
     transform: translate(-50%, -50%) rotate(90deg);
   }
 
-  .menuButton:hover
-  {
+  .menuButton:hover {
       cursor: pointer;
   }
 
@@ -130,6 +128,8 @@
   }
   
   .cancel {
+    background-color: rgb(56, 117, 194);
+    color:white;
     border-radius: 0px 0px 3px 3px;
     width: 100%;
   }
@@ -205,6 +205,8 @@
   }
 
   .btn-custom-half-right {
+    background-color: rgb(56, 117, 194);
+    color:white;
     float: left;
     width: 50% !important;
     border-radius: 0px;
