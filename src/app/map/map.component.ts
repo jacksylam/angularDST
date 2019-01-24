@@ -288,6 +288,9 @@ export class MapComponent implements OnInit {
 
     //thinking I like the collapsed version with this stuff
     this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
+    
+    let layerControl = this.map._controlContainer.children[1];
+    layerControl.style.visibility = "hidden";
 
     this.rcPalette = this.USGSStyleRechargePalette();
     this.rcDivergingPalette = this.divergingPalette();
@@ -295,9 +298,10 @@ export class MapComponent implements OnInit {
     this.types.recharge.palette = C.linearPalette(this.rcPalette);
     this.types.landCover.palette = C.directPalette(this.landCoverPalette());
 
-    this.initializeLayers().then(() => {
-      this.loadDrawControls();
-      this.metrics = this.createMetrics();
+    this.initializeData().then(() => {
+      layerControl.style.visibility = "visible";
+
+      this.mapService.dataLoaded(this);
       this.mapService.setLoading(this, false);
 
       //possibly change if on recharge
@@ -376,7 +380,7 @@ export class MapComponent implements OnInit {
               popup.openOn(this.map);
             }
 
-          }, 1000)
+          }, 1000);
         });
 
       });
@@ -1186,7 +1190,7 @@ export class MapComponent implements OnInit {
 
 
 
-  private initializeLayers(): Promise<any> {
+  private initializeData(): Promise<any> {
     setTimeout(() => {
       this.mapService.setLoading(this, true);
     }, 0);
@@ -1275,7 +1279,7 @@ export class MapComponent implements OnInit {
           __this.types.recharge.data = coverage;
           __this.loadRechargeStyle("rate");
           
-        }),
+        })
       ];
 
       return Promise.all(tasks);
@@ -1295,7 +1299,7 @@ export class MapComponent implements OnInit {
           }
         });
         resolve();
-      })
+      });
     }
 
     //doesn't matter when aesthetic parts complete, so load last
@@ -1376,6 +1380,8 @@ export class MapComponent implements OnInit {
         this.caprock = data[0];
         this.aquifers = data[1];
         return new Promise((resolve) => {
+          this.loadDrawControls();
+          this.metrics = this.createMetrics();
           this.currentDataInitialized = true;
           //can resolve once the current data initialization is complete
           resolve();
@@ -1676,9 +1682,9 @@ export class MapComponent implements OnInit {
 
   createMetrics() {
     //if still initializing just ignore, metrics will be computed after initialization completed, shouldn't ever happen, but might as well include as a failsafe
-    if(!this.currentDataInitialized) {
-      return null;
-    }
+    // if(!this.currentDataInitialized) {
+    //   return null;
+    // }
 
     let data = {
       customAreas: [],
@@ -4613,7 +4619,20 @@ export class MapComponent implements OnInit {
     let numItems = geojsonObjects.features.length;
     //console.log(geojsonObjects);
     if (numItems != 0) {
+      //recharge value handling requires all scenarios are loaded, so wait until complete
+      let dataHandlerReadyCheck = (backoff, data) => {
+        if(this.scenariosInitialized) {
+          dataHandler(data);
+        }
+        else {
+          setTimeout(() => {
+            dataHandlerReadyCheck(backoff * 2, data);
+          }, backoff);
+        }
+      };
+
       this.mapService.setLoading(this, true);
+
       //deal with errors too
       let start = new Date().getTime();
       Observable.forkJoin(geojsonObjects.features.map(element => {
@@ -4622,9 +4641,9 @@ export class MapComponent implements OnInit {
       .subscribe((data) => {
         let optime = new Date().getTime()
         console.log("Operation took " + (optime - start).toString() + "ms");
-        //console.log(typeof data);
-        //use file(s) generated as cover
-        dataHandler(data);
+        
+        dataHandlerReadyCheck(1, data);
+        
         console.log("Data handler took " + (new Date().getTime() - optime).toString() + "ms");
         this.mapService.setLoading(this, false);
       }, (error) => {

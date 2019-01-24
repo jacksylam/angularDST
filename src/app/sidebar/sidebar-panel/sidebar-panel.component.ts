@@ -35,7 +35,7 @@ export class SidebarPanelComponent implements OnInit {
 
   updateBase = false;
 
-  disabled = false;
+  disabled = true;
 
   constructor(private mapService: MapService) { }
 
@@ -101,5 +101,9 @@ export class SidebarPanelComponent implements OnInit {
     if(!this.debug) {
       this.loading += isLoading;
     }
+  }
+
+  dataLoaded() {
+    this.disabled = false;
   }
 }

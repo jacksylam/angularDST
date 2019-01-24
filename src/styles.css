@@ -61,6 +61,10 @@
 .mat-radio-button.mat-accent .mat-radio-ripple .mat-ripple-element {
   background-color:rgba(56, 117, 194, .4) !important;
 }
+
+.mat-progress-spinner circle, .mat-spinner circle {
+  stroke: white;
+}
   
 
  

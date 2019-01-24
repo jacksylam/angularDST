@@ -65,6 +65,7 @@ import { TermsOfUseComponent } from './terms-of-use/terms-of-use.component'
 
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatTooltipModule} from '@angular/material/tooltip'
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 @NgModule({
   declarations: [
@@ -102,7 +103,8 @@ import {MatTooltipModule} from '@angular/material/tooltip'
     MatIconModule,
     FormsModule,
     MatCheckboxModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressSpinnerModule
   ],
   //Commented out Agave module
   // providers: [WindowService, HttpClient, Configuration, APIHelper],

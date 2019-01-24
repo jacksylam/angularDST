@@ -24,4 +24,8 @@ export class TermsOfUseComponent implements OnInit {
     this.tooltip = value == true ? "" : "Please accept the terms of use to continue";
   }
 
+  close(accepted) {
+    this.dialogRef.close(accepted);
+  }
+
 }

@@ -3,7 +3,7 @@
 </h2>
 <div>
     <p>
-      The Hawai‘i Groundwater Recharge Tool (HIGRET) web interface was developed through collaboration between the U.S. Geological Survey (USGS) and the University of Hawai‘i Cyberinfrastructure Team (UH-CT), and is provided as a service to the public. Users are responsible for understanding the <a (click)="dialogRef.close(false)" routerLink="/background">background and limitations</a> of the HIGRET web interface, and for evaluating the appropriateness of the results for their application.
+      The Hawai‘i Groundwater Recharge Tool (HIGRET) web interface was developed through collaboration between the U.S. Geological Survey (USGS) and the University of Hawai‘i Cyberinfrastructure Team (UH-CT), and is provided as a service to the public. Users are responsible for understanding the <a (click)="close(false)" routerLink="/background">background and limitations</a> of the HIGRET web interface, and for evaluating the appropriateness of the results for their application.
     </p>
     <p>
       The HIGRET web interface has been approved for release by the USGS. Although the web interface has been subjected to review, the USGS reserves the right to update the web interface as needed pursuant to further analysis and review. No warranty, expressed or implied, is made by the USGS or the U.S. Government as to the functionality of the web interface and related material, nor shall the fact of release constitute any such warranty. Furthermore, the web interface is released on condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from its authorized or unauthorized use.
@@ -21,6 +21,6 @@
 
 <mat-dialog-actions>
   <div matTooltip="{{tooltip}}" [matTooltipPosition]="position">
-    <button mat-raised-button class="mat-primary" [disabled]="!accepted" (click)="dialogRef.close(true)">Continue</button>
+    <button mat-raised-button class="mat-primary" [disabled]="!accepted" (click)="close(true)">Continue</button>
   </div>
 </mat-dialog-actions>

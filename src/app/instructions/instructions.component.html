@@ -11,8 +11,8 @@
   <div class="body">
 
     <div #heightBalancer class="height-balancer"></div>
-      <div #imageContainer class="image-container" [@toggleImage]="{value: toggleMessage, params: {retracted: imgOffset}}">
-        <a #ref target="_blank" href="../assets/instruction_images/lc_vis.PNG"><img #image src="../assets/instruction_images/lc_vis.PNG" alt="Web Interface Flow Chart"></a>
+      <div #imageContainer class="image-container" [@toggleImage]="{value: toggleMessage, params: {retracted: imgOffset}}" matTooltip="Hover over an instruction for an image of its usage in the application.">
+        <a #ref target="_blank" href="../assets/instruction_images/lc_vis.PNG"><img #image src="../assets/instruction_images/lc_vis.PNG" alt="Instruction image"></a>
       </div>
 
       <div #buttonContainer class="button-container" [@toggleButton]="{value: toggleMessage, params: {retracted: imgOffset}}">
@@ -26,7 +26,7 @@
     </div>
     
     
-    <p>
+    <p (mouseenter)="hover('../assets/instruction_images/new_map.PNG')">
       The <a routerLink="/workspace">Workspace</a> should start with a map open. To add additional maps for analysis, click the “New Map” button in the top left corner of the screen.
     </p>
 
@@ -135,34 +135,34 @@
       Recharge Visualization
     </h2>
 
-    <p (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
+    <p (mouseenter)="hover('../assets/instruction_images/rc_layer_controls.PNG')">
       To change to the recharge portion of the visualization, hover over the layer controls in the upper right corner of the map and select “Recharge Rate” (to switch back to the land cover visualization select “Land Cover”). This displays the level of groundwater recharge for each map cell.
     </p>
 
 
-    <h3>
+    <h3 (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
       Details Panel
     </h3>
 
     <ul>
-      <li (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
+      <li (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
         The details panel at the bottom of the map shows various metrics for the island’s groundwater recharge rates based on the land cover modifications made in the land cover layer.
       </li>
-      <li (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
+      <li (mouseenter)="hover('../assets/instruction_images/caprock_box.PNG')">
         The “Include Caprock” box also allows the island’s caprock to be included or excluded from the recharge calculations.
       </li>
     </ul>
 
-    <h3>
+    <h3 (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
       Menu Panel
     </h3>
 
-    <p>
+    <p (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
       The menu panel on the left side of the window allows for the visualization style and metric mode to be changed.
     </p>
 
     <ul>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/vis_style.PNG')">
         Visualization style
         <ul>
           <li>
@@ -176,7 +176,7 @@
           </li>
         </ul>
       </li>
-      <li>
+      <li  (mouseenter)="hover('../assets/instruction_images/c_scheme.PNG')">
         Color scheme
         <ul>
           <li>
@@ -184,7 +184,7 @@
           </li>
         </ul>
       </li>
-      <li>
+      <li  (mouseenter)="hover('../assets/instruction_images/data_mode.PNG')">
         Data mode
         <ul>
           <li>
@@ -218,22 +218,22 @@
 
 
 
-    <h2>
+    <h2 (mouseenter)="hover('../assets/instruction_images/import_export.PNG')">
       Importing and Exporting Items
     </h2>
 
-    <p>
+    <p  (mouseenter)="hover('../assets/instruction_images/import_export.PNG')">
       The "Load/Save Changes" section of the control panel on the right side of the map allows users to import and export items to and from the application.
     </p>
 
     <ul>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
         Import
         <ul>
-          <li>
+          <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
             Allows shapefile data or land cover data grids to be loaded onto the map.
           </li>
-          <li>
+          <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
             Upload shapefile
             <ul>
               <li>
@@ -276,7 +276,7 @@
               </li>
             </ul>
           </li>
-          <li>
+          <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
             Upload land cover raster
             <ul>
               <li>
@@ -343,7 +343,7 @@
               </li>
             </ul>
           </li>
-          <li>
+          <li (mouseenter)="hover('../assets/instruction_images/import_advanced.PNG')">
             Advanced options
             <ul>
               <li>
@@ -359,11 +359,20 @@
           </li>
         </ul>
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/export.PNG')">
         Export
         <ul>
           <li>
             Allows the map’s land cover, recharge, or custom area data to be saved. This data can then be imported to restore the map state or used for further analysis or manipulation outside the application.
+          </li>
+          <li>
+            Custom areas, polygons drawn on the map or imported as such, can be exported as a shapefile.
+          </li>
+          <li>
+            Land cover and recharge rate rasters can be exported in either an ASCII or CoverageJSON file format.
+          </li>
+          <li>
+            If multiple items are exported, they will be packaged in a zip folder.
           </li>
         </ul>
       </li>
@@ -376,25 +385,25 @@
 
 
 
-    <h2>
+    <h2 (mouseenter)="hover('../assets/instruction_images/report_gen.PNG')">
       Report Generation 
     </h2>
 
-    <p>
+    <p (mouseenter)="hover('../assets/instruction_images/report_gen.PNG')">
       Clicking the “Generate Report” button in the control panel on the right side of the map will bring up a report containing a detailed breakdown of groundwater recharge rate metrics.
     </p>
 
     <ul>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/report.PNG')">
         Report includes aquifer metrics with and without the caprock, custom area metrics, and a summary of metrics for the entire island with and without caprock and combined custom area metrics (note that the metrics of the combined set of aquifers should be identical to that of the full island).
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/report.PNG')">
         The scenario name next to “This Analysis Rainfall Scenario” is the climate scenario selected for analysis (can be changed in the menu panel of the land cover visualization).
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/report.PNG')">
         The set of comparison metrics, listed as “Baseline Rainfall” or “RCP 8.5”, represents the metrics of the baseline rainfall, 1978-2007, or rainfall projection RCP 8.5, 2041-2070, respectively using the default land cover values for the island.
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/report_download.PNG')">
         A PDF version of the report can be downloaded by clicking the “Download as PDF” button in the top right corner of the report window.
       </li>
     </ul>
@@ -406,15 +415,15 @@
 
 
 
-    <h2>
+    <h2 (mouseenter)="hover('../assets/instruction_images/map_controls.PNG')">
       Map Controls
     </h2>
     
-    <p>
+    <p (mouseenter)="hover('../assets/instruction_images/map_controls.PNG')">
       In addition to importing/exporting items and report generation, the control panel on the right side of the window provides various options for the map.
     </p>
 
-    <ul>
+    <ul (mouseenter)="hover('../assets/instruction_images/map_controls.PNG')">
       <li>
         “Name Custom Areas” allows user defined areas to be named. In this mode, an area can be selected displaying the areas name. This name can be changed by typing a new name into the box that appears in the control panel and clicking “Set Name”. To exit this naming mode click the “Exit” button. This changes the name the area is referred to as in generated reports as well as in the properties of the shapefile generated if the custom areas are downloaded.
       </li>
@@ -435,19 +444,19 @@
     </h2>
 
     <ul>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/lc_vis.PNG')">
         Hovering over an area of the map will display a popup with the baseline and current land cover type for that cell.
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/map_zoom.PNG')">
         Scrolling on the map allows the map view to be zoomed in or out. Alternatively, the + and – buttons above the draw controls can be used for more rapid zooming.
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/satellite_img.PNG')">
         In addition to the recharge and land cover visualizations, a simple satellite image of the map can be viewed by selecting “Satellite Image” from the layer controls in the upper right corner of the map.
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/layer_controls.PNG')">
         The layer controls can also be used to toggle on and off the aquifer, caprock, or uploaded reference layers. These layers are listed under the three map visualization types.
       </li>
-      <li>
+      <li (mouseenter)="hover('../assets/instruction_images/retract_panel.PNG')">
         Clicking the name tab of a panel will toggle it between expanded and hidden.
       </li>
     </ul>

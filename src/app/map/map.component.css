@@ -1,7 +1,13 @@
+.spinner {
+    position: absolute;
+    left: calc(50% - 100px);
+    top: calc(50% - 100px);
+    z-index: 10000;
+}
 
 .topcorner{
     position:absolute;
-    top:40px;
+    top: 40px;
     left: 10px;
  }
 

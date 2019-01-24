@@ -62,7 +62,7 @@
       
     </div>
 
-    <div class="menu" #menu (scroll)="menuScroll($event)">
+    <div class="menu" #menu (scroll)="menuScroll($event)"  [ngClass]="{'disable': disabled}">
       
       
       <div *ngIf="mode!='name'">

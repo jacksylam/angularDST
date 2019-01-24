@@ -8,6 +8,16 @@
   border-radius: 0px 0px 0px 5px;
 }
 
+.spacer {
+  display: inline-block;
+  width: 5px;
+}
+
+.icon {
+  font-size: 18px;
+  /* color: rgb(56, 117, 194); */
+}
+
 .colorDisplay {
   display: inline-block;
   width: 30px;

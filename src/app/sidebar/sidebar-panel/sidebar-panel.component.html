@@ -12,6 +12,9 @@
           <button type="button" class="btn btn-responsive btn-label">Climate</button>
           <div class="checkbox-div">
             <mat-checkbox [(ngModel)]="updateBase" (ngModelChange)="climateChange()"><div class="checkbox-text">Update Default Scenario</div></mat-checkbox>
+            <span class="spacer"></span>
+            <mat-icon class="icon" matTooltip="By default, all metrics are computed relative to the baseline rainfall scenario. Checking this box will cause recharge metrics to be compared to the default values for the currently selected scenario.">help</mat-icon>
+            
           </div> 
           <mat-select [(ngModel)]="selected" (ngModelChange)="climateChange()">
             <mat-option value="Baseline Rainfall 1978-2007">Baseline Rainfall 1978-2007</mat-option>

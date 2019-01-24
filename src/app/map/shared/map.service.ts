@@ -217,5 +217,11 @@ export class MapService {
     let index = this.mapHash.indexOf(map);
     this.controlPanelHash[index].switchToShow();
   }
+
+  dataLoaded(map: any) {
+    let index = this.mapHash.indexOf(map);
+    this.controlPanelHash[index].dataLoaded();
+    this.panelButtonHash[index].dataLoaded();
+  }
   
 }

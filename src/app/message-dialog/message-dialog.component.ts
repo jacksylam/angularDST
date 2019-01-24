@@ -15,10 +15,15 @@ export class MessageDialogComponent implements OnInit {
     //probably want to change design based on type, for now just put type in front of message
     this.message = info.message;
     this.type = info.type;
+    this.dialogRef = dialogRef;
   }
 
   ngOnInit() {
 
+  }
+
+  close() {
+    this.dialogRef.close();
   }
 
 }

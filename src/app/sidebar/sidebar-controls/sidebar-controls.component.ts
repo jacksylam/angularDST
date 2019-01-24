@@ -32,6 +32,8 @@ export class SidebarControlsComponent implements OnInit {
   loading = 0;
   debug = false;
 
+  disabled = true;
+
   baselayer = "landcover";
 
   value = 1;
@@ -193,6 +195,10 @@ export class SidebarControlsComponent implements OnInit {
     if(!this.debug) {
       this.loading += isLoading;
     }
+  }
+
+  dataLoaded() {
+    this.disabled = false;
   }
 
 
