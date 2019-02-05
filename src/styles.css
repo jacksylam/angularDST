@@ -3,7 +3,7 @@
 @import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
 @import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 
-:root {
+:host {
   --color0: #ffffff;
   --color1: #ffffff;
   --color2: #ffffff;

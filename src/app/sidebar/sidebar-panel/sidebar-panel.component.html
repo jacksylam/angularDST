@@ -68,7 +68,7 @@
         </div>
       </div>
 
-      <div *ngSwitchCase="layer == 'recharge'" [ngClass]="{'disable': loading > 0}">
+      <div *ngSwitchCase="layer == 'recharge'" class="scrollable-menu" [ngClass]="{'disable': loading > 0}">
         <div class="outline btn-group-vertical internal-menu">
           <button type="button" class="btn btn-responsive btn-label">Visualization Style</button>
           <mat-select [(ngModel)]="rechargeStyle" (ngModelChange)="styleChange($event)">
