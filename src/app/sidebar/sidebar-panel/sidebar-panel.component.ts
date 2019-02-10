@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/animations';
 import {MapService} from '../../map/shared/map.service';
 
@@ -37,7 +37,7 @@ export class SidebarPanelComponent implements OnInit {
 
   disabled = true;
 
-  constructor(private mapService: MapService) { }
+  constructor(private mapService: MapService, private elementRef: ElementRef) { }
 
   ngOnInit() {
     this.mapService.setButtonPanel(this);
@@ -45,7 +45,7 @@ export class SidebarPanelComponent implements OnInit {
 
   toggleMenu() {
     this.state = this.state == 'inactive' ? 'active' : 'inactive';
-    this.state == 'active' ? document.documentElement.style.setProperty("--in-out-menu", "'\\00BB'") : document.documentElement.style.setProperty("--in-out-menu", "'\\00AB'");
+    this.state == 'active' ? this.elementRef.nativeElement.style.setProperty("--in-out-menu", "'\\00BB'") : this.elementRef.nativeElement.style.setProperty("--in-out-menu", "'\\00AB'");
   }
 
   changeShapeFile() {

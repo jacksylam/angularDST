@@ -1545,9 +1545,10 @@ export class MapComponent implements OnInit {
     switch(style) {
       case "rate": {
         this.types.recharge.style = "rate";
-        for(let i = 0; i < rechargeData.length; i++) {
+        let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
+        rechargeData[0] = this.paletteType == "usgs" ? MapComponent.USGS_PURPLE_RECHARGE : MapComponent.MAX_RECHARGE;
+        for(let i = 1; i < rechargeData.length; i++) {
           if(this.paletteType == "usgs") {
-            let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
             if(lcVals[i] == 0) {
               rechargeData[i] = -180;
             }
@@ -1566,8 +1567,9 @@ export class MapComponent implements OnInit {
             min = rechargeData[i];
           }
         }
-        let paletteWindow = this.paletteWindow(this.rcPalette, [min, max], this.paletteExtent, this.rcPalette.length);
-        this.types.recharge.palette = C.linearPalette(paletteWindow);
+        //console.log([min, max]);
+        //let paletteWindow = this.paletteWindow(this.rcPalette, [min, max], this.paletteExtent, this.rcPalette.length);
+        this.types.recharge.palette = C.linearPalette(this.rcPalette);
         break;
       }
       case "pchange": {
@@ -5120,12 +5122,12 @@ export class MapComponent implements OnInit {
 
 
   //raycasting algorithm, point is internal if intersects an odd number of edges
-  // isInternal(a: any[], b: any[], point: any, origin: any = [149, 64]): boolean {
+  // isInternal(a: any[], b: any[], point: any, origin: any = { x: 0, y: 0 }): boolean {
   //   //need to convert points to lat long for this to work properly
-  //   let convertedOrigin = origin;//MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [origin.x, origin.y]);
+  //   let convertedOrigin = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [origin.x, origin.y]);
   //   let convertedPoint = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [point.x, point.y]);
-  //   let referenceArc = this.getGreatCircleSegment(origin, point);
-  //   let referenceCircle = this.getGreatCircle(origin, point);
+  //   let referenceArc = this.getGreatCircleSegment(convertedOrigin, convertedPoint);
+  //   let referenceCircle = this.getGreatCircle(convertedOrigin, convertedPoint);
   //   let reference = {
   //     arc: referenceArc,
   //     circle: referenceCircle
