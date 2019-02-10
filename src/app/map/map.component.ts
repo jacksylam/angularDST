@@ -29,6 +29,7 @@ import { AQUIFER_NAME_MAP, AQUIFER_CODE_MAP } from './shared/aquifer_name_map';
 import * as chroma from '../../../node_modules/chroma-js/chroma.js';
 import * as CovJSON from 'covjson-reader';
 import { WebWorkerService } from 'ngx-web-worker';
+import 'leaflet-easyprint';
 
 
 
@@ -274,6 +275,13 @@ export class MapComponent implements OnInit {
         [21.7852, -157.5153]
       ]
     });
+
+    // L.easyPrint({
+    //   title: 'My awesome print button',
+    //   position: 'bottomright',
+    //   sizeModes: ['A4Portrait', 'A4Landscape'],
+    //   exportOnly: true
+    // }).addTo(this.map);
 
     L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
@@ -5025,23 +5033,40 @@ export class MapComponent implements OnInit {
         //again, assume values are in order
         //find min and max indexes
         //check if ascending or descending order, findIndex returns first occurance
-        if (xs[0] < xs[1]) {
-          minxIndex = xs.findIndex(function (val) { return val >= xmin });
+        if(xs[0] < xs[1]) {
+          minxIndex = Math.max(xs.findIndex((val) => { return val >= xmin }), 0);
           //> not >= so returns index after last even if on edge 
-          maxxIndex = xs.findIndex(function (val) { return val > xmax });
+          maxxIndex = xs.findIndex((val) => { return val > xmax });
+          if(maxxIndex < 0) {
+            maxxIndex = this.gridWidthCells;
+          }
         }
         else {
-          maxxIndex = xs.findIndex(function (val) { return val < xmin });
-          minxIndex = xs.findIndex(function (val) { return val <= xmax });
+          maxxIndex = Math.max(xs.findIndex((val) => { return val < xmin }), 0);
+          minxIndex = xs.findIndex((val) => { return val <= xmax });
+          if(minxIndex < 0) {
+            minxIndex = this.gridWidthCells;
+          }
         }
-        if (ys[0] < ys[1]) {
-          minyIndex = ys.findIndex(function (val) { return val >= ymin });
-          maxyIndex = ys.findIndex(function (val) { return val > ymax });
+        if(ys[0] < ys[1]) {
+          minyIndex = Math.max(ys.findIndex((val) => { return val >= ymin }), 0);
+          maxyIndex = ys.findIndex((val) => { return val > ymax });
+          if(maxyIndex < 0) {
+            maxyIndex = this.gridHeightCells;
+          }
         }
         else {
-          maxyIndex = ys.findIndex(function (val) { return val < ymin });
-          minyIndex = ys.findIndex(function (val) { return val <= ymax });
+          console.log("!");
+          maxyIndex = Math.max(ys.findIndex((val) => { return val < ymin }), 0);
+          minyIndex = ys.findIndex((val) => { return val <= ymax });
+          if(minyIndex < 0) {
+            minyIndex = this.gridHeightCells;
+          }
         }
+        console.log(minxIndex);
+        console.log(maxxIndex);
+        console.log(minyIndex);
+        console.log(maxyIndex);
 
         let index;
         //check if shape boundaries out of coverage range
@@ -5232,6 +5257,11 @@ export class MapComponent implements OnInit {
       this.layers.removeLayer(coverage.layer);
     }
     if(coverage == this.types.landCover) {
+      // coverage.data._covjson.ranges.cover.values.forEach((value, i) => {
+      //   if(value == 0) {
+      //     coverage.data._covjson.ranges.cover.values[i] = null;
+      //   }
+      // });
       for(let i = 0; i < 30; i++) {
         coverage.data._covjson.ranges.cover.values[i] = i;
       }
@@ -5410,39 +5440,89 @@ export class MapComponent implements OnInit {
     
   }
 
-  //generate 31 colors
+
+  private createColorChain(colors: string[][], chain: string[]) {
+    let comb;
+    let combinationColors = [];
+    let colorEndpoints = [];
+    colors.forEach((colorSet, i) => {
+      colorSet.forEach((color, j) => {
+        colorEndpoints.push(color);
+        comb = [];
+        colors.forEach((opposingSet, k) => {
+          if(k != i) {
+            opposingSet.forEach((opposingColor, l) => {
+              if(l != j) {
+                comb.push(opposingSet[l]);
+              }
+            });
+          }
+        });
+        combinationColors.push(comb);
+      });
+    });
+    this.combine(0, colorEndpoints, combinationColors, chain);
+  }
+
+  private combine(color: number, colors: string[], combinationColors: string[][], chain: string[]) {
+    chain.push(colors[color]);
+    let cEnd = combinationColors[color].shift();
+    if(cEnd == undefined) {
+      console.log(combinationColors);
+      return;
+    }
+    let cPos = colors.indexOf(cEnd);
+    this.combine(cPos, colors, combinationColors, chain);
+  }
+
+
   private landCoverPalette(): string[] {
 
+    //no color (black)
+    let nc = "000000";
+    //color channels for interpolation
+    let r = "ff0000";
+    let g = "00ff00";
+    let b = "0000ff";
+
+    //set divisions per color
+    let rd = 4;
+    let gd = 3;
+    let bd = 3;
+
+    //create channel divisions using rgb interpolation
+    //using rgb instead of lrgb because shifts the scheme logarithmically towards darker colors, which looks nicer
+    let rco = (chroma as any).scale([nc, r]).mode('rgb').colors(rd);
+    let gco = (chroma as any).scale([nc, g]).mode('rgb').colors(gd);
+    let bco = (chroma as any).scale([nc, b]).mode('rgb').colors(bd);
+
+    //strip out individual channels
+    rco = rco.map((color) => {
+      return color.substring(1, 3);
+    });
+    gco = gco.map((color) => {
+      return color.substring(3, 5);
+    });
+    bco = bco.map((color) => {
+      return color.substring(5, 7);
+    });
+
     let palette = [];
-    let range = 255;
-    let color;
-    let r;
-    let g;
-    let b;
-    let first = true;
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 3; j++) {
-        for (let k = 0; k < 3; k++) {
-          if (palette.length >= 31) {
+
+    for(let i = 0; i < rco.length; i++) {
+      for(let j = 0; j < gco.length; j++) {
+        for(let k = 0; k < bco.length; k++) {
+          if(palette.length >= 32) {
             break;
           }
-          //avoid black so lines stand out more (have 5 extra colors)
-          if (!first) {
-            r = (Math.round(range / 3 * i)).toString(16);
-            g = (Math.round(range / 2 * j)).toString(16);
-            b = (Math.round(range / 2 * k)).toString(16);
-            if (r.length < 2) r = "0" + r;
-            if (g.length < 2) g = "0" + g;
-            if (b.length < 2) b = "0" + b;
-            color = "#" + r + g + b;
-            palette.push(color);
-          }
-          else {
-            first = false;
-          }
+          palette.push("#" + rco[i] + gco[j] + bco[k]);
         }
       }
     }
+
+    palette.shift();
+
+    //rank warm/coolness by red and blue levels, order lc types by recharge inhibition, assign colors appropriately?
 
     for (let i = 0; i < 30; i++) {
       COVER_INDEX_DETAILS[i].color = palette[i];
@@ -5452,6 +5532,50 @@ export class MapComponent implements OnInit {
     //palette = this.agitate(palette);
     return palette;
   }
+
+
+  //generate 31 colors
+  // private landCoverPalette(): string[] {
+
+  //   let palette = [];
+  //   let range = 255;
+  //   let color;
+  //   let r;
+  //   let g;
+  //   let b;
+  //   let first = true;
+  //   for (let i = 0; i < 4; i++) {
+  //     for (let j = 0; j < 3; j++) {
+  //       for (let k = 0; k < 3; k++) {
+  //         if (palette.length >= 31) {
+  //           break;
+  //         }
+  //         //avoid black so lines stand out more (have 5 extra colors)
+  //         if (!first) {
+  //           r = (Math.round(range / 3 * i)).toString(16);
+  //           g = (Math.round(range / 2 * j)).toString(16);
+  //           b = (Math.round(range / 2 * k)).toString(16);
+  //           if (r.length < 2) r = "0" + r;
+  //           if (g.length < 2) g = "0" + g;
+  //           if (b.length < 2) b = "0" + b;
+  //           color = "#" + r + g + b;
+  //           palette.push(color);
+  //         }
+  //         else {
+  //           first = false;
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   for (let i = 0; i < 30; i++) {
+  //     COVER_INDEX_DETAILS[i].color = palette[i];
+  //     document.documentElement.style.setProperty("--color" + (LC_TO_BUTTON_INDEX[i + 1]).toString(), palette[i + 1]);
+  //   }
+
+  //   //palette = this.agitate(palette);
+  //   return palette;
+  // }
 
   //generate 31 colors
   // private landCoverPalette(): string[] {
@@ -5647,18 +5771,18 @@ export class MapComponent implements OnInit {
 
   private rechargePalette(): string[] {
     let palette = [];
-    //let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
-    let colors = ["#f7fbff", "#08306b"];
+    let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
+    //let colors = ["#f7fbff", "#08306b"];
     //let colors = ["#fff7fb", "#ece7f2", "#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", "#0570b0", "#045a8d", "#023858"];
     //let colors = ["#fff7fb", "#023858"];
-    //let colors = ["#f7fbff", "#0c2f7a"];
+    //let colors = ["#a50026", "#313695"];
     
     //linear segments
     let colorSegments = (chroma as any).scale(colors).mode('lab').colors(9);
     //colorbrewer segments
     //let colorSegments = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
     let divs = 200;
-    let exp = 1.5
+    let exp = 1.75;
     let scale = Math.pow(exp, colorSegments.length - 1);
     let modifier = Math.ceil(divs / scale);
     for(let i = 0; i < colorSegments.length - 1; i++) {

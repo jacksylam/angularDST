@@ -3,6 +3,15 @@
         "xhash": "c",
         "xtree": "c",
         "xutility": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "random": "c",
+        "fstream": "c",
+        "xlocmes": "c",
+        "algorithm": "c",
+        "xlocmon": "c",
+        "xlocnum": "c",
+        "chrono": "c",
+        "limits": "c",
+        "utility": "c"
     }
 }
