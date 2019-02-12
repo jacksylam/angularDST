@@ -44,6 +44,7 @@ export class DBConnectService {
         data.result.forEach((record) => {
           this.sanityCheck(record);
         });
+        console.log("debug query complete");
       })
     ).subscribe();
 

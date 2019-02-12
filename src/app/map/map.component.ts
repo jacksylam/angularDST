@@ -613,6 +613,7 @@ export class MapComponent implements OnInit {
 
 
   setUnits(type: string) {
+    this.DBService.debugQuery();
     this.unitType = type;
     if(this.legend != undefined) {
       this.map.removeControl(this.legend);
@@ -2642,7 +2643,37 @@ export class MapComponent implements OnInit {
                 }
               }
               else if(data.cover.values[i] != data.cover.nodata && data.cover.values[i] != 0 && covData[i] == 0 && !messageShown) {
-                //console.log(data.cover.values[i]);
+
+                //debugging------------------------------------------------------------------------------------------------
+
+                // let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+                // let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+                // let point = this.getComponents(i);
+
+                // let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] - 37.5]);
+                // let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] - 37.5]);
+                // let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] + 37.5, ys[point.y] + 37.5]);
+                // let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [xs[point.x] - 37.5, ys[point.y] + 37.5]);
+                // let cellBounds = {
+                //   "type": "Feature",
+                //   "properties": {},
+                //   "geometry": {
+                //     "type": "Polygon",
+                //     "coordinates": [[c1, c2, c3, c4, c1]]
+                //   }
+                // };
+                // L.geoJSON(cellBounds, { interactive: false })
+                // .setStyle({
+                //   fillColor: 'orange',
+                //   weight: 5,
+                //   opacity: 1,
+                //   color: 'orange',
+                //   fillOpacity: 0.2
+                // })
+                // .addTo(this.map);
+
+                //debugging------------------------------------------------------------------------------------------------
+
                 this.dialog.open(MessageDialogComponent, {data: {message: "Attempted to change background cell.\nPlease note that changes to background cells will not be included.", type: "Warning"}});
                 messageShown = true;
               }
@@ -3459,16 +3490,6 @@ export class MapComponent implements OnInit {
           else if(format == "asc" || format == "ascii" || format == "txt") {
             test = (data) => {
 
-              //INSTEAD OF THIS, LETS JUST CONSTRUCT A FULL DATA GRID, FILL IN MISSING VALUES WITH NO DATA VALUE
-              //ONLY NEED TO PASS BACK VALUE GRID AND NO DATA VALUE
-              // let parsedData = {
-              //   ncols: 0,
-              //   nrows: 0,
-              //   xStart: 0,
-              //   yStart: 0,
-              //   nodata: 0,
-              //   values: []
-              // };
               let parsedData: {
                 nodata: number,
                 values: number[]
@@ -3497,9 +3518,6 @@ export class MapComponent implements OnInit {
               }
 
               
-              //console.log("?");
-
-              //all of these weird mapping things need to change when fix covjson
               let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
               let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
 
@@ -3509,15 +3527,10 @@ export class MapComponent implements OnInit {
                 let diffx = x - this.xmin;
                 let diffy = y - this.ymin;
   
-                //don't need this, just check indexOf
-                //reject if out of range of grid
-                // if (!(diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange)) {
-                //   reject();
-                // }
-  
-                //round down to nearest 75 (get cell leading edge)
-                diffx = Math.floor(diffx / 75) * 75;
-                diffy = Math.floor(diffy / 75) * 75;
+
+                //round to nearest 75
+                diffx = Math.round(diffx / 75) * 75;
+                diffy = Math.round(diffy / 75) * 75;
   
                 //add to min offset and add 37.5 to get centroid
                 let xCellVal = this.xmin + 37.5 + diffx;
@@ -3536,14 +3549,11 @@ export class MapComponent implements OnInit {
 
               
               let minCentroid = getCentroidComponentIndices(xCorner, yCorner);
-              //console.log("?");
               //check if corner centroid valid, reject if it isn't
               if(minCentroid.xIndex < 0 || minCentroid.yIndex < 0) {
-                //console.log("test2");
                 reject();
                 return;
               }
-              //console.log("?");
               //values array might have newlines in it (especially between rows)
               let vals = [];
               //console.log(details.length);
@@ -3559,7 +3569,6 @@ export class MapComponent implements OnInit {
                 }
                 //console.log(vals[vals.length - 1]);
               }
-              //console.log("?");
               //verify number of values
               if(vals.length != ncols * nrows) {
                 //console.log(vals.length);
@@ -3567,14 +3576,12 @@ export class MapComponent implements OnInit {
                 reject();
                 return;
               }
-              //console.log("?");
               //convert values to numbers and ensure valid
               for(let i = 0; i < vals.length; i++) {
                 //values strings, convert to numbers
                 vals[i] = Number(vals[i]);
                 //whole number in valid range or no data value
                 if((vals[i] % 1 != 0 || vals[i] < this.validLandcoverRange.min || vals[i] > this.validLandcoverRange.max) && vals[i] != noData) {
-                  //console.log("test2");
                   reject();
                   return;
                 }
@@ -3633,14 +3640,14 @@ export class MapComponent implements OnInit {
                   }
                   
 
-                  //offset from local grid bounds, so compute global indices from this
-                  let globalXIndex = minCentroid.xIndex + globalXOffset;
-                  //subtract on y axis because bottom to top
-                  let globalYIndex = minCentroid.yIndex - globalYOffset;
+                  // //offset from local grid bounds, so compute global indices from this
+                  // let globalXIndex = minCentroid.xIndex + globalXOffset;
+                  // //subtract on y axis because bottom to top
+                  // let globalYIndex = minCentroid.yIndex - globalYOffset;
 
                   let localXIndex = localXOffset;
-                  //y offset from bottom so need to subtract from total number of rows
-                  let localYIndex = nrows - localYOffset
+                  //y offset from bottom so need to subtract from total number of rows (- 1 because 0 based)
+                  let localYIndex = (nrows - 1) - localYOffset;
 
                   return {
                     xIndex: localXIndex,
@@ -3656,9 +3663,23 @@ export class MapComponent implements OnInit {
 
                 let scale = 75 / cellSize;
 
-                for(let xOffset = minCentroid.xIndex; xOffset < maxCentroid.xIndex; xOffset++) {
+                //debugging
+                // console.log(minCentroid);
+                // console.log(xs[minCentroid.xIndex]);
+                // console.log(ys[minCentroid.yIndex]);
+                // console.log(maxCentroid);
+                // console.log(xs[maxCentroid.xIndex]);
+                // console.log(ys[maxCentroid.yIndex]);
+                // console.log(vals.length);
+                // console.log(scale);
+
+                
+                // let last = 0;
+                //debugging
+
+                for(let xOffset = minCentroid.xIndex; xOffset <= maxCentroid.xIndex; xOffset++) {
                   //bottom to top, so max centroid's y axis should be smaller
-                  for(let yOffset = maxCentroid.yIndex; yOffset < minCentroid.yIndex; yOffset++) {
+                  for(let yOffset = maxCentroid.yIndex; yOffset <= minCentroid.yIndex; yOffset++) {
                     //grid goes from lower left (left to right bottom to top)
                     //subtract yOffset since going up
                     let globalIndex = this.getIndex(xOffset, yOffset);
@@ -3667,6 +3688,14 @@ export class MapComponent implements OnInit {
 
                     //y offset from bottom so need to subtract from total number of rows
                     let localIndex = getLocalIndex(localComponents.xIndex, localComponents.yIndex);
+
+                    //debugging
+                    // if(localIndex > vals.length) {
+                    //   console.log(localIndex);
+                    // }
+                    // last++;
+                    //debugging
+
                     parsedData.values[globalIndex] = vals[localIndex];
                   }
                 }
@@ -3820,8 +3849,6 @@ export class MapComponent implements OnInit {
         //need to read files in verify, no need to reread, just return desired data
 
         //check top level files for valid file
-
-        //MAKE FILE VERIFICATION RESOLVE WITH DESIRED DATA IF FILE FOUND, AND REJECT OTHERWISE
         let check = checkFiles(false, acceptedFormats, info.files).then((data) => {
           //valid file found, resolve with the file's data
           accept(data);
@@ -4874,6 +4901,8 @@ export class MapComponent implements OnInit {
       let backupData = Array.from(covData);
 
       this.updateRecharge(geojsonObjects, (update) => {
+        // console.log(update);
+        // console.log(COVER_ENUM[type] - 1);
         update.forEach(area => {
           //how does it behave if out of coverage range? check db response and modify so doesn't throw an error
           area.forEach(record => {
@@ -5044,10 +5073,10 @@ export class MapComponent implements OnInit {
           }
         }
         else {
-          maxxIndex = Math.max(xs.findIndex((val) => { return val < xmin }), 0);
-          minxIndex = xs.findIndex((val) => { return val <= xmax });
-          if(minxIndex < 0) {
-            minxIndex = this.gridWidthCells;
+          maxxIndex = xs.findIndex((val) => { return val < xmin });
+          minxIndex = Math.max(xs.findIndex((val) => { return val <= xmax }), 0);
+          if(maxxIndex < 0) {
+            maxxIndex = this.gridWidthCells;
           }
         }
         if(ys[0] < ys[1]) {
@@ -5058,36 +5087,28 @@ export class MapComponent implements OnInit {
           }
         }
         else {
-          console.log("!");
-          maxyIndex = Math.max(ys.findIndex((val) => { return val < ymin }), 0);
-          minyIndex = ys.findIndex((val) => { return val <= ymax });
-          if(minyIndex < 0) {
-            minyIndex = this.gridHeightCells;
+          maxyIndex = ys.findIndex((val) => { return val < ymin });
+          minyIndex = Math.max(ys.findIndex((val) => { return val <= ymax }), 0);
+          if(maxyIndex < 0) {
+            maxyIndex = this.gridHeightCells;
           }
         }
-        console.log(minxIndex);
-        console.log(maxxIndex);
-        console.log(minyIndex);
-        console.log(maxyIndex);
 
         let index;
-        //check if shape boundaries out of coverage range
-        if(minxIndex != -1 && maxxIndex != -1 && minyIndex != -1 && maxyIndex != -1) {
-          //convert cell coords to long lat and raycast
-          //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-          for(let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-            for(let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-              index = this.getIndex(xIndex, yIndex);
-              //don't include if background
-              if(lcVals[index] != 0) {
-                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                  indexes.push(index)
-                }
+        //convert cell coords to long lat and raycast
+        //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
+        for(let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+          for(let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+            index = this.getIndex(xIndex, yIndex);
+            //don't include if background
+            if(lcVals[index] != 0) {
+              if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                indexes.push(index)
               }
-              else if(backgroundIndices != null) {
-                if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                  backgroundIndices.push(index)
-                }
+            }
+            else if(backgroundIndices != null) {
+              if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+                backgroundIndices.push(index)
               }
             }
           }
@@ -5264,9 +5285,7 @@ export class MapComponent implements OnInit {
       //     coverage.data._covjson.ranges.cover.values[i] = null;
       //   }
       // });
-      for(let i = 0; i < 30; i++) {
-        coverage.data._covjson.ranges.cover.values[i] = i;
-      }
+      coverage.data._covjson.ranges.cover.values[0] = 30;
     }
 
     // work with coverage object
@@ -5726,7 +5745,7 @@ export class MapComponent implements OnInit {
     colors.forEach((color) => {
       hexColors.push((chroma as any).gl(color).hex());
     });
-    //console.log(hexColors)
+    console.log(hexColors)
 
     let purpleTailScale = Math.floor((MapComponent.USGS_PURPLE_RECHARGE / MapComponent.MAX_RECHARGE - 1) * colors.length);
 
@@ -5774,6 +5793,7 @@ export class MapComponent implements OnInit {
   private rechargePalette(): string[] {
     let palette = [];
     let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
+    //let colors = ["e2891e", "08306b"];
     //let colors = ["#f7fbff", "#08306b"];
     //let colors = ["#fff7fb", "#ece7f2", "#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", "#0570b0", "#045a8d", "#023858"];
     //let colors = ["#fff7fb", "#023858"];
@@ -5784,7 +5804,7 @@ export class MapComponent implements OnInit {
     //colorbrewer segments
     //let colorSegments = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
     let divs = 200;
-    let exp = 1.75;
+    let exp = 2;
     let scale = Math.pow(exp, colorSegments.length - 1);
     let modifier = Math.ceil(divs / scale);
     for(let i = 0; i < colorSegments.length - 1; i++) {
