@@ -30,7 +30,7 @@ import * as chroma from '../../../node_modules/chroma-js/chroma.js';
 import * as CovJSON from 'covjson-reader';
 import { WebWorkerService } from 'ngx-web-worker';
 import 'leaflet-easyprint';
-import 'pnglib';
+import * as pnglib from 'pnglib';
 
 
 
@@ -454,6 +454,7 @@ export class MapComponent implements OnInit {
 
     //need to add a way to store initial layer, just need layer and name probably, so manually add name at init
     this.map.on('baselayerchange', (e) => {
+      //console.log(e);
       //store current layer details
       this.baseLayer = e;
       //if ever need to get neame from leaflet layer control, here it is, change "0" in children[1][0] to index of label
@@ -5864,8 +5865,18 @@ export class MapComponent implements OnInit {
     };
   }
 
-  private generatePNG() {
-
+  //chroma .rgba will convert to color channels
+  private generatePNG(scale: number, raster: number[][][]) {
+    let width = raster[0].length * scale;
+    let height = raster.length * scale;
+    let image = new pnglib(width, height, 256);
+    
+    for(let i = 0; i < width; i++) {
+      for(let j = 0; j < height; j++) {
+        
+        image.buffer[image.index(i, j)] = image.color(...raster[i][j]);
+      }
+    }
   }
 }
 
