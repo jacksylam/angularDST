@@ -613,7 +613,6 @@ export class MapComponent implements OnInit {
 
 
   setUnits(type: string) {
-    this.DBService.debugQuery();
     this.unitType = type;
     if(this.legend != undefined) {
       this.map.removeControl(this.legend);
@@ -5513,9 +5512,9 @@ export class MapComponent implements OnInit {
 
     //create channel divisions using rgb interpolation
     //using rgb instead of lrgb because shifts the scheme logarithmically towards darker colors, which looks nicer
-    let rco = (chroma as any).scale([nc, r]).mode('rgb').colors(rd);
-    let gco = (chroma as any).scale([nc, g]).mode('rgb').colors(gd);
-    let bco = (chroma as any).scale([nc, b]).mode('rgb').colors(bd);
+    let rco = (chroma as any).scale([nc, r]).mode('lrgb').colors(rd);
+    let gco = (chroma as any).scale([nc, g]).mode('lrgb').colors(gd);
+    let bco = (chroma as any).scale([nc, b]).mode('lrgb').colors(bd);
 
     //strip out individual channels
     rco = rco.map((color) => {
@@ -5540,15 +5539,20 @@ export class MapComponent implements OnInit {
         }
       }
     }
+    //6, 15
+    console.log(palette);
 
     palette.shift();
 
     //rank warm/coolness by red and blue levels, order lc types by recharge inhibition, assign colors appropriately?
 
+    let buttonPalette = new Array(30);
     for (let i = 0; i < 30; i++) {
       COVER_INDEX_DETAILS[i].color = palette[i];
-      document.documentElement.style.setProperty("--color" + (LC_TO_BUTTON_INDEX[i + 1]).toString(), palette[i + 1]);
+      let buttonIndex = LC_TO_BUTTON_INDEX[i + 1]
+      buttonPalette[buttonIndex] = palette[i + 1];
     }
+    //this.mapService.setLCButtonPalette(this, buttonPalette);
 
     //palette = this.agitate(palette);
     return palette;
@@ -5745,7 +5749,7 @@ export class MapComponent implements OnInit {
     colors.forEach((color) => {
       hexColors.push((chroma as any).gl(color).hex());
     });
-    console.log(hexColors)
+    //console.log(hexColors)
 
     let purpleTailScale = Math.floor((MapComponent.USGS_PURPLE_RECHARGE / MapComponent.MAX_RECHARGE - 1) * colors.length);
 

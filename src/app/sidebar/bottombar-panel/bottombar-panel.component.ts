@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/animations';
 import { CovDetailsService } from 'app/map/shared/cov-details.service';
 import {MapService} from '../../map/shared/map.service';
@@ -107,13 +107,14 @@ export class BottombarPanelComponent implements OnInit {
 
   mode: string;
 
-  constructor(private mapService: MapService) { }
+  constructor(private mapService: MapService, private elementRef: ElementRef) { }
 
   ngOnInit() {
     this.mapService.setDetailsPanel(this);
     this.unitSystem = "USC";
     this.mode = "none";
     this.displayMetrics.units = this.units.USC;
+    this.elementRef.nativeElement.style.setProperty("--in-out-bottom", "'\\00AB'");
   }
 
   ngAfterViewInit() {
@@ -168,7 +169,7 @@ export class BottombarPanelComponent implements OnInit {
 
   toggleMenu() {
     this.state = (this.state == 'inactive' ? 'active' : 'inactive');
-    this.state == 'active' ? document.documentElement.style.setProperty("--in-out-bottom", "'\\00AB'") : document.documentElement.style.setProperty("--in-out-bottom", "'\\00BB'");
+    this.state == 'active' ? this.elementRef.nativeElement.style.setProperty("--in-out-bottom", "'\\00AB'") : this.elementRef.nativeElement.style.setProperty("--in-out-bottom", "'\\00BB'");
   }
 
 

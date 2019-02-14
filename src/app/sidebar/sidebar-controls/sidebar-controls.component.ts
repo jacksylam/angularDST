@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/animations';
 import {MapService} from '../../map/shared/map.service';
 import {MatDialog} from "@angular/material";
@@ -55,7 +55,7 @@ export class SidebarControlsComponent implements OnInit {
 
   name: string;
 
-  constructor(private mapService: MapService, private dialog: MatDialog) {
+  constructor(private mapService: MapService, private dialog: MatDialog, private elementRef: ElementRef) {
   }
 
   // changeValueFunctionToReplaceAngularsDumbEventSystem(e) {
@@ -64,7 +64,7 @@ export class SidebarControlsComponent implements OnInit {
 
   ngAfterViewInit() {
     let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
-    document.documentElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth + 1).toString() + "px");
+    this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth + 1).toString() + "px");
   }
 
   openDialog(type: string) {
@@ -98,11 +98,12 @@ export class SidebarControlsComponent implements OnInit {
 
   ngOnInit() {
     this.mapService.setControlPanel(this);
+    this.elementRef.nativeElement.style.setProperty("--in-out-control", "'\\00AB'");
   }
 
   toggleMenu() {
     this.state = this.state == 'inactive' ? 'active' : 'inactive';
-    this.state == 'active' ? document.documentElement.style.setProperty("--in-out-control", "'\\00AB'") : document.documentElement.style.setProperty("--in-out-control", "'\\00BB'");
+    this.state == 'active' ? this.elementRef.nativeElement.style.setProperty("--in-out-control", "'\\00AB'") : this.elementRef.nativeElement.style.setProperty("--in-out-control", "'\\00BB'");
   }
 
   sliderChange(e) {
@@ -179,7 +180,7 @@ export class SidebarControlsComponent implements OnInit {
       this.menuDiv.nativeElement.scrollTop = e.target.scrollTop;
       //set scrollbar width so dynamic with mac's dissappearing scroll bar
       let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
-      document.documentElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth).toString() + "px");
+      this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth).toString() + "px");
     }
     else {
       //unlock after bounce

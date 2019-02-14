@@ -223,5 +223,11 @@ export class MapService {
     this.controlPanelHash[index].dataLoaded();
     this.panelButtonHash[index].dataLoaded();
   }
+
+  setLCButtonPalette(map: any, colors: string[]) {
+    let index = this.mapHash.indexOf(map);
+    this.panelButtonHash[index].setLCPalette(colors);
+  }
+  
   
 }

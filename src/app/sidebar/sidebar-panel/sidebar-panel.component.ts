@@ -8,7 +8,7 @@ import {MapService} from '../../map/shared/map.service';
   styleUrls: ['./sidebar-panel.component.css'],
   animations: [
     trigger('movePanel', [
-         state('active', style({
+      state('active', style({
         transform: 'translate(-225px, 0px)',
       })),
       state('inactive', style({
@@ -41,6 +41,7 @@ export class SidebarPanelComponent implements OnInit {
 
   ngOnInit() {
     this.mapService.setButtonPanel(this);
+    this.elementRef.nativeElement.style.setProperty("--in-out-menu", "'\\00BB'");
   }
 
   toggleMenu() {
@@ -61,6 +62,12 @@ export class SidebarPanelComponent implements OnInit {
 
   colorChange() {
     this.mapService.changeColor(this, this.colorScheme);
+  }
+
+  setLCPalette(colors: string[]) {
+    for (let i = 0; i < 30; i++) {
+      this.elementRef.nativeElement.style.setProperty("--color" + i.toString(), colors[i]);
+    }
   }
 
 
