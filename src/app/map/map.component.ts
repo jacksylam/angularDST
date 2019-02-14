@@ -30,6 +30,7 @@ import * as chroma from '../../../node_modules/chroma-js/chroma.js';
 import * as CovJSON from 'covjson-reader';
 import { WebWorkerService } from 'ngx-web-worker';
 import 'leaflet-easyprint';
+import 'pnglib';
 
 
 
@@ -5552,7 +5553,7 @@ export class MapComponent implements OnInit {
       let buttonIndex = LC_TO_BUTTON_INDEX[i + 1]
       buttonPalette[buttonIndex] = palette[i + 1];
     }
-    //this.mapService.setLCButtonPalette(this, buttonPalette);
+    this.mapService.setLCButtonPalette(this, buttonPalette);
 
     //palette = this.agitate(palette);
     return palette;
@@ -5861,6 +5862,10 @@ export class MapComponent implements OnInit {
       x: index % this.gridWidthCells,
       y: Math.floor(index / this.gridWidthCells)
     };
+  }
+
+  private generatePNG() {
+
   }
 }
 
