@@ -1,15 +1,21 @@
 
 <nav #nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">
-    <img src="./assets/images/Ike Wai logo color on transp 2500px.png">
-    <img src="./assets/images/USGSLogo.png">
-  </a>
+  
+  <span>
+    <a class="navbar-brand" target="_blank" href="http://www.hawaii.edu/epscor/ike-wai-project/">
+      <img src="./assets/images/Ike Wai logo color on transp 2500px.png">
+    </a>
+    <a class="navbar-brand" target="_blank" href="https://www.usgs.gov/centers/piwsc">
+      <img src="./assets/images/USGSLogo.png">
+    </a>
+  </span>
+  
   <button class="navbar-toggler" type="button" (click)="toggleCollapse()" data-toggle="collapse" data-target="#nav" aria-controls="nav" aria-expanded="true" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
 
-  <div class="collapse navbar-collapse" [ngClass]="{ 'show': isCollapsed }"  id="nav">
+  <span class="collapse navbar-collapse" [ngClass]="{ 'show': isCollapsed }"  id="nav">
     <ul class="navbar-nav mr-auto">
         <li [routerLinkActive]="['active']"><a class="nav-link" routerLink="/home">Home</a></li>
         <li [routerLinkActive]="['active']"><a class="nav-link" routerLink="/workspace">Workspace</a></li>
@@ -18,7 +24,7 @@
         <li [routerLinkActive]="['active']"><a class="nav-link" target="_blank" routerLink="/instructions">Instructions</a></li>
         <!-- <li [routerLinkActive]="['active']"><a routerLink="/feedback">Feedback</a></li> -->
     </ul>
-  </div>
+  </span>
 </nav>
 
 <router-outlet></router-outlet>

@@ -5460,6 +5460,7 @@ export class MapComponent implements OnInit {
       }, backoff);
     }
     
+    this.generatePNG(1, this.generateLCColorRaster());
   }
 
 
@@ -5865,18 +5866,47 @@ export class MapComponent implements OnInit {
     };
   }
 
+  private generateLCColorRaster(): number[][][] {
+    let raster = []
+    let row;
+    let codes = this.types.landCover.data._covjson.ranges.cover.values;
+    codes.forEach((code, i) => {
+      if(i % this.gridWidthCells == 0) {
+        raster.push([]);
+        row = raster[raster.length - 1];
+      }
+      if(code == 0) {
+        row.push([0, 0, 0, 0])
+      }
+      else {
+        let color = chroma(COVER_INDEX_DETAILS[code].color).rgba();
+        color[3] *= 255;
+        row.push(color);
+      }
+    });
+    return raster;
+  }
+
   //chroma .rgba will convert to color channels
   private generatePNG(scale: number, raster: number[][][]) {
+    //need to implement scaling
+    scale = 1;
+
     let width = raster[0].length * scale;
     let height = raster.length * scale;
     let image = new pnglib(width, height, 256);
+
+    console.log(image.color(1, 0, 0, 1));
     
     for(let i = 0; i < width; i++) {
       for(let j = 0; j < height; j++) {
-        
-        image.buffer[image.index(i, j)] = image.color(...raster[i][j]);
+        image.buffer[image.index(i, j)] = image.color(...raster[j][i]);
       }
     }
+
+    console.log(image);
+    document.write('<img src="data:image/png;base64,' + image.getBase64() + '">');
+    //saveAs(new Blob([p.getBase64()], { type: "image/png" }), "test");
   }
 }
 
