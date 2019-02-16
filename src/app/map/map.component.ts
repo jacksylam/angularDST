@@ -2090,7 +2090,7 @@ export class MapComponent implements OnInit {
         infoNoCaprock.metrics = metrics[code].nocaprock;
         infoNoCaprock.roundedMetrics = this.roundMetrics(metrics[code].nocaprock);
         infoNoCaprock.name = AQUIFER_NAME_MAP[code];
-        data.aquifersNoCaprock.push(info);
+        data.aquifersNoCaprock.push(infoNoCaprock);
       }
     });
 
@@ -2101,6 +2101,7 @@ export class MapComponent implements OnInit {
     data.totalNoCaprock.metrics = metrics.total.nocaprock;
     data.totalNoCaprock.roundedMetrics = this.roundMetrics(metrics.total.nocaprock);
 
+    console.log(data);
 
     return data;
   }
