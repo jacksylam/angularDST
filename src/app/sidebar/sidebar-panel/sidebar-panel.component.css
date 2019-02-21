@@ -198,9 +198,30 @@
   margin-left: -4%;
 }
 
+.dmiw {
+  transform: scale(.65, .9);
+  margin-left: -14%;
+}
+
+.dmiwo {
+  transform: scale(.6, .9);
+  margin-left: -17%;
+}
+
+.dhiw {
+  transform: scale(.69, .9);
+  margin-left: -12%;
+}
+
+.dhiwo {
+  transform: scale(.65, .9);
+  margin-left: -14%;
+}
+
 .shift {
   text-align: left;
-  padding-left: 6%;
+  padding-left: 9%;
+  white-space: normal;
 }
 
 .btn-red:hover {
@@ -218,6 +239,8 @@
 .btn-custom-t2 {
   border: 1px solid #016422;
   font-size: 12px;
+  max-height: 50px !important;
+  min-height: 50px !important;
 }
 
 .btn-custom-t2:hover {
@@ -246,125 +269,4 @@
   background: ivory;
   color: black;
   font-weight: normal;
-}
-
-.c0{
-  background: linear-gradient(90deg, var(--color0) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-  color: black;
-}
-.c1{
-  background: linear-gradient(90deg, var(--color1) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-  color: black;
-}
-.c2{
-  background: linear-gradient(90deg, var(--color2) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-  color: black;
-}
-.c3{
-  color: black;
-  background: linear-gradient(90deg, var(--color3) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c4{
-  color: black;
-  background: linear-gradient(90deg, var(--color4) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c5{
-  color: black;
-  background: linear-gradient(90deg, var(--color5) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c6{
-  color: black;
-  background: linear-gradient(90deg, var(--color6) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c7{
-  color: black;
-  background: linear-gradient(90deg, var(--color7) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c8{
-  color: black;
-  background: linear-gradient(90deg, var(--color8) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c9{
-  color: black;
-  background: linear-gradient(90deg, var(--color9) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c10{
-  color: black;
-  background: linear-gradient(90deg, var(--color10) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c11{
-  color: black;
-  background: linear-gradient(90deg, var(--color11) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c12{
-  color: black;
-  background: linear-gradient(90deg, var(--color12) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c13{
-  color: black;
-  background: linear-gradient(90deg, var(--color13) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c14{
-  color: black;
-  background: linear-gradient(90deg, var(--color14) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c15{
-  color: black;
-  background: linear-gradient(90deg, var(--color15) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c16{
-  color: black;
-  background: linear-gradient(90deg, var(--color16) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c17{
-  color: black;
-  background: linear-gradient(90deg, var(--color17) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c18{
-  color: black;
-  background: linear-gradient(90deg, var(--color18) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c19{
-  color: black;
-  background: linear-gradient(90deg, var(--color19) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c20{
-  color: black;
-  background: linear-gradient(90deg, var(--color20) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c21{
-  color: black;
-  background: linear-gradient(90deg, var(--color21) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c22{
-  color: black;
-  background: linear-gradient(90deg, var(--color22) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c23{
-  color: black;
-  background: linear-gradient(90deg, var(--color23) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c24{
-  color: black;
-  background: linear-gradient(90deg, var(--color24) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c25{
-  color: black;
-  background: linear-gradient(90deg, var(--color25) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c26{
-  color: black;
-  background: linear-gradient(90deg, var(--color26) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c27{
-  color: black;
-  background: linear-gradient(90deg, var(--color27) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c28{
-  color: black;
-  background: linear-gradient(90deg, var(--color28) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
-}
-.c29{
-  color: black;
-  background: linear-gradient(90deg, var(--color29) 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%);
 }

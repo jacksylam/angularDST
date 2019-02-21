@@ -20,7 +20,7 @@
     <h2>
       Database of Recharge Simulations
     </h2>
-    <a target="_blank" href="../assets/lc_table.png"><img src="../assets/lc_table.png" alt="Web Interface Flow Chart"></a>
+    <a target="_blank" routerLink="/land_cover_table"><app-lc-table class="figure" [columns]="2" header="Table 1. Land cover types and codes used in the Hawaiʻi Groundwater Recharge Tool"></app-lc-table></a>
     <p class="clearfix">
       The database consists of 54 recharge simulations for O‘ahu. Each simulation represents recharge that would result if the entire island was covered in one of the 27 land-cover types from the studies by <a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Engott and others (2017)</a> (table 1),  under one of the two climate conditions: (1) 1978-2007 or (2) 2041-2071 RCP 8.5. When the user changes a land-cover or climate condition, the web interface retrieves the recharge values for the area for the appropriate land cover and climate in the database.
     </p>

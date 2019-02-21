@@ -1,0 +1,21 @@
+.maintable {
+    border-bottom: 1px solid;
+}
+
+th {
+    border-bottom: 1px solid;
+}
+
+td {
+    vertical-align: top;
+    padding: 5px 5% 5px 0px;
+}
+
+td:last-child {
+    padding-right: 0;
+}
+
+table {
+    width: 100%;
+}
+

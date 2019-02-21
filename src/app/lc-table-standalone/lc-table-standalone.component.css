@@ -1,0 +1,26 @@
+.header {
+    background: rgb(56, 117, 194);
+    color: white;
+}
+
+.body {
+    position: absolute;
+    width: 90%;
+    left: 5%;
+    padding-bottom: 100px;
+    float: right;
+    clear: right;
+}
+
+.buffer {
+    padding-bottom: 20px;
+}
+
+.pad {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+h1 {
+    text-align: center;
+}

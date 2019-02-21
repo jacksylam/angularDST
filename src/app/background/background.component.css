@@ -23,7 +23,11 @@ img {
     width: 760px;
     height: auto;
     clear: both;
+    color: black !important;
+    font-size: 10px;
 }
+
+
 
 table {
     width: 100%;

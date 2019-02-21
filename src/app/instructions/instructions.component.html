@@ -27,7 +27,7 @@
     
     
     <p (mouseenter)="hover('../assets/instruction_images/new_map.PNG')">
-      The <a routerLink="/workspace">Workspace</a> should start with a map open. To add additional maps for analysis, click the “New Map” button in the top left corner of the screen.
+      The <a routerLink="/workspace">Workspace</a> should start with a map open. To add additional maps for analysis, click the “New Map” button in the top left corner of the screen. The maps provided in this application provide interactive visualizations – visual representations of a set of data. The two main visualizations presented are a land cover visualization, the default map view representing the land usage for the island of O'ahu, and the recharge visualization, representing the approximate groundwater recharge rates for the island based on the set land usage. A satellite representation of the island is also available.
     </p>
 
     <h2 (mouseenter)="hover('../assets/instruction_images/lc_vis.PNG')">
@@ -41,7 +41,7 @@
       </h3>
 
       <p>
-        The initial map view represents the current land cover usage for the island of Oahu. To create an area to update, the leaflet draw tools on the left side of the map can be used. 
+        The initial map view represents the current land cover usage for the island of O'ahu. To create an area to update, the leaflet draw tools on the left side of the map can be used. 
       </p>
 
       <ul>
@@ -65,11 +65,11 @@
 
     </div>
 
-    <h3>
+    <h3 (mouseenter)="hover('../assets/instruction_images/lc_menu.PNG')">
       Menu Panel
     </h3>
 
-    <p>
+    <p (mouseenter)="hover('../assets/instruction_images/lc_menu.PNG')">
       The menu panel on the left edge of the map window provides controls for modifying land covers and climate scenarios.
     </p>
 
@@ -100,21 +100,24 @@
         <li (mouseenter)="hover('../assets/instruction_images/advanced_mapping.PNG')">
           Advanced mapping
           <ul>
-            <li>
+            <li (mouseenter)="hover('../assets/instruction_images/advanced_mapping.PNG')">
               Allows specific land cover types to be mapped to other land cover types.
             </li>
-            <li>
-              The “+” and “-“ buttons can be used to add or remove mappings.
-            </li>
-            <li>
-              The “Everything Else” option allows a default cover to be selected for any land covers without a specific mapping.
-            </li>
-            <li>
-              When finished, clicking “Submit” will apply the specified mapping to selected areas.
-            </li>
+            <!-- should add  (mouseenter)="hover('../assets/instruction_images/advanced_mapping.PNG')" here, need to make size more consistent to prevent jittering -->
+            <span>
+              <li>
+                The “+” and “-“ buttons can be used to add or remove mappings.
+              </li>
+              <li>
+                The “Everything Else” option allows a default cover to be selected for any land covers without a specific mapping.
+              </li>
+              <li>
+                When finished, clicking “Submit” will apply the specified mapping to selected areas.
+              </li>
+            </span>
           </ul>
         </li>
-        <li (mouseenter)="hover('../assets/instruction_images/draw_controls.PNG')">
+        <li (mouseenter)="hover('../assets/instruction_images/revert_baseline.PNG')">
           Revert to Default Land Cover
           <ul>
             <li>
@@ -125,7 +128,7 @@
             </li>
           </ul>
         </li>
-        <li>
+        <li (mouseenter)="hover('../assets/instruction_images/lc_types.PNG')">
           The remaining buttons will change any selected areas to the indicated land cover type. For example, clicking the “Alien Forest” button will change the land cover for any selected areas to alien forest.
         </li>
       </ul>
@@ -140,7 +143,7 @@
     </p>
 
 
-    <h3 (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
+    <h3 (mouseenter)="hover('../assets/instruction_images/details.PNG')">
       Details Panel
     </h3>
 
@@ -153,11 +156,11 @@
       </li>
     </ul>
 
-    <h3 (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
+    <h3 (mouseenter)="hover('../assets/instruction_images/rc_menu.PNG')">
       Menu Panel
     </h3>
 
-    <p (mouseenter)="hover('../assets/instruction_images/rc_vis.PNG')">
+    <p  (mouseenter)="hover('../assets/instruction_images/rc_menu.PNG')">
       The menu panel on the left side of the window allows for the visualization style and metric mode to be changed.
     </p>
 
@@ -231,16 +234,16 @@
         Import
         <ul>
           <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
-            Allows shapefile data or land cover data grids to be loaded onto the map.
+            Allows shapefile data or land cover data grids to be imported to the workspace.
           </li>
           <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
-            Upload shapefile
+            Import shapefile
             <ul>
               <li>
                 All of the required shapefile components (.shp, .dbf, .shx, .prj) should be stored in a zip folder.
               </li>
               <li>
-                Shapefiles can be uploaded in three ways
+                Shapefiles can be imported in three ways
                 <ul>
                   <li>
                     Custom areas
@@ -254,7 +257,7 @@
                     Reference layer
                     <ul>
                       <li>
-                        The geometries in the shapefile will be loaded into a toggleable layer and added to the layer control menu with the aquifer and caprock overlays.
+                        The geometries in the shapefile will be imported into a toggleable layer and added to the layer control menu with the aquifer and caprock overlays.
                       </li>
                     </ul>
                   </li>
@@ -277,7 +280,7 @@
             </ul>
           </li>
           <li (mouseenter)="hover('../assets/instruction_images/import.PNG')">
-            Upload land cover raster
+            Import land cover raster
             <ul>
               <li>
                 Allows a grid of land cover values to be imported as an ASCII file (accepts .asc, .ascii, or .txt file extensions) or a CoverageJSON file (.covjson file extension).
@@ -335,7 +338,7 @@
                         “ranges” field must have a parameter label of “cover”.
                       </li>
                       <li>
-                        Information on the CoverageJSON format specification can be found here. The set of labels used by this application can be retrieved by exporting a copy of the land cover data, selecting the covjson format.
+                        Information on the CoverageJSON format specification can be found <a #ref target="_blank" href="https://covjson.org/spec/">here</a>. The set of labels used by this application can be retrieved by exporting a copy of the land cover data, selecting the covjson format.
                       </li>
                     </ul>
                   </li>
@@ -423,20 +426,21 @@
       In addition to importing/exporting items and report generation, the control panel on the right side of the window provides various options for the map.
     </p>
 
-    <ul (mouseenter)="hover('../assets/instruction_images/map_controls.PNG')">
-      <li>
+    <ul>
+      <li (mouseenter)="hover('../assets/instruction_images/naming.PNG')">
         “Name Custom Areas” allows user defined areas to be named. In this mode, an area can be selected displaying the areas name. This name can be changed by typing a new name into the box that appears in the control panel and clicking “Set Name”. To exit this naming mode click the “Exit” button. This changes the name the area is referred to as in generated reports as well as in the properties of the shapefile generated if the custom areas are downloaded.
       </li>
-      <li>
-        “Hide/Show Custom Areas” will remove or display any user defined areas.
-      </li>
-      <li>
-        “Layer Opacity” allows for the visualization layer to be made transparent, making a satellite image of the map visible beneath the visualization.
-      </li>
-      <li>
-        “Units” allows the units used by the application to be changed between united states customary and metric.
-      </li>
-      
+      <span (mouseenter)="hover('../assets/instruction_images/map_controls.PNG')">
+        <li>
+          “Hide/Show Custom Areas” will remove or display any user defined areas.
+        </li>
+        <li>
+          “Layer Opacity” allows for the visualization layer to be made transparent, making a satellite image of the map visible beneath the visualization.
+        </li>
+        <li>
+          “Units” allows the units used by the application to be changed between united states customary and metric.
+        </li>
+      </span>
     </ul>
 
     <h2>

@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/animations';
 import {MapService} from '../../map/shared/map.service';
+import {COVER_INDEX_DETAILS} from '../../map/shared/cover_enum';
 
 @Component({
   selector: 'app-sidebar-panel',
@@ -37,6 +38,8 @@ export class SidebarPanelComponent implements OnInit {
 
   disabled = true;
 
+  panel = [];
+
   constructor(private mapService: MapService, private elementRef: ElementRef) { }
 
   ngOnInit() {
@@ -64,10 +67,18 @@ export class SidebarPanelComponent implements OnInit {
     this.mapService.changeColor(this, this.colorScheme);
   }
 
-  setLCPalette(colors: string[]) {
-    for (let i = 0; i < 30; i++) {
-      this.elementRef.nativeElement.style.setProperty("--color" + i.toString(), colors[i]);
-    }
+  setLCPalette() {
+    this.panel = Object.keys(COVER_INDEX_DETAILS).map((code) => {
+      return {
+        name: COVER_INDEX_DETAILS[code].type,
+        background: "linear-gradient(90deg," + COVER_INDEX_DETAILS[code].color + " 12%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%)"
+      };
+    })
+    .sort((a, b) => {
+      let t1 = a.name;
+      let t2 = b.name;
+      return t1 < t2 ? -1 : 1;
+    });
   }
 
 

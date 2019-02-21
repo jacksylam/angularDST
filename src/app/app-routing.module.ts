@@ -11,6 +11,7 @@ import { BackgroundComponent } from './background/background.component';
 import { DisclaimerComponent } from './disclaimer/disclaimer.component';
 import { FeedbackComponent } from './feedback/feedback.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { LcTableStandaloneComponent } from './lc-table-standalone/lc-table-standalone.component';
 
 const routes: Routes = [
   // {
@@ -25,6 +26,7 @@ const routes: Routes = [
   { path: 'background',  component: BackgroundComponent },
   { path: 'disclaimer', component: DisclaimerComponent},
   { path: 'feedback', component: FeedbackComponent},
+  { path: 'land_cover_table', component: LcTableStandaloneComponent},
   { path: '**', component: NotFoundComponent}
 ];
 

@@ -12,7 +12,7 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('nav') nav;
   
   title = 'app';
-  isCollapsed = false;
+  isCollapsed = true;
 
   constructor (private mapService: MapService) {
     //mapService.init();
@@ -20,6 +20,10 @@ export class AppComponent implements AfterViewInit {
 
   toggleCollapse() {
     this.isCollapsed = !this.isCollapsed;
+  }
+
+  collapse() {
+    this.isCollapsed = true;
   }
 
   ngAfterViewInit() {

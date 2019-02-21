@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, EventEmitter, Input, Output } from '@angular/core';
+import { Component, OnInit, AfterContentInit, ViewChild, ElementRef, EventEmitter, Input, Output } from '@angular/core';
 import { MapService } from '../map/shared/map.service';
 import { Http } from '@angular/http';
 import 'rxjs/add/operator/map';
@@ -9,7 +9,7 @@ import { isNullOrUndefined } from 'util';
 import 'rxjs/add/observable/forkJoin';
 import { Observable } from 'rxjs';
 //import { CovDetailsService } from 'app/map/shared/cov-details.service';
-import { COVER_ENUM, COVER_INDEX_DETAILS, LC_TO_BUTTON_INDEX } from './shared/cover_enum';
+import { COVER_ENUM, COVER_INDEX_DETAILS } from './shared/cover_enum';
 import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
 //import * as shpwrite from 'shp-write';
@@ -45,7 +45,7 @@ declare let require: any;
   styleUrls: ['./map.component.css'],
   providers: []
 })
-export class MapComponent implements OnInit {
+export class MapComponent implements OnInit, AfterContentInit {
 
   @ViewChild('mapid') mapid;
 
@@ -57,6 +57,7 @@ export class MapComponent implements OnInit {
   static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
   static readonly MAX_RECHARGE = 180;
   static readonly USGS_PURPLE_RECHARGE = 450;
+  static readonly PROJECTION = 'PROJCS["NAD_1983_UTM_Zone_4N",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-159],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]"';
 
   rechargePaletteTailLength: number;
   rechargePaletteHeadLength: number;
@@ -261,6 +262,10 @@ export class MapComponent implements OnInit {
 
   ngOnInit() {
 
+  }
+
+  ngAfterContentInit() {
+    this.mapService.setLCButtonPalette(this);
   }
 
   ngAfterViewInit() {
@@ -2101,7 +2106,7 @@ export class MapComponent implements OnInit {
     data.totalNoCaprock.metrics = metrics.total.nocaprock;
     data.totalNoCaprock.roundedMetrics = this.roundMetrics(metrics.total.nocaprock);
 
-    console.log(data);
+    //console.log(data);
 
     return data;
   }
@@ -4075,8 +4080,15 @@ export class MapComponent implements OnInit {
       let ready = [];
       let index = 0;
 
-      [info.shapes, info.recharge, info.cover].forEach((item) => {
+      [info.recharge, info.cover].forEach((item) => {
         if(item) {
+          ready.push({
+            ready: false,
+            fname: "",
+            type: "",
+            data: null
+          });
+          //projection file
           ready.push({
             ready: false,
             fname: "",
@@ -4085,6 +4097,14 @@ export class MapComponent implements OnInit {
           });
         }
       });
+      if(info.shapes) {
+        ready.push({
+          ready: false,
+          fname: "",
+          type: "",
+          data: null
+        });
+      }
 
 
       //get string representation of specified file contents
@@ -4095,119 +4115,132 @@ export class MapComponent implements OnInit {
         let vals = type == "recharge" ? this.types.recharge.currentData[this.currentScenario] : this.types.landCover.data._covjson.ranges.cover.values;
         let fcontents;
     
-        if(format == "asc") {
+        switch(format) {
           
-          
-          //generate header lines
-          fcontents = "ncols " + this.gridWidthCells + "\n";
-          fcontents += "nrows " + this.gridHeightCells + "\n";
-          fcontents += "xllcorner " + this.xmin + "\n";
-          fcontents += "yllcorner " + this.ymin + "\n";
-          fcontents += "cellsize " + 75 + "\n";
-          fcontents += "NODATA_value -9999 \n";
-      
-          let colCounter = 0;
-          //add data
-          vals.forEach((val) => {
-            let convertedVal = val;
-            if(this.unitType == "Metric" && type == "recharge") {
-              convertedVal = this.numericRoundToDecimalPlaces(convertedVal * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3);
-            }
-            fcontents += convertedVal + " "
-            
-            //should have newline at the end of every row
-            if(++colCounter >= this.gridWidthCells) {
-              fcontents += "\n";
-              colCounter = 0;
-            }
-          });
+          case "asc": {
+            //generate header lines
+            fcontents = "ncols " + this.gridWidthCells + "\n";
+            fcontents += "nrows " + this.gridHeightCells + "\n";
+            fcontents += "xllcorner " + this.xmin + "\n";
+            fcontents += "yllcorner " + this.ymin + "\n";
+            fcontents += "cellsize " + 75 + "\n";
+            fcontents += "NODATA_value -9999 \n";
 
-          let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
-          return {
-            data: fcontents,
-            name: fname,
-            type: 'text/plain;charset=utf-8'
-          }
-          
-        }
-        else if(format == "covjson") {
-          let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
-          return {
-            data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType, this.numericRoundToDecimalPlaces)),
-            name: fname,
-            type: 'text/plain;charset=utf-8'
-          }
-          
-        }
-        //download as a shapefile
-        //not currently available
-        else {
-          let cells = [];
-
-          //need to change property label if recharge
-
-          xs.forEach((x, i) => {
-            ys.forEach((y, j) => {
-              let value = vals[this.getIndex(i, j)];
-              if(value == 0) {
-                return;
+            let colCounter = 0;
+            //add data
+            vals.forEach((val) => {
+              let convertedVal = val;
+              if(this.unitType == "Metric" && type == "recharge") {
+                convertedVal = this.numericRoundToDecimalPlaces(convertedVal * MapComponent.INCH_TO_MILLIMETER_FACTOR, 3);
               }
-              console.log("test");
-
-              let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y - 37.5]);
-              let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y + 37.5]);
-              let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y + 37.5]);
-              let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y - 37.5]);
-
-              let cellBounds = {
-                type: "Feature",
-                properties: {},
-                geometry: {
-                  type: "Polygon",
-                  coordinates: [[c1, c2, c3, c4, c1]]
-                }
-              };
-
-              cellBounds.properties = type == "landCover" ? { lcCode: value } : { recharge: value };
-
-              cells.push(cellBounds);
+              fcontents += convertedVal + " "
+              
+              //should have newline at the end of every row
+              if(++colCounter >= this.gridWidthCells) {
+                fcontents += "\n";
+                colCounter = 0;
+              }
             });
-          });
 
-          console.log("complete");
-          
-          let shapes = L.geoJSON(cells).toGeoJSON();
-
-          let zip = new JSZip();
-
-          //redefine shp-write zip feature with desired file hierarchy
-          let polygons = shpWriteGeojson.polygon(shapes);
-          polygons.geometries = polygons.geometries[0];
-          if (polygons.geometries.length && polygons.geometries[0].length) {
-            this.modShpWrite.write(
-              // field definitions
-              polygons.properties,
-              // geometry type
-              polygons.type,
-              // geometries
-              polygons.geometries,
-              function (err, files) {
-                let fileName = type;
-                zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-                zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-                zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-                zip.file(fileName + '.prj', shpWritePrj);
-              }
-            );
+            let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
+            return {
+              data: fcontents,
+              name: fname,
+              type: 'text/plain;charset=utf-8'
+            }
+            break;
           }
           
-          zip.generateAsync({ type: "base64" }).then((file) => {
+          case "covjson": {
+            let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
             return {
-              data: this.base64ToArrayBuffer(file),
-              name: type + ".zip",
-              type: 'data:application/zip'
+              data: JSON.stringify(this.covjsonTemplate.constructCovjson(xs, ys, vals, [this.gridHeightCells, this.gridWidthCells], type == "recharge" ? "recharge" : "cover", this.unitType, this.numericRoundToDecimalPlaces)),
+              name: fname,
+              type: 'text/plain;charset=utf-8'
             }
-          });
+            break;
+          }
+
+          case "prj": {
+            let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
+            return {
+              data: MapComponent.PROJECTION,
+              name: fname,
+              type: 'text/plain;charset=utf-8'
+            }
+          }
+
+          //download as a shapefile
+          //not currently available
+          case "shp": {
+
+            let cells = [];
+
+            //need to change property label if recharge
+
+            xs.forEach((x, i) => {
+              ys.forEach((y, j) => {
+                let value = vals[this.getIndex(i, j)];
+                if(value == 0) {
+                  return;
+                }
+                //console.log("test");
+
+                let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y - 37.5]);
+                let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x - 37.5, y + 37.5]);
+                let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y + 37.5]);
+                let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [x + 37.5, y - 37.5]);
+
+                let cellBounds = {
+                  type: "Feature",
+                  properties: {},
+                  geometry: {
+                    type: "Polygon",
+                    coordinates: [[c1, c2, c3, c4, c1]]
+                  }
+                };
+
+                cellBounds.properties = type == "landCover" ? { lcCode: value } : { recharge: value };
+
+                cells.push(cellBounds);
+              });
+            });
+
+            //console.log("complete");
+            
+            let shapes = L.geoJSON(cells).toGeoJSON();
+
+            let zip = new JSZip();
+
+            //redefine shp-write zip feature with desired file hierarchy
+            let polygons = shpWriteGeojson.polygon(shapes);
+            polygons.geometries = polygons.geometries[0];
+            if (polygons.geometries.length && polygons.geometries[0].length) {
+              this.modShpWrite.write(
+                // field definitions
+                polygons.properties,
+                // geometry type
+                polygons.type,
+                // geometries
+                polygons.geometries,
+                function (err, files) {
+                  let fileName = type;
+                  zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+                  zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+                  zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+                  zip.file(fileName + '.prj', shpWritePrj);
+                }
+              );
+            }         
+            zip.generateAsync({ type: "base64" }).then((file) => {
+              return {
+                data: this.base64ToArrayBuffer(file),
+                name: type + ".zip",
+                type: 'data:application/zip'
+              }
+            });
+            break;
+          }
         }
       };
 
@@ -4305,15 +4338,22 @@ export class MapComponent implements OnInit {
 
         //get current details object and increment index
         let thisDetails = ready[index++];
+        //get projection details
+        let prjDetails = ready[index++];
 
         //generate file details
         let fdetails = genDataFileContents("recharge", info.format);
         thisDetails.data = fdetails.data;
         thisDetails.fname = fdetails.name;
         thisDetails.type = fdetails.type;
+        fdetails = genDataFileContents("recharge", "prj");
+        prjDetails.data = fdetails.data;
+        prjDetails.fname = fdetails.name;
+        prjDetails.type = fdetails.type;
 
         //signal ready
         thisDetails.ready = true;
+        prjDetails.ready = true;
 
         //check if all items are ready, and download if they are
         let allReady = true;
@@ -4329,15 +4369,22 @@ export class MapComponent implements OnInit {
 
         //get current details object and increment index
         let thisDetails = ready[index++];
+        //get projection details
+        let prjDetails = ready[index++];
 
         //generate file details
         let fdetails = genDataFileContents("landCover", info.format);
         thisDetails.data = fdetails.data;
         thisDetails.fname = fdetails.name;
         thisDetails.type = fdetails.type;
+        fdetails = genDataFileContents("landCover", "prj");
+        prjDetails.data = fdetails.data;
+        prjDetails.fname = fdetails.name;
+        prjDetails.type = fdetails.type;
 
         //signal ready
         thisDetails.ready = true;
+        prjDetails.ready = true;
 
         //check if all items are ready, and download if they are
         let allReady = true;
@@ -5287,7 +5334,7 @@ export class MapComponent implements OnInit {
       //     coverage.data._covjson.ranges.cover.values[i] = null;
       //   }
       // });
-      coverage.data._covjson.ranges.cover.values[0] = 30;
+      coverage.data._covjson.ranges.cover.values[0] = 32;
     }
 
     // work with coverage object
@@ -5461,7 +5508,7 @@ export class MapComponent implements OnInit {
       }, backoff);
     }
     
-    this.generatePNG(1, this.generateLCColorRaster());
+    //this.generatePNG(1, this.generateLCColorRaster());
   }
 
 
@@ -5502,6 +5549,8 @@ export class MapComponent implements OnInit {
 
   private landCoverPalette(): string[] {
 
+    let maxLCCode = 32;
+
     //no color (black)
     let nc = "000000";
     //color channels for interpolation
@@ -5517,8 +5566,8 @@ export class MapComponent implements OnInit {
     //create channel divisions using rgb interpolation
     //using rgb instead of lrgb because shifts the scheme logarithmically towards darker colors, which looks nicer
     let rco = (chroma as any).scale([nc, r]).mode('lrgb').colors(rd);
-    let gco = (chroma as any).scale([nc, g]).mode('lrgb').colors(gd);
-    let bco = (chroma as any).scale([nc, b]).mode('lrgb').colors(bd);
+    let gco = (chroma as any).scale([nc, g]).mode('rgb').colors(gd);
+    let bco = (chroma as any).scale([nc, b]).mode('rgb').colors(bd);
 
     //strip out individual channels
     rco = rco.map((color) => {
@@ -5536,7 +5585,7 @@ export class MapComponent implements OnInit {
     for(let i = 0; i < rco.length; i++) {
       for(let j = 0; j < gco.length; j++) {
         for(let k = 0; k < bco.length; k++) {
-          if(palette.length >= 32) {
+          if(palette.length > maxLCCode + 1) {
             break;
           }
           palette.push("#" + rco[i] + gco[j] + bco[k]);
@@ -5544,19 +5593,19 @@ export class MapComponent implements OnInit {
       }
     }
     //6, 15
-    console.log(palette);
+    //console.log(palette);
 
     palette.shift();
 
     //rank warm/coolness by red and blue levels, order lc types by recharge inhibition, assign colors appropriately?
 
-    let buttonPalette = new Array(30);
-    for (let i = 0; i < 30; i++) {
-      COVER_INDEX_DETAILS[i].color = palette[i];
-      let buttonIndex = LC_TO_BUTTON_INDEX[i + 1]
-      buttonPalette[buttonIndex] = palette[i + 1];
+    //let buttonPalette = new Array(30);
+    for (let i = 0; i <= maxLCCode; i++) {
+      if(COVER_INDEX_DETAILS[i] != undefined) {
+        COVER_INDEX_DETAILS[i].color = palette[i];
+      }
     }
-    this.mapService.setLCButtonPalette(this, buttonPalette);
+    this.mapService.setLCButtonPalette(this);
 
     //palette = this.agitate(palette);
     return palette;

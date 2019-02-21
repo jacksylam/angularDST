@@ -66,6 +66,8 @@ import { TermsOfUseComponent } from './terms-of-use/terms-of-use.component'
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatTooltipModule} from '@angular/material/tooltip'
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import { LcTableComponent } from './lc-table/lc-table.component';
+import { LcTableStandaloneComponent } from './lc-table-standalone/lc-table-standalone.component';
 
 @NgModule({
   declarations: [
@@ -86,7 +88,9 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
     DisplayUnitComponent,
     VisWindowComponent,
     ReportWindowComponent,
-    TermsOfUseComponent
+    TermsOfUseComponent,
+    LcTableComponent,
+    LcTableStandaloneComponent
   ],
   imports: [
     HttpModule,

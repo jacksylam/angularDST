@@ -1,0 +1,41 @@
+
+  
+  <table class="maintable">
+    <tr>
+      <td>
+        <table>
+            <tr>
+              <th>{{header}}</th>
+            </tr>
+          </table>
+        </td>
+    </tr>
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td *ngFor="let column of rows">
+              <table>
+                <tr>
+                  <th>
+                    Land Cover
+                  </th>
+                  <th>
+                    code
+                  </th>
+                </tr>
+                <tr *ngFor="let item of column">
+                  <td>
+                    {{item.name}}
+                  </td>
+                  <td>
+                    {{item.code}}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
