@@ -28,47 +28,18 @@ export class AdvancedMappingDialogComponent implements OnInit {
   }
 
   constructor(private dialogRef: MatDialogRef<AdvancedMappingDialogComponent>, @Inject(MAT_DIALOG_DATA) info) {
-    this.sourceTypes = info.sourceTypes;
-    this.allTypes = info.allTypes;
-
-    //put background type at end and rename
-    let backgroundIndex = this.allTypes.indexOf("Background");
-    //make sure exists
-    if(backgroundIndex >= 0) {
-      this.allTypes.splice(backgroundIndex, 1);
-      this.allTypes.push("Background (No Recharge)");
-    }
+    this.sourceTypes = info.sourceTypes.sort();
+    this.allTypes = info.allTypes.filter((type) => {
+      return type != "Background";
+    }).sort();
 
 
     this.formState = [];
     this.assigned = [];
     if(info.state) {
-      // Object.keys(info.state).forEach((key) => {
-      //   //if default key set default type
-      //   if(key == "default") {
-      //     this.defaultType = info.state[key];
-      //   }
-      //   //otherwise construct representative form fields
-      //   else {
-      //     //check if this source type is available in current set
-      //     let sourceCoverIndex = this.sourceTypes.indexOf(key);
-      //     //disclude options with invalid source type
-      //     if(sourceCoverIndex >= 0) {
-      //       this.formState.push({source: key, target: info.state[key], oldSource: key});
-      //       //remove pre-mapped sources from available source types list
-      //       this.assigned.push(key);
-      //     }
-      //   }      
-        
-      // });
 
-      //CHANGE SO SWAPS BACK TO BACKGROUND LABEL TEXT
-
-      this.defaultType = info.state.default == "Background" ? "Background (No Recharge)" : info.state.default;
+      this.defaultType = info.state.default;
       info.state.formState.forEach((field) => {
-        if(field.target == "Background") {
-          field.target = "Background (No Recharge)";
-        }
         //if source is null (partially filled out) allow, but nothing added to assigned
         if(field.source == null) {
           this.formState.push(field);

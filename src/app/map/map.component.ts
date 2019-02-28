@@ -301,7 +301,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     this.paletteType = "usgs";
 
     //thinking I like the collapsed version with this stuff
-    this.layers = L.control.layers({ "Satellite Image": empty }, null/*, {collapsed: false}*/).addTo(this.map)
+    this.layers = L.control.layers({ "Satellite Image": empty }, null).addTo(this.map)
     
     let layerControl = this.map._controlContainer.children[1];
     layerControl.style.visibility = "hidden";
@@ -445,7 +445,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     //think there's a value in the middle that's invalid, may need to give valid values if issue, probably ok and more efficient like this though
     this.validLandcoverRange = {
       min: 0,
-      max: 30
+      max: 32
     };
 
     this.map.on('movestart', () => {
@@ -814,15 +814,19 @@ export class MapComponent implements OnInit, AfterContentInit {
   forceObjectsShow() {
     if(!this.map.hasLayer(this.drawnItems)) {
       this.drawnItems.addTo(this.map);
-      this.drawControl.addTo(this.map);
+      if(this.baseLayer.name == "Land Cover") {
+        this.drawControl.addTo(this.map);
+      }
     }
     this.mapService.switchToShow(this);
   }
 
   showHideObjects(showOrHide: string) {
-    if (showOrHide == "Show") {
+    if(showOrHide == "Show") {
       this.drawnItems.addTo(this.map);
-      this.drawControl.addTo(this.map);
+      if(this.baseLayer.name == "Land Cover") {
+        this.drawControl.addTo(this.map);
+      }
     }
     else {
       this.drawControl.remove();
@@ -5508,7 +5512,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       }, backoff);
     }
     
-    //this.generatePNG(1, this.generateLCColorRaster());
+    //this.generatePNG(1000, 1000, this.generateLCColorRaster());
   }
 
 
@@ -5596,6 +5600,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     //console.log(palette);
 
     palette.shift();
+    //palette[0] = "#ffffff";
 
     //rank warm/coolness by red and blue levels, order lc types by recharge inhibition, assign colors appropriately?
 
@@ -5938,26 +5943,67 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
   //chroma .rgba will convert to color channels
-  private generatePNG(scale: number, raster: number[][][]) {
-    //need to implement scaling
-    scale = 1;
-
-    let width = raster[0].length * scale;
-    let height = raster.length * scale;
-    let image = new pnglib(width, height, 256);
-
-    console.log(image.color(1, 0, 0, 1));
+  //maximum of 2 colors blended per cell, if scale < .5 then in between colors are just left out
+  //blend left to right, up to down
+  private generatePNG(width: number, height: number, raster: number[][][]) {
     
+    let rWidth = raster[0].length;
+    let rHeight = raster.length;
+
+    let wScale = width / rWidth;
+    let hScale = height / rHeight;
+    //maintain aspect ratio (rest of pixels if one side longer will be background)
+    let scale = Math.min(wScale, hScale);
+    //compute extra background on each side (if scale same as respective scaler then 0)
+    let extraWidthLeft = Math.floor((rWidth * scale - width) / 2);
+    let extraWidthRight = Math.ceil((rWidth * scale - width) / 2);
+    let extraHeightTop = Math.floor((rHeight * scale - height) / 2);
+    let extraHeightBottom = Math.ceil((rHeight * scale - height) / 2);
+
+    let image = new pnglib(width, height, 256);
+    console.log(image.buffer[image.index(0, 0)] == "\x00");
+
+    let colorProportions = [];
+    let indexFill = 0;
+
+    //if scaling so that cells are less than half a pixel (scale < 0.5), skip in between cells and scale up cells that are used to over 0.5
+    let iterator = Math.max(Math.floor(1 / scale), 1);
+    scale *= iterator;
+
+    //create objects indicating the colors to be blended/proportions
+    let x = 0;
+    let y = 0;
+    for(let i = 0; i < rWidth; i += iterator) {
+      for(let j = 0; j < rHeight; j += iterator) {
+        let scaled
+        //zones
+      }
+    }
+
     for(let i = 0; i < width; i++) {
       for(let j = 0; j < height; j++) {
-        image.buffer[image.index(i, j)] = image.color(...raster[j][i]);
+        // if(partials[j][i])  {
+
+        // }
       }
     }
 
     console.log(image);
-    document.write('<img src="data:image/png;base64,' + image.getBase64() + '">');
+    //document.write('<img src="data:image/png;base64,' + image.getBase64() + '">');
     //saveAs(new Blob([p.getBase64()], { type: "image/png" }), "test");
   }
+
+  // private computeRespectiveIndexProportions(index: number, scale: number) {
+  //   let scaledIndex = index * scale;
+  //   let scaleEnd = scaledIndex + scale;
+
+  //   let indices = [];
+  //   let start
+  //   {
+  //     sharedWith: 
+  //   }
+    
+  // }
 }
 
 

@@ -68,7 +68,11 @@ export class SidebarPanelComponent implements OnInit {
   }
 
   setLCPalette() {
-    this.panel = Object.keys(COVER_INDEX_DETAILS).map((code) => {
+    this.panel = Object.keys(COVER_INDEX_DETAILS)
+    .filter((code) => {
+      return COVER_INDEX_DETAILS[code].type != "Background";
+    })
+    .map((code) => {
       return {
         name: COVER_INDEX_DETAILS[code].type,
         background: "linear-gradient(90deg," + COVER_INDEX_DETAILS[code].color + " 12%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%, ivory 10%)"

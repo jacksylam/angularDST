@@ -11,8 +11,13 @@ td {
     padding: 5px 5% 5px 0px;
 }
 
+.td-code {
+    text-align: right;
+    padding-right: 5% !important;
+}
+
 td:last-child {
-    padding-right: 0;
+    padding-right: 0px;
 }
 
 table {
