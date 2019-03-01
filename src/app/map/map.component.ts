@@ -5338,7 +5338,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       //     coverage.data._covjson.ranges.cover.values[i] = null;
       //   }
       // });
-      coverage.data._covjson.ranges.cover.values[0] = 32;
+      coverage.data._covjson.ranges.cover.values[0] = this.validLandcoverRange.max;
     }
 
     // work with coverage object
@@ -5971,12 +5971,33 @@ export class MapComponent implements OnInit, AfterContentInit {
     scale *= iterator;
 
     //create objects indicating the colors to be blended/proportions
-    let x = 0;
-    let y = 0;
+    let x = extraWidthLeft;
+    let y = extraWidthRight;
     for(let i = 0; i < rWidth; i += iterator) {
       for(let j = 0; j < rHeight; j += iterator) {
-        let scaled
-        //zones
+        let xNext = x + scale;
+        let yNext = y + scale;
+        let xLeft = x % 1;
+        let yLeft = y % 1;
+        if(xLeft != 0) {
+          //blend
+          for(let cy = y; cy < yNext; cy++) {
+            image.buffer[image.index(x, y)] = chroma.scale(image.buffer[image.index(x, y)], raster[j][i])(xLeft);
+          }
+        }
+        if(yLeft != 0) {
+          //blend
+          //have to blend all the way down
+        }
+        x += xLeft;
+        y += yLeft;
+
+        // for() {
+        //   for() {
+
+        //   }
+        // }
+
       }
     }
 
