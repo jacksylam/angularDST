@@ -9,6 +9,8 @@ import { map, retry, catchError, mergeMap } from 'rxjs/operators';
 export class DBConnectService {
 
   static readonly TOKEN_FILE = "/assets/APIToken.txt"
+  static readonly MAX_URI = 2000;
+  static readonly MAX_POINTS = 10000;
 
   tokenReader: FileReader;
 
@@ -22,14 +24,14 @@ export class DBConnectService {
 
   spatialQueryLength(geometry: any): number {
     let query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset02172019'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q=" + encodeURI(query) + "&limit=" + DBConnectService.MAX_POINTS + "&offset=0";
     return url.length;
   }
 
   debugQuery() {
     console.log("called debug query");
     let sampleQuery = "{'$and':[{'name':'Landuse'},{'value.name':'dataset02172019'},{'value.loc': {$geoWithin: {'$geometry':{'type':'Polygon','coordinates':[[[-158.068537,21.465326],[-158.068537,21.54625],[-157.926289,21.54625],[-157.926289,21.465326],[-158.068537,21.465326]]]}}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(sampleQuery)+"&limit=10000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(sampleQuery)+"&limit=" + DBConnectService.MAX_POINTS + "&offset=0";
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
@@ -79,7 +81,7 @@ export class DBConnectService {
 
   spatialSearch(geometry: any, offset: number = 0, resultSet = []): Observable<Cover[]> {
     let query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset02172019'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=" + offset.toString();
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=" + DBConnectService.MAX_POINTS + "&offset=" + offset.toString();
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");
@@ -94,15 +96,14 @@ export class DBConnectService {
         let localResult = data.result as Cover[]
         let result = resultSet.concat(localResult);
         //console.log(localResult);
-        if(localResult.length >= 10000) {
+        if(localResult.length >= DBConnectService.MAX_POINTS) {
           //console.log("next");
-          return this.spatialSearch(geometry, offset + 10000, result);
+          return this.spatialSearch(geometry, offset + DBConnectService.MAX_POINTS, result);
         }
         else {
           //console.log("done");
           return of(result);
         }
-        //return this.spatialSearch(geometry, 10000);
       }),
       catchError((e) => {
         return Observable.throw(new Error(e.message));
@@ -120,7 +121,7 @@ export class DBConnectService {
   //   //console.log(JSON.stringify(JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')));
   //   let query = "{'$and':[{'name':'Landuse'},{'value.name':'testset10092018'},{'value.loc': {$geoWithin: {'$polygon':"+JSON.stringify(geometry.coordinates[0].slice(0, geometry.coordinates[0].length - 1)).replace(/"/g,'\'')+"}}}]}";
   //   //console.log(query);
-  //   let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+  //   let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=" + DBConnectService.MAX_POINTS + "&offset=0";
   //   let head = new HttpHeaders()
   //   .set("Authorization", "Bearer " + this.oAuthAccessToken)
   //   .set("Content-Type", "application/x-www-form-urlencoded");
@@ -158,7 +159,7 @@ export class DBConnectService {
     query = query.slice(0, -1);
     query += "]}]}";
 
-    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=10000&offset=0";
+    let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=" + DBConnectService.MAX_POINTS + "&offset=0";
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");

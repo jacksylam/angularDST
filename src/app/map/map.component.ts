@@ -657,14 +657,14 @@ export class MapComponent implements OnInit, AfterContentInit {
     return arrCopy;
   }
 
-  private repackageShapes(shapes: any): any {
-    let componentIndices = [];
-    let indices = this.getInternalIndexes(shapes.toGeoJSON());
-    indices.forEach((index) => {
-      componentIndices.push(this.getComponents(index));
-    });
-    return this.generateGeometriesFromPoints(componentIndices);
-  }
+  // private repackageShapes(shapes: any): any {
+  //   let componentIndices = [];
+  //   let indices = this.getInternalIndexes(shapes.toGeoJSON());
+  //   indices.forEach((index) => {
+  //     componentIndices.push(this.getComponents(index));
+  //   });
+  //   return this.generateGeometriesFromPoints(componentIndices);
+  // }
 
   private repackageIndices(internalIndices: number[]) {
     let componentIndices = [];
@@ -672,7 +672,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       componentIndices.push(this.getComponents(index));
     });
     //console.log(componentIndices);
-    return this.generateGeometriesFromPoints(componentIndices);
+    return this.generateGeometriesFromPoints(componentIndices).features;
   }
 
   
@@ -726,7 +726,12 @@ export class MapComponent implements OnInit, AfterContentInit {
     if(lcShapes.features.length < 1) {
       return;
     }
-    let queryShapes = lcShapes;
+
+    //can't do this while db ops running, need to run checks before can run db ops
+    //package relevant information and run land cover replacements async
+    let featureIndices = [];
+    let queryShapes = this.validateRepackageQueryShapes(lcShapes, featureIndices);
+
     let covData = this.types.landCover.data._covjson.ranges.cover.values;
 
     //backup values to restore on data failure
@@ -742,12 +747,11 @@ export class MapComponent implements OnInit, AfterContentInit {
       //   queryShapes = this.repackageShapes(queryShapes, {x: 2, y: 2});
       // }
 
-      lcShapes.features.forEach((shape) => {
-        let geoJSONShape = L.geoJSON(shape).toGeoJSON();
+      lcShapes.features.forEach((shape, i) => {
         //default property is lcCode, add advanced option to upload where can specify
         let lc = shape.properties[lcProperty];
 
-        let internal = this.getInternalIndexes(geoJSONShape);
+        let internal = featureIndices[i].internal;
 
         //here need to also check if overwrite base values
         internal.forEach((index) => {
@@ -4703,7 +4707,6 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
   
-  
   private updateRecharge(geojsonObjects: any, dataHandler: any, errorHandler: any) {
     
     let numItems = geojsonObjects.features.length;
@@ -4789,25 +4792,12 @@ export class MapComponent implements OnInit, AfterContentInit {
     //this.downloadShapefile(this.highlightedItems.toGeoJSON());
 
     let geojsonObjects = this.highlightedItems.toGeoJSON();
-    let backgroundIndices = [];
-    let indexes = this.getInternalIndexes(geojsonObjects, backgroundIndices);
-
-    if(indexes.length == 0) {
-      this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small or contain no valid cells", type: "Info"}});
-      return;
-    }
-
-    if(backgroundIndices.length > 0) {
-      this.dialog.open(MessageDialogComponent, {data: {message: "Background cells have been selected.\nPlease note that changes to background cells will not be included.", type: "Warning"}});
-    }
 
     let covData = this.types.landCover.data._covjson.ranges.cover.values;
     
     if(type == "advanced") {
-      if(indexes.length + backgroundIndices.length > 10000) {
-        console.log("large");
-        geojsonObjects = this.repackageIndices(indexes);
-      }
+
+      
       //backup values to restore on data failure
       let backupData = Array.from(covData);
 
@@ -4815,8 +4805,19 @@ export class MapComponent implements OnInit, AfterContentInit {
 
       let containedTypes = new Set();
 
-      indexes.forEach(index => {
-        containedTypes.add(COVER_INDEX_DETAILS[covData[index]].type);
+      let featureIndices = geojsonObjects.features.map((shape) => {
+        let featureDetails = {
+          internal: [],
+          background: []
+        }
+        featureDetails.internal = this.getInternalIndexes(L.geoJSON(shape).toGeoJSON(), featureDetails.background);
+        return featureDetails;
+      });
+
+      featureIndices.forEach((details) => {
+        details.internal.forEach((index) => {
+          containedTypes.add(COVER_INDEX_DETAILS[covData[index]].type);
+        });
       });
 
       info.sourceTypes = Array.from(containedTypes);
@@ -4833,32 +4834,35 @@ export class MapComponent implements OnInit, AfterContentInit {
           //check if a mapping was created or if operation canceled
           if(data.mapping) {
 
+            let queryObjects = this.validateRepackageQueryShapes(geojsonObjects, featureIndices);
+
             let covRemap = new Promise((resolve) => {
-              indexes.forEach(index => {
-                //set to default type
-                let mappedType = data.mapping.default;
-                let currentType = COVER_INDEX_DETAILS[covData[index]].type;
-                //if mapping exists assign to mapped type
-                if(data.mapping[currentType]) {
-                  mappedType = data.mapping[currentType];
-                }
-    
-                //if mapped type is base assign base value
-                if(mappedType == "base") {
-                  covData[index] = this.types.landCover.baseData[index];
-                }
-                //if mapped type isn't "no change" change cover to mapped value
-                else if(mappedType != "No Change") {
-                  covData[index] = COVER_ENUM[mappedType];
-                }
-    
+              featureIndices.forEach((details) => {
+                details.internal.forEach((index) => {
+                  //set to default type
+                  let mappedType = data.mapping.default;
+                  let currentType = COVER_INDEX_DETAILS[covData[index]].type;
+                  //if mapping exists assign to mapped type
+                  if(data.mapping[currentType]) {
+                    mappedType = data.mapping[currentType];
+                  }
+
+                  //if mapped type is base assign base value
+                  if(mappedType == "base") {
+                    covData[index] = this.types.landCover.baseData[index];
+                  }
+                  //if mapped type isn't "no change" change cover to mapped value
+                  else if(mappedType != "No Change") {
+                    covData[index] = COVER_ENUM[mappedType];
+                  }
+                });
               });
               //reload layer from changes
               this.loadCover(this.types.landCover, false);
               resolve()
             });
 
-            this.updateRecharge(geojsonObjects, (update) => {
+            this.updateRecharge(queryObjects, (update) => {
               //ensure coverage remapping complete before processing recharge values
               covRemap.then(() => {
                 update.forEach((area) => {
@@ -4934,7 +4938,10 @@ export class MapComponent implements OnInit, AfterContentInit {
     }
     //type base indicates should be changed back to base values
     else if (type == "base") {
-      indexes.forEach(index => {
+      let backgroundIndices = []
+      let indices = this.getInternalIndexes(geojsonObjects, backgroundIndices);
+
+      indices.forEach(index => {
         covData[index] = this.types.landCover.baseData[index];
         Object.keys(this.types.recharge.currentData).forEach((scenario) => {
           this.types.recharge.currentData[scenario][index] = this.types.recharge.baseData[scenario][index];
@@ -4946,14 +4953,29 @@ export class MapComponent implements OnInit, AfterContentInit {
       this.loadRechargeStyle(this.types.recharge.style);
     }
     else {
-      if(indexes.length + backgroundIndices.length > 10000) {
-        console.log("large");
-        geojsonObjects = this.repackageIndices(indexes);
+      let featureIndices = [];
+      let queryObjects = this.validateRepackageQueryShapes(geojsonObjects, featureIndices);
+
+      let numIndices = featureIndices.reduce((acc, details) => {
+        return acc += details.internal.length;
+      }, 0);
+      let hasBackground = featureIndices.some((details) => {
+        return details.background.length > 0;
+      });
+
+      if(numIndices == 0) {
+        this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small or contain no valid cells", type: "Info"}});
+        return;
       }
+  
+      if(hasBackground) {
+        this.dialog.open(MessageDialogComponent, {data: {message: "Background cells have been selected.\nPlease note that changes to background cells will not be included.", type: "Warning"}});
+      }
+
       //backup values to restore on data failure
       let backupData = Array.from(covData);
 
-      this.updateRecharge(geojsonObjects, (update) => {
+      this.updateRecharge(queryObjects, (update) => {
         // console.log(update);
         // console.log(COVER_ENUM[type] - 1);
         update.forEach(area => {
@@ -4986,8 +5008,10 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.loadCover(this.types.landCover, false);
       });
 
-      indexes.forEach(index => {
-        covData[index] = COVER_ENUM[type];
+      featureIndices.forEach((details) => {
+        details.internal.forEach((index) => {
+          covData[index] = COVER_ENUM[type];
+        });
       });
 
       //reload layer from changes
@@ -5008,6 +5032,47 @@ export class MapComponent implements OnInit, AfterContentInit {
     });
       
   }
+
+
+  //features may have overlapping bounding boxes, generally better to take all or nothing approach (if any feature needs to be repackaged, repackage everything together)
+  //optimizations in repackaging algorithm should balance out unoptimal configuarations reasonably well (cases where features are non-overlapping)
+  //just return bool in case need indexes for something else before repackaging (advanced mapping...)
+  private checkRepackageShapes(geojsonObjects: any, indices?: {internal: number[], background: number}): boolean {
+    
+    let repackage = false;
+
+
+    if(indices != undefined) {
+      indices.internal = [];
+      indices.background = 0;
+    }
+
+    for(let i = 0; i < geojsonObjects.features.length; i++) {
+      let background = [];
+      let shape = geojsonObjects.features[i];
+      let featureIndices = this.getInternalIndexes(L.geoJSON(shape).toGeoJSON(), background);
+
+      //no need to run checks if already found feature that needs to be repackaged
+      if(!repackage) {
+        if(featureIndices.length + background.length > DBConnectService.MAX_POINTS || this.DBService.spatialQueryLength(shape.geometry) > DBConnectService.MAX_URI ) {
+          repackage= true;
+        }
+      }
+      
+
+      if(indices != undefined) {
+        indices.internal = indices.internal.concat(featureIndices);
+        indices.background += background.length;
+      }
+      //if don't need to set indices and a feature that needs to be repackaged has been found can go ahead and break from loop
+      else if(repackage) {
+        break;
+      }
+    }
+
+    return repackage;
+  }
+
 
   private getInternalIndexes(geojsonFeatures: any, backgroundIndices: number[] = null): number[] {
     let indexes = [];
@@ -5512,7 +5577,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       }, backoff);
     }
     
-    //this.generatePNG(1000, 1000, this.generateLCColorRaster());
+    this.generatePNG(5000, 5000, this.generateLCColorRaster(3, 3));
   }
 
 
@@ -5921,7 +5986,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     };
   }
 
-  private generateLCColorRaster(): number[][][] {
+  private generateLCColorRaster(aquifer?: number, caprock?: number): number[][][] {
     let raster = []
     let row;
     let codes = this.types.landCover.data._covjson.ranges.cover.values;
@@ -5939,6 +6004,122 @@ export class MapComponent implements OnInit, AfterContentInit {
         row.push(color);
       }
     });
+
+    if(aquifer != undefined || caprock != undefined) {
+      let boundaryMap = new Array(codes.length).fill(0);
+      let aquicode = 1;
+      let capcode = 2;
+
+      if(caprock != undefined) {
+        for(let i = 0; i < this.gridWidthCells - 1; i++) {
+          for(let j = 0; j < this.gridHeightCells - 1; j++) {
+            //mark left/top of boundary
+            let host = this.getIndex(i, j);
+            if(this.caprock[host] != this.caprock[this.getIndex(i + 1, j)] || this.caprock[host] != this.caprock[this.getIndex(i, j + 1)] || this.caprock[host] != this.caprock[this.getIndex(i + 1, j + 1)]) {
+              boundaryMap[host] = capcode;
+            }
+          }
+        }
+      }
+      //aquifer takes precedence
+      if(aquifer != undefined) {
+        console.log(this.aquifers[0] != this.aquifers[this.getIndex(0 + 1, 0)] || this.aquifers[0] != this.aquifers[this.getIndex(0, 0 + 1)] || this.aquifers[0] != this.aquifers[this.getIndex(0 + 1, 0 + 1)]);
+        for(let i = 0; i < this.gridWidthCells - 1; i++) {
+          for(let j = 0; j < this.gridHeightCells - 1; j++) {
+            //mark left/top of boundary
+            let host = this.getIndex(i, j);
+            if(this.aquifers[host] != this.aquifers[this.getIndex(i + 1, j)] || this.aquifers[host] != this.aquifers[this.getIndex(i, j + 1)] || this.aquifers[host] != this.aquifers[this.getIndex(i + 1, j + 1)]) {
+              boundaryMap[host] = aquicode;
+            }
+          }
+        }
+      }
+      let black = [0, 0, 0, 255];
+
+      let mask = {
+        aqui: [],
+        cap: []
+      };
+      if(aquifer != undefined) {
+        let radius = aquifer / 2;
+        let indexCenter = Math.floor(aquifer / 2);
+        //no need make matrix for mask, use set of offsets from cell so more efficient (only cover relevent cells)
+        for(let x = 0; x < aquifer; x++) {
+          for(let y = 0; y < aquifer; y++) {
+            let d = Math.sqrt(Math.pow(x - radius, 2) + Math.pow(y - radius, 2));
+            if(d <= radius) {
+              mask.aqui.push({
+                x: x - indexCenter,
+                y: y - indexCenter
+              });
+            }
+          }
+        }
+      }
+
+      //if same no need to recompute mask
+      if(caprock == aquifer) {
+        mask.cap = mask.aqui;
+      }
+      else if(caprock != undefined) {
+        let center = caprock / 2;
+        let indexCenter = Math.floor(caprock / 2);
+        //no need make matrix for mask, use set of offsets from cell so more efficient (only cover relevent cells)
+        for(let x = 0; x < caprock; x++) {
+          for(let y = 0; y < caprock; y++) {
+            let d = Math.sqrt(Math.pow(x - center, 2) + Math.pow(y - center, 2));
+            if(d <= caprock) {
+              mask.cap.push({
+                x: x - indexCenter,
+                y: y - indexCenter
+              });
+            }
+          }
+        }
+      }
+
+      console.log(mask);
+
+      //go over and set index offsets in mask to black
+      for(let x = 0; x < this.gridWidthCells - 1; x++) {
+        for(let y = 0; y < this.gridHeightCells - 1; y++) {
+          let i = this.getIndex(x, y);
+          if(boundaryMap[i] == aquicode) {
+            for(let maskIndex = 0; maskIndex < mask.aqui.length; maskIndex++) {
+              let offset = mask.aqui[maskIndex];
+              let targetComponents = {
+                x: x + offset.x,
+                y: y + offset.y
+              };
+
+              //ensure in range
+              if(targetComponents.x < 0 || targetComponents.x >= this.gridWidthCells
+                || targetComponents.y < 0 || targetComponents.y >= this.gridHeightCells) {
+                continue;
+              }
+              raster[targetComponents.y][targetComponents.x] = black;
+            }
+          }
+          else if(boundaryMap[i] == capcode) {
+            for(let maskIndex = 0; maskIndex < mask.cap.length; maskIndex++) {
+              let offset = mask.cap[maskIndex];
+              let targetComponents = {
+                x: x + offset.x,
+                y: y + offset.y
+              };
+
+              //ensure in range
+              if(targetComponents.x < 0 || targetComponents.x >= this.gridWidthCells
+                || targetComponents.y < 0 || targetComponents.y >= this.gridHeightCells) {
+                continue;
+              }
+              raster[targetComponents.y][targetComponents.x] = black;
+            }
+          }
+        }
+      }
+    }
+    console.log(raster);
     return raster;
   }
 
@@ -5949,22 +6130,24 @@ export class MapComponent implements OnInit, AfterContentInit {
     
     let rWidth = raster[0].length;
     let rHeight = raster.length;
-
+    
     let wScale = width / rWidth;
     let hScale = height / rHeight;
     //maintain aspect ratio (rest of pixels if one side longer will be background)
     let scale = Math.min(wScale, hScale);
+
+    console.log(rHeight);
+    console.log(scale);
+    console.log(height);
+
     //compute extra background on each side (if scale same as respective scaler then 0)
-    let extraWidthLeft = Math.floor((rWidth * scale - width) / 2);
-    let extraWidthRight = Math.ceil((rWidth * scale - width) / 2);
-    let extraHeightTop = Math.floor((rHeight * scale - height) / 2);
-    let extraHeightBottom = Math.ceil((rHeight * scale - height) / 2);
+    let extraWidthLeft = Math.floor((width - rWidth * scale) / 2);
+    //let extraWidthRight = Math.ceil((rWidth * scale - width) / 2);
+    let extraHeightTop = Math.floor((height - rHeight * scale) / 2);
+    //let extraHeightBottom = Math.ceil((rHeight * scale - height) / 2);
 
     let image = new pnglib(width, height, 256);
-    console.log(image.buffer[image.index(0, 0)] == "\x00");
-
-    let colorProportions = [];
-    let indexFill = 0;
+    //console.log(image.buffer[image.index(0, 0)] == "\x00");
 
     //if scaling so that cells are less than half a pixel (scale < 0.5), skip in between cells and scale up cells that are used to over 0.5
     let iterator = Math.max(Math.floor(1 / scale), 1);
@@ -5972,46 +6155,72 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     //create objects indicating the colors to be blended/proportions
     let x = extraWidthLeft;
-    let y = extraWidthRight;
-    for(let i = 0; i < rWidth; i += iterator) {
-      for(let j = 0; j < rHeight; j += iterator) {
-        let xNext = x + scale;
-        let yNext = y + scale;
-        let xLeft = x % 1;
-        let yLeft = y % 1;
-        if(xLeft != 0) {
-          //blend
-          for(let cy = y; cy < yNext; cy++) {
-            image.buffer[image.index(x, y)] = chroma.scale(image.buffer[image.index(x, y)], raster[j][i])(xLeft);
-          }
-        }
-        if(yLeft != 0) {
-          //blend
-          //have to blend all the way down
-        }
-        x += xLeft;
-        y += yLeft;
-
-        // for() {
-        //   for() {
-
+    let y = extraHeightTop;
+    console.log(x);
+    console.log(y);
+    let test;
+    for(let i = 0; i < rWidth - 1; i += iterator) {
+      console.log(test);
+      //console.log(y);
+      y = extraHeightTop;
+      x += scale;
+      //console.log(x);
+      for(let j = 0; j < rHeight - 1; j += iterator) {
+        let xRange = [Math.floor(x), Math.ceil(x + scale)];
+        let yRange = [Math.floor(y), Math.ceil(y + scale)];
+        //console.log(yRange)
+        //blending takes time and is unnessecary, just color as most prominent of the colors
+        //much more efficient replacement as well since no ripple effect
+        // let xLeft = x % 1;
+        // let yLeft = y % 1;
+        // if(xLeft != 0) {
+        //   //blend
+        //   for(let cy = yRange[0]; cy < yRange[1]; cy++) {
+        //     //console.log(chroma.scale(image.buffer[image.index(x, cy)], raster[j][i])(xLeft).rgba());
+        //     image.buffer[image.index(x, cy)] = chroma.scale(image.buffer[image.index(x, cy)], raster[j][i])(xLeft).rgba();
         //   }
         // }
+        // if(yLeft != 0) {
+        //   //blend
+        //   for(let cx = xRange[0]; cx < xRange[1]; cx++) {
+        //     image.buffer[image.index(cx, y)] = chroma.scale(image.buffer[image.index(cx, y)], raster[j][i])(yLeft).rgba();
+        //   }
+        // }
+        // xRange[0] = Math.ceil(x);
+        // yRange[0] = Math.ceil(y);
 
+        test = this.complexityTest();
+
+        for(let cx = xRange[0]; cx < xRange[1]; cx++) {
+          for(let cy = yRange[0]; cy < yRange[1]; cy++) {
+            image.buffer[image.index(cx, cy)] = raster[j][i];
+          }
+        }
+        y += scale;
       }
     }
 
-    for(let i = 0; i < width; i++) {
-      for(let j = 0; j < height; j++) {
-        // if(partials[j][i])  {
-
-        // }
+    for(x = 0; x < width; x++) {
+      for(y = 0; y < height; y++) {
+        let index = image.index(x, y);
+        if(Array.isArray(image.buffer[index])) {
+          image.buffer[index] = image.color(...image.buffer[index]);
+        }
+        
       }
     }
 
     console.log(image);
-    //document.write('<img src="data:image/png;base64,' + image.getBase64() + '">');
+    document.write('<img src="data:image/png;base64,' + image.getBase64() + '">');
     //saveAs(new Blob([p.getBase64()], { type: "image/png" }), "test");
+  }
+
+  private complexityTest() {
+    return {
+      x: Math.sqrt((130^2 + 54^2) / 2),
+      y: Math.sqrt((43^2 + 123^2) / 2),
+      z: Math.sqrt((29^2 + 54^2) / 2)
+    }
   }
 
   // private computeRespectiveIndexProportions(index: number, scale: number) {
