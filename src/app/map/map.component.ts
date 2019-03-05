@@ -716,7 +716,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
-  
+
   //need to check if shapes have valid property (moved so have to check here)
   addUploadedLandcoverByShape(shapes: any, lcProperty: string, overwrite: boolean) {
     //create new geojson set with only items that have landcover property
@@ -726,6 +726,13 @@ export class MapComponent implements OnInit, AfterContentInit {
     if(lcShapes.features.length < 1) {
       return;
     }
+
+    //break into groups based on land cover code then send groups to updateCover function
+    //NEED TO ADD AN OPTION FOR OVERWRITE TO updateCover
+    
+
+
+    //VVVVVVVVVVVVVVVVVVVVVVVVVV to be removed VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
     //can't do this while db ops running, need to run checks before can run db ops
     //package relevant information and run land cover replacements async
