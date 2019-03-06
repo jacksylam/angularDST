@@ -1,16 +1,16 @@
 <div class="dialog-container">
-  <h2 mat-dialog-title>Upload Information to Map {{id}}</h2>
+  <h2 mat-dialog-title>Import Information to Map {{id}}</h2>
 
   <!-- reactive forms things not working properly, manually set with events -->
 
-    <mat-checkbox (change)="updateValue('shapes', $event.checked)">Upload Shapefile</mat-checkbox>
+    <mat-checkbox (change)="updateValue('shapes', $event.checked)">Import Shapefile</mat-checkbox>
     <br>
-    <mat-checkbox (change)="updateValue('cover', $event.checked)">Upload Land Cover Raster*</mat-checkbox>
+    <mat-checkbox (change)="updateValue('cover', $event.checked)">Import Land Cover Raster*</mat-checkbox>
     <br>
     
     <div *ngIf="info.shapes">
       <br>
-      <label>Upload shapefile as: </label>
+      <label>Import shapefile as: </label>
       <br>
       <mat-radio-group (change)="updateShapeDetails('format', $event.value)" [value]="info.shapeDetails.format">
         <mat-radio-button value="custom">Custom Areas (Allows for these areas to be modified for analysis)<sup>&dagger;</sup></mat-radio-button>
@@ -54,7 +54,7 @@
 
   <br>
 
-  * Uploading land cover modifications will overwite any previous changes made to areas specified by the file.
+  * Importing land cover modifications will overwite any previous changes made to areas specified by the file.
   <br>
   <div *ngIf="info.shapes">
     &dagger; These areas will have individual metrics in generated reports reflecting any land cover modifications made to the enclosed area.
