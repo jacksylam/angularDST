@@ -82,6 +82,8 @@ export class DBConnectService {
   spatialSearch(geometry: any, offset: number = 0, resultSet = []): Observable<Cover[]> {
     let query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset02172019'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
     let url = "https://agaveauth.its.hawaii.edu:443/meta/v2/data?q="+encodeURI(query)+"&limit=" + DBConnectService.MAX_POINTS + "&offset=" + offset.toString();
+    // console.log(query);
+    // console.log(url);
     let head = new HttpHeaders()
     .set("Authorization", "Bearer " + this.oAuthAccessToken)
     .set("Content-Type", "application/x-www-form-urlencoded");

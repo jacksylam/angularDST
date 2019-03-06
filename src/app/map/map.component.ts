@@ -4832,6 +4832,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       options.code = COVER_ENUM[type];
     }
     console.log(options);
+    console.log(this.highlightedItems.toGeoJSON());
     this.updateCoverByShape(this.highlightedItems.toGeoJSON(), convertedType, options);
   }
   
@@ -4859,6 +4860,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         let queryObjects = this.checkRepackageShapes(geojsonObjects, indices) ? this.repackageIndices(indices.internal) : geojsonObjects;
         console.log(indices);
         console.log(queryObjects);
+        console.log(geojsonObjects);
 
         // let numIndices = indices.internal.l
         // let hasBackground = featureIndices.some((details) => {
@@ -5098,6 +5100,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       //no need to run checks if already found feature that needs to be repackaged
       if(!repackage) {
         if(featureIndices.length + background.length > DBConnectService.MAX_POINTS || this.DBService.spatialQueryLength(shape.geometry) > DBConnectService.MAX_URI ) {
+          console.log("repack");
           repackage= true;
         }
       }
