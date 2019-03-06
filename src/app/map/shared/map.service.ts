@@ -63,7 +63,7 @@ export class MapService {
 
   changeCover(buttonPanel: any, cover: string) {
     let index = this.panelButtonHash.indexOf(buttonPanel);
-    this.mapHash[index].updateCover(cover);
+    this.mapHash[index].updateCustomAreaCover(cover);
   }
 
   setMode(buttonPanel: any, mode: string) {

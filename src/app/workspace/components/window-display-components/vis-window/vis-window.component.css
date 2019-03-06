@@ -4,7 +4,6 @@
   position: absolute;
   z-index: 0;
   border-radius: 5px 5px 5px 5px;
-
   transition: left .01s ease-in, top .01s ease-in;
 }
   

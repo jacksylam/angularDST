@@ -129,7 +129,7 @@ export class CovjsonTemplateService {
   //should probably do a more stringent check, but should be fine for now
   verifyCovjson(covjson: any): number[] {
     try {
-      console.log(covjson);
+      //console.log(covjson);
       let shape = covjson.ranges.cover.shape;
       let numys = shape[0];
       let numxs = shape[1];
