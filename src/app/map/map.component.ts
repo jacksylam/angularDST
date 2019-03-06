@@ -672,7 +672,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       componentIndices.push(this.getComponents(index));
     });
     //console.log(componentIndices);
-    return this.generateGeometriesFromPoints(componentIndices).features;
+    return this.generateGeometriesFromPoints(componentIndices);
   }
 
   
@@ -730,11 +730,11 @@ export class MapComponent implements OnInit, AfterContentInit {
       let code = shape.properties[lcProperty];
       if(code != undefined) {
         if(lcShapes[code] == undefined) {
-          lcShapes[code] = L.geoJSON(shape).toGeoJSON;
+          lcShapes[code] = L.geoJSON(shape).toGeoJSON();
         }
         else {
           lcShapes[code].features.push(shape);
-        }
+        }     
       }
     });
 
@@ -751,6 +751,8 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     groups.forEach((code) => {
       options.code = code;
+      console.log(lcShapes);
+      console.log(lcShapes[code]);
       this.updateCoverByShape(lcShapes[code], "shape", options);
     });
 
@@ -4743,7 +4745,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
   
   private updateRecharge(geojsonObjects: any, dataHandler: any, errorHandler: any) {
-    
+    console.log(geojsonObjects);
     let numItems = geojsonObjects.features.length;
     //console.log(geojsonObjects);
     if (numItems != 0) {
@@ -4855,6 +4857,8 @@ export class MapComponent implements OnInit, AfterContentInit {
 
         let indices: any = {};
         let queryObjects = this.checkRepackageShapes(geojsonObjects, indices) ? this.repackageIndices(indices.internal) : geojsonObjects;
+        console.log(indices);
+        console.log(queryObjects);
 
         // let numIndices = indices.internal.l
         // let hasBackground = featureIndices.some((details) => {
