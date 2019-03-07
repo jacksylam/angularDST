@@ -5106,6 +5106,8 @@ export class MapComponent implements OnInit, AfterContentInit {
       //console.log(shape);
       //can handle multipolygons i think
       //array due to potential cutouts, shouldn't have any cutouts
+      //WHY SHOULDN'T IT HAVE CUTOUTS? YOU'RE WRONG, FIX IT
+      console.log(shape.geometry.coordinates.length);
       shape.geometry.coordinates.forEach((pointsBase) => {
 
         //let pointsBase = shape.geometry.coordinates[0];
@@ -5267,10 +5269,10 @@ export class MapComponent implements OnInit, AfterContentInit {
   private isInternal(a: any[], b: any[], point: any, origin: any = { x: 0, y: 0 }): boolean {
     //raycasting algorithm, point is internal if intersects an odd number of edges
     let internal = false;
-    for (let i = 0; i < a.length; i++) {
+    for(let i = 0; i < a.length; i++) {
       //segments intersect iff endpoints of each segment are on opposite sides of the other segment
       //check if angle formed is counterclockwise to determine which side endpoints fall on
-      if (this.ccw(a[i], origin, point) != this.ccw(b[i], origin, point) && this.ccw(a[i], b[i], origin) != this.ccw(a[i], b[i], point)) {
+      if(this.ccw(a[i], origin, point) != this.ccw(b[i], origin, point) && this.ccw(a[i], b[i], origin) != this.ccw(a[i], b[i], point)) {
         internal = !internal
       }
 
