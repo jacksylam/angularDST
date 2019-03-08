@@ -659,7 +659,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
   // private repackageShapes(shapes: any): any {
   //   let componentIndices = [];
-  //   let indices = this.getInternalIndexes(shapes.toGeoJSON());
+  //   let indices = this.getInternalIndices(shapes.toGeoJSON());
   //   indices.forEach((index) => {
   //     componentIndices.push(this.getComponents(index));
   //   });
@@ -711,7 +711,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       // }
     });
     
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
     this.metrics.customAreasTotal.metrics = customTotal;
     this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
@@ -1163,7 +1163,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   // }
 
   private getSelectedShapeMetrics() {
-    let indexes = this.getInternalIndexes(this.highlightedItems.toGeoJSON());
+    let indexes = this.getInternalIndices(this.highlightedItems.toGeoJSON());
 
     //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
 
@@ -1739,16 +1739,17 @@ export class MapComponent implements OnInit, AfterContentInit {
       //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
       let info = this.customAreaMap[layer._leaflet_id];
       //console.log(layer.toGeoJSON())
-      let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
+      let itemMetrics = this.getMetricsSuite(this.getInternalIndices(items.addLayer(layer).toGeoJSON()), true);
       info.metrics = itemMetrics;
       info.roundedMetrics = this.roundMetrics(itemMetrics);
 
       data.customAreas.push(info);
     });
 
+    //WHY ARE YOU RECOMPUTING THE INTERNAL INDICES???
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
     data.customAreasTotal.metrics = customTotal;
     data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
@@ -3290,7 +3291,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       
     //   //L.geoJSON(geojsonBounds).addTo(this.map);
     // });
-    // let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    // let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
     // this.metrics.customAreasTotal.metrics = customTotal;
     // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
     
@@ -4498,7 +4499,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
       //no need recompute customTotal if nothing removed
       if(Object.keys(event.layers._layers).length > 0) {
-        let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+        let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
         this.metrics.customAreasTotal.metrics = customTotal;
         this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
       }
@@ -4544,7 +4545,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
       //can streamline computation by using set of added shapes' metrics and previous data as base
 
-      let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+      let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
       this.metrics.customAreasTotal.metrics = customTotal;
       this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
@@ -4642,7 +4643,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     //set to whole metric object so when change name will change in metrics
     this.customAreaMap[layer._leaflet_id] = info;
 
-    let itemMetrics = this.getMetricsSuite(this.getInternalIndexes(items.addLayer(layer).toGeoJSON()), true);
+    let itemMetrics = this.getMetricsSuite(this.getInternalIndices(items.addLayer(layer).toGeoJSON()), true);
 
     info.metrics = itemMetrics;
     info.roundedMetrics = this.roundMetrics(itemMetrics);
@@ -4652,7 +4653,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     //ADD BATCH DEFERENCE, THEN CAN ALLOW MANY CUSTOM AREAS
     //update custom areas total
     //can definately improve upon this
-    // let customTotal = this.getMetricsSuite(this.getInternalIndexes(this.drawnItems.toGeoJSON()), true);
+    // let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
     // this.metrics.customAreasTotal.metrics = customTotal;
     // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
@@ -5020,7 +5021,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       }
       case "base": {
         let backgroundIndices = []
-        let indices = this.getInternalIndexes(geojsonObjects, backgroundIndices);
+        let indices = this.getInternalIndices(geojsonObjects, backgroundIndices);
 
         indices.forEach(index => {
           covData[index] = this.types.landCover.baseData[index];
@@ -5075,7 +5076,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     for(let i = 0; i < geojsonObjects.features.length; i++) {
       let background = [];
       let shape = geojsonObjects.features[i];
-      let featureIndices = this.getInternalIndexes(L.geoJSON(shape).toGeoJSON(), background);
+      let featureIndices = this.getInternalIndices(L.geoJSON(shape).toGeoJSON(), background);
 
       //no need to run checks if already found feature that needs to be repackaged
       if(!repackage) {
@@ -5100,170 +5101,176 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
 
-  private getInternalIndexes(geojsonFeatures: any, backgroundIndices: number[] = null): number[] {
-    let indexes = [];
-    geojsonFeatures.features.forEach(shape => {
-      //console.log(shape);
-      //can handle multipolygons i think
-      //array due to potential cutouts, shouldn't have any cutouts
-      //WHY SHOULDN'T IT HAVE CUTOUTS? YOU'RE WRONG, FIX IT
-      console.log(shape.geometry.coordinates.length);
-      shape.geometry.coordinates.forEach((pointsBase) => {
+  private getInternalIndices(geojsonObjects: any, backgroundIndices?: number[]): number[] {
+    let indices = [];
 
-        //let pointsBase = shape.geometry.coordinates[0];
-        let convertedPoints = [];
-        let a = [];
-        let b = [];
-        let xmax = Number.NEGATIVE_INFINITY;
-        let xmin = Number.POSITIVE_INFINITY;
-        let ymax = Number.NEGATIVE_INFINITY;
-        let ymin = Number.POSITIVE_INFINITY;
-
-        //if multiple rings add each ring
-        if(Array.isArray(pointsBase[0][0])) {
-          pointsBase.forEach((ring) => {
-            convertedPoints = [];
-
-            for (let i = 0; i < ring.length; i++) {
-              convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, ring[i]));
-            }
-    
-            for (let i = 0; i < convertedPoints.length - 1; i++) {
-              //coordinates are in long lat order (I think)
-    
-              //get max and min vals to limit coordinates need to compare
-              if (convertedPoints[i][0] > xmax) {
-                xmax = convertedPoints[i][0];
-              }
-              if (convertedPoints[i][0] < xmin) {
-                xmin = convertedPoints[i][0];
-              }
-              if (convertedPoints[i][1] > ymax) {
-                ymax = convertedPoints[i][1];
-              }
-              if (convertedPoints[i][1] < ymin) {
-                ymin = convertedPoints[i][1];
-              }
-              //convert these points, less conversions than trying to convert grid points
-              a.push({
-                x: convertedPoints[i][0],
-                y: convertedPoints[i][1]
-              });
-              b.push({
-                x: convertedPoints[i + 1][0],
-                y: convertedPoints[i + 1][1]
-              });
-            }
+    geojsonObjects.features.forEach((feature) => {
+      //if not a feature return
+      if(feature.type.toLowerCase() != "feature") {
+        return;
+      }
+      let geoType = feature.geometry.type.toLowerCase();
+      switch(geoType) {
+        case "polygon": {
+          let coordinates = feature.geometry.coordinates;
+          indices = indices.concat(this.getPolygonInternalIndices(coordinates, backgroundIndices));
+          break;
+        }
+        case "multipolygon": {
+          let coordinates = feature.geometry.coordinates;
+          coordinates.forEach((polygon) => {
+            indices = indices.concat(this.getPolygonInternalIndices(polygon, backgroundIndices));
           });
+          break;
         }
-        else {
-          for (let i = 0; i < pointsBase.length; i++) {
-            convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
-          }
-  
-          for (let i = 0; i < convertedPoints.length - 1; i++) {
-            //coordinates are in long lat order (I think)
-  
-            //get max and min vals to limit coordinates need to compare
-            if (convertedPoints[i][0] > xmax) {
-              xmax = convertedPoints[i][0];
-            }
-            if (convertedPoints[i][0] < xmin) {
-              xmin = convertedPoints[i][0];
-            }
-            if (convertedPoints[i][1] > ymax) {
-              ymax = convertedPoints[i][1];
-            }
-            if (convertedPoints[i][1] < ymin) {
-              ymin = convertedPoints[i][1];
-            }
-            //convert these points, less conversions than trying to convert grid points
-            a.push({
-              x: convertedPoints[i][0],
-              y: convertedPoints[i][1]
-            });
-            b.push({
-              x: convertedPoints[i + 1][0],
-              y: convertedPoints[i + 1][1]
-            });
-          }
-        }
-        
-
-        //convert max min values and find range of cells
-        //no need to check every single one
-        //convert coordinate and get x value
-        // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
-        // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
-        // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
-        // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
-
-        let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-        let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-        let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
-
-        let minxIndex;
-        let maxxIndex;
-        let minyIndex;
-        let maxyIndex;
-
-        //again, assume values are in order
-        //find min and max indexes
-        //check if ascending or descending order, findIndex returns first occurance
-        if(xs[0] < xs[1]) {
-          minxIndex = Math.max(xs.findIndex((val) => { return val >= xmin }), 0);
-          //> not >= so returns index after last even if on edge 
-          maxxIndex = xs.findIndex((val) => { return val > xmax });
-          if(maxxIndex < 0) {
-            maxxIndex = this.gridWidthCells;
-          }
-        }
-        else {
-          maxxIndex = xs.findIndex((val) => { return val < xmin });
-          minxIndex = Math.max(xs.findIndex((val) => { return val <= xmax }), 0);
-          if(maxxIndex < 0) {
-            maxxIndex = this.gridWidthCells;
-          }
-        }
-        if(ys[0] < ys[1]) {
-          minyIndex = Math.max(ys.findIndex((val) => { return val >= ymin }), 0);
-          maxyIndex = ys.findIndex((val) => { return val > ymax });
-          if(maxyIndex < 0) {
-            maxyIndex = this.gridHeightCells;
-          }
-        }
-        else {
-          maxyIndex = ys.findIndex((val) => { return val < ymin });
-          minyIndex = Math.max(ys.findIndex((val) => { return val <= ymax }), 0);
-          if(maxyIndex < 0) {
-            maxyIndex = this.gridHeightCells;
-          }
-        }
-
-        let index;
-        //convert cell coords to long lat and raycast
-        //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
-        for(let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
-          for(let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
-            index = this.getIndex(xIndex, yIndex);
-            //don't include if background
-            if(lcVals[index] != 0) {
-              if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                indexes.push(index)
-              }
-            }
-            else if(backgroundIndices != null) {
-              if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-                backgroundIndices.push(index)
-              }
-            }
-          }
-        }
-      });
+      }
     });
-
-    return indexes;
+    
+    return indices;
   }
+
+  private getPolygonInternalIndices(coordinates: number[][][], backgroundIndices: number[]) {
+    let indices = [];
+    let convertedPoints = [];
+    let a = [];
+    let b = [];
+    let xmax = Number.NEGATIVE_INFINITY;
+    let xmin = Number.POSITIVE_INFINITY;
+    let ymax = Number.NEGATIVE_INFINITY;
+    let ymin = Number.POSITIVE_INFINITY;
+
+    //bounding box on first ring because outer ring
+    let pointsBase = coordinates[0];
+
+    for(let i = 0; i < pointsBase.length; i++) {
+      convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
+    }
+
+    for(let i = 0; i < convertedPoints.length - 1; i++) {
+      //coordinates are in long lat order (I think)
+
+      //get max and min vals to limit coordinates need to compare
+      if(convertedPoints[i][0] > xmax) {
+        xmax = convertedPoints[i][0];
+      }
+      if(convertedPoints[i][0] < xmin) {
+        xmin = convertedPoints[i][0];
+      }
+      if(convertedPoints[i][1] > ymax) {
+        ymax = convertedPoints[i][1];
+      }
+      if(convertedPoints[i][1] < ymin) {
+        ymin = convertedPoints[i][1];
+      }
+      //convert these points, less conversions than trying to convert grid points
+      a.push({
+        x: convertedPoints[i][0],
+        y: convertedPoints[i][1]
+      });
+      b.push({
+        x: convertedPoints[i + 1][0],
+        y: convertedPoints[i + 1][1]
+      });
+    }
+    //add segments for inner rings
+    for(let i = 1; i < coordinates.length; i++) {
+      pointsBase = coordinates[i];
+      convertedPoints = [];
+
+      for(let i = 0; i < pointsBase.length; i++) {
+        convertedPoints.push(MapComponent.proj4(MapComponent.longlat, MapComponent.utm, pointsBase[i]));
+      }
+
+      for(let i = 0; i < convertedPoints.length - 1; i++) {
+        a.push({
+          x: convertedPoints[i][0],
+          y: convertedPoints[i][1]
+        });
+        b.push({
+          x: convertedPoints[i + 1][0],
+          y: convertedPoints[i + 1][1]
+        });
+      }
+    }
+
+
+    //-----------------end pre-processing-------------------
+
+      
+
+    //convert max min values and find range of cells
+    //no need to check every single one
+    //convert coordinate and get x value
+    // let xmaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmax_x, xmax_y])[0];
+    // let xminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [xmin_x, xmin_y])[0];
+    // let ymaxUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymax_x, ymax_y])[1];
+    // let yminUTM = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [ymin_x, ymin_y])[1];
+
+    let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+    let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+    let lcVals = this.types.landCover.data._covjson.ranges.cover.values;
+
+    let minxIndex;
+    let maxxIndex;
+    let minyIndex;
+    let maxyIndex;
+
+    //again, assume values are in order
+    //find min and max indexes
+    //check if ascending or descending order, findIndex returns first occurance
+    if(xs[0] < xs[1]) {
+      minxIndex = Math.max(xs.findIndex((val) => { return val >= xmin }), 0);
+      //> not >= so returns index after last even if on edge 
+      maxxIndex = xs.findIndex((val) => { return val > xmax });
+      if(maxxIndex < 0) {
+        maxxIndex = this.gridWidthCells;
+      }
+    }
+    else {
+      maxxIndex = xs.findIndex((val) => { return val < xmin });
+      minxIndex = Math.max(xs.findIndex((val) => { return val <= xmax }), 0);
+      if(maxxIndex < 0) {
+        maxxIndex = this.gridWidthCells;
+      }
+    }
+    if(ys[0] < ys[1]) {
+      minyIndex = Math.max(ys.findIndex((val) => { return val >= ymin }), 0);
+      maxyIndex = ys.findIndex((val) => { return val > ymax });
+      if(maxyIndex < 0) {
+        maxyIndex = this.gridHeightCells;
+      }
+    }
+    else {
+      maxyIndex = ys.findIndex((val) => { return val < ymin });
+      minyIndex = Math.max(ys.findIndex((val) => { return val <= ymax }), 0);
+      if(maxyIndex < 0) {
+        maxyIndex = this.gridHeightCells;
+      }
+    }
+
+    let index;
+    //convert cell coords to long lat and raycast
+    //max index calculation returns index after last index in range, so only go to index before in loop (< not <=)
+    for(let xIndex = minxIndex; xIndex < maxxIndex; xIndex++) {
+      for(let yIndex = minyIndex; yIndex < maxyIndex; yIndex++) {
+        index = this.getIndex(xIndex, yIndex);
+        //don't include if background
+        if(lcVals[index] != 0) {
+          if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+            indices.push(index)
+          }
+        }
+        else if(backgroundIndices != undefined) {
+          if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
+            backgroundIndices.push(index)
+          }
+        }
+      }
+    }
+
+    return indices;
+  }
+
 
   //can specify origin if 0, 0 is in range, not necessary for cover being used (0,0 not in range)
   private isInternal(a: any[], b: any[], point: any, origin: any = { x: 0, y: 0 }): boolean {
@@ -5605,7 +5612,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       }, backoff);
     }
     
-    this.generatePNG(5000, 5000, this.generateLCColorRaster(3, 3));
+    //this.generatePNG(5000, 5000, this.generateLCColorRaster(3, 3));
   }
 
 
@@ -6147,7 +6154,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         }
       }
     }
-    console.log(raster);
+    //console.log(raster);
     return raster;
   }
 
@@ -6184,8 +6191,8 @@ export class MapComponent implements OnInit, AfterContentInit {
     //create objects indicating the colors to be blended/proportions
     let x = extraWidthLeft;
     let y = extraHeightTop;
-    console.log(x);
-    console.log(y);
+    // console.log(x);
+    // console.log(y);
     let test;
     for(let i = 0; i < rWidth - 1; i += iterator) {
       console.log(test);

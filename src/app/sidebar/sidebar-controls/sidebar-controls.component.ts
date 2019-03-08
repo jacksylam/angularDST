@@ -65,8 +65,8 @@ export class SidebarControlsComponent implements OnInit {
   ngAfterViewInit() {
     let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
     this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth + 1).toString() + "px");
-    console.log(this.leftScrollbarDiv.nativeElement.clientWidth);
-    console.log(scrollbarWidth);
+    // console.log(this.leftScrollbarDiv.nativeElement.clientWidth);
+    // console.log(scrollbarWidth);
   }
 
   openDialog(type: string) {
