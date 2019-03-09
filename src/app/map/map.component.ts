@@ -4306,10 +4306,42 @@ export class MapComponent implements OnInit, AfterContentInit {
         //   properties: any,
         // };
         
-        let polygons = shpWriteGeojson.polygon(shapes);
-        if(shapes.type.toLowerCase() != "feature") {
-          throw new Error("Invalid shapefile download");
-        }
+        //let polygons = shpWriteGeojson.polygon(shapes);
+        let polygons = [];
+        // if(shapes.type.toLowerCase() != "featurecollection") {
+        //   throw new Error("Invalid shapefile download");
+        // } probably don't need this check, if no feature list will throw error anyway (should never happen regardless)
+        shapes.features.forEach((feature) => {
+          //not a feature, ignore
+          if(feature.type.toLowerCase() != "feature") {
+            return;
+          }
+          
+          let geoType = feature.geometry.type.toLowerCase();
+
+          let coordbase = feature.geometry.coordinates;
+          
+          let polygon: any = {};
+          //get properties
+          polygon.properties = feature.properties;
+          if(geoType == "polygon") {
+            //get position rings will be after flatten
+            
+            //flatten rings
+            polygon.geometry = coordbase.flat();
+          }
+          else if(geoType == "multipolygon") {
+            //flatten rings
+            polygon.geometry = coordbase.flat(2);
+          }
+          //ensure polygon or multipolygon
+          else {
+            return;
+          }
+
+          polygons.push(polygon);
+          
+        });
         console.log(polygons);
         polygons.geometries = polygons.geometries[0];
         
