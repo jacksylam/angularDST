@@ -4221,9 +4221,10 @@ export class MapComponent implements OnInit, AfterContentInit {
             let zip = new JSZip();
 
             //redefine shp-write zip feature with desired file hierarchy
+            
             let polygons = shpWriteGeojson.polygon(shapes);
             polygons.geometries = polygons.geometries[0];
-            if (polygons.geometries.length && polygons.geometries[0].length) {
+            if(polygons.geometries.length && polygons.geometries[0].length) {
               this.modShpWrite.write(
                 // field definitions
                 polygons.properties,
@@ -4296,6 +4297,15 @@ export class MapComponent implements OnInit, AfterContentInit {
     
         
         //redefine shp-write zip feature with desired file hierarchy
+        //unsure of behavior, redo for rings
+        //rings need to be flattened inner->outer, track number of rings, assumes ordering correct
+        //only download polygons, should all be polygons anyway (add type checks everywhere, can allow different shapes in overlays but not custom areas)
+        // let polygons: {
+        //   points: number[][],
+        //   rings: number,
+        //   properties: any,
+        // };
+        
         let polygons = shpWriteGeojson.polygon(shapes);
         console.log(polygons);
         //polygons.geometries = polygons.geometries[0];
@@ -4316,6 +4326,24 @@ export class MapComponent implements OnInit, AfterContentInit {
             }
           );
         }
+        console.log(polygons);
+        polygons.geometries = polygons.geometries[0];
+        
+        this.modShpWrite.write(
+          // field definitions
+          polygons.properties,
+          // geometry type
+          polygons.type,
+          // geometries
+          polygons.geometries,
+          function (err, files) {
+            let fileName = "DefinedAreas";
+            zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+            zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+            zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+            zip.file(fileName + '.prj', shpWritePrj);
+          }
+        );
 
         zip.generateAsync({ type: "base64" }).then((file) => {
           //generate file details
@@ -5613,7 +5641,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       }, backoff);
     }
     
-    //this.generatePNG(5000, 5000, this.generateLCColorRaster(3, 3));
+    //this.generatePNG(1000, 1000, this.generateLCColorRaster(3, 3));
   }
 
 
