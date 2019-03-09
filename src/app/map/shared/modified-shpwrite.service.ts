@@ -21,6 +21,7 @@ export class ModifiedShpwriteService {
     let TYPE = types.geometries[geometry_type]
     let writer = polyWriter;
     //should never have multi-part polygons, so just use 1
+    //wrong, might have multipolygons, fix
     let parts = 1;
     let shpLength = 100;
     //this is provided correctly as geometries.length * 8 (number of records * 8 bytes)

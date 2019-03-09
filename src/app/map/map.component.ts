@@ -4297,8 +4297,9 @@ export class MapComponent implements OnInit, AfterContentInit {
         
         //redefine shp-write zip feature with desired file hierarchy
         let polygons = shpWriteGeojson.polygon(shapes);
-        polygons.geometries = polygons.geometries[0];
-        if (polygons.geometries.length && polygons.geometries[0].length) {
+        console.log(polygons);
+        //polygons.geometries = polygons.geometries[0];
+        if(polygons.geometries.length && polygons.geometries[0].length) {
           this.modShpWrite.write(
             // field definitions
             polygons.properties,
