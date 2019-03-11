@@ -1592,7 +1592,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         for(let i = 0; i < rechargeData.length; i++) {
           //make sure not dividing by 0 if no recharge in cell
           if(this.types.recharge.baseData[this.baseScenario][i] == 0) {
-            rechargeData[i] = 0;
+            rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] == 0 ? 0 : this.pchangeExtent[1];
           }
           else {
             let diff = this.types.recharge.currentData[this.currentScenario][i] - this.types.recharge.baseData[this.baseScenario][i];
@@ -2007,10 +2007,20 @@ export class MapComponent implements OnInit, AfterContentInit {
       metrics[code].caprock.Metric.volumetric.diff = metrics[code].caprock.Metric.volumetric.current - metrics[code].caprock.Metric.volumetric.original;
       metrics[code].caprock.Metric.average.diff = metrics[code].caprock.Metric.average.current - metrics[code].caprock.Metric.average.original;
       //make sure not dividing by 0 if no recharge in selected cells
-      metrics[code].caprock.USC.volumetric.pchange = metrics[code].caprock.USC.volumetric.original == 0 ? 0 : metrics[code].caprock.USC.volumetric.diff / metrics[code].caprock.USC.volumetric.original * 100;
-      metrics[code].caprock.USC.average.pchange = metrics[code].caprock.USC.average.original == 0 ? 0 : metrics[code].caprock.USC.average.diff / metrics[code].caprock.USC.average.original * 100;
-      metrics[code].caprock.Metric.volumetric.pchange = metrics[code].caprock.Metric.volumetric.original == 0 ? 0 : metrics[code].caprock.Metric.volumetric.diff / metrics[code].caprock.Metric.volumetric.original * 100;
-      metrics[code].caprock.Metric.average.pchange = metrics[code].caprock.Metric.average.original == 0 ? 0 : metrics[code].caprock.Metric.average.diff / metrics[code].caprock.Metric.average.original * 100;
+      if(metrics[code].caprock.USC.volumetric.original == 0) {
+        //if the current change is also 0 (diff is 0) then pchange is 0, else set to infinity
+        metrics[code].caprock.USC.volumetric.pchange = metrics[code].caprock.USC.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics[code].caprock.USC.average.pchange = metrics[code].caprock.USC.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics[code].caprock.Metric.volumetric.pchange = metrics[code].caprock.Metric.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics[code].caprock.Metric.average.pchange = metrics[code].caprock.Metric.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+      }
+      else {
+        metrics[code].caprock.USC.volumetric.pchange = metrics[code].caprock.USC.volumetric.diff / metrics[code].caprock.USC.volumetric.original * 100;
+        metrics[code].caprock.USC.average.pchange = metrics[code].caprock.USC.average.diff / metrics[code].caprock.USC.average.original * 100;
+        metrics[code].caprock.Metric.volumetric.pchange = metrics[code].caprock.Metric.volumetric.diff / metrics[code].caprock.Metric.volumetric.original * 100;
+        metrics[code].caprock.Metric.average.pchange = metrics[code].caprock.Metric.average.diff / metrics[code].caprock.Metric.average.original * 100;
+      }
+      
       
       //get square miles
       metrics[code].caprock.USC.area *= Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2);
@@ -2046,11 +2056,19 @@ export class MapComponent implements OnInit, AfterContentInit {
         metrics[code].nocaprock.Metric.volumetric.diff = metrics[code].nocaprock.Metric.volumetric.current - metrics[code].nocaprock.Metric.volumetric.original;
         metrics[code].nocaprock.Metric.average.diff = metrics[code].nocaprock.Metric.average.current - metrics[code].nocaprock.Metric.average.original;
         //make sure not dividing by 0 if no recharge in selected cells
-        metrics[code].nocaprock.USC.volumetric.pchange = metrics[code].nocaprock.USC.volumetric.original == 0 ? 0 : metrics[code].nocaprock.USC.volumetric.diff / metrics[code].nocaprock.USC.volumetric.original * 100;
-        metrics[code].nocaprock.USC.average.pchange = metrics[code].nocaprock.USC.average.original == 0 ? 0 : metrics[code].nocaprock.USC.average.diff / metrics[code].nocaprock.USC.average.original * 100;
-        metrics[code].nocaprock.Metric.volumetric.pchange = metrics[code].nocaprock.Metric.volumetric.original == 0 ? 0 : metrics[code].nocaprock.Metric.volumetric.diff / metrics[code].nocaprock.Metric.volumetric.original * 100;
-        metrics[code].nocaprock.Metric.average.pchange = metrics[code].nocaprock.Metric.average.original == 0 ? 0 : metrics[code].nocaprock.Metric.average.diff / metrics[code].nocaprock.Metric.average.original * 100;
-        
+        if(metrics[code].nocaprock.USC.volumetric.original == 0) {
+          //if the current change is also 0 (diff is 0) then pchange is 0, else set to infinity
+          metrics[code].nocaprock.USC.volumetric.pchange = metrics[code].nocaprock.USC.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+          metrics[code].nocaprock.USC.average.pchange = metrics[code].nocaprock.USC.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+          metrics[code].nocaprock.Metric.volumetric.pchange = metrics[code].nocaprock.Metric.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+          metrics[code].nocaprock.Metric.average.pchange = metrics[code].nocaprock.Metric.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        }
+        else {
+          metrics[code].nocaprock.USC.volumetric.pchange = metrics[code].nocaprock.USC.volumetric.diff / metrics[code].nocaprock.USC.volumetric.original * 100;
+          metrics[code].nocaprock.USC.average.pchange = metrics[code].nocaprock.USC.average.diff / metrics[code].nocaprock.USC.average.original * 100;
+          metrics[code].nocaprock.Metric.volumetric.pchange = metrics[code].nocaprock.Metric.volumetric.diff / metrics[code].nocaprock.Metric.volumetric.original * 100;
+          metrics[code].nocaprock.Metric.average.pchange = metrics[code].nocaprock.Metric.average.diff / metrics[code].nocaprock.Metric.average.original * 100;
+        }
         //get square miles
         metrics[code].nocaprock.USC.area *= Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2);
         //square kilometers
@@ -2224,7 +2242,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     metrics.Metric.area = Math.pow(75 / 1000, 2) * cells;
 
     //if no cells leave at default value of 0 to avoid dividing by 0
-    if (cells > 0) {
+    if(cells > 0) {
       //average average summation over cells
       metrics.USC.average.original /= cells;
       metrics.USC.average.current /= cells;
@@ -2238,10 +2256,19 @@ export class MapComponent implements OnInit, AfterContentInit {
       metrics.Metric.volumetric.diff = metrics.Metric.volumetric.current - metrics.Metric.volumetric.original;
       metrics.Metric.average.diff = metrics.Metric.average.current - metrics.Metric.average.original;
       //make sure not dividing by 0 if no recharge in selected cells
-      metrics.USC.volumetric.pchange = metrics.USC.volumetric.original == 0 ? 0 : metrics.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
-      metrics.USC.average.pchange = metrics.USC.average.original == 0 ? 0 : metrics.USC.average.diff / metrics.USC.average.original * 100;
-      metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.original == 0 ? 0 : metrics.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
-      metrics.Metric.average.pchange = metrics.Metric.average.original == 0 ? 0 : metrics.Metric.average.diff / metrics.Metric.average.original * 100;
+      if(metrics.USC.volumetric.original == 0) {
+        //if the current change is also 0 (diff is 0) then pchange is 0, else set to infinity
+        metrics.USC.volumetric.pchange = metrics.USC.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics.USC.average.pchange = metrics.USC.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics.Metric.average.pchange = metrics.Metric.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+      }
+      else {
+        metrics.USC.volumetric.pchange = metrics.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
+        metrics.USC.average.pchange = metrics.USC.average.diff / metrics.USC.average.original * 100;
+        metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
+        metrics.Metric.average.pchange = metrics.Metric.average.diff / metrics.Metric.average.original * 100;
+      }
     }
 
     return metrics;
@@ -2331,10 +2358,19 @@ export class MapComponent implements OnInit, AfterContentInit {
       metrics.Metric.volumetric.diff = metrics.Metric.volumetric.current - metrics.Metric.volumetric.original;
       metrics.Metric.average.diff = metrics.Metric.average.current - metrics.Metric.average.original;
       //make sure not dividing by 0 if no recharge in selected cells
-      metrics.USC.volumetric.pchange = metrics.USC.volumetric.original == 0 ? 0 : metrics.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
-      metrics.USC.average.pchange = metrics.USC.average.original == 0 ? 0 : metrics.USC.average.diff / metrics.USC.average.original * 100;
-      metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.original == 0 ? 0 : metrics.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
-      metrics.Metric.average.pchange = metrics.Metric.average.original == 0 ? 0 : metrics.Metric.average.diff / metrics.Metric.average.original * 100;
+      if(metrics.USC.volumetric.original == 0) {
+        //if the current change is also 0 (diff is 0) then pchange is 0, else set to infinity
+        metrics.USC.volumetric.pchange = metrics.USC.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics.USC.average.pchange = metrics.USC.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+        metrics.Metric.average.pchange = metrics.Metric.average.diff == 0 ? 0 : Number.POSITIVE_INFINITY;
+      }
+      else {
+        metrics.USC.volumetric.pchange = metrics.USC.volumetric.diff / metrics.USC.volumetric.original * 100;
+        metrics.USC.average.pchange = metrics.USC.average.diff / metrics.USC.average.original * 100;
+        metrics.Metric.volumetric.pchange = metrics.Metric.volumetric.diff / metrics.Metric.volumetric.original * 100;
+        metrics.Metric.average.pchange = metrics.Metric.average.diff / metrics.Metric.average.original * 100;
+      }
       
       //get square miles
       metrics.USC.area *= Math.pow(75 * MapComponent.METER_TO_MILE_FACTOR, 2);
