@@ -14,7 +14,7 @@ import * as proj4x from 'proj4';
 import * as shp from 'shpjs';
 //import * as shpwrite from 'shp-write';
 import * as JSZip from 'jszip'
-import * as shpWriteGeojson from '../../../node_modules/shp-write/src/geojson'
+// import * as shpWriteGeojson from '../../../node_modules/shp-write/src/geojson'
 import * as shpWritePrj from '../../../node_modules/shp-write/src/prj';
 import { saveAs } from 'file-saver';
 import { WindowService } from '../window/shared/window.service';
@@ -57,7 +57,6 @@ export class MapComponent implements OnInit, AfterContentInit {
   static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
   static readonly MAX_RECHARGE = 180;
   static readonly USGS_PURPLE_RECHARGE = 450;
-  static readonly PROJECTION = 'PROJCS["NAD_1983_UTM_Zone_4N",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-159],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]"';
 
   rechargePaletteTailLength: number;
   rechargePaletteHeadLength: number;
@@ -1731,17 +1730,16 @@ export class MapComponent implements OnInit, AfterContentInit {
     
     this.getAquiferAndTotalMetrics(data);
 
-    let items = new L.featureGroup();
-    
+    let customTotalIndices = []
     this.drawnItems.eachLayer((layer) => {
-      items = new L.featureGroup();
       //let intervals = new Date().getTime();
       //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
       let info = this.customAreaMap[layer._leaflet_id];
-      //console.log(layer.toGeoJSON())
-      let itemMetrics = this.getMetricsSuite(this.getInternalIndices(items.addLayer(layer).toGeoJSON()), true);
+      let indices = this.getInternalIndices({features: [layer.toGeoJSON()]});
+      let itemMetrics = this.getMetricsSuite(indices, true);
       info.metrics = itemMetrics;
       info.roundedMetrics = this.roundMetrics(itemMetrics);
+      customTotalIndices = customTotalIndices.concat(indices);
 
       data.customAreas.push(info);
     });
@@ -1749,7 +1747,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     //WHY ARE YOU RECOMPUTING THE INTERNAL INDICES???
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
+    let customTotal = this.getMetricsSuite(customTotalIndices, true);
     data.customAreasTotal.metrics = customTotal;
     data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
@@ -4172,7 +4170,7 @@ export class MapComponent implements OnInit, AfterContentInit {
           case "prj": {
             let fname = type == "recharge" ? ((this.unitType == "Metric" ? type + "_millimeters_per_year" : type + "_inches_per_year") + this.scenarioFnames[this.currentScenario] + "." + format) : type + "." + format;
             return {
-              data: MapComponent.PROJECTION,
+              data: ModifiedShpwriteService.PROJECTION,
               name: fname,
               type: 'text/plain;charset=utf-8'
             }
@@ -4219,28 +4217,15 @@ export class MapComponent implements OnInit, AfterContentInit {
             let shapes = L.geoJSON(cells).toGeoJSON();
 
             let zip = new JSZip();
-
-            //redefine shp-write zip feature with desired file hierarchy
             
-            let polygons = shpWriteGeojson.polygon(shapes);
-            polygons.geometries = polygons.geometries[0];
-            if(polygons.geometries.length && polygons.geometries[0].length) {
-              this.modShpWrite.write(
-                // field definitions
-                polygons.properties,
-                // geometry type
-                polygons.type,
-                // geometries
-                polygons.geometries,
-                function (err, files) {
-                  let fileName = type;
-                  zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-                  zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-                  zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-                  zip.file(fileName + '.prj', shpWritePrj);
-                }
-              );
-            }         
+            this.modShpWrite.writePolygons(shapes, (err, files) => {
+              let fileName = "DefinedAreas";
+              zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+              zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+              zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+              zip.file(fileName + '.prj', shpWritePrj);
+            });
+
             zip.generateAsync({ type: "base64" }).then((file) => {
               return {
                 data: this.base64ToArrayBuffer(file),
@@ -4276,7 +4261,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       };
       
 
-      let __this = this;
+      //let __this = this;
 
       if(info.shapes) {
 
@@ -4296,54 +4281,21 @@ export class MapComponent implements OnInit, AfterContentInit {
         //console.log(shapes);
     
         
-        //redefine shp-write zip feature with desired file hierarchy
-        //unsure of behavior, redo for rings
-        //rings need to be flattened inner->outer, track number of rings, assumes ordering correct
-        //only download polygons, should all be polygons anyway (add type checks everywhere, can allow different shapes in overlays but not custom areas)
-        // let polygons: {
-        //   points: number[][],
-        //   rings: number,
-        //   properties: any,
-        // };
+        //console.log(shapes);
+        //let polygons = shpWriteGeojson.polygon(shapes);
+
+        // if(shapes.type.toLowerCase() != "featurecollection") {
+        //   throw new Error("Invalid shapefile download");
+        // } probably don't need this check, if no feature list will throw error anyway (should never happen regardless)
         
-        let polygons = shpWriteGeojson.polygon(shapes);
-        console.log(polygons);
-        //polygons.geometries = polygons.geometries[0];
-        if(polygons.geometries.length && polygons.geometries[0].length) {
-          this.modShpWrite.write(
-            // field definitions
-            polygons.properties,
-            // geometry type
-            polygons.type,
-            // geometries
-            polygons.geometries,
-            function (err, files) {
-              let fileName = "DefinedAreas";
-              zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-              zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-              zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-              zip.file(fileName + '.prj', shpWritePrj);
-            }
-          );
-        }
-        console.log(polygons);
-        polygons.geometries = polygons.geometries[0];
         
-        this.modShpWrite.write(
-          // field definitions
-          polygons.properties,
-          // geometry type
-          polygons.type,
-          // geometries
-          polygons.geometries,
-          function (err, files) {
-            let fileName = "DefinedAreas";
-            zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
-            zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
-            zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
-            zip.file(fileName + '.prj', shpWritePrj);
-          }
-        );
+        this.modShpWrite.writePolygons(shapes, (err, files) => {
+          let fileName = "DefinedAreas";
+          zip.file(fileName + '.shp', files.shp.buffer, { binary: true });
+          zip.file(fileName + '.shx', files.shx.buffer, { binary: true });
+          zip.file(fileName + '.dbf', files.dbf.buffer, { binary: true });
+          zip.file(fileName + '.prj', shpWritePrj);
+        });
 
         zip.generateAsync({ type: "base64" }).then((file) => {
           //generate file details
@@ -4666,13 +4618,12 @@ export class MapComponent implements OnInit, AfterContentInit {
       metrics: {},
       roundedMetrics: {}
     };
-    let items = new L.featureGroup();
 
     info.name = name == undefined ? "Custom Area " + (__this.customAreasCount++).toString() : name;
     //set to whole metric object so when change name will change in metrics
     this.customAreaMap[layer._leaflet_id] = info;
 
-    let itemMetrics = this.getMetricsSuite(this.getInternalIndices(items.addLayer(layer).toGeoJSON()), true);
+    let itemMetrics = this.getMetricsSuite(this.getInternalIndices({features: [layer.toGeoJSON()]}), true);
 
     info.metrics = itemMetrics;
     info.roundedMetrics = this.roundMetrics(itemMetrics);
@@ -4741,14 +4692,19 @@ export class MapComponent implements OnInit, AfterContentInit {
     if (numItems != 0) {
       //recharge value handling requires all scenarios are loaded, so wait until complete
       let dataHandlerReadyCheck = (backoff, data) => {
-        if(this.scenariosInitialized) {
-          dataHandler(data);
-        }
-        else {
-          setTimeout(() => {
-            dataHandlerReadyCheck(backoff * 2, data);
-          }, backoff);
-        }
+        return new Promise((resolve) => {
+          if(this.scenariosInitialized) {
+            dataHandler(data);
+            resolve();
+          }
+          else {
+            setTimeout(() => {
+              dataHandlerReadyCheck(backoff * 2, data).then(() => {
+                resolve();
+              });
+            }, backoff);
+          }
+        });
       };
 
       this.mapService.setLoading(this, true);
@@ -4762,10 +4718,10 @@ export class MapComponent implements OnInit, AfterContentInit {
         let optime = new Date().getTime()
         console.log("Operation took " + (optime - start).toString() + "ms");
         
-        dataHandlerReadyCheck(1, data);
-        
-        console.log("Data handler took " + (new Date().getTime() - optime).toString() + "ms");
-        this.mapService.setLoading(this, false);
+        dataHandlerReadyCheck(1, data).then(() => {
+          console.log("Data handler took " + (new Date().getTime() - optime).toString() + "ms");
+          this.mapService.setLoading(this, false);
+        });
       }, (error) => {
         //console.log(error);
         this.dialog.open(MessageDialogComponent, {data: {message: "An error has occurred while retrieving recharge data. Land cover changes have been reverted. Please try again.", type: "Error"}});
