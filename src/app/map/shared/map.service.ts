@@ -229,5 +229,14 @@ export class MapService {
     this.panelButtonHash[index].setLCPalette();
   }
   
+  updateSelect(map: any, validAreas: number, highlightedAreas: number) {
+    let index = this.mapHash.indexOf(map);
+    this.controlPanelHash[index].updateSelect(validAreas, highlightedAreas);
+  }
+
+  selectAll(controlPanel: any, select: boolean) {
+    let index = this.controlPanelHash.indexOf(controlPanel);
+    this.mapHash[index].selectAll(select);
+  }
   
 }

@@ -1092,6 +1092,9 @@ export class ReportWindowComponent implements AfterViewInit {
       yaxis: {
         title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
       },
+      // xaxis: {
+      //   tickangle: 45
+      // },
       barmode: 'group',
       margin: {
         b: 125,
@@ -1146,6 +1149,9 @@ export class ReportWindowComponent implements AfterViewInit {
       yaxis: {
         title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
       },
+      // xaxis: {
+      //   tickangle: 45
+      // },
       barmode: 'group',
       margin: {
         b: 125,
@@ -1328,9 +1334,13 @@ export class ReportWindowComponent implements AfterViewInit {
         yaxis: {
           title: "Total Recharge (" + this.data.unitSystem.units.volumetric + ")"
         },
+        // xaxis: {
+        //   tickangle: 45
+        // },
         barmode: 'group',
         margin: {
-          t: 30
+          t: 30,
+          b: 125
         },
         annotations: customAnnotations
       }

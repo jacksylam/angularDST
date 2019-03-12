@@ -55,6 +55,9 @@ export class SidebarControlsComponent implements OnInit {
 
   name: string;
 
+  selectType = "Deselect";
+  selectDisabled = true;
+
   constructor(private mapService: MapService, private dialog: MatDialog, private elementRef: ElementRef) {
   }
 
@@ -67,6 +70,7 @@ export class SidebarControlsComponent implements OnInit {
     this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth + 1).toString() + "px");
     // console.log(this.leftScrollbarDiv.nativeElement.clientWidth);
     // console.log(scrollbarWidth);
+    this.elementRef.nativeElement.style.setProperty("--scrollheight", this.menuDiv.nativeElement.scrollHeight + 20 + "px");
   }
 
   openDialog(type: string) {
@@ -115,6 +119,15 @@ export class SidebarControlsComponent implements OnInit {
   toggleAreas() {
     this.mapService.showHideObjects(this.displayType, this);
     this.displayType = this.displayType == "Show" ? "Hide" : "Show";
+  }
+
+  updateSelect(validAreas: number, highlightedAreas: number) {
+    this.selectType = highlightedAreas < validAreas ? "Select" : "Deselect";
+    this.selectDisabled = validAreas < 1;
+  }
+
+  selectAll() {
+    this.mapService.selectAll(this, this.selectType == "Select");
   }
 
   switchToShow() {

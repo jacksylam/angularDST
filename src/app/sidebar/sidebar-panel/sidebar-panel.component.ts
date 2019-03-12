@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import {animate, transition, state, trigger, style} from '@angular/animations';
 import {MapService} from '../../map/shared/map.service';
 import {COVER_INDEX_DETAILS} from '../../map/shared/cover_enum';
@@ -22,7 +22,9 @@ import {COVER_INDEX_DETAILS} from '../../map/shared/cover_enum';
 })
 
 
-export class SidebarPanelComponent implements OnInit {
+export class SidebarPanelComponent implements OnInit, AfterViewInit {
+  @ViewChild("scrollableMenu") scrollableMenu;
+
   state = 'active';
 
   layer = "landcover";
@@ -48,6 +50,8 @@ export class SidebarPanelComponent implements OnInit {
   }
 
   toggleMenu() {
+    //this.elementRef.nativeElement.style.setProperty("--scrollheight", this.sidebar.nativeElement.scrollHeight);
+    //console.log(this.sidebar.nativeElement.scrollHeight);
     this.state = this.state == 'inactive' ? 'active' : 'inactive';
     this.state == 'active' ? this.elementRef.nativeElement.style.setProperty("--in-out-menu", "'\\00BB'") : this.elementRef.nativeElement.style.setProperty("--in-out-menu", "'\\00AB'");
   }
@@ -59,7 +63,8 @@ export class SidebarPanelComponent implements OnInit {
 
 
   ngAfterViewInit(){
-    
+    this.elementRef.nativeElement.style.setProperty("--scrollheight", this.scrollableMenu.nativeElement.scrollHeight + 20 + "px");
+    //console.log(this.sidebar.nativeElement.scrollHeight);
   }
 
 
@@ -112,7 +117,11 @@ export class SidebarPanelComponent implements OnInit {
   }
 
   changeLayer(type: string) {
+    this.elementRef.nativeElement.style.setProperty("--scrollheight", "100px");
     this.layer = type;
+    setTimeout(() => {
+      this.elementRef.nativeElement.style.setProperty("--scrollheight", this.scrollableMenu.nativeElement.scrollHeight + 20 + "px");
+    }, 0);
   }
 
   toggleDisable() {

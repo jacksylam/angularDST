@@ -838,18 +838,21 @@ export class MapComponent implements OnInit, AfterContentInit {
 
   private changeLayerOpacity(opacity: number) {
     //shouldn't change base map opacity
-    if (this.baseLayer.name != "Satellite Image") {
+    if(this.baseLayer.name != "Satellite Image") {
       this.baseLayer.layer.setOpacity(opacity);
     }
     this.opacity = opacity;
   }
 
   public setMode(mode: string) {
-    switch (mode) {
-      case "cell":
+    switch(mode) {
+      case "cell": {
+        //disable mass selection
+        this.mapService.updateSelect(this, 0, 0);
         this.addCellInteraction();
         break;
-      case "custom":
+      }  
+      case "custom": {
         this.forceObjectsShow();
         if(this.baseLayer.name == "Recharge Rate") {
           this.enableShapeInteraction(true);
@@ -860,13 +863,18 @@ export class MapComponent implements OnInit, AfterContentInit {
           this.enableShapeInteraction(false);
         }
         break;
-      case "aquifer":
+      }
+      case "aquifer": {
         this.addAquiferInteractions();
         break;
-      case "full":
+      }
+      case "full": {
+        //disable mass selection
+        this.mapService.updateSelect(this, 0, 0);
         //just get metrics, not interactive
         this.getWholeMapMetrics();
         break;
+      }
     }
   }
 
@@ -945,7 +953,11 @@ export class MapComponent implements OnInit, AfterContentInit {
     }
   }
 
-
+  // updateSelect() {
+  //   ;
+  //   fwerw
+  //   this.mapService.updateSelect(this, this.drawnItems.getLayers().length, this.highlightedItems.getLayers().length);
+  // }
 
   private addAquiferInteractions() {
     if (this.interactionType == "aquifer") {
@@ -976,7 +988,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     }
 
     //make sure aquifers aren't hidden
-    if (!this.map.hasLayer(this.types.aquifers.layer)) {
+    if(!this.map.hasLayer(this.types.aquifers.layer)) {
       this.types.aquifers.layer.addTo(this.map);
     }
 
@@ -1003,9 +1015,10 @@ export class MapComponent implements OnInit, AfterContentInit {
         let metrics = this.roundMetrics(this.getSelectedAquiferMetrics(highlightedAquifers, this.includeCaprock));
         //console.log(indexes);
         this.mapService.updateMetrics(this, "aquifer", metrics);
+        this.mapService.updateSelect(this, this.types.aquifers.layer.getLayers().length, highlightedAquifers.length);
       });
     });
-
+    this.mapService.updateSelect(this, this.types.aquifers.layer.getLayers().length, highlightedAquifers.length);
     this.mapService.updateMetrics(this, "aquifer", this.defaultMetrics);
 
   }
@@ -1027,6 +1040,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         color: 'black',
         fillOpacity: 0
       });
+      layer.highlighted = false;
     });
     this.highlightedAquiferIndices = [];
     //remove again if was hidden
@@ -4549,10 +4563,10 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     this.map.on(L.Draw.Event.CREATED, (event) => {
       //console.log(event.layer);
-      if (event.layerType == "marker") {
+      if(event.layerType == "marker") {
         let bounds = this.getCell(event.layer._latlng);
         //check if was out of map boundaries, do nothing if it was
-        if (bounds) {
+        if(bounds) {
           this.addDrawnItem(new L.Rectangle(bounds), false);
         }
       }
@@ -4704,10 +4718,12 @@ export class MapComponent implements OnInit, AfterContentInit {
         __this.highlightedItems.addLayer(this);
       }
       //if indicated that metrics are to be computed, recompute on change
-      if (emitMetrics) {
+      if(emitMetrics) {
         __this.getSelectedShapeMetrics();
       }
-    })
+      __this.mapService.updateSelect(__this, __this.drawnItems.getLayers().length, __this.highlightedItems.getLayers().length);
+    });
+    __this.mapService.updateSelect(__this, __this.drawnItems.getLayers().length, __this.highlightedItems.getLayers().length);
   }
 
 
@@ -5440,6 +5456,40 @@ export class MapComponent implements OnInit, AfterContentInit {
       y: a.z * b.x - a.x * b.z,
       z: a.x * b.y - a.y * b.x
     };
+  }
+
+
+
+  selectAll(select: boolean) {
+    if(select) {
+      this.drawnItems.eachLayer((layer) => {
+        //don't want to add layer if already highlighted
+        if(!layer.highlighted) {
+          //just simulate a click so everything that needs to be handled is correctly handled
+          layer.fire("click");
+        }
+      });
+      this.types.aquifers.layer.eachLayer((layer) => {
+        if(!layer.highlighted) {
+          layer.fire("click");
+        }
+      });
+    }
+    else {
+      this.drawnItems.eachLayer((layer) => {
+        //don't want to remove layer if already deselected
+        if(layer.highlighted) {
+          layer.fire("click");
+        }
+      });
+      this.types.aquifers.layer.eachLayer((layer) => {
+        if(layer.highlighted) {
+          layer.fire("click");
+        }
+      });
+    }
+    
+    this.mapService.updateSelect(this, this.drawnItems.getLayers().length, this.highlightedItems.getLayers().length);
   }
 
 

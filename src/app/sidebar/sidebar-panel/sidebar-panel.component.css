@@ -56,6 +56,7 @@
     background-color: rgba(255, 255, 255, 0.9);
     width: 225px;
     height: calc(100% - 40px);
+    max-height: var(--scrollheight);
     border-radius: 10px 0px 0px 10px;
     padding: 8px;
     box-shadow: 5px 5px 3px rgba(0,0,0,0.4);
@@ -92,7 +93,7 @@
   .row {
     margin: 0px !important;
     position: absolute;
-    height: 97%;
+    height: calc(100% - 20px);
   }
   
   .col-sm {
