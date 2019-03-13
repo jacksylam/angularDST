@@ -1011,10 +1011,14 @@ export class MapComponent implements OnInit, AfterContentInit {
           highlightedAquifers.push(layer.feature.properties.CODE);
         }
 
-        //get rounded metrics from indexes and send to bottom panel
-        let metrics = this.roundMetrics(this.getSelectedAquiferMetrics(highlightedAquifers, this.includeCaprock));
-        //console.log(indexes);
-        this.mapService.updateMetrics(this, "aquifer", metrics);
+        //check if metrics are locked in event
+        if(e.lockMetrics == undefined || !e.lockMetrics) {
+          //get rounded metrics from indexes and send to bottom panel
+          let metrics = this.roundMetrics(this.getSelectedAquiferMetrics(highlightedAquifers, this.includeCaprock));
+          //console.log(indexes);
+          this.mapService.updateMetrics(this, "aquifer", metrics);
+        }
+        
         this.mapService.updateSelect(this, this.types.aquifers.layer.getLayers().length, highlightedAquifers.length);
       });
     });
@@ -4706,19 +4710,20 @@ export class MapComponent implements OnInit, AfterContentInit {
       fillOpacity: 0
     }
 
-    layer.on('click', function () {
-      if(this.highlighted) {
-        this.setStyle(unhighlight);
-        this.highlighted = false;
-        __this.highlightedItems.removeLayer(this);
+    layer.on('click', (e) => {
+      if(layer.highlighted) {
+        layer.setStyle(unhighlight);
+        layer.highlighted = false;
+        __this.highlightedItems.removeLayer(layer);
       }
       else {
-        this.setStyle(highlight);
-        this.highlighted = true;
-        __this.highlightedItems.addLayer(this);
+        layer.setStyle(highlight);
+        layer.highlighted = true;
+        __this.highlightedItems.addLayer(layer);
       }
       //if indicated that metrics are to be computed, recompute on change
-      if(emitMetrics) {
+      //check if metrics are locked in event
+      if(emitMetrics && (e.lockMetrics == undefined || !e.lockMetrics)) {
         __this.getSelectedShapeMetrics();
       }
       __this.mapService.updateSelect(__this, __this.drawnItems.getLayers().length, __this.highlightedItems.getLayers().length);
@@ -5461,35 +5466,35 @@ export class MapComponent implements OnInit, AfterContentInit {
 
 
   selectAll(select: boolean) {
-    if(select) {
-      this.drawnItems.eachLayer((layer) => {
-        //don't want to add layer if already highlighted
-        if(!layer.highlighted) {
-          //just simulate a click so everything that needs to be handled is correctly handled
-          layer.fire("click");
+
+    let clickLayers = (layers) => {
+      layers.forEach((layer, i) => {
+        //signal click handler to lock metrics updates unless last item to prevent unnecessary computations
+        if(i < layers.length - 1) {
+          layer.fire("click", {lockMetrics: true});
         }
-      });
-      this.types.aquifers.layer.eachLayer((layer) => {
-        if(!layer.highlighted) {
-          layer.fire("click");
+        else {
+          layer.fire("click", {lockMetrics: false});
         }
       });
     }
-    else {
-      this.drawnItems.eachLayer((layer) => {
-        //don't want to remove layer if already deselected
-        if(layer.highlighted) {
-          layer.fire("click");
-        }
-      });
-      this.types.aquifers.layer.eachLayer((layer) => {
-        if(layer.highlighted) {
-          layer.fire("click");
-        }
-      });
+
+    //no need to trigger click events if not proper mode
+    let mode = this.interactionType;
+    switch(mode) {
+      case "aquifer": {
+        //filter layers by ones that need to be toggled (need to filter ahead of time so know which layer is the last one being interacted with)
+        let layers = this.types.aquifers.layer.getLayers().filter((layer) => {return layer.highlighted != select});
+        clickLayers(layers);
+      }
+      case "custom": {
+        let layers = this.drawnItems.getLayers().filter((layer) => {return layer.highlighted != select});
+        clickLayers(layers);
+      }
     }
     
-    this.mapService.updateSelect(this, this.drawnItems.getLayers().length, this.highlightedItems.getLayers().length);
+    
+    //this.mapService.updateSelect(this, this.drawnItems.getLayers().length, this.highlightedItems.getLayers().length);
   }
 
 
