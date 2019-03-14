@@ -22,7 +22,7 @@ const routes: Routes = [
   { path: 'home',  component: HomeComponent },
   { path: 'workspace', component: WorkspaceComponent},
   { path: 'instructions',  component: InstructionsComponent },
-  { path: 'how_to_cite', component: HowToCiteComponent},
+  { path: 'about', component: HowToCiteComponent},
   { path: 'background',  component: BackgroundComponent },
   { path: 'disclaimer', component: DisclaimerComponent},
   { path: 'feedback', component: FeedbackComponent},

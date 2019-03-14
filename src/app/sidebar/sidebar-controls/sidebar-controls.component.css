@@ -1,11 +1,13 @@
 
 
-/* ::ng-deep .mat-slider-sliding:not(.mat-slider-disabled) {
-  transform: scale(2) !important;
-} */
+::ng-deep .mat-slider-wrapper {
+  width: 150px !important;
+  transform: translateX(10px);
+}
 
 ::ng-deep .mat-slider-track-fill {
   background-color: rgb(56, 117, 194) !important;
+  transform: scale(2, 1) !important;
 }
 
 ::ng-deep .mat-slider-thumb {
@@ -43,7 +45,7 @@
   top: 10px;
   left: var(--control-scrollbar-width);
   height: calc(100% - 20px);
-  width: 152px;
+  width: 215px;
   position: absolute;
   overflow-x: hidden;
 }
@@ -53,6 +55,10 @@
   opacity: .9;
 }
 
+.menu-shift {
+  position: absolute;
+  width: calc(100% - 2px);
+}
 
 .left-scrollbar {
   margin: 0px !important;
@@ -63,18 +69,19 @@
   height: 100%;
   /* overflow-y: scroll !important; */
   overflow-x: hidden;
+  z-index: 1;
 }
 
 .menu {
   margin: 0px !important;
   position: absolute;
-  /* assumes scrollbar width in browsers will never be more than 20px (modern standard is 17) */
-  left: var(--control-scrollbar-width);
+  left: calc(var(--control-scrollbar-width) - 5px);
   top: 0px;
   height: 100%;
   /* padding-left: 5px; */
-  width: 100%;
+  width: calc(100% + 5px);
   overflow-y: scroll !important;
+  z-index: 0;
 }
 
 .invisible {
@@ -94,7 +101,7 @@
     top: 35px;
     z-index: -1000;
     background-color: rgba(255, 255, 255, 0.9);
-    width: 162px;
+    width: 225px;
     height: calc(100% - 40px);
     max-height: var(--scrollheight);
     border-radius: 0px 10px 10px 0px;
@@ -104,7 +111,7 @@
     
 .menuButton {
     position: relative;
-    left: 155px;
+    left: 218px;
     /* transform: translate(0%, 50%); */
     /* transform: rotate(180deg); */
     background-color: rgb(56, 117, 194);
@@ -184,6 +191,7 @@
 
   .slider-background {
     background: ivory;
+    width: 100%;
   }
 
   .disable {
@@ -241,7 +249,7 @@
   }
 
   .save-apply-shift {
-    margin-left: -10px;
+    margin-left: 0px;
   }
 
   

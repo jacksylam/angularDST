@@ -15,7 +15,7 @@ import {DownloadDialogComponent} from "../download-dialog/download-dialog.compon
         transform: 'translate(0px, 0px)',
       })),
       state('inactive', style({
-        transform: 'translate(-162px, 0px)',
+        transform: 'translate(-225px, 0px)',
       })),
       transition('active => inactive', animate('500ms ease-in-out')),
       transition('inactive => active', animate('500ms ease-in-out'))
@@ -58,6 +58,8 @@ export class SidebarControlsComponent implements OnInit {
   selectType = "Deselect";
   selectDisabled = true;
 
+  scrollbarWidth: number;
+
   constructor(private mapService: MapService, private dialog: MatDialog, private elementRef: ElementRef) {
   }
 
@@ -66,8 +68,13 @@ export class SidebarControlsComponent implements OnInit {
   // }
 
   ngAfterViewInit() {
-    let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
-    this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth + 1).toString() + "px");
+    // console.log(this.getScrollbarWidth());
+    //this.menuDiv.nativeElement.style.overflowY = "";
+    setTimeout(() => {
+      this.scrollbarWidth = this.menuDiv.nativeElement.offsetWidth - this.menuDiv.nativeElement.clientWidth;
+      this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (this.scrollbarWidth).toString() + "px");
+    }, 0);
+    
     // console.log(this.leftScrollbarDiv.nativeElement.clientWidth);
     // console.log(scrollbarWidth);
     this.elementRef.nativeElement.style.setProperty("--scrollheight", this.menuDiv.nativeElement.scrollHeight + 20 + "px");
@@ -181,6 +188,12 @@ export class SidebarControlsComponent implements OnInit {
       //lock scroll so other element doesn't scroll
       this.scrollLock = true;
       this.leftScrollbarDiv.nativeElement.scrollTop = e.target.scrollTop;
+      //set scrollbar width so dynamic with mac's dissappearing scroll bar
+      let scrollbarWidth = this.menuDiv.nativeElement.offsetWidth - this.menuDiv.nativeElement.clientWidth;
+      //don't bother if same as previous
+      if(scrollbarWidth != this.scrollbarWidth) {
+        this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth).toString() + "px");
+      }
     }
     else {
       //unlock after bounce
@@ -194,8 +207,11 @@ export class SidebarControlsComponent implements OnInit {
       this.scrollLock = true;
       this.menuDiv.nativeElement.scrollTop = e.target.scrollTop;
       //set scrollbar width so dynamic with mac's dissappearing scroll bar
-      let scrollbarWidth = this.leftScrollbarDiv.nativeElement.offsetWidth - this.leftScrollbarDiv.nativeElement.clientWidth;
-      this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth).toString() + "px");
+      let scrollbarWidth = this.menuDiv.nativeElement.offsetWidth - this.menuDiv.nativeElement.clientWidth;
+      //don't bother if same as previous
+      if(scrollbarWidth != this.scrollbarWidth) {
+        this.elementRef.nativeElement.style.setProperty("--control-scrollbar-width", (scrollbarWidth).toString() + "px");
+      }
     }
     else {
       //unlock after bounce

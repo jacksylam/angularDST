@@ -21,7 +21,7 @@ export class TermsOfUseComponent implements OnInit {
 
   setAccepted(value: boolean) {
     this.accepted = value;
-    this.tooltip = value == true ? "" : "Please accept the terms of use to continue";
+    this.tooltip = value == true ? "" : "Please accept the conditions of use to continue";
   }
 
   close(accepted) {
