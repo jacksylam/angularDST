@@ -10,12 +10,12 @@
   <div>
     <a target="_blank" href="../assets/Recharge_web_interface.jpg"><img src="../assets/Recharge_web_interface.jpg" alt="Web Interface Flow Chart"></a>
     <p class="clearfix">
-        The Hawai‘i Groundwater Recharge Tool allows users to evaluate how changes in land cover and climate can affect groundwater recharge. The web interface initially presents a baseline 
-        condition representing 1978–2007 average rainfall and 2010 land cover. Users can change land cover over areas of their choice using tools provided in the website, or by importing 
-        spatial datasets, such as shapefiles or raster files, specifying land-cover distribution. Users can also select a future climate condition (statistically downscaled projections of 
-        rainfall for 2041–2071 under representative concentration pathway (RCP) 8.5 [
-      <a target="_blank" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2014JD022059">Elison Timm and others, 2015</a>
-      ]). The web interface accesses a database of recharge simulations representing various possible combinations of land-cover and climate conditions, and returns the recharge corresponding 
+      The Hawai‘i Groundwater Recharge Tool allows users to evaluate how changes in land cover and climate can affect groundwater recharge. The web interface initially presents a baseline 
+      condition representing 1978–2007 average rainfall and 2010 land cover. Users can change land cover over areas of their choice using tools provided in the website, or by importing 
+      spatial datasets, such as shapefiles or raster files, specifying land-cover distribution. Users can also select a future climate condition (statistically downscaled projections of 
+      rainfall for 2041–2071 under representative concentration pathway (RCP) 8.5 
+      [<a target="_blank" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2014JD022059">Elison Timm and others, 2015</a>]). 
+      The web interface accesses a database of recharge simulations representing various possible combinations of land-cover and climate conditions, and returns the recharge corresponding 
       to the user’s input.
     </p>
   </div>
@@ -46,9 +46,9 @@
     </h2>
     <a target="_blank" href="../assets/SWB_concepts.jpg"><img src="../assets/SWB_concepts.jpg" alt="SWB Recharge Model Concept Diagram"></a>
     <p>
-      The recharge values in the database were computed using the soil water-balance computer program (SWB) version 2.0 (
-      <a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek and others, 2018</a>
-      ). SWB estimates groundwater recharge from precipitation, soil, land-cover, and other data.
+      The recharge values in the database were computed using the soil water-balance computer program (SWB) version 2.0 
+      (<a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek and others, 2018</a>). 
+      SWB estimates groundwater recharge from precipitation, soil, land-cover, and other data.
     </p>
     <p>
       SWB accounts for water entering, leaving, and being stored within the soil on a daily basis. Most groundwater recharge originates as precipitation. 
@@ -59,17 +59,17 @@
       in the soil given its water-storing capacity, antecedent water content, and losses through evapotranspiration. In some areas, additional water is contributed 
       by leaks from ponds, reservoirs, water mains, sewer lines, and cesspools; in the SWB simulations, these contributions are considered “direct recharge” that 
       bypasses the evapotranspiration processes in the plant root zone.
-    </p>---
+    </p>
     <p>
       Parameter input values used to generate the SWB simulations were derived from spatial datasets compiled by 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
       and 
-      <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>
-      . However, SWB uses a rectangular-grid environment which differs from the mostly irregular (non-rectangular) polygon spatial datasets used by 
+      <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>. 
+      However, SWB uses a rectangular-grid environment which differs from the mostly irregular (non-rectangular) polygon spatial datasets used by 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
       and 
-      <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>
-      . In most cases, the gridded input for SWB was created using the following procedure:
+      <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>. 
+      In most cases, the gridded input for SWB was created using the following procedure:
     </p>
     <ul>
       <li>
@@ -83,8 +83,8 @@
       </li>
       <li>
         Using the “rasterize” and “translate” functions of 
-        <a target="_blank" href="https://gdal.org/">GDAL/OGR contributors (2018)</a>
-        , each cell in the SWB grid was assigned the land cover and associated parameter values 
+        <a target="_blank" href="https://gdal.org/">GDAL/OGR contributors (2018)</a>, 
+        each cell in the SWB grid was assigned the land cover and associated parameter values 
         from the datasets of 
         <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
         and 
@@ -95,6 +95,51 @@
     <p>
       Exceptions to the procedure described include:
     </p>
+    <ul>
+      <li>
+        Maps of rainfall 
+        (<a target="_blank" href="https://rmets.onlinelibrary.wiley.com/doi/abs/10.1002/joc.4437">Frazier and others, 2016</a>) 
+        and reference evapotranspiration 
+        (<a target="_blank" href="http://evapotranspiration.geography.hawaii.edu/">Giambelluca and others, 2014</a>) 
+        were already in gridded form, with square cells of about 240 by 240 meters. SWB uses the value closest to the center 
+        of each SWB grid cell.
+      </li>
+      <li>
+        Simulation of sugarcane uses a uniform root depth for the entire crop cycle; this approach differs from that of 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        and 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>.
+      </li>
+      <li>
+        Effluent rates from point input for cesspools and septic systems (Whittier and El-Kadi, 2009) were summed for each SWB cell and 
+        only applied to developed land covers (codes 8, 9, 10, 31, and 32).
+      </li>
+      <li>
+        Total water-main leakage estimated by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        was prorated to each SWB cell on the basis of the sum of the length of water-main lines within each SWB cell.
+      </li>
+      <li>
+        SWB cells designated as developed (codes 8, 9, 10, 31, and 32) were assigned average values for perviousness, which differs 
+        from the spatially variable perviousness values used by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>
+        . The average values used in SWB cells were the area-weighted averages of perviousness for all polygons of a given developed 
+        landcover (for example, “developed, high-intensity”) in the dataset used by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>.
+      </li>
+      <li>
+        SWB cells designated as forest or other land covers with trees (codes 1, 3, 5, 25, and 28) were assigned average values for 
+        canopy cover, which differs from the spatially variable canopy-cover values used by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        and 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>. 
+        The average values used in SWB cells were the area-weighted averages of canopy cover for all polygons of a given land-cover 
+        type (for example, “native forest”) in the dataset used by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        and 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>.
+      </li>
+    </ul>
 
     <br>
 
@@ -102,44 +147,104 @@
       Limitations
     </h2>
     <p>
-      Accuracy and relevance of the results generated by this web interface for certain applications is limited by the assumptions of the soil-water budget approach and the quality 
-      of the various input data sets available for O‘ahu. A review of the limitations appears below, but more complete descriptions of limitations are given by 
+      Accuracy of the results generated by the Hawai‘i Groundwater Recharge Tool and their applicability for certain studies is limited 
+      by the assumptions of the soil-water budget approach and the quality of the various input datasets available for O‘ahu. A review 
+      of the limitations appears below, but more complete descriptions of limitations are given by 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
       and 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek and others (2018)</a>.
     </p>
-    <ul style="list-style-type:disc">
+    <ul>
       <li>
-        Difference in the evapotranspiration rates of native and non-native forests is poorly known.
+        The Hawai‘i Groundwater Recharge Tool does not distinguish between user-defined scenarios that are plausible and those that 
+        are unrealistic. Some land-cover types (and their parameter values) may not be applicable in all areas of the island 
+        (for example, evapotranspiration coefficients for native forests, which typically are in high-rainfall areas, may not be 
+        applicable in dry areas). Users are responsible for assessing the plausibility of scenarios they test.
       </li>
       <li>
-        Projections of future precipitation are highly uncertain, particularly for the Hawaiian Islands (Keener and others, 2012);  alternative projections exist besides the one offered 
-        by this website. In addition, the only climate-change parameter that can be changed with the web interface is rainfall; changes to other climate parameters, such as evapotranspiration 
-        and the extent of fog contribution,  cannot be simulated with the current web interface.
+        When designating an area as developed, high-intensity or developed, medium-intensity, users have the option of including storms 
+        drains (codes 9 and 10) or not including storm drains (codes 31 and 32). Users are responsible for understanding the implications 
+        of these options for their application; selection of the inappropriate option can have unintended results. In the 2010 baseline 
+        landcover, storm drains are applied to medium- and high-intensity developed land covers only in selected aquifer systems 
+        (<a target="_blank" href="http://files.hawaii.gov/dlnr/cwrm/planning/wrpp2008update/FINAL_WRPP_20080828.pdf">State of Hawaiʻi, 2008</a>),
+        which is consistent with the procedure described by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>. 
+        For most of O‘ahu, medium- and 
+        high-intensity developed land covers have storm drains (codes 9 and 10). In more rural northern O‘ahu (aquifer systems 30401, 
+        30402, 30403, 30601, and 30602), medium- and high-intensity developed land covers have no storm drains (codes 31 and 32). See 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>
+        for more information.
       </li>
       <li>
-          Results from this website are based on simulations using long-term average input data, and may not accurately simulate recharge for a short period.
+        Changing land cover to taro (code 26), water body (code 13), or reservoir (code 14) in areas that don’t already have them in 
+        the baseline land cover can lead to gross errors. Recharge rates for these land covers are fixed values that were not computed 
+        by the soil water-budget analysis, but were based on simplifying assumptions 
+        (<a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>) 
+        that may not be transferrable to other locations.
       </li>
       <li>
-          Land cover types may exist that are not among the ones included in this website.
+        The Hawai‘i Groundwater Recharge Tool results are long-term average recharge rates, and may not accurately simulate recharge 
+        over a short period.
       </li>
       <li>
-          If the user changes a baseline non-urban area to urban, contributions from septic systems, cesspools, and water mains are not extended to the new urban areas; only areas that are urban in the baseline land-cover will continue to have these contributions. However, if a baseline urban area is converted to non-urban, the contributions will not be applied in the new non-urban area.
+        Land-cover types may exist that are not among the ones included in the Hawai‘i Groundwater Recharge Tool.
       </li>
       <li>
-          The ability to assess changes in runoff related to changes in land cover, such as urban vs. vegetated surfaces, is limited.
+        Estimates of runoff used in the SWB simulations have high uncertainty. Runoff is computed on the basis of runoff-to-rainfall 
+        ratios which are based on basin-integrated stream-gage data. Runoff-to-rainfall ratios are not computed for specific land-cover 
+        types and do not change when a user changes land cover. As a result, the Hawai‘i Groundwater Recharge Tool is not able to assess 
+        changes in recharge related to differences in runoff for different land-cover types.
       </li>
       <li>
-          Estimates of runoff in basins that have no stream-gage data have high uncertainty.
+        Differences in the evapotranspiration rates of native and non-native forests are not well known.
       </li>
       <li>
-          The process of groundwater discharge to the surface, and its potential effect on recharge, are not simulated.
+        Projections of future precipitation are uncertain, particularly for the Hawaiian Islands 
+        (<a target="_blank" href="https://pirca.org/2012/12/04/2012-pirca-full-report/">Keener and others, 2012</a>); 
+        alternative projections exist besides the one offered by the Hawai‘i Groundwater Recharge Tool. In addition, the only 
+        climate-change parameter that can be changed with the web interface is rainfall; changes to other climate parameters, 
+        such as temperature, reference evapotranspiration, and the spatial extent of fog contribution, cannot be simulated with the 
+        current Hawai‘i Groundwater Recharge Tool.
       </li>
       <li>
-          The possibility that water flows into a cell from adjacent cells—either in the surface or subsurface—is not included in the water balance.
+        The process of groundwater discharge to the surface, and its potential effect of rejecting recharge, were not part of the 
+        SWB simulations. The process of groundwater recharge from streams that lose water along their reaches due to seepage was 
+        also not directly part of the SWB simulations, but was potentially accounted for by the basin-wide runoff integration of 
+        the runoff-to-rainfall ratio method used by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        and 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>.
       </li>
       <li>
-          The web interface does not distinguish between scenarios that are plausible and those that are unrealistic. the user is responsible for assessing the plausibility of scenarios they test.
+        The possibility that water flows into a cell from adjacent cells—either in the surface or subsurface—was not part of the SWB 
+        simulations.
+      </li>
+      <li>
+        If the user changes a baseline non-developed area to developed (codes 8, 9, 10, 31, and 32), contributions from septic systems, 
+        cesspools, and water mains are not extended to the new developed areas; only areas that are developed in the baseline land cover 
+        will continue to have these contributions. However, if a baseline developed area is converted to non-developed, these contributions 
+        will not be applied in the new non-developed area.
+      </li>
+      <li>
+        The users’ ability to change land cover and climate in the Hawai‘i Groundwater Recharge Tool is limited by the grid-cell dimensions. 
+        Only cells whose center is within the users’ change shape will be converted according to users’ designation. Shapes that are smaller 
+        than the 75-meter square cells or highly complicated may not produce the changes intended by the user.
+      </li>
+      <li>
+        Conversion from the irregular-polygon environment of the source publications 
+        (<a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        and 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>) 
+        to the rectangular-grid environment of SWB can result in slight differences between the results in the source publication and the 
+        Hawai‘i Groundwater Recharge Tool’s baseline land cover.
+      </li>
+      <li>
+        Some land-cover types use simplifying assumptions that differ from published conditions for 2010 land cover by 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
+        and 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>.
+        For example, percentage pervious area for developed land-cover types and canopy cover for forested land-cover types are 
+        area-weighted average values for each land cover based on estimated values for 2010 land-cover conditions.
       </li>
     </ul>
   </div>
@@ -160,13 +265,19 @@
       <a target="_blank" href="https://rmets.onlinelibrary.wiley.com/doi/abs/10.1002/joc.4437">Frazier, A.G., Giambelluca, T.W., Diaz, H.F., and Needham, H.L., 2016, Comparison of geostatistical approaches to spatially interpolate month‐year rainfall for the Hawaiian Islands: International Journal of Climatology, v. 36, no. 3, p. 1459–1470.</a>
     </p>
     <p>
-      GDAL/OGR contributors, 2018, GDAL/OGR Geospatial Data Abstraction Software Library: Open Source Geospatial Foundation, URL http://gdal.org
+      <a target="_blank" href="https://gdal.org/">GDAL/OGR contributors, 2018, GDAL/OGR Geospatial Data Abstraction Software Library: Open Source Geospatial Foundation, URL http://gdal.org.</a>
     </p>
     <p>
       <a target="_blank" href="http://evapotranspiration.geography.hawaii.edu/">Giambelluca, T.W., Shuai, X., Barnes, M.L., Alliss, R.J., Longman, R.J., Miura, T., Chen, Q., Frazier, A.G., Mudd, R.G., Cuo, L., and Businger, A.D., 2014, Evapotranspiration of Hawai‘i. Final report submitted to the U.S. Army Corps of Engineers—Honolulu District, and the Commission on Water Resource Management, State of Hawai‘i.</a>
     </p>
     <p>
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka, S.K., Engott, J.A., Rotzoll, K., Bassiouni, M., Johnson, A.G., Miller, L.D., and Mair, A., 2018, Volcanic aquifers of Hawai‘i—Hydrogeology, water budgets, and conceptual models (ver. 2.0, March 2018): U.S. Geological Survey Scientific Investigations Report 2015-5164, 158 p., https://doi.org/10.3133/sir20155164.</a>
+    </p>
+    <p>
+      <a target="_blank" href="https://pirca.org/2012/12/04/2012-pirca-full-report/">Keener, V.W., Marra, J.J., Finucane M.L., Spooner, D., and Smith, M.H. (eds.), 2012, Climate Change and Pacific Islands: Indicators and Impacts: Report for the 2012 Pacific Islands Regional Climate Assessment (PIRCA). Washington, D.C.: Island Press, 170 p.</a>
+    </p>
+    <p>
+      <a target="_blank" href="http://files.hawaii.gov/dlnr/cwrm/planning/wrpp2008update/FINAL_WRPP_20080828.pdf">State of Hawaiʻi, 2008, Water resource protection plan, June 2008: Report prepared by Wilson Okamoto Corporation for the State of Hawaiʻi, Commission on Water Resource Management, 556 p., http://files.hawaii.gov/dlnr/cwrm/planning/wrpp2008update/FINAL_WRPP_20080828.pdf.</a>
     </p>
     <p>
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek, S.M., Engott, J.A., Kelson, V.A., and Hunt, R.J., 2018, SWB Version 2.0—A Soil-Water-Balance code for estimating net infiltration and other water-budget components: U.S. Geological Survey Techniques and Methods, book 6, chap. A59, 118 p., https://doi.org/10.3133/tm6A59.</a>
