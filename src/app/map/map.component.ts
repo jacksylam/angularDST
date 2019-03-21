@@ -1722,10 +1722,6 @@ export class MapComponent implements OnInit, AfterContentInit {
   */
 
   createMetrics() {
-    //if still initializing just ignore, metrics will be computed after initialization completed, shouldn't ever happen, but might as well include as a failsafe
-    // if(!this.currentDataInitialized) {
-    //   return null;
-    // }
 
     let data = {
       customAreas: [],
@@ -1748,7 +1744,8 @@ export class MapComponent implements OnInit, AfterContentInit {
     
     this.getAquiferAndTotalMetrics(data);
 
-    let customTotalIndices = []
+    //use set to ensure index uniqueness
+    let customTotalIndices = new Set();
     this.drawnItems.eachLayer((layer) => {
       //let intervals = new Date().getTime();
       //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
@@ -1757,15 +1754,16 @@ export class MapComponent implements OnInit, AfterContentInit {
       let itemMetrics = this.getMetricsSuite(indices, true);
       info.metrics = itemMetrics;
       info.roundedMetrics = this.roundMetrics(itemMetrics);
-      customTotalIndices = customTotalIndices.concat(indices);
+      indices.forEach((index) => {
+        customTotalIndices.add(index);
+      });
 
       data.customAreas.push(info);
     });
 
-    //WHY ARE YOU RECOMPUTING THE INTERNAL INDICES???
     //can make more efficient by computing individual shape metrics and full metrics at the same time
     //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(customTotalIndices, true);
+    let customTotal = this.getMetricsSuite(Array.from(customTotalIndices), true);
     data.customAreasTotal.metrics = customTotal;
     data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
@@ -5144,7 +5142,9 @@ export class MapComponent implements OnInit, AfterContentInit {
 
 
   private getInternalIndices(geojsonObjects: any, backgroundIndices?: number[]): number[] {
-    let indices = [];
+    //want indices to be unique
+    let indices = new Set();
+    
 
     geojsonObjects.features.forEach((feature) => {
       //if not a feature return
@@ -5155,24 +5155,33 @@ export class MapComponent implements OnInit, AfterContentInit {
       switch(geoType) {
         case "polygon": {
           let coordinates = feature.geometry.coordinates;
-          indices = indices.concat(this.getPolygonInternalIndices(coordinates, backgroundIndices));
+          this.getPolygonInternalIndices(coordinates, backgroundIndices).forEach((index) => {
+            indices.add(index);
+          });
           break;
         }
         case "multipolygon": {
           let coordinates = feature.geometry.coordinates;
           coordinates.forEach((polygon) => {
-            indices = indices.concat(this.getPolygonInternalIndices(polygon, backgroundIndices));
+            this.getPolygonInternalIndices(polygon, backgroundIndices).forEach((index) => {
+              indices.add(index);
+            });
           });
           break;
         }
       }
     });
     
-    return indices;
+    return Array.from(indices);
   }
 
-  private getPolygonInternalIndices(coordinates: number[][][], backgroundIndices: number[]) {
-    let indices = [];
+  private getPolygonInternalIndices(coordinates: number[][][], background: boolean) {
+    let indices: any = {
+      internal: []
+    };
+    if(background) {
+      indices.background = [];
+    }
     let convertedPoints = [];
     let a = [];
     let b = [];
@@ -5302,9 +5311,9 @@ export class MapComponent implements OnInit, AfterContentInit {
             indices.push(index)
           }
         }
-        else if(backgroundIndices != undefined) {
+        else if(indices.internal != undefined) {
           if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-            backgroundIndices.push(index)
+            indices.internal.push(index)
           }
         }
       }
