@@ -5141,9 +5141,10 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
 
-  private getInternalIndices(geojsonObjects: any, backgroundIndices?: number[]): number[] {
+  private getInternalIndices(geojsonObjects: any, backgroundIndices: boolean): number[] {
     //want indices to be unique
-    let indices = new Set();
+    let indices = new Set<number>();
+    //if single feature indices guaranteed unique, no need to go through set
     
 
     geojsonObjects.features.forEach((feature) => {
@@ -5175,13 +5176,8 @@ export class MapComponent implements OnInit, AfterContentInit {
     return Array.from(indices);
   }
 
-  private getPolygonInternalIndices(coordinates: number[][][], background: boolean) {
-    let indices: any = {
-      internal: []
-    };
-    if(background) {
-      indices.background = [];
-    }
+  private getPolygonInternalIndices(coordinates: number[][][], mechanisms: {internal: (val: number) => any, background: (val: number) => any}) {
+
     let convertedPoints = [];
     let a = [];
     let b = [];
@@ -5318,8 +5314,6 @@ export class MapComponent implements OnInit, AfterContentInit {
         }
       }
     }
-
-    return indices;
   }
 
 
