@@ -5060,7 +5060,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         break;
       }
       case "base": {
-        let backgroundIndices = []
+        //let backgroundIndices = [];
         let indices = this.getInternalIndices(geojsonObjects, backgroundIndices);
 
         indices.forEach(index => {
@@ -5141,11 +5141,16 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
 
-  private getInternalIndices(geojsonObjects: any, backgroundIndices: boolean): number[] {
+  //only ever need to know how many background indices there are, never need to know their indices, should also never need background for breakdown (just return array of non-background internal indices for each feature)
+  private getInternalIndices(geojsonObjects: any, options: {background?: boolean, breakdown?: boolean}): {internal: number [], background?: number, breakdown?: number[][]} {
     //want indices to be unique
-    let indices = new Set<number>();
-    //if single feature indices guaranteed unique, no need to go through set
-    
+    let indices: any = {};
+    let conversions = [];
+    let mechanisms = {};
+    //still need to store background indices in set
+    //if single feature indices guaranteed unique, no need to go through set (more efficient to use array directly)
+    indices.internal = geojsonObjects.features.length < 2 ? [] : new Set();
+    options.background ? indices.backgrou
 
     geojsonObjects.features.forEach((feature) => {
       //if not a feature return
@@ -5156,27 +5161,26 @@ export class MapComponent implements OnInit, AfterContentInit {
       switch(geoType) {
         case "polygon": {
           let coordinates = feature.geometry.coordinates;
-          this.getPolygonInternalIndices(coordinates, backgroundIndices).forEach((index) => {
-            indices.add(index);
-          });
+          this.getPolygonInternalIndices(coordinates, mechanisms);
           break;
         }
         case "multipolygon": {
           let coordinates = feature.geometry.coordinates;
           coordinates.forEach((polygon) => {
-            this.getPolygonInternalIndices(polygon, backgroundIndices).forEach((index) => {
-              indices.add(index);
-            });
+            this.getPolygonInternalIndices(polygon, mechanisms);
           });
           break;
         }
       }
     });
+    conversions.forEach((conversion) => {
+      conversion();
+    });
     
-    return Array.from(indices);
+    return indices;
   }
 
-  private getPolygonInternalIndices(coordinates: number[][][], mechanisms: {internal: (val: number) => any, background: (val: number) => any}) {
+  private getPolygonInternalIndices(coordinates: number[][][], mechanisms: {internal: (val: number) => any, background?: (val: number) => any, breakdown?: (val: number) => any}): void {
 
     let convertedPoints = [];
     let a = [];
@@ -5304,12 +5308,12 @@ export class MapComponent implements OnInit, AfterContentInit {
         //don't include if background
         if(lcVals[index] != 0) {
           if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-            indices.push(index)
+            mechanisms.internal(index)
           }
         }
-        else if(indices.internal != undefined) {
+        else if(mechanisms.background != undefined) {
           if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-            indices.internal.push(index)
+            mechanisms.background(index)
           }
         }
       }
