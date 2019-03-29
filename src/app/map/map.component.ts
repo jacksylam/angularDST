@@ -4638,7 +4638,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     // console.log(this.types.aquifers.layer);
 
     //this.downloadShapefile(this.drawnItems)
-
+    //let start = new Date().getTime();
     let __this = this;
 
     let highlight = {
@@ -4685,6 +4685,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     this.metrics.customAreas.push(info);
 
+    //console.log(start - new Date().getTime());
     //ADD BATCH DEFERENCE, THEN CAN ALLOW MANY CUSTOM AREAS
     //update custom areas total
     //can definately improve upon this
