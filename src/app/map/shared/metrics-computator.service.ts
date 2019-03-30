@@ -5,6 +5,58 @@ import { Injectable } from '@angular/core';
 })
 export class MetricsComputatorService {
 
+  //what are we tracking?
+  /*
+  //if cell not tracked in state then background cell
+  state = {
+    cell_index_n: {
+      baseline_state: {
+        lc: number
+        recharge: {
+          scenario_0: number
+          ...
+          scenario_x: number
+        }
+      }
+      update_state: {
+        lc: number
+        recharge: {
+          scenario_0: number
+          ...
+          scenario_x: number
+        }
+      } || null (no change, save memory)
+
+      internal_to: {
+        custom_areas: []
+      }
+    }
+    ...
+    cell_index_m: {...}
+  }
+
+  updated_cells_index: number[]
+
+  dirty_objects: []
+
+  object_map: {
+    aquifers: {
+      layer_id: {
+        make object in case determine need other things so no need change schema
+        internal_indices: number[]
+      }
+    }
+    custom_areas: {
+      layer_id: cell_indices[]
+    }
+  }
+
+
+  what do we typically have when we click on something? a layer id
+
+  
+  */
+
   constructor() { }
 
   // createMetrics() {
