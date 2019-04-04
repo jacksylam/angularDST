@@ -228,7 +228,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       layer: null
     },
     caprocks: {
-      label: "Caprocks",
+      label: "Caprock",
       layer: null
     }
   };
