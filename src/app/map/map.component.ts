@@ -31,6 +31,7 @@ import * as CovJSON from 'covjson-reader';
 import { WebWorkerService } from 'ngx-web-worker';
 import 'leaflet-easyprint';
 import * as pnglib from 'pnglib';
+import {workerGetInternalIndices} from "./worker-scripts/worker-scripts";
 
 
 
@@ -1420,10 +1421,12 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.aquifers = data[1];
         return new Promise((resolve) => {
           this.loadDrawControls();
-          this.metrics = this.createMetrics();
-          this.currentDataInitialized = true;
-          //can resolve once the current data initialization is complete
-          resolve();
+          this.createMetrics().then((data) => {
+            this.metrics = data;
+            this.currentDataInitialized = true;
+            //can resolve once the current data initialization is complete
+            resolve();
+          });
         });
       });
     });
@@ -1721,7 +1724,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   compute full map metrics
   */
 
-  createMetrics() {
+  createMetrics(): Promise<any> {
 
     let data = {
       customAreas: [],
@@ -1744,31 +1747,65 @@ export class MapComponent implements OnInit, AfterContentInit {
     
     this.getAquiferAndTotalMetrics(data);
 
-    let customTotalIndices = new Set();
-    //do each individually instead of relying on breakdown in order to ensure can get correct layer id etc (non-guarunteed ordering between eachlayer and togeojson)
+    
+    
+    let geojsonFeatures = {
+      features: []
+    };
+    
     this.drawnItems.eachLayer((layer) => {
       
       //let intervals = new Date().getTime();
       //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
       let info = this.customAreaMap[layer._leaflet_id];
-      let indices = this.getInternalIndices({features: [layer.toGeoJSON()]}, {}).internal;
-      let itemMetrics = this.getMetricsSuite(indices, true);
-      info.metrics = itemMetrics;
-      info.roundedMetrics = this.roundMetrics(itemMetrics);
+      //no guarentee of identical ordering of eachlayer and togeojson feature list, so construct feature list using eachlayer
+      geojsonFeatures.features.push(layer.toGeoJSON());
+      //let itemMetrics = this.getMetricsSuite(indices, true);
+      //info.metrics = itemMetrics;
+      //info.roundedMetrics = this.roundMetrics(itemMetrics);
 
       data.customAreas.push(info);
 
-      indices.forEach((index) => {
-        customTotalIndices.add(index);
-      });
     });
-    //can make more efficient by computing individual shape metrics and full metrics at the same time
-    //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(Array.from(customTotalIndices), true);
-    data.customAreasTotal.metrics = customTotal;
-    data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
-    return data;
+    let args = {
+      host: window.location.host,
+      path: window.location.pathname,
+      protocol: window.location.protocol,
+      data: {
+        geojsonObjects: geojsonFeatures,
+        xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+        ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+        lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+        gridWidthCells: this.gridWidthCells,
+        gridHeightCells: this.gridHeightCells,
+        longlat: MapComponent.longlat,
+        utm: MapComponent.utm,
+        options: {
+            breakdown: true
+        }
+      }
+    }
+
+    //get
+    return this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+      //set individual metrics
+      indices.breakdown.forEach((featureIndices, i) => {
+        let info = data.customAreas[i];
+        let itemMetrics = this.getMetricsSuite(featureIndices.internal, true);
+        info.metrics = itemMetrics;
+        info.roundedMetrics = this.roundMetrics(itemMetrics);
+      });
+
+      //set total metrics
+      let customTotal = this.getMetricsSuite(Array.from(indices.internal), true);
+      data.customAreasTotal.metrics = customTotal;
+      data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+
+      return data;
+    }, (error) => {
+      console.log(error);
+    });
   }
 
 
@@ -2534,10 +2571,15 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     // this.metrics.total = this.getMetricsSuite(null);
 
-    this.metrics = this.createMetrics();
-    if(this.baseLayer.name == "Recharge Rate") {
-      this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
-    }
+    this.createMetrics().then((data) => {
+
+      this.metrics = data;
+
+      if(this.baseLayer.name == "Recharge Rate") {
+        this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
+      }
+    });
+    
   }
 
 
@@ -4677,13 +4719,38 @@ export class MapComponent implements OnInit, AfterContentInit {
     //set to whole metric object so when change name will change in metrics
     this.customAreaMap[layer._leaflet_id] = info;
 
-    let indices = this.getInternalIndices({features: [layer.toGeoJSON()]}, {});
-    let itemMetrics = this.getMetricsSuite(indices.internal, true);
+    //test
+    let args = {
+      host: window.location.host,
+      path: window.location.pathname,
+      protocol: window.location.protocol,
+      data: {
+        geojsonObjects: {features: [layer.toGeoJSON()]},
+        xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+        ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+        lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+        gridWidthCells: this.gridWidthCells,
+        gridHeightCells: this.gridHeightCells,
+        longlat: MapComponent.longlat,
+        utm: MapComponent.utm,
+        options: {}
+      }
+    }
+    this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+      let itemMetrics = this.getMetricsSuite(indices.internal, true);
 
-    info.metrics = itemMetrics;
-    info.roundedMetrics = this.roundMetrics(itemMetrics);
+      info.metrics = itemMetrics;
+      info.roundedMetrics = this.roundMetrics(itemMetrics);
 
-    this.metrics.customAreas.push(info);
+      this.metrics.customAreas.push(info);
+    }, (error) => {
+      console.log(error);
+    });
+    //test
+
+    
+
+    
 
     //console.log(start - new Date().getTime());
     //ADD BATCH DEFERENCE, THEN CAN ALLOW MANY CUSTOM AREAS
@@ -5705,7 +5772,9 @@ export class MapComponent implements OnInit, AfterContentInit {
       this.currentScenario = type;
       this.baseScenario = updateBase ? type : "recharge_scenario0";
   
-      this.metrics = this.createMetrics();
+      this.createMetrics().then((data) => {
+        this.metrics = data;
+      });
       this.loadRechargeStyle(this.types.recharge.style);
     }
     //if all scenarios have not yet been loaded, pause until complete

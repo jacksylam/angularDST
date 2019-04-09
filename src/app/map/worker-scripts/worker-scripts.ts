@@ -1,114 +1,25 @@
-import { Injectable } from '@angular/core';
-import * as proj4 from 'proj4';
-
+//import * as test from '../../../../node_modules/proj4/dist/proj4.js'
 declare function importScripts(...urls: string[]): void;
-
-@Injectable({
-  providedIn: 'root'
-})
-export class WorkerReadyMethodsService {
-
-  
-
-  constructor() { }
-
-    //only ever need to know how many background indices there are, never need to know their indices, should also never need background for breakdown (just return array of non-background internal indices for each feature)
-    private getInternalIndices(args: {geojsonObjects: any, xs: number[], ys: number[], lcVals: number[], gridWidthCells: number, gridHeightCells: number, longlat: string, utm: string, options: {background?: boolean, breakdown?: boolean}}): {internal: number [], background?: number, breakdown?: {internal: number[], background?: number}[]} {
-      importScripts("node_modules/proj4/dist/proj4.js");
-      let geojsonObjects = args.geojsonObjects;
-      let options = args.options;
-      let xs = args.xs;
-      let ys = args.ys;
-      let lcVals = args.lcVals;
-      let gridWidthCells = args.gridWidthCells;
-      let gridHeightCells = args.gridHeightCells;
-      let longlat = args.longlat;
-      let utm = args.utm;
-
-      if(!geojsonObjects.features) {
-        return;
-      }
-      //want indices to be unique
-      let indices: any = {};
-      let conversions = [];
-      let mechanisms: any = {};
-      //still need to store background indices in set
-      //if single feature indices guaranteed unique, no need to go through set (more efficient to use array directly)
-      if(geojsonObjects.features.length < 2) {
-        indices.internal = [];
-        mechanisms.internal = indices.internal.push.bind(indices.internal);
-        if(options.background) {
-          indices.background = 0;
-          mechanisms.background = () => { indices.background++; };
-        }
-      }
-      else {
-        indices.internal = new Set();
-        mechanisms.internal = indices.internal.add.bind(indices.internal);
-        conversions.push(() => { indices.internal = Array.from(indices.internal); });
-        if(options.background) {
-          indices.background = new Set();
-          mechanisms.background = indices.background.add.bind(indices.background);
-          conversions.push(() => { indices.background = indices.background.size; });
-        }
-      }
-      if(options.breakdown) {
-        indices.breakdown = [];
-      }
-      
-      geojsonObjects.features.forEach((feature) => {
-        if(options.breakdown) {
-          let featureIndices: any = {
-            internal: [],
-          };
-          mechanisms.breakdownInternal = featureIndices.internal.push.bind(featureIndices.internal);
-          if(options.background) {
-            featureIndices.background = 0;
-            mechanisms.breakdownBackground = () => { featureIndices.background++; }
-          }
-          indices.breakdown.push(featureIndices);
-          
-        }
-        //if not a feature return
-        if(feature.type.toLowerCase() != "feature") {
-          return;
-        }
-        let geoType = feature.geometry.type.toLowerCase();
-        switch(geoType) {
-          case "polygon": {
-            let coordinates = feature.geometry.coordinates;
-            getPolygonInternalIndices(coordinates, xs, ys, lcVals, gridWidthCells, gridHeightCells, longlat, utm, mechanisms);
-            break;
-          }
-          case "multipolygon": {
-            let coordinates = feature.geometry.coordinates;
-            coordinates.forEach((polygon) => {
-              getPolygonInternalIndices(polygon, xs, ys, lcVals, gridWidthCells, gridHeightCells, longlat, utm, mechanisms);
-            });
-            break;
-          }
-        }
-      });
-      conversions.forEach((conversion) => {
-        conversion();
-      });
-
-
-      //-------------------------------functions---------------------------------------------------
+declare const proj4: any;
+ 
+ //only ever need to know how many background indices there are, never need to know their indices, should also never need background for breakdown (just return array of non-background internal indices for each feature)
+ export const workerGetInternalIndices = (args: {protocol: string, host: string, data: {geojsonObjects: any, xs: number[], ys: number[], lcVals: number[], gridWidthCells: number, gridHeightCells: number, longlat: string, utm: string, options: {background?: boolean, breakdown?: boolean}}}): {internal: number [], background?: number, breakdown?: {internal: number[], background?: number}[]} => {
+    
+    //-------------------------------functions---------------------------------------------------
 
 
 
-      //determinant formula yields twice the signed area of triangle formed by 3 points
-      //counterclockwise if negative, clockwise if positive, collinear if 0
-      let ccw = (p1, p2, p3): boolean => {
+    //determinant formula yields twice the signed area of triangle formed by 3 points
+    //counterclockwise if negative, clockwise if positive, collinear if 0
+    let ccw = (p1, p2, p3): boolean => {
         //if on line counts, both will be 0, probably need to add special value (maybe return -1, 0, or 1)
         return ((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) > 0;
       }
-
+  
       let getIndex = (x: number, y: number, width) => {
         return y * width + x;
       }
-
+  
       let getPolygonInternalIndices = (coordinates: number[][][], xs: number[], ys: number[], lcVals: number[], gridWidthCells: number, gridHeightCells: number, longlat: string, utm: string, mechanisms: {internal: (val: number) => any, background?: (val: number) => any, breakdownInternal?: (val: number) => any, breakdownBackground?: (val: number) => any}): void => {
   
         let convertedPoints = [];
@@ -256,11 +167,91 @@ export class WorkerReadyMethodsService {
         }
         return internal;
       }
+
+    //-------------------------------functions---------------------------------------------------
+console.log(typeof proj4 == "undefined");
+  //  if(typeof proj4 == undefined) {
+        importScripts(`${args.protocol}//${args.host}/assets/scripts/proj4.js`);
+    //}
+    console.log(proj4);
     
-      
-      
-      return indices;
+    let geojsonObjects = args.data.geojsonObjects;
+    let options = args.data.options;
+    let xs = args.data.xs;
+    let ys = args.data.ys;
+    let lcVals = args.data.lcVals;
+    let gridWidthCells = args.data.gridWidthCells;
+    let gridHeightCells = args.data.gridHeightCells;
+    let longlat = args.data.longlat;
+    let utm = args.data.utm;
+
+    if(!geojsonObjects.features) {
+      return;
     }
-  
+    //want indices to be unique
+    let indices: any = {};
+    let conversions = [];
+    let mechanisms: any = {};
+    //still need to store background indices in set
+    //if single feature indices guaranteed unique, no need to go through set (more efficient to use array directly)
+    if(geojsonObjects.features.length < 2) {
+      indices.internal = [];
+      mechanisms.internal = indices.internal.push.bind(indices.internal);
+      if(options.background) {
+        indices.background = 0;
+        mechanisms.background = () => { indices.background++; };
+      }
+    }
+    else {
+      indices.internal = new Set();
+      mechanisms.internal = indices.internal.add.bind(indices.internal);
+      conversions.push(() => { indices.internal = Array.from(indices.internal); });
+      if(options.background) {
+        indices.background = new Set();
+        mechanisms.background = indices.background.add.bind(indices.background);
+        conversions.push(() => { indices.background = indices.background.size; });
+      }
+    }
+    if(options.breakdown) {
+      indices.breakdown = [];
+    }
     
-}
+    geojsonObjects.features.forEach((feature) => {
+      if(options.breakdown) {
+        let featureIndices: any = {
+          internal: [],
+        };
+        mechanisms.breakdownInternal = featureIndices.internal.push.bind(featureIndices.internal);
+        if(options.background) {
+          featureIndices.background = 0;
+          mechanisms.breakdownBackground = () => { featureIndices.background++; }
+        }
+        indices.breakdown.push(featureIndices);
+        
+      }
+      //if not a feature return
+      if(feature.type.toLowerCase() != "feature") {
+        return;
+      }
+      let geoType = feature.geometry.type.toLowerCase();
+      switch(geoType) {
+        case "polygon": {
+          let coordinates = feature.geometry.coordinates;
+          getPolygonInternalIndices(coordinates, xs, ys, lcVals, gridWidthCells, gridHeightCells, longlat, utm, mechanisms);
+          break;
+        }
+        case "multipolygon": {
+          let coordinates = feature.geometry.coordinates;
+          coordinates.forEach((polygon) => {
+            getPolygonInternalIndices(polygon, xs, ys, lcVals, gridWidthCells, gridHeightCells, longlat, utm, mechanisms);
+          });
+          break;
+        }
+      }
+    });
+    conversions.forEach((conversion) => {
+      conversion();
+    });
+    
+    return indices;
+  };

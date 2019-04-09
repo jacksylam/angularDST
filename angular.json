@@ -18,7 +18,12 @@
             "polyfills": "src/polyfills.ts",
             "assets": [
               "src/assets",
-              "src/favicon.ico"
+              "src/favicon.ico",
+              {
+                "glob": "**/*",
+                "input": "./node_modules/proj4/dist",
+                "output": "assets/scripts"
+              }
             ],
             "styles": [
               "src/styles.css",
