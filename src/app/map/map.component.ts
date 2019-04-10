@@ -678,42 +678,57 @@ export class MapComponent implements OnInit, AfterContentInit {
   
   private parseAndAddShapes(shapes: any, nameProperty: string) {
 
-    shapes.features.forEach(shape => {
-      //deepcopy so don't mess up original object when swapping coordinates
-      let coordsBase = shape.geometry.coordinates;
+    let args = {
+      host: window.location.host,
+      path: window.location.pathname,
+      protocol: window.location.protocol,
+      data: {
+        geojsonObjects: shapes,
+        xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+        ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+        lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+        gridWidthCells: this.gridWidthCells,
+        gridHeightCells: this.gridHeightCells,
+        longlat: MapComponent.longlat,
+        utm: MapComponent.utm,
+        options: {
+          breakdown: true
+        }
+      }
+    }
+    this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+      let precomputedIndices = {
+        layer: null,
+        total: indices.internal
+      }
 
-      //allow for custom property to be defined
-      //default is name
-      let name = shape.properties[nameProperty];
-
-      //swap coordinates, who wants consistent standards anyway?
-      //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
-      let polyCoords = this.swapCoordinates(coordsBase);
-      // console.log(coordsBase);
-      // console.log(polyCoords);
-
-      //can we handle multiploygons now?
-      //there are 2 different types:
-      //1. multiple outer rings as one object, represented as multiple shapes inside coordinates array
-      //2. items in the coordinates array can be arrays where the fist is an outer ring and the rest are holes
-      //DEAL WITH ALL THIS LATER, FOR NOW LET'S JUST ASSUME SIMPLE SHAPES FOR PURPOSES OF USE AS LANDCOVER AREAS
-      //i think mongodb can handle rings and things
-      //just remove this part for now
-      // if (shape.geometry.type == "MultiPolygon") {
-      //   for (let i = 0; i < coordsBase.length; i++) {
-      //     this.addDrawnItem(L.polygon(coordsBase[i], {}), true, name);
-      //   }
-      // }
-      // else {
-
-      //this should handle multipolygons fine, actually
-      this.addDrawnItem(L.polygon(polyCoords, {}), true, name);
-      // }
+      shapes.features.forEach((shape, i) => {
+        //deepcopy so don't mess up original object when swapping coordinates
+        let coordsBase = shape.geometry.coordinates;
+  
+        //allow for custom property to be defined
+        //default is name
+        let name = shape.properties[nameProperty];
+  
+        //swap coordinates, who wants consistent standards anyway?
+        //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
+        let polyCoords = this.swapCoordinates(coordsBase);
+  
+  
+        let last = i == shapes.features.length;
+        //this should handle multipolygons fine, actually
+        precomputedIndices.layer = indices.breakdown[i].internal;
+        this.addDrawnItem(L.polygon(polyCoords, {}), true, name, last, precomputedIndices);
+        // }
+      });
     });
-    let indices = this.getInternalIndices(this.drawnItems.toGeoJSON(), {});
-    let customTotal = this.getMetricsSuite(indices.internal, true);
-    this.metrics.customAreasTotal.metrics = customTotal;
-    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+
+
+  
+    // let indices = this.getInternalIndices(this.drawnItems.toGeoJSON(), {});
+    // let customTotal = this.getMetricsSuite(indices.internal, true);
+    // this.metrics.customAreasTotal.metrics = customTotal;
+    // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
 
@@ -4620,11 +4635,11 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.addDrawnItem(event.layer);
       }
 
-      //can streamline computation by using set of added shapes' metrics and previous data as base
-      let indices = this.getInternalIndices(this.drawnItems.toGeoJSON(), {})
-      let customTotal = this.getMetricsSuite(indices.internal, true);
-      this.metrics.customAreasTotal.metrics = customTotal;
-      this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+      // //can streamline computation by using set of added shapes' metrics and previous data as base
+      // let indices = this.getInternalIndices(this.drawnItems.toGeoJSON(), {})
+      // let customTotal = this.getMetricsSuite(indices.internal, true);
+      // this.metrics.customAreasTotal.metrics = customTotal;
+      // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
     });
   }
@@ -4676,7 +4691,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   //might want to do something about overlapping layers
   //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
   //maybe check if one is contained in another
-  private addDrawnItem(layer, editable: boolean = true, name: string = undefined) {
+  private addDrawnItem(layer: any, editable: boolean = true, name?: string, updateCustomTotal: boolean = true, precomputedIndices?: {layer?: number[], total?: number[]}) {
     // console.log(this.types.aquifers.layer);
 
     //this.downloadShapefile(this.drawnItems)
@@ -4719,46 +4734,74 @@ export class MapComponent implements OnInit, AfterContentInit {
     //set to whole metric object so when change name will change in metrics
     this.customAreaMap[layer._leaflet_id] = info;
 
-    //test
-    let args = {
-      host: window.location.host,
-      path: window.location.pathname,
-      protocol: window.location.protocol,
-      data: {
-        geojsonObjects: {features: [layer.toGeoJSON()]},
-        xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
-        ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
-        lcVals: this.types.landCover.data._covjson.ranges.cover.values,
-        gridWidthCells: this.gridWidthCells,
-        gridHeightCells: this.gridHeightCells,
-        longlat: MapComponent.longlat,
-        utm: MapComponent.utm,
-        options: {}
-      }
+    // //test
+    // let args = {
+    //   host: window.location.host,
+    //   path: window.location.pathname,
+    //   protocol: window.location.protocol,
+    //   data: {
+    //     geojsonObjects: this.getInternalIndices(this.drawnItems.toGeoJSON(),
+    //     xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+    //     ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+    //     lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+    //     gridWidthCells: this.gridWidthCells,
+    //     gridHeightCells: this.gridHeightCells,
+    //     longlat: MapComponent.longlat,
+    //     utm: MapComponent.utm,
+    //     options: {}
+    //   }
+    // }
+    // this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+    //   
+
+    //   
+    // }, (error) => {
+    //   console.log(error);
+    // });
+    // //test
+
+    let indices = precomputedIndices != undefined && precomputedIndices.layer != undefined ? precomputedIndices.layer : this.getInternalIndices(layer.toGeoJSON(), {}).internal;
+    let itemMetrics = this.getMetricsSuite(indices, true);
+
+    info.metrics = itemMetrics;
+    info.roundedMetrics = this.roundMetrics(itemMetrics);
+    this.metrics.customAreas.push(info);
+    
+
+    
+
+    if(updateCustomTotal) {
+      new Promise<number[]>((resolve) => {
+        if(precomputedIndices != undefined && precomputedIndices.total != undefined) {
+          resolve(precomputedIndices.total);
+        }
+        else {
+          let args = {
+            host: window.location.host,
+            path: window.location.pathname,
+            protocol: window.location.protocol,
+            data: {
+              geojsonObjects: this.drawnItems.toGeoJSON(),
+              xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+              ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+              lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+              gridWidthCells: this.gridWidthCells,
+              gridHeightCells: this.gridHeightCells,
+              longlat: MapComponent.longlat,
+              utm: MapComponent.utm,
+              options: {}
+            }
+          }
+          return this.webWorker.run(workerGetInternalIndices, args);
+        }
+      }).then((indices) => {
+        let customTotal = this.getMetricsSuite(indices, true);
+        this.metrics.customAreasTotal.metrics = customTotal;
+        this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+      });
+      
     }
-    this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
-      let itemMetrics = this.getMetricsSuite(indices.internal, true);
-
-      info.metrics = itemMetrics;
-      info.roundedMetrics = this.roundMetrics(itemMetrics);
-
-      this.metrics.customAreas.push(info);
-    }, (error) => {
-      console.log(error);
-    });
-    //test
-
     
-
-    
-
-    //console.log(start - new Date().getTime());
-    //ADD BATCH DEFERENCE, THEN CAN ALLOW MANY CUSTOM AREAS
-    //update custom areas total
-    //can definately improve upon this
-    // let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
-    // this.metrics.customAreasTotal.metrics = customTotal;
-    // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
 
