@@ -715,7 +715,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         let polyCoords = this.swapCoordinates(coordsBase);
   
   
-        let last = i == shapes.features.length;
+        let last = i == shapes.features.length - 1;
         //this should handle multipolygons fine, actually
         precomputedIndices.layer = indices.breakdown[i].internal;
         this.addDrawnItem(L.polygon(polyCoords, {}), true, name, last, precomputedIndices);
@@ -4760,7 +4760,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     // });
     // //test
 
-    let indices = precomputedIndices != undefined && precomputedIndices.layer != undefined ? precomputedIndices.layer : this.getInternalIndices(layer.toGeoJSON(), {}).internal;
+    let indices = precomputedIndices != undefined && precomputedIndices.layer != undefined ? precomputedIndices.layer : this.getInternalIndices({features: [layer.toGeoJSON()]}, {}).internal;
     let itemMetrics = this.getMetricsSuite(indices, true);
 
     info.metrics = itemMetrics;

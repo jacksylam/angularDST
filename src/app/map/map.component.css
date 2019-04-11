@@ -1,7 +1,7 @@
 .spinner {
     position: absolute;
-    left: calc(50% - 100px);
-    top: calc(50% - 100px);
+    left: calc(50% - 50px);
+    top: calc(50% - 50px);
     z-index: 10000;
 }
 
