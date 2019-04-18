@@ -169,11 +169,10 @@ declare const proj4: any;
       }
 
     //-------------------------------functions---------------------------------------------------
-console.log(typeof proj4 == "undefined");
-  //  if(typeof proj4 == undefined) {
+    
+    if(typeof proj4 == "undefined") {
         importScripts(`${args.protocol}//${args.host}/assets/scripts/proj4.js`);
-    //}
-    console.log(proj4);
+    }
     
     let geojsonObjects = args.data.geojsonObjects;
     let options = args.data.options;
