@@ -292,6 +292,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     //   sizeModes: ['A4Portrait', 'A4Landscape'],
     //   exportOnly: true
     // }).addTo(this.map);
+    console.log(L);
 
     L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
@@ -1607,7 +1608,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         for(let i = 1; i < rechargeData.length; i++) {
           if(this.paletteType == "usgs") {
             if(lcVals[i] == 0) {
-              rechargeData[i] = -180;
+              rechargeData[i] = -MapComponent.MAX_RECHARGE;
             }
             else {
               rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] <= MapComponent.USGS_PURPLE_RECHARGE ? Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE) : MapComponent.USGS_PURPLE_RECHARGE;
@@ -5884,6 +5885,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
   public changeScenario(type: string, updateBase: boolean, backoff: number = 1) {
+    //this.generatePNG(2750, 2750, this.generateColorRaster("rc", 3, 3));
     if(this.scenariosInitialized) {
       this.currentScenario = type;
       this.baseScenario = updateBase ? type : "recharge_scenario0";
@@ -5903,8 +5905,6 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.changeScenario(type, updateBase, backoff * 2)
       }, backoff);
     }
-    
-    //this.generatePNG(1000, 1000, this.generateLCColorRaster(3, 3));
   }
 
 
@@ -6313,27 +6313,81 @@ export class MapComponent implements OnInit, AfterContentInit {
     };
   }
 
-  private generateLCColorRaster(aquifer?: number, caprock?: number): number[][][] {
-    let raster = []
+  private generateColorRaster(type: "lc"| "rc", aquifer?: number, caprock?: number): number[][][] {
+    
+    let value2color = (value: number, range: [number, number], palette: {blue: number[], green: number[], red: number[]}): [number, number, number, number] => {
+      let offset = value - range[0];
+      let span = range[1] - range[0];
+      let buckets = palette.blue.length;
+      let bucketSpan = span / buckets;
+      let bucket = Math.min(Math.floor(offset / bucketSpan), buckets - 1);
+      return [palette.red[bucket], palette.green[bucket], palette.blue[bucket], 255];
+    }
+    
+    let raster = [];
     let row;
-    let codes = this.types.landCover.data._covjson.ranges.cover.values;
-    codes.forEach((code, i) => {
+    let values;
+    let palette;
+    let range;
+    switch(type) {
+      case "lc": {
+        values = this.types.landCover.data._covjson.ranges.cover.values;
+        palette = this.types.landCover.palette;
+        range = [this.validLandcoverRange.min, this.validLandcoverRange.max];
+        break;
+      }
+      case "rc": {
+        values = this.types.recharge.data._covjson.ranges.recharge.values;
+        palette = this.types.recharge.palette;
+        range = [-MapComponent.MAX_RECHARGE, MapComponent.USGS_PURPLE_RECHARGE];
+        break;
+      }
+      default: {
+        throw new Error("Invalid raster type.");
+      }
+    }
+    console.log(value2color(450, range, palette));
+    let offset = 450 - range[0];
+    let span = range[1] - range[0];
+    let buckets = palette.blue.length;
+    let bucketSpan = span / buckets;
+    let bucket = Math.floor(offset / bucketSpan);
+    let isBackground = (value: number): boolean => {
+      let background = false;
+      switch(type) {  
+        case "lc": {
+          background = value == 0;
+          break;
+        }
+        case "rc": {
+          background = value < 0;
+          break;
+        }
+        default: {
+          throw new Error("Invalid raster type.");
+        }
+      }
+      return background;
+    }
+    console.log(range, offset, span, buckets, bucketSpan, bucket);
+    values.forEach((value, i) => {
       if(i % this.gridWidthCells == 0) {
         raster.push([]);
         row = raster[raster.length - 1];
       }
-      if(code == 0) {
+      if(isBackground(value)) {
         row.push([0, 0, 0, 0])
       }
       else {
-        let color = chroma(COVER_INDEX_DETAILS[code].color).rgba();
-        color[3] *= 255;
-        row.push(color);
+        // let color = chroma(COVER_INDEX_DETAILS[code].color).rgba();
+        // color[3] *= 255;
+        // row.push(color);
+        row.push(value2color(value, range, palette));
       }
     });
 
     if(aquifer != undefined || caprock != undefined) {
-      let boundaryMap = new Array(codes.length).fill(0);
+      let boundaryMap = new Array(values.length).fill(0);
       let aquicode = 1;
       let capcode = 2;
 
@@ -6405,7 +6459,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         }
       }
 
-      console.log(mask);
+      //console.log(mask);
 
       //go over and set index offsets in mask to black
       for(let x = 0; x < this.gridWidthCells - 1; x++) {
@@ -6485,9 +6539,9 @@ export class MapComponent implements OnInit, AfterContentInit {
     let y = extraHeightTop;
     // console.log(x);
     // console.log(y);
-    let test;
+    //let test;
     for(let i = 0; i < rWidth - 1; i += iterator) {
-      console.log(test);
+      //console.log(test);
       //console.log(y);
       y = extraHeightTop;
       x += scale;
@@ -6516,7 +6570,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         // xRange[0] = Math.ceil(x);
         // yRange[0] = Math.ceil(y);
 
-        test = this.complexityTest();
+        //test = this.complexityTest();
 
         for(let cx = xRange[0]; cx < xRange[1]; cx++) {
           for(let cy = yRange[0]; cy < yRange[1]; cy++) {
@@ -6533,7 +6587,9 @@ export class MapComponent implements OnInit, AfterContentInit {
         if(Array.isArray(image.buffer[index])) {
           image.buffer[index] = image.color(...image.buffer[index]);
         }
-        
+        else {
+          image.buffer[index] = image.color(0, 0, 0, 0);
+        }
       }
     }
 
