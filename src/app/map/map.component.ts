@@ -31,6 +31,7 @@ import * as CovJSON from 'covjson-reader';
 import { WebWorkerService } from 'ngx-web-worker';
 import 'leaflet-easyprint';
 import * as pnglib from 'pnglib';
+import {workerGetInternalIndices} from "./worker-scripts/worker-scripts";
 
 
 
@@ -57,6 +58,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   static readonly SPECIAL_AQUIFERS = ["30701", "30702"];
   static readonly MAX_RECHARGE = 180;
   static readonly USGS_PURPLE_RECHARGE = 450;
+  static readonly MAX_EDIT_VERTICES = 1000;
 
   rechargePaletteTailLength: number;
   rechargePaletteHeadLength: number;
@@ -81,6 +83,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
   drawnItems: any;
   uneditableItems: any;
+  overflowItems: any;
   highlightedItems: any;
   drawControl: any;
 
@@ -281,12 +284,15 @@ export class MapComponent implements OnInit, AfterContentInit {
       ]
     });
 
+    L.Browser.touch = true;
+
     // L.easyPrint({
     //   title: 'My awesome print button',
     //   position: 'bottomright',
     //   sizeModes: ['A4Portrait', 'A4Landscape'],
     //   exportOnly: true
     // }).addTo(this.map);
+    console.log(L);
 
     L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
@@ -677,42 +683,59 @@ export class MapComponent implements OnInit, AfterContentInit {
   
   private parseAndAddShapes(shapes: any, nameProperty: string) {
 
-    shapes.features.forEach(shape => {
-      //deepcopy so don't mess up original object when swapping coordinates
-      let coordsBase = shape.geometry.coordinates;
+    let args = {
+      host: window.location.host,
+      path: window.location.pathname,
+      protocol: window.location.protocol,
+      data: {
+        geojsonObjects: shapes,
+        xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+        ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+        lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+        gridWidthCells: this.gridWidthCells,
+        gridHeightCells: this.gridHeightCells,
+        longlat: MapComponent.longlat,
+        utm: MapComponent.utm,
+        options: {
+          breakdown: true
+        }
+      }
+    }
+    this.mapService.setLoading(this, true);
+    this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+      let precomputedIndices = {
+        layer: null,
+        total: indices.internal
+      }
 
-      //allow for custom property to be defined
-      //default is name
-      let name = shape.properties[nameProperty];
-
-      //swap coordinates, who wants consistent standards anyway?
-      //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
-      let polyCoords = this.swapCoordinates(coordsBase);
-      // console.log(coordsBase);
-      // console.log(polyCoords);
-
-      //can we handle multiploygons now?
-      //there are 2 different types:
-      //1. multiple outer rings as one object, represented as multiple shapes inside coordinates array
-      //2. items in the coordinates array can be arrays where the fist is an outer ring and the rest are holes
-      //DEAL WITH ALL THIS LATER, FOR NOW LET'S JUST ASSUME SIMPLE SHAPES FOR PURPOSES OF USE AS LANDCOVER AREAS
-      //i think mongodb can handle rings and things
-      //just remove this part for now
-      // if (shape.geometry.type == "MultiPolygon") {
-      //   for (let i = 0; i < coordsBase.length; i++) {
-      //     this.addDrawnItem(L.polygon(coordsBase[i], {}), true, name);
-      //   }
-      // }
-      // else {
-
-      //this should handle multipolygons fine, actually
-      this.addDrawnItem(L.polygon(polyCoords, {}), true, name);
-      // }
+      shapes.features.forEach((shape, i) => {
+        //deepcopy so don't mess up original object when swapping coordinates
+        let coordsBase = shape.geometry.coordinates;
+  
+        //allow for custom property to be defined
+        //default is name
+        let name = shape.properties[nameProperty];
+  
+        //swap coordinates, who wants consistent standards anyway?
+        //different formats have different numbers of nested arrays, recursively swap values in bottom level arrays
+        let polyCoords = this.swapCoordinates(coordsBase);
+  
+  
+        let last = i == shapes.features.length - 1;
+        //this should handle multipolygons fine, actually
+        precomputedIndices.layer = indices.breakdown[i].internal;
+        this.addDrawnItem(L.polygon(polyCoords, {}), true, name, last, precomputedIndices);
+        // }
+      });
+      this.mapService.setLoading(this, false);
     });
-    
-    let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
-    this.metrics.customAreasTotal.metrics = customTotal;
-    this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+
+
+  
+    // let indices = this.getInternalIndices(this.drawnItems.toGeoJSON(), {});
+    // let customTotal = this.getMetricsSuite(indices.internal, true);
+    // this.metrics.customAreasTotal.metrics = customTotal;
+    // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
   }
 
 
@@ -726,9 +749,9 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     //can't do this while db ops running, need to run checks before can run db ops
     //package relevant information and run land cover replacements async
-    let indices: any = {};
-    let repackage = this.checkRepackageShapes(lcShapes, indices)
-    let internalIndices = indices.internal.flat();
+    let indices: any = this.getInternalIndices(lcShapes, {background: true, breakdown: true});
+    let repackage = this.checkRepackageShapes(lcShapes, indices.breakdown);
+    let internalIndices = indices.internal;
 
     //there are no indices to change
     if(internalIndices.length == 0) {
@@ -751,7 +774,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       lcShapes.features.forEach((shape, i) => {
         //default property is lcCode, add advanced option to upload where can specify
         let lc = shape.properties[lcProperty];
-        let featureIndices = indices.internal[i];
+        let featureIndices = indices.breakdown[i].internal;
 
         featureIndices.forEach((index) => {
           if(covData[index] != 0) {
@@ -786,7 +809,7 @@ export class MapComponent implements OnInit, AfterContentInit {
             let mappedType = covData[index];
 
             Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-              //background is not included in the database so indexes shifted by 1
+              //background is not included in the database so indices shifted by 1
               //if background type set recharge rate to 0
               let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
@@ -1013,9 +1036,9 @@ export class MapComponent implements OnInit, AfterContentInit {
 
         //check if metrics are locked in event
         if(e.lockMetrics == undefined || !e.lockMetrics) {
-          //get rounded metrics from indexes and send to bottom panel
+          //get rounded metrics from indices and send to bottom panel
           let metrics = this.roundMetrics(this.getSelectedAquiferMetrics(highlightedAquifers, this.includeCaprock));
-          //console.log(indexes);
+          //console.log(indices);
           this.mapService.updateMetrics(this, "aquifer", metrics);
         }
         
@@ -1180,12 +1203,12 @@ export class MapComponent implements OnInit, AfterContentInit {
   // }
 
   private getSelectedShapeMetrics() {
-    let indexes = this.getInternalIndices(this.highlightedItems.toGeoJSON());
+    let indices = this.getInternalIndices(this.highlightedItems.toGeoJSON(), {});
 
     //THIS CAN BE SPED UP BY USING ALREADY COMPUTED METRICS, CREATE IMPROVED METRICS COMBINING FUNCTION
 
     //get rounded metrics for highlighted sshapes and send to bottom panel
-    let metrics = this.roundMetrics(this.getMetricsSuite(indexes, true));
+    let metrics = this.roundMetrics(this.getMetricsSuite(indices.internal, true));
     this.mapService.updateMetrics(this, "custom", metrics);
   }
 
@@ -1213,7 +1236,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
     }
     else if(mode == "Aquifer") {
-      //get rounded metrics from indexes and send to bottom panel
+      //get rounded metrics from indices and send to bottom panel
       let metrics = this.roundMetrics(this.getMetricsSuite(this.highlightedAquiferIndices, this.includeCaprock));
       this.mapService.updateMetrics(this, "aquifer", metrics);
     }
@@ -1420,10 +1443,14 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.aquifers = data[1];
         return new Promise((resolve) => {
           this.loadDrawControls();
-          this.metrics = this.createMetrics();
-          this.currentDataInitialized = true;
-          //can resolve once the current data initialization is complete
-          resolve();
+          this.mapService.setLoading(this, true);
+          this.createMetrics().then((data) => {
+            this.metrics = data;
+            this.mapService.setLoading(this, false);
+            this.currentDataInitialized = true;
+            //can resolve once the current data initialization is complete
+            resolve();
+          });
         });
       });
     });
@@ -1581,7 +1608,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         for(let i = 1; i < rechargeData.length; i++) {
           if(this.paletteType == "usgs") {
             if(lcVals[i] == 0) {
-              rechargeData[i] = -180;
+              rechargeData[i] = -MapComponent.MAX_RECHARGE;
             }
             else {
               rechargeData[i] = this.types.recharge.currentData[this.currentScenario][i] <= MapComponent.USGS_PURPLE_RECHARGE ? Math.min(this.types.recharge.currentData[this.currentScenario][i], MapComponent.MAX_RECHARGE) : MapComponent.USGS_PURPLE_RECHARGE;
@@ -1721,11 +1748,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   compute full map metrics
   */
 
-  createMetrics() {
-    //if still initializing just ignore, metrics will be computed after initialization completed, shouldn't ever happen, but might as well include as a failsafe
-    // if(!this.currentDataInitialized) {
-    //   return null;
-    // }
+  createMetrics(): Promise<any> {
 
     let data = {
       customAreas: [],
@@ -1748,28 +1771,65 @@ export class MapComponent implements OnInit, AfterContentInit {
     
     this.getAquiferAndTotalMetrics(data);
 
-    let customTotalIndices = []
+    
+    
+    let geojsonFeatures = {
+      features: []
+    };
+    
     this.drawnItems.eachLayer((layer) => {
+      
       //let intervals = new Date().getTime();
       //any custom layers should have metrics object registered with customAreaMap, use this as a base since same name
       let info = this.customAreaMap[layer._leaflet_id];
-      let indices = this.getInternalIndices({features: [layer.toGeoJSON()]});
-      let itemMetrics = this.getMetricsSuite(indices, true);
-      info.metrics = itemMetrics;
-      info.roundedMetrics = this.roundMetrics(itemMetrics);
-      customTotalIndices = customTotalIndices.concat(indices);
+      //no guarentee of identical ordering of eachlayer and togeojson feature list, so construct feature list using eachlayer
+      geojsonFeatures.features.push(layer.toGeoJSON());
+      //let itemMetrics = this.getMetricsSuite(indices, true);
+      //info.metrics = itemMetrics;
+      //info.roundedMetrics = this.roundMetrics(itemMetrics);
 
       data.customAreas.push(info);
+
     });
 
-    //WHY ARE YOU RECOMPUTING THE INTERNAL INDICES???
-    //can make more efficient by computing individual shape metrics and full metrics at the same time
-    //figure out how to generalize as much as possible without adding too much extra overhead and use same function for everything
-    let customTotal = this.getMetricsSuite(customTotalIndices, true);
-    data.customAreasTotal.metrics = customTotal;
-    data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+    let args = {
+      host: window.location.host,
+      path: window.location.pathname,
+      protocol: window.location.protocol,
+      data: {
+        geojsonObjects: geojsonFeatures,
+        xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+        ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+        lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+        gridWidthCells: this.gridWidthCells,
+        gridHeightCells: this.gridHeightCells,
+        longlat: MapComponent.longlat,
+        utm: MapComponent.utm,
+        options: {
+            breakdown: true
+        }
+      }
+    }
 
-    return data;
+    //get
+    return this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+      //set individual metrics
+      indices.breakdown.forEach((featureIndices, i) => {
+        let info = data.customAreas[i];
+        let itemMetrics = this.getMetricsSuite(featureIndices.internal, true);
+        info.metrics = itemMetrics;
+        info.roundedMetrics = this.roundMetrics(itemMetrics);
+      });
+
+      //set total metrics
+      let customTotal = this.getMetricsSuite(Array.from(indices.internal), true);
+      data.customAreasTotal.metrics = customTotal;
+      data.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+
+      return data;
+    }, (error) => {
+      console.log(error);
+    });
   }
 
 
@@ -2160,8 +2220,7 @@ export class MapComponent implements OnInit, AfterContentInit {
   //maybe have subfunctions in generate report for different parts
 
   //also need to update all full map computations to disclude background cells
-  getMetricsSuite(indexes: number[], caprock: boolean) {
-
+  getMetricsSuite(indices: number[], caprock: boolean) {
     let metrics = {
       USC: {
         average: {
@@ -2217,7 +2276,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     };
 
     //pass in null if want whole map
-    if(indexes == null) {
+    if(indices == null) {
       for(let i = 0; i < rechargeVals.length; i++) {
         //if background value don't count
         if(checkInclude(i)) {
@@ -2234,7 +2293,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     }
     else {
       //get total average over cells
-      indexes.forEach((index) => {
+      indices.forEach((index) => {
         if(checkInclude(index)) {
           cells++;
           metrics.USC.average.current += rechargeVals[index];
@@ -2534,11 +2593,17 @@ export class MapComponent implements OnInit, AfterContentInit {
     // this.metrics.customAreasTotal = this.getMetricsSuite(this.drawnItems);
 
     // this.metrics.total = this.getMetricsSuite(null);
+    this.mapService.setLoading(this, true);
+    this.createMetrics().then((data) => {
 
-    this.metrics = this.createMetrics();
-    if(this.baseLayer.name == "Recharge Rate") {
-      this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
-    }
+      this.metrics = data;
+      this.mapService.setLoading(this, false);
+
+      if(this.baseLayer.name == "Recharge Rate") {
+        this.includeCaprock ? this.mapService.updateMetrics(this, "full", this.metrics.total.roundedMetrics) : this.mapService.updateMetrics(this, "full", this.metrics.totalNoCaprock.roundedMetrics);
+      }
+    });
+    
   }
 
 
@@ -2788,7 +2853,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
                   Object.keys(this.types.recharge.currentData).forEach((scenario) => {
 
-                    //background is not included in the database so indexes shifted by 1
+                    //background is not included in the database so indices shifted by 1
                     //if background type set recharge rate to 0
                     let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
@@ -3343,7 +3408,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       
     //   //L.geoJSON(geojsonBounds).addTo(this.map);
     // });
-    // let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
+    // let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON(), {}).internal);
     // this.metrics.customAreasTotal.metrics = customTotal;
     // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
     
@@ -4468,10 +4533,11 @@ export class MapComponent implements OnInit, AfterContentInit {
 
 
 
-
+  //consider switching to leaflet pm
   private loadDrawControls() {
     this.drawnItems = new L.featureGroup();
     this.uneditableItems = new L.featureGroup();
+    this.overflowItems = new L.featureGroup();
     this.highlightedItems = new L.featureGroup();
 
     this.map.addLayer(this.drawnItems);
@@ -4486,7 +4552,11 @@ export class MapComponent implements OnInit, AfterContentInit {
         return [
           {
             enabled: true,
-            handler: new L.Draw.Polygon(map, {repeatMode: true, allowIntersection: false}),
+            handler: new L.Draw.Polygon(map, {
+              repeatMode: true,
+              allowIntersection: false,
+              snapDistance: 1000
+            }),
             title: L.drawLocal.draw.toolbar.buttons.polygon
           },
 
@@ -4514,7 +4584,10 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     this.drawControl = new L.Control.Draw({
       edit: {
-        featureGroup: this.drawnItems
+        featureGroup: this.drawnItems,
+        edit: {
+          allowIntersection: false
+        }
       }
     });
     this.map.addControl(this.drawControl);
@@ -4534,28 +4607,79 @@ export class MapComponent implements OnInit, AfterContentInit {
 
       //no need recompute customTotal if nothing removed
       if(Object.keys(event.layers._layers).length > 0) {
-        let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
-        this.metrics.customAreasTotal.metrics = customTotal;
-        this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+        this.mapService.setLoading(this, true);
+        let args = {
+          host: window.location.host,
+          path: window.location.pathname,
+          protocol: window.location.protocol,
+          data: {
+            geojsonObjects: this.drawnItems.toGeoJSON(),
+            xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+            ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+            lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+            gridWidthCells: this.gridWidthCells,
+            gridHeightCells: this.gridHeightCells,
+            longlat: MapComponent.longlat,
+            utm: MapComponent.utm,
+            options: {}
+          }
+        };
+        this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+          let customTotal = this.getMetricsSuite(indices.internal, true);
+          this.metrics.customAreasTotal.metrics = customTotal;
+          this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+          this.mapService.setLoading(this, false);
+        });
       }
     });
 
     //remove individual cells from edit control (can be deleted but not edited)
     this.map.on(L.Draw.Event.EDITSTART, (event) => {
+      //weird trick for keeping edit vertices small while avoiding difficulty closing shapes while drawing
+      L.Browser.touch = false;
       this.uneditableItems.eachLayer((layer) => {
         this.drawnItems.removeLayer(layer);
-      })
+      });
+      let vertices = 0;
+      //could make this more efficient by memoizing, probably not very important though
+      let first = true;
+      this.drawnItems.eachLayer((layer) => {
+        let vlen = layer._latlngs.flat().length;
+        //check if vertices overflow max allowable
+        if(vertices + vlen < MapComponent.MAX_EDIT_VERTICES) {
+          vertices += vlen;
+        }
+        //track in overflow items and temporarily remove from drawnitems
+        else {
+          if(first) {
+            this.dialog.open(MessageDialogComponent, {data: {message: `Too many vertices exist. Some areas will be excluded from modification.\nA maximum of ${MapComponent.MAX_EDIT_VERTICES} vertices may be modified at a time for performance reasons. Areas that surpass this limit will not be able to be edited through the web interface.`, type: "Warning"}});
+            first = false;
+          }
+          this.drawnItems.removeLayer(layer);
+          this.overflowItems.addLayer(layer);
+        }
+      });
       //removed from visible layer so add to map temporarily
       this.uneditableItems.addTo(this.map);
+      this.overflowItems.addTo(this.map);
     });
     //add back when editing complete
     this.map.on(L.Draw.Event.EDITSTOP, (event) => {
+      L.Browser.touch = true;
       //remove added shapes from map so not included twice
       this.map.removeLayer(this.uneditableItems);
+      this.map.removeLayer(this.overflowItems);
       //add back shapes to edit control
       this.uneditableItems.eachLayer((layer) => {
         this.drawnItems.addLayer(layer);
-      })
+      });
+      //could make this more efficient by memoizing, probably not very important though
+      //add back overflow items
+      this.overflowItems.eachLayer((layer) => {
+        this.drawnItems.addLayer(layer);
+      });
+      //reset overflow group
+      this.overflowItems = new L.featureGroup();
     });
 
     //if anything edited update metrics
@@ -4566,6 +4690,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     });
 
     this.map.on(L.Draw.Event.CREATED, (event) => {
+      console.log(event.layer);
       //console.log(event.layer);
       if(event.layerType == "marker") {
         let bounds = this.getCell(event.layer._latlng);
@@ -4578,11 +4703,11 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.addDrawnItem(event.layer);
       }
 
-      //can streamline computation by using set of added shapes' metrics and previous data as base
-
-      let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
-      this.metrics.customAreasTotal.metrics = customTotal;
-      this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+      // //can streamline computation by using set of added shapes' metrics and previous data as base
+      // let indices = this.getInternalIndices(this.drawnItems.toGeoJSON(), {})
+      // let customTotal = this.getMetricsSuite(indices.internal, true);
+      // this.metrics.customAreasTotal.metrics = customTotal;
+      // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
 
     });
   }
@@ -4634,11 +4759,11 @@ export class MapComponent implements OnInit, AfterContentInit {
   //might want to do something about overlapping layers
   //right now if a shape is drawn over another shape and fully encloses it, there is no way to interact with the first shape (all clicks are caught by newly drawn shape)
   //maybe check if one is contained in another
-  private addDrawnItem(layer, editable: boolean = true, name: string = undefined) {
+  private addDrawnItem(layer: any, editable: boolean = true, name?: string, updateCustomTotal: boolean = true, precomputedIndices?: {layer?: number[], total?: number[]}) {
     // console.log(this.types.aquifers.layer);
 
     //this.downloadShapefile(this.drawnItems)
-
+    //let start = new Date().getTime();
     let __this = this;
 
     let highlight = {
@@ -4654,6 +4779,8 @@ export class MapComponent implements OnInit, AfterContentInit {
     this.highlightedItems.addLayer(layer);
 
     this.drawnItems.addLayer(layer);
+    //editable = editable && layer._latlngs.flat().length <= MapComponent.MAX_EDIT_VERTICES;
+    //console.log(layer._latlngs.flat());
     if (!editable) {
       this.uneditableItems.addLayer(layer);
     }
@@ -4677,19 +4804,78 @@ export class MapComponent implements OnInit, AfterContentInit {
     //set to whole metric object so when change name will change in metrics
     this.customAreaMap[layer._leaflet_id] = info;
 
-    let itemMetrics = this.getMetricsSuite(this.getInternalIndices({features: [layer.toGeoJSON()]}), true);
+    // //test
+    // let args = {
+    //   host: window.location.host,
+    //   path: window.location.pathname,
+    //   protocol: window.location.protocol,
+    //   data: {
+    //     geojsonObjects: this.getInternalIndices(this.drawnItems.toGeoJSON(),
+    //     xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+    //     ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+    //     lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+    //     gridWidthCells: this.gridWidthCells,
+    //     gridHeightCells: this.gridHeightCells,
+    //     longlat: MapComponent.longlat,
+    //     utm: MapComponent.utm,
+    //     options: {}
+    //   }
+    // }
+    // this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+    //   
+
+    //   
+    // }, (error) => {
+    //   console.log(error);
+    // });
+    // //test
+
+    let indices = precomputedIndices != undefined && precomputedIndices.layer != undefined ? precomputedIndices.layer : this.getInternalIndices({features: [layer.toGeoJSON()]}, {}).internal;
+    let itemMetrics = this.getMetricsSuite(indices, true);
 
     info.metrics = itemMetrics;
     info.roundedMetrics = this.roundMetrics(itemMetrics);
-
     this.metrics.customAreas.push(info);
+    
 
-    //ADD BATCH DEFERENCE, THEN CAN ALLOW MANY CUSTOM AREAS
-    //update custom areas total
-    //can definately improve upon this
-    // let customTotal = this.getMetricsSuite(this.getInternalIndices(this.drawnItems.toGeoJSON()), true);
-    // this.metrics.customAreasTotal.metrics = customTotal;
-    // this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+    
+
+    if(updateCustomTotal) {
+      this.mapService.setLoading(this, true);
+      new Promise<number[]>((resolve) => {
+        if(precomputedIndices != undefined && precomputedIndices.total != undefined) {
+          resolve(precomputedIndices.total);
+        }
+        else {
+          let args = {
+            host: window.location.host,
+            path: window.location.pathname,
+            protocol: window.location.protocol,
+            data: {
+              geojsonObjects: this.drawnItems.toGeoJSON(),
+              xs: this.types.landCover.data._covjson.domain.axes.get("x").values,
+              ys: this.types.landCover.data._covjson.domain.axes.get("y").values,
+              lcVals: this.types.landCover.data._covjson.ranges.cover.values,
+              gridWidthCells: this.gridWidthCells,
+              gridHeightCells: this.gridHeightCells,
+              longlat: MapComponent.longlat,
+              utm: MapComponent.utm,
+              options: {}
+            }
+          }
+          this.webWorker.run(workerGetInternalIndices, args).then((indices) => {
+            resolve(indices.internal);
+          });
+        }
+      }).then((indices) => {
+        let customTotal = this.getMetricsSuite(indices, true);
+        this.metrics.customAreasTotal.metrics = customTotal;
+        this.metrics.customAreasTotal.roundedMetrics = this.roundMetrics(customTotal);
+        this.mapService.setLoading(this, false);
+      });
+      
+    }
+    
   }
 
 
@@ -4866,9 +5052,9 @@ export class MapComponent implements OnInit, AfterContentInit {
           throw new Error("No code option provided for shape update");
         }
 
-        let indices: any = {};
-        let repackage = this.checkRepackageShapes(geojsonObjects, indices)
-        let internalIndices = indices.internal.flat();
+        let indices: any = this.getInternalIndices(geojsonObjects, {background: true, breakdown: true});
+        let repackage = this.checkRepackageShapes(geojsonObjects, indices.breakdown);
+        let internalIndices = indices.internal;
 
         if(internalIndices.length == 0) {
           this.dialog.open(MessageDialogComponent, {data: {message: "No Cells Selected for Modification.\n\nEither:\n\n- No areas have been created for modification (Use the drawing tools on the left side of the map to define areas, or upload a shapefile containing predefined areas).\n- All areas have been deselected (Click on a defined area to allow modifications).\n- The area(s) selected are too small or contain no valid cells", type: "Info"}});
@@ -4916,7 +5102,7 @@ export class MapComponent implements OnInit, AfterContentInit {
                 let mappedType = covData[index];
   
                 Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-                  //background is not included in the database so indexes shifted by 1
+                  //background is not included in the database so indices shifted by 1
                   //if background type set recharge rate to 0
                   let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
                   this.types.recharge.currentData[scenario][index] = recordValue;
@@ -4957,9 +5143,9 @@ export class MapComponent implements OnInit, AfterContentInit {
 
         let containedTypes = new Set();
 
-        let indices: any = {}
-        let repackage = this.checkRepackageShapes(geojsonObjects, indices);
-        let internalIndices = indices.internal.flat();
+        let indices: any = this.getInternalIndices(geojsonObjects, {background: true, breakdown: true});
+        let repackage = this.checkRepackageShapes(geojsonObjects, indices.breakdown);
+        let internalIndices = indices.internal;
 
         internalIndices.forEach((index) => {
           containedTypes.add(COVER_INDEX_DETAILS[covData[index]].type);
@@ -5029,7 +5215,7 @@ export class MapComponent implements OnInit, AfterContentInit {
                       let mappedType = covData[index];
 
                       Object.keys(this.types.recharge.currentData).forEach((scenario) => {
-                        //background is not included in the database so indexes shifted by 1
+                        //background is not included in the database so indices shifted by 1
                         //if background type set recharge rate to 0
                         let recordValue = mappedType == 0 ? 0 : recordBase[scenario][mappedType - 1]
 
@@ -5062,10 +5248,10 @@ export class MapComponent implements OnInit, AfterContentInit {
         break;
       }
       case "base": {
-        let backgroundIndices = []
-        let indices = this.getInternalIndices(geojsonObjects, backgroundIndices);
+        //let backgroundIndices = [];
+        let indices = this.getInternalIndices(geojsonObjects, {});
 
-        indices.forEach(index => {
+        indices.internal.forEach(index => {
           covData[index] = this.types.landCover.baseData[index];
           Object.keys(this.types.recharge.currentData).forEach((scenario) => {
             this.types.recharge.currentData[scenario][index] = this.types.recharge.baseData[scenario][index];
@@ -5104,37 +5290,18 @@ export class MapComponent implements OnInit, AfterContentInit {
 
   //features may have overlapping bounding boxes, generally better to take all or nothing approach (if any feature needs to be repackaged, repackage everything together)
   //optimizations in repackaging algorithm should balance out unoptimal configuarations reasonably well (cases where features are non-overlapping)
-  //just return bool in case need indexes for something else before repackaging (advanced mapping...)
-  private checkRepackageShapes(geojsonObjects: any, indices?: {internal: number[][], background: number}): boolean {
+  //just return bool in case need indices for something else before repackaging (advanced mapping...)
+  private checkRepackageShapes(geojsonObjects: any, featureIndices: {internal: number[], background: number}[]): boolean {
     
     let repackage = false;
 
-
-    if(indices != undefined) {
-      indices.internal = [];
-      indices.background = 0;
-    }
-
-    for(let i = 0; i < geojsonObjects.features.length; i++) {
-      let background = [];
+    for(let i = 0; i < featureIndices.length; i++) {
       let shape = geojsonObjects.features[i];
-      let featureIndices = this.getInternalIndices(L.geoJSON(shape).toGeoJSON(), background);
-
-      //no need to run checks if already found feature that needs to be repackaged
-      if(!repackage) {
-        if(featureIndices.length + background.length > DBConnectService.MAX_POINTS || this.DBService.spatialQueryLength(shape.geometry) > DBConnectService.MAX_URI ) {
-          console.log("repack");
-          repackage= true;
-        }
-      }
-      
-
-      if(indices != undefined) {
-        indices.internal.push(featureIndices);
-        indices.background += background.length;
-      }
-      //if don't need to set indices and a feature that needs to be repackaged has been found can go ahead and break from loop
-      else if(repackage) {
+      let feature = featureIndices[i];
+      if(feature.internal.length + feature.background > DBConnectService.MAX_POINTS || this.DBService.spatialQueryLength(shape.geometry) > DBConnectService.MAX_URI ) {
+        console.log("repack");
+        repackage= true;
+        //found a feature that needs to be repackaged, no need to keep looking
         break;
       }
     }
@@ -5143,10 +5310,49 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
 
-  private getInternalIndices(geojsonObjects: any, backgroundIndices?: number[]): number[] {
-    let indices = [];
-
+  //only ever need to know how many background indices there are, never need to know their indices, should also never need background for breakdown (just return array of non-background internal indices for each feature)
+  private getInternalIndices(geojsonObjects: any, options: {background?: boolean, breakdown?: boolean}): {internal: number [], background?: number, breakdown?: {internal: number[], background?: number}[]} {
+    //want indices to be unique
+    let indices: any = {};
+    let conversions = [];
+    let mechanisms: any = {};
+    //still need to store background indices in set
+    //if single feature indices guaranteed unique, no need to go through set (more efficient to use array directly)
+    if(geojsonObjects.features.length < 2) {
+      indices.internal = [];
+      mechanisms.internal = indices.internal.push.bind(indices.internal);
+      if(options.background) {
+        indices.background = 0;
+        mechanisms.background = () => { indices.background++; };
+      }
+    }
+    else {
+      indices.internal = new Set();
+      mechanisms.internal = indices.internal.add.bind(indices.internal);
+      conversions.push(() => { indices.internal = Array.from(indices.internal); });
+      if(options.background) {
+        indices.background = new Set();
+        mechanisms.background = indices.background.add.bind(indices.background);
+        conversions.push(() => { indices.background = indices.background.size; });
+      }
+    }
+    if(options.breakdown) {
+      indices.breakdown = [];
+    }
+    
     geojsonObjects.features.forEach((feature) => {
+      if(options.breakdown) {
+        let featureIndices: any = {
+          internal: [],
+        };
+        mechanisms.breakdownInternal = featureIndices.internal.push.bind(featureIndices.internal);
+        if(options.background) {
+          featureIndices.background = 0;
+          mechanisms.breakdownBackground = () => { featureIndices.background++; }
+        }
+        indices.breakdown.push(featureIndices);
+        
+      }
       //if not a feature return
       if(feature.type.toLowerCase() != "feature") {
         return;
@@ -5155,24 +5361,27 @@ export class MapComponent implements OnInit, AfterContentInit {
       switch(geoType) {
         case "polygon": {
           let coordinates = feature.geometry.coordinates;
-          indices = indices.concat(this.getPolygonInternalIndices(coordinates, backgroundIndices));
+          this.getPolygonInternalIndices(coordinates, mechanisms);
           break;
         }
         case "multipolygon": {
           let coordinates = feature.geometry.coordinates;
           coordinates.forEach((polygon) => {
-            indices = indices.concat(this.getPolygonInternalIndices(polygon, backgroundIndices));
+            this.getPolygonInternalIndices(polygon, mechanisms);
           });
           break;
         }
       }
     });
+    conversions.forEach((conversion) => {
+      conversion();
+    });
     
     return indices;
   }
 
-  private getPolygonInternalIndices(coordinates: number[][][], backgroundIndices: number[]) {
-    let indices = [];
+  private getPolygonInternalIndices(coordinates: number[][][], mechanisms: {internal: (val: number) => any, background?: (val: number) => any, breakdownInternal?: (val: number) => any, breakdownBackground?: (val: number) => any}): void {
+
     let convertedPoints = [];
     let a = [];
     let b = [];
@@ -5258,7 +5467,7 @@ export class MapComponent implements OnInit, AfterContentInit {
     let maxyIndex;
 
     //again, assume values are in order
-    //find min and max indexes
+    //find min and max indices
     //check if ascending or descending order, findIndex returns first occurance
     if(xs[0] < xs[1]) {
       minxIndex = Math.max(xs.findIndex((val) => { return val >= xmin }), 0);
@@ -5299,18 +5508,22 @@ export class MapComponent implements OnInit, AfterContentInit {
         //don't include if background
         if(lcVals[index] != 0) {
           if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-            indices.push(index)
+            mechanisms.internal(index)
+            if(mechanisms.breakdownInternal) {
+              mechanisms.breakdownInternal(index);
+            }
           }
         }
-        else if(backgroundIndices != undefined) {
+        else if(mechanisms.background != undefined) {
           if(this.isInternal(a, b, { x: xs[xIndex], y: ys[yIndex] })) {
-            backgroundIndices.push(index)
+            mechanisms.background(index)
+            if(mechanisms.breakdownBackground) {
+              mechanisms.breakdownBackground(index);
+            }
           }
         }
       }
     }
-
-    return indices;
   }
 
 
@@ -5672,11 +5885,16 @@ export class MapComponent implements OnInit, AfterContentInit {
   }
 
   public changeScenario(type: string, updateBase: boolean, backoff: number = 1) {
+    //this.generatePNG(2750, 2750, this.generateColorRaster("rc", 3, 3));
     if(this.scenariosInitialized) {
       this.currentScenario = type;
       this.baseScenario = updateBase ? type : "recharge_scenario0";
   
-      this.metrics = this.createMetrics();
+      this.mapService.setLoading(this, true);
+      this.createMetrics().then((data) => {
+        this.metrics = data;
+        this.mapService.setLoading(this, false);
+      });
       this.loadRechargeStyle(this.types.recharge.style);
     }
     //if all scenarios have not yet been loaded, pause until complete
@@ -5687,8 +5905,6 @@ export class MapComponent implements OnInit, AfterContentInit {
         this.changeScenario(type, updateBase, backoff * 2)
       }, backoff);
     }
-    
-    //this.generatePNG(1000, 1000, this.generateLCColorRaster(3, 3));
   }
 
 
@@ -6097,27 +6313,81 @@ export class MapComponent implements OnInit, AfterContentInit {
     };
   }
 
-  private generateLCColorRaster(aquifer?: number, caprock?: number): number[][][] {
-    let raster = []
+  private generateColorRaster(type: "lc"| "rc", aquifer?: number, caprock?: number): number[][][] {
+    
+    let value2color = (value: number, range: [number, number], palette: {blue: number[], green: number[], red: number[]}): [number, number, number, number] => {
+      let offset = value - range[0];
+      let span = range[1] - range[0];
+      let buckets = palette.blue.length;
+      let bucketSpan = span / buckets;
+      let bucket = Math.min(Math.floor(offset / bucketSpan), buckets - 1);
+      return [palette.red[bucket], palette.green[bucket], palette.blue[bucket], 255];
+    }
+    
+    let raster = [];
     let row;
-    let codes = this.types.landCover.data._covjson.ranges.cover.values;
-    codes.forEach((code, i) => {
+    let values;
+    let palette;
+    let range;
+    switch(type) {
+      case "lc": {
+        values = this.types.landCover.data._covjson.ranges.cover.values;
+        palette = this.types.landCover.palette;
+        range = [this.validLandcoverRange.min, this.validLandcoverRange.max];
+        break;
+      }
+      case "rc": {
+        values = this.types.recharge.data._covjson.ranges.recharge.values;
+        palette = this.types.recharge.palette;
+        range = [-MapComponent.MAX_RECHARGE, MapComponent.USGS_PURPLE_RECHARGE];
+        break;
+      }
+      default: {
+        throw new Error("Invalid raster type.");
+      }
+    }
+    console.log(value2color(450, range, palette));
+    let offset = 450 - range[0];
+    let span = range[1] - range[0];
+    let buckets = palette.blue.length;
+    let bucketSpan = span / buckets;
+    let bucket = Math.floor(offset / bucketSpan);
+    let isBackground = (value: number): boolean => {
+      let background = false;
+      switch(type) {  
+        case "lc": {
+          background = value == 0;
+          break;
+        }
+        case "rc": {
+          background = value < 0;
+          break;
+        }
+        default: {
+          throw new Error("Invalid raster type.");
+        }
+      }
+      return background;
+    }
+    console.log(range, offset, span, buckets, bucketSpan, bucket);
+    values.forEach((value, i) => {
       if(i % this.gridWidthCells == 0) {
         raster.push([]);
         row = raster[raster.length - 1];
       }
-      if(code == 0) {
+      if(isBackground(value)) {
         row.push([0, 0, 0, 0])
       }
       else {
-        let color = chroma(COVER_INDEX_DETAILS[code].color).rgba();
-        color[3] *= 255;
-        row.push(color);
+        // let color = chroma(COVER_INDEX_DETAILS[code].color).rgba();
+        // color[3] *= 255;
+        // row.push(color);
+        row.push(value2color(value, range, palette));
       }
     });
 
     if(aquifer != undefined || caprock != undefined) {
-      let boundaryMap = new Array(codes.length).fill(0);
+      let boundaryMap = new Array(values.length).fill(0);
       let aquicode = 1;
       let capcode = 2;
 
@@ -6189,7 +6459,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         }
       }
 
-      console.log(mask);
+      //console.log(mask);
 
       //go over and set index offsets in mask to black
       for(let x = 0; x < this.gridWidthCells - 1; x++) {
@@ -6269,9 +6539,9 @@ export class MapComponent implements OnInit, AfterContentInit {
     let y = extraHeightTop;
     // console.log(x);
     // console.log(y);
-    let test;
+    //let test;
     for(let i = 0; i < rWidth - 1; i += iterator) {
-      console.log(test);
+      //console.log(test);
       //console.log(y);
       y = extraHeightTop;
       x += scale;
@@ -6300,7 +6570,7 @@ export class MapComponent implements OnInit, AfterContentInit {
         // xRange[0] = Math.ceil(x);
         // yRange[0] = Math.ceil(y);
 
-        test = this.complexityTest();
+        //test = this.complexityTest();
 
         for(let cx = xRange[0]; cx < xRange[1]; cx++) {
           for(let cy = yRange[0]; cy < yRange[1]; cy++) {
@@ -6317,7 +6587,9 @@ export class MapComponent implements OnInit, AfterContentInit {
         if(Array.isArray(image.buffer[index])) {
           image.buffer[index] = image.color(...image.buffer[index]);
         }
-        
+        else {
+          image.buffer[index] = image.color(0, 0, 0, 0);
+        }
       }
     }
 

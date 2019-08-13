@@ -24,6 +24,7 @@ import { DBConnectService } from './map/shared/dbconnect.service';
 import { CovDetailsService } from './map/shared/cov-details.service';
 import { ModifiedShpwriteService } from './map/shared/modified-shpwrite.service';
 import { CovjsonTemplateService } from './map/shared/covjson-template.service';
+import { MetricsComputatorService } from './map/shared/metrics-computator.service';
 
 //Agave imports
 import { HttpModule } from '@angular/http'; //deprecated, replace with httpclientmodule
@@ -124,7 +125,8 @@ import { LcTableStandaloneComponent } from './lc-table-standalone/lc-table-stand
       provide: RouteReuseStrategy,
       useClass: CustomReuseStrategy
     },
-    WebWorkerService
+    WebWorkerService,
+    MetricsComputatorService
   ],
   bootstrap: [AppComponent],
   entryComponents: [
