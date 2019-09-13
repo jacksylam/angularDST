@@ -231,7 +231,7 @@ export class MapComponent implements OnInit, AfterContentInit {
       layer: null
     },
     caprocks: {
-      label: "Caprocks",
+      label: "Caprock",
       layer: null
     }
   };
@@ -292,7 +292,6 @@ export class MapComponent implements OnInit, AfterContentInit {
     //   sizeModes: ['A4Portrait', 'A4Landscape'],
     //   exportOnly: true
     // }).addTo(this.map);
-    console.log(L);
 
     L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
@@ -1339,7 +1338,6 @@ export class MapComponent implements OnInit, AfterContentInit {
     
           //set up data, recharge layer, and metrics based on these values
           __this.types.recharge.data = coverage;
-          __this.loadRechargeStyle("rate");
           
         })
       ];
@@ -1427,8 +1425,8 @@ export class MapComponent implements OnInit, AfterContentInit {
     }
 
     return initializeCurrentData().then((resolveVals) => {
+      this.loadRechargeStyle("rate");
       let workerPromises = [this.webWorker.run(loadDataArrayFromASC, resolveVals[1].text()), this.webWorker.run(loadDataArrayFromASC, resolveVals[2].text())];
-      console.log("main load took: " + (new Date().getTime() - startLoad).toString() + "ms");
       setTimeout(() => {
         initializeRemainingScenarios().then(() => {
           //indicate scenario initialization complete
@@ -1436,6 +1434,8 @@ export class MapComponent implements OnInit, AfterContentInit {
           setTimeout(() => {
             initializeAesthetics();
           }, pause);
+        }, () => {
+          this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
         });
       }, pause); 
       return Promise.all(workerPromises).then((data) => {
@@ -1446,13 +1446,32 @@ export class MapComponent implements OnInit, AfterContentInit {
           this.mapService.setLoading(this, true);
           this.createMetrics().then((data) => {
             this.metrics = data;
+            console.log("main load took: " + (new Date().getTime() - startLoad).toString() + "ms");
             this.mapService.setLoading(this, false);
             this.currentDataInitialized = true;
             //can resolve once the current data initialization is complete
             resolve();
+          }, () => {
+            this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
+          })
+          .catch((error) => {
+            console.log(error);
+            this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
           });
         });
+      }, () => {
+        this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
+      })
+      .catch((error) => {
+        console.log(error);
+        this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
       });
+    }, () => {
+      this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
+    })
+    .catch((error) => {
+      console.log(error);
+      this.dialog.open(MessageDialogComponent, {data: {message: "An error occured while initializing application data. Please refresh the page or notify a site administrator if this issue persists.", type: "Error"}});
     });
   }
 
