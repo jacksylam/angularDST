@@ -10,13 +10,7 @@
   <div>
     <a target="_blank" href="../assets/Recharge_web_interface.jpg"><img src="../assets/Recharge_web_interface.jpg" alt="Web Interface Flow Chart"></a>
     <p class="clearfix">
-      The Hawai‘i Groundwater Recharge Tool allows users to evaluate how changes in land cover and climate can affect groundwater recharge. The web interface initially presents a baseline 
-      condition representing 1978–2007 average rainfall and 2010 land cover. Users can change land cover over areas of their choice using tools provided in the website, or by importing 
-      spatial datasets, such as shapefiles or raster files, specifying land-cover distribution. Users can also select a future climate condition (statistically downscaled projections of 
-      rainfall for 2041–2071 under representative concentration pathway (RCP) 8.5 
-      [<a target="_blank" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2014JD022059">Elison Timm and others, 2015</a>]). 
-      The web interface accesses a database of recharge simulations representing various possible combinations of land-cover and climate conditions, and returns the recharge corresponding 
-      to the user’s input.
+      The Hawai‘i Groundwater Recharge Tool allows users to evaluate how changes in land cover and climate can affect groundwater recharge. The web interface initially presents a baseline condition representing 1978–2007 average rainfall and 2010 land cover. Users can change land cover over areas of their choice using tools provided in the website, or by importing spatial datasets, such as shapefiles or raster files, specifying land-cover distribution. Users can also select a future climate condition (statistically downscaled projections of rainfall for 2041–2071 under representative concentration pathway (RCP) 8.5 [<a target="_blank" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2014JD022059">Elison Timm and others, 2015</a>]). The web interface accesses a database of recharge simulations representing various possible combinations of land-cover and climate conditions, and returns the recharge corresponding to the user’s input.
     </p>
   </div>
 
@@ -28,13 +22,11 @@
     </h2>
     <a target="_blank" routerLink="/land_cover_table"><app-lc-table class="figure" [columns]="2" header="Table 1. Land cover types and codes used in the Hawaiʻi Groundwater Recharge Tool"></app-lc-table></a>
     <p class="clearfix">
-      The database consists of 58 recharge simulations for O‘ahu. Each simulation represents recharge that would result if the entire island was covered in one of the 29 land-cover 
-      types from the studies by 
+      The database consists of 58 recharge simulations for O‘ahu. Each simulation represents recharge that would result if the entire island was covered in one of the 29 land-cover types from the studies by 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Engott and others (2017)</a> 
       and
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>
-      (table 1), under one of the two climate conditions: (1) 1978–2007 or (2) 2041–2071 RCP 8.5. When the user changes a land-cover or climate condition, the web interface retrieves 
-      the recharge values for the area for the appropriate land cover and climate in the database.
+      (table 1), under one of the two climate conditions: (1) 1978–2007 or (2) 2041–2071 RCP 8.5. When the user changes a land-cover or climate condition, the web interface retrieves the recharge values for the area for the appropriate land cover and climate in the database.
     </p>
   </div>
 
@@ -46,26 +38,19 @@
     </h2>
     <a target="_blank" href="../assets/SWB_concepts.jpg"><img src="../assets/SWB_concepts.jpg" alt="SWB Recharge Model Concept Diagram"></a>
     <p>
-      The recharge values in the database were computed using the soil water-balance computer program (SWB) version 2.0 
+      The recharge values in the database were computed using the soil water-balance computer program (SWB) version 2.0
       (<a target="_blank" href="https://pubs.er.usgs.gov/publication/tm6A59">Westenbroek and others, 2018</a>). 
       SWB estimates groundwater recharge from precipitation, soil, land-cover, and other data.
     </p>
     <p>
-      SWB accounts for water entering, leaving, and being stored within the soil on a daily basis. Most groundwater recharge originates as precipitation. 
-      Irrigation contributes additional water in some areas (the net effect on groundwater resources may be positive or negative, depending on whether the 
-      irrigation water comes from groundwater or surface water). Some of the water runs off the land surface or evaporates from wet surfaces. The remainder 
-      infiltrates the soil, where it is subject to uptake by plants through transpiration (the combined effect of evaporation and transpiration is referred to 
-      as “evapotranspiration”). In the soil water-balance computations of SWB, groundwater recharge occurs when more water infiltrates the soil than can be held 
-      in the soil given its water-storing capacity, antecedent water content, and losses through evapotranspiration. In some areas, additional water is contributed 
-      by leaks from ponds, reservoirs, water mains, sewer lines, and cesspools; in the SWB simulations, these contributions are considered “direct recharge” that 
-      bypasses the evapotranspiration processes in the plant root zone.
+      SWB accounts for water entering, leaving, and being stored within the soil on a daily basis. Most groundwater recharge originates as precipitation. Irrigation contributes additional water in some areas (the net effect on groundwater resources may be positive or negative, depending on whether the irrigation water comes from groundwater or surface water). Some of the water runs off the land surface or evaporates from wet surfaces. The remainder infiltrates the soil, where it is subject to uptake by plants through transpiration (the combined effect of evaporation and transpiration is referred to as “evapotranspiration”). In the soil water-balance computations of SWB, groundwater recharge occurs when more water infiltrates the soil than can be held in the soil given its water-storing capacity, antecedent water content, and losses through evapotranspiration. In some areas, additional water is contributed by leaks from ponds, reservoirs, water mains, sewer lines, and cesspools; in the SWB simulations, these contributions are considered “direct recharge” that bypasses the evapotranspiration processes in the plant root zone.
     </p>
     <p>
       Parameter input values used to generate the SWB simulations were derived from spatial datasets compiled by 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
       and 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>. 
-      However, SWB uses a rectangular-grid environment which differs from the mostly irregular (non-rectangular) polygon spatial datasets used by 
+      However, SWB uses a rectangular-grid environment which differs from the mostly irregular (non-rectangular) polygon spatial datasets used by
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
       and 
       <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>. 
@@ -76,7 +61,7 @@
         The island of O‘ahu was discretized (divided) into a grid consisting of 75-meter square cells
       </li>
       <li>
-        The SWB grid was overlaid onto the irregular-polygon datasets used by 
+        The SWB grid was overlaid onto the irregular-polygon datasets used by
         <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
         and 
         <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a>.
@@ -84,8 +69,7 @@
       <li>
         Using the “rasterize” and “translate” functions of 
         <a target="_blank" href="https://gdal.org/">GDAL/OGR contributors (2018)</a>, 
-        each cell in the SWB grid was assigned the land cover and associated parameter values 
-        from the datasets of 
+        each cell in the SWB grid was assigned the land cover and associated parameter values from the datasets of 
         <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a> 
         and 
         <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155164">Izuka and others (2018)</a> 
@@ -122,8 +106,8 @@
       <li>
         SWB cells designated as developed (codes 8, 9, 10, 31, and 32) were assigned average values for perviousness, which differs 
         from the spatially variable perviousness values used by 
-        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>
-        . The average values used in SWB cells were the area-weighted averages of perviousness for all polygons of a given developed 
+        <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>. 
+        The average values used in SWB cells were the area-weighted averages of perviousness for all polygons of a given developed 
         landcover (for example, “developed, high-intensity”) in the dataset used by 
         <a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>.
       </li>
@@ -179,7 +163,7 @@
         Changing land cover to taro (code 26), water body (code 13), or reservoir (code 14) in areas that don’t already have them in 
         the baseline land cover can lead to gross errors. Recharge rates for these land covers are fixed values that were not computed 
         by the soil water-budget analysis, but were based on simplifying assumptions 
-        (<a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others (2017)</a>) 
+        (<a target="_blank" href="https://pubs.er.usgs.gov/publication/sir20155010">Engott and others, 2017</a>) 
         that may not be transferrable to other locations.
       </li>
       <li>
