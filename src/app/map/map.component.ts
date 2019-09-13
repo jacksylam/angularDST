@@ -286,14 +286,6 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     L.Browser.touch = true;
 
-    // L.easyPrint({
-    //   title: 'My awesome print button',
-    //   position: 'bottomright',
-    //   sizeModes: ['A4Portrait', 'A4Landscape'],
-    //   exportOnly: true
-    // }).addTo(this.map);
-    console.log(L);
-
     L.esri.basemapLayer('Imagery').addTo(this.map);
     //create empty layer for displaying base map
     let empty = L.featureGroup();
@@ -316,94 +308,7 @@ export class MapComponent implements OnInit, AfterContentInit {
 
     this.types.recharge.palette = C.linearPalette(this.rcPalette);
     this.types.landCover.palette = C.directPalette(this.landCoverPalette());
-
-    this.initializeData().then(() => {
-      layerControl.style.visibility = "visible";
-
-      this.mapService.dataLoaded(this);
-      this.mapService.setLoading(this, false);
-
-      //possibly change if on recharge
-      this.map.on('mouseover', () => {
-        L.DomUtil.addClass(this.map._container, 'crosshair-cursor-enabled');
-        this.map.on('mousemove', (e) => {
-          if (this.highlightedCell) {
-            this.map.removeLayer(this.highlightedCell);
-            this.highlightedCell = null;
-          }
-          this.map.closePopup();
-          clearTimeout(this.popupTimer);
-          this.popupTimer = setTimeout(() => {
-
-            //coords for conversion in long lat format
-            let convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
-            //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
-            let data = this.types.landCover.data._covjson.ranges.cover.values;
-            let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
-            let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
-
-            //get difference from min to mouse position
-            let diffx = convertedMousePoint[0] - this.xmin;
-            let diffy = convertedMousePoint[1] - this.ymin;
-            //do nothing if out of range of grid
-            if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
-
-              //round down to nearest 75
-              diffx = Math.floor(diffx / 75) * 75;
-              diffy = Math.floor(diffy / 75) * 75;
-
-              //get cell boundaries as geojson object to draw on map
-              //cell corners
-              let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
-              let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
-              let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
-              let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
-              let cellBounds = {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                  "type": "Polygon",
-                  "coordinates": [[c1, c2, c3, c4, c1]]
-                }
-              };
-              this.highlightedCell = L.geoJSON(cellBounds, { interactive: false })
-                .setStyle({
-                  fillColor: 'orange',
-                  weight: 3,
-                  opacity: 1,
-                  color: 'orange',
-                  fillOpacity: 0.2
-                })
-                .addTo(this.map)
-
-              //add back 37.5 and rounded difference value to get cell coordinate
-              let xCellVal = this.xmin + 37.5 + diffx;
-              let yCellVal = this.ymin + 37.5 + diffy;
-
-              //find index of cell with coordinates
-              let xIndex = xs.indexOf(xCellVal);
-              let yIndex = ys.indexOf(yCellVal);
-
-              //convert to data cell index
-              let index = this.getIndex(xIndex, yIndex);
-
-              //popup cell value
-              let popup = L.popup({ autoPan: false })
-                .setLatLng(e.latlng);
-              if (data[index] == this.types.landCover.baseData[index]) {
-                popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type)
-              }
-              else {
-                popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type + "<br> Original: " + COVER_INDEX_DETAILS[this.types.landCover.baseData[index]].type)
-              }
-              popup.openOn(this.map);
-            }
-
-          }, 1000);
-        });
-
-      });
-    });
+    
 
     this.undoStack = [];
     this.redoStack = [];
@@ -532,6 +437,103 @@ export class MapComponent implements OnInit, AfterContentInit {
       clearTimeout(this.popupTimer);
       this.map.closePopup();
     });
+
+    let initData = () => {
+      this.initializeData().then(() => {
+        console.log("earlier");
+        layerControl.style.visibility = "visible";
+  
+        this.mapService.dataLoaded(this);
+        this.mapService.setLoading(this, false);
+  
+        //possibly change if on recharge
+        this.map.on('mouseover', () => {
+          L.DomUtil.addClass(this.map._container, 'crosshair-cursor-enabled');
+          this.map.on('mousemove', (e) => {
+            if (this.highlightedCell) {
+              this.map.removeLayer(this.highlightedCell);
+              this.highlightedCell = null;
+            }
+            this.map.closePopup();
+            clearTimeout(this.popupTimer);
+            this.popupTimer = setTimeout(() => {
+  
+              //coords for conversion in long lat format
+              let convertedMousePoint = MapComponent.proj4(MapComponent.longlat, MapComponent.utm, [e.latlng.lng, e.latlng.lat]);
+              //round x and y values to nearest multiple of 75 offset from first x/y value, then find position of grid cell that corresponds to this value from stored cover file
+              let data = this.types.landCover.data._covjson.ranges.cover.values;
+              let xs = this.types.landCover.data._covjson.domain.axes.get("x").values;
+              let ys = this.types.landCover.data._covjson.domain.axes.get("y").values;
+  
+              //get difference from min to mouse position
+              let diffx = convertedMousePoint[0] - this.xmin;
+              let diffy = convertedMousePoint[1] - this.ymin;
+              //do nothing if out of range of grid
+              if (diffx >= 0 && diffy >= 0 && diffx <= this.xrange && diffy <= this.yrange) {
+  
+                //round down to nearest 75
+                diffx = Math.floor(diffx / 75) * 75;
+                diffy = Math.floor(diffy / 75) * 75;
+  
+                //get cell boundaries as geojson object to draw on map
+                //cell corners
+                let c1 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy]);
+                let c2 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy]);
+                let c3 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx + 75, this.ymin + diffy + 75]);
+                let c4 = MapComponent.proj4(MapComponent.utm, MapComponent.longlat, [this.xmin + diffx, this.ymin + diffy + 75]);
+                let cellBounds = {
+                  "type": "Feature",
+                  "properties": {},
+                  "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[c1, c2, c3, c4, c1]]
+                  }
+                };
+                this.highlightedCell = L.geoJSON(cellBounds, { interactive: false })
+                  .setStyle({
+                    fillColor: 'orange',
+                    weight: 3,
+                    opacity: 1,
+                    color: 'orange',
+                    fillOpacity: 0.2
+                  })
+                  .addTo(this.map)
+  
+                //add back 37.5 and rounded difference value to get cell coordinate
+                let xCellVal = this.xmin + 37.5 + diffx;
+                let yCellVal = this.ymin + 37.5 + diffy;
+  
+                //find index of cell with coordinates
+                let xIndex = xs.indexOf(xCellVal);
+                let yIndex = ys.indexOf(yCellVal);
+  
+                //convert to data cell index
+                let index = this.getIndex(xIndex, yIndex);
+  
+                //popup cell value
+                let popup = L.popup({ autoPan: false })
+                  .setLatLng(e.latlng);
+                if (data[index] == this.types.landCover.baseData[index]) {
+                  popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type)
+                }
+                else {
+                  popup.setContent("Current: " + COVER_INDEX_DETAILS[data[index]].type + "<br> Original: " + COVER_INDEX_DETAILS[this.types.landCover.baseData[index]].type)
+                }
+                popup.openOn(this.map);
+              }
+  
+            }, 1000);
+          });
+  
+        });
+      },
+      () => {
+        console.log("Data initialization failed, retrying...");
+        initData();
+      });
+    }
+
+    initData();
   }
 
 
@@ -1424,36 +1426,67 @@ export class MapComponent implements OnInit, AfterContentInit {
       }, (e) => {
         console.log(e);
       });
-    }
+    };
 
-    return initializeCurrentData().then((resolveVals) => {
-      let workerPromises = [this.webWorker.run(loadDataArrayFromASC, resolveVals[1].text()), this.webWorker.run(loadDataArrayFromASC, resolveVals[2].text())];
-      console.log("main load took: " + (new Date().getTime() - startLoad).toString() + "ms");
-      setTimeout(() => {
-        initializeRemainingScenarios().then(() => {
-          //indicate scenario initialization complete
-          this.scenariosInitialized = true;
-          setTimeout(() => {
-            initializeAesthetics();
-          }, pause);
-        });
-      }, pause); 
-      return Promise.all(workerPromises).then((data) => {
-        this.caprock = data[0];
-        this.aquifers = data[1];
-        return new Promise((resolve) => {
-          this.loadDrawControls();
-          this.mapService.setLoading(this, true);
-          this.createMetrics().then((data) => {
-            this.metrics = data;
-            this.mapService.setLoading(this, false);
-            this.currentDataInitialized = true;
-            //can resolve once the current data initialization is complete
-            resolve();
+    let initializeRemainingScenariosRetryWrapper = () => {
+      
+    };
+
+    let initializeAestheticsRetryWrapper = () => {
+
+    };
+
+    let initializeCurrentDataRetryWrapper = (): Promise<any> => {
+
+      let initializeASCLoaderRetryWrapper = (resolveVals) => {
+        let workerPromises = [this.webWorker.run(loadDataArrayFromASC, resolveVals[1].text()), this.webWorker.run(loadDataArrayFromASC, resolveVals[2].text())];
+        
+        return Promise.all(workerPromises).then((data) => {
+          this.caprock = data[0];
+          this.aquifers = data[1];
+          return new Promise((resolve) => {
+            this.loadDrawControls();
+            this.mapService.setLoading(this, true);
+            this.createMetrics().then((data) => {
+              this.metrics = data;
+              this.mapService.setLoading(this, false);
+              this.currentDataInitialized = true;
+              console.log("main load took: " + (new Date().getTime() - startLoad).toString() + "ms");
+              //can resolve once the current data initialization is complete
+              resolve();
+            });
           });
         });
+      };
+
+
+      return initializeCurrentData().then((resolveVals) => {
+        
+        
+        setTimeout(() => {
+          initializeRemainingScenarios().then(() => {
+            console.log("later");
+            //indicate scenario initialization complete
+            this.scenariosInitialized = true;
+            setTimeout(() => {
+              initializeAesthetics();
+            }, pause);
+          },
+          () => {
+  
+          });
+        }, pause);
+
+        return initializeASCLoaderRetryWrapper(resolveVals);
+
+        
+      },
+      () => {
+        return initializeCurrentDataRetryWrapper(); 
       });
-    });
+    };
+
+    return initializeCurrentDataRetryWrapper();
   }
 
 
