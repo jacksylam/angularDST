@@ -52,7 +52,7 @@
           The rectangle button allows rectangles to be drawn by clicking at a desired starting point and dragging the mouse to adjust the width and height of the rectangle.
         </li>
         <li>
-          The map point button allows for a single map cell (75m<sup>2</sup> area) to be selected.
+          The map point button allows for a single map cell (75m x 75m area) to be selected.
         </li>
       </ul>
 
@@ -194,7 +194,7 @@
               The data mode changes the area for which the metrics in the details panel are displayed.
               <ul>
                 <li>
-                  “Display Data by Cell” allows a single 75m<sup>2</sup> cell to be selected.
+                  “Display Data by Cell” allows a single 75m x 75m cell to be selected.
                 </li>
                 <li>
                   “Display Custom Area Data” allows a set of user defined areas to be selected.
@@ -315,13 +315,13 @@
                         UTM values must be provided as zone 4, NAD83 in meters.
                       </li>
                       <li>
-                        The data grid must be a subset of the data grid used by default. The default grid has 887 columns, 689 rows, an xllcorner corner value of 574000, yllcorner value of 2350025, and a cell size of 75 – resolution of 75m<sup>2</sup>.
+                        The data grid must be a subset of the data grid used by default. The default grid has 887 columns, 689 rows, an xllcorner corner value of 574000, yllcorner value of 2350025, and a cell size of 75 – resolution of 75m x 75m.
                       </li>
                       <li>
                         Data that does not align with the application’s value grid will be shifted up and to the left to match the nearest cell in the application grid.
                       </li>
                       <li>
-                        Grids with a different resolution from the application grid will be coerced into a resolution of 75m<sup>2</sup>. This may result in a loss of data or precision depending on the resolution of the imported grid.
+                        Grids with a different resolution from the application grid will be coerced into a resolution of 75m x 75m. This may result in a loss of data or precision depending on the resolution of the imported grid.
                       </li>
                     </ul>
                   </li>
