@@ -69,6 +69,9 @@ import {MatTooltipModule} from '@angular/material/tooltip'
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import { LcTableComponent } from './lc-table/lc-table.component';
 import { LcTableStandaloneComponent } from './lc-table-standalone/lc-table-standalone.component';
+import { BrowserErrorComponent } from './browser-error/browser-error.component';
+import {BrowserGuard} from "./guards/browser-guard.service";
+
 
 @NgModule({
   declarations: [
@@ -91,7 +94,8 @@ import { LcTableStandaloneComponent } from './lc-table-standalone/lc-table-stand
     ReportWindowComponent,
     TermsOfUseComponent,
     LcTableComponent,
-    LcTableStandaloneComponent
+    LcTableStandaloneComponent,
+    BrowserErrorComponent
   ],
   imports: [
     HttpModule,
@@ -126,7 +130,8 @@ import { LcTableStandaloneComponent } from './lc-table-standalone/lc-table-stand
       useClass: CustomReuseStrategy
     },
     WebWorkerService,
-    MetricsComputatorService
+    MetricsComputatorService,
+    BrowserGuard
   ],
   bootstrap: [AppComponent],
   entryComponents: [
